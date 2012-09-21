@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns="http://java.sun.com/xml/ns/javaee"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:schemaLocation="http://java.sun.com/xml/ns/javaee
+          http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
+           version="2.5">
+
+    <servlet>
+        <servlet-name>CQSControllerServlet</servlet-name>
+        <servlet-class>com.comcast.plaxo.cqs.controller.CQSControllerServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>CQSControllerServlet</servlet-name>
+        <url-pattern>/</url-pattern>
+    </servlet-mapping>    
+
+    <servlet>
+        <servlet-name>CNSControllerServlet</servlet-name>
+        <servlet-class>com.comcast.plaxo.cns.controller.CNSControllerServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>CNSControllerServlet</servlet-name>
+        <url-pattern>/CNS/*</url-pattern>
+    </servlet-mapping>
+    
+    <servlet>
+    	<servlet-name>AdminServlet</servlet-name>
+    	<servlet-class>com.comcast.plaxo.cmb.common.controller.AdminServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+    	<servlet-name>AdminServlet</servlet-name>
+    	<url-pattern>/ADMIN/*</url-pattern>
+    </servlet-mapping>
+    
+    <servlet>
+    	<servlet-name>CNSUserPageServlet</servlet-name>
+    	<servlet-class>com.comcast.plaxo.cns.controller.CNSUserPageServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+    	<servlet-name>CNSUserPageServlet</servlet-name>
+    	<url-pattern>/CNSUser/*</url-pattern>
+    </servlet-mapping>
+    
+    <servlet>
+    	<servlet-name>CQSUserPageServlet</servlet-name>
+    	<servlet-class>com.comcast.plaxo.cqs.controller.CQSUserPageServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+    	<servlet-name>CQSUserPageServlet</servlet-name>
+    	<url-pattern>/CQSUser/*</url-pattern>
+    </servlet-mapping>
+    
+    <servlet>
+    	<servlet-name>UserLoginPageServlet</servlet-name>
+    	<servlet-class>com.comcast.plaxo.cmb.common.controller.UserLoginPageServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+    	<servlet-name>UserLoginPageServlet</servlet-name>
+    	<url-pattern>/UserLogin/*</url-pattern>
+    </servlet-mapping>
+    
+    <servlet>
+    	<servlet-name>UserPageServlet</servlet-name>
+    	<servlet-class>com.comcast.plaxo.cmb.common.controller.UserPageServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+    	<servlet-name>UserPageServlet</servlet-name>
+    	<url-pattern>/User/*</url-pattern>
+    </servlet-mapping>
+    
+    <servlet>
+    	<servlet-name>AWSProxyServlet</servlet-name>
+    	<servlet-class>com.comcast.plaxo.cmb.common.controller.AWSProxyServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+    	<servlet-name>AWSProxyServlet</servlet-name>
+    	<url-pattern>/AWSProxy/*</url-pattern>
+    </servlet-mapping>
+    
+    <servlet>
+    	<servlet-name>CNSSubscriptionPageServlet</servlet-name>
+    	<servlet-class>com.comcast.plaxo.cns.controller.CNSSubscriptionPageServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+    	<servlet-name>CNSSubscriptionPageServlet</servlet-name>
+    	<url-pattern>/CNSUser/SUBSCRIPTION/*</url-pattern>
+    </servlet-mapping>
+    
+    <servlet>
+    	<servlet-name>CNSPublishToTopicPageServlet</servlet-name>
+    	<servlet-class>com.comcast.plaxo.cns.controller.CNSPublishToTopicPageServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+    	<servlet-name>CNSPublishToTopicPageServlet</servlet-name>
+    	<url-pattern>/CNSUser/Publish/*</url-pattern>
+    </servlet-mapping>
+    
+    <servlet>
+    	<servlet-name>CNSEditTopicDisplayNamePage</servlet-name>
+    	<servlet-class>com.comcast.plaxo.cns.controller.CNSEditTopicDisplayNamePage</servlet-class>
+    </servlet>
+    <servlet-mapping>
+    	<servlet-name>CNSEditTopicDisplayNamePage</servlet-name>
+    	<url-pattern>/CNSUser/EditDisplayName/*</url-pattern>
+    </servlet-mapping>
+    
+    <servlet>
+    	<servlet-name>CNSEditTopicDeliveryPolicyPage</servlet-name>
+    	<servlet-class>com.comcast.plaxo.cns.controller.CNSEditTopicDeliveryPolicyPage</servlet-class>
+    </servlet>
+    <servlet-mapping>
+    	<servlet-name>CNSEditTopicDeliveryPolicyPage</servlet-name>
+    	<url-pattern>/CNSUser/EditDeliveryPolicy/*</url-pattern>
+    </servlet-mapping>
+    
+    <servlet>
+    	<servlet-name>CNSEditSubscriptionDeliveryPolicyPage</servlet-name>
+    	<servlet-class>com.comcast.plaxo.cns.controller.CNSEditSubscriptionDeliveryPolicyPage</servlet-class>
+    </servlet>
+    <servlet-mapping>
+    	<servlet-name>CNSEditSubscriptionDeliveryPolicyPage</servlet-name>
+    	<url-pattern>/CNSUser/SUBSCRIPTION/EditDeliveryPolicy/*</url-pattern>
+    </servlet-mapping>
+    
+    <servlet>
+    	<servlet-name>CNSTopicPermissionPage</servlet-name>
+    	<servlet-class>com.comcast.plaxo.cns.controller.CNSTopicPermissionPage</servlet-class>
+    </servlet>
+    <servlet-mapping>
+    	<servlet-name>CNSTopicPermissionPage</servlet-name>
+    	<url-pattern>/CNSUser/Permission/*</url-pattern>
+    </servlet-mapping>
+    
+    <servlet>
+    	<servlet-name>CNSTopicAddPermissionPage</servlet-name>
+    	<servlet-class>com.comcast.plaxo.cns.controller.CNSTopicAddPermissionPage</servlet-class>
+    </servlet>
+    <servlet-mapping>
+    	<servlet-name>CNSTopicAddPermissionPage</servlet-name>
+    	<url-pattern>/CNSUser/AddPermission/*</url-pattern>
+    </servlet-mapping>
+    
+    <servlet>
+    	<servlet-name>CQSQueueMessagesPageServlet</servlet-name>
+    	<servlet-class>com.comcast.plaxo.cqs.controller.CQSQueueMessagesPageServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+    	<servlet-name>CQSQueueMessagesPageServlet</servlet-name>
+    	<url-pattern>/CQSUser/MESSAGE/*</url-pattern>
+    </servlet-mapping>
+    
+    <servlet>
+    	<servlet-name>CQSAddQueuePermissionPage</servlet-name>
+    	<servlet-class>com.comcast.plaxo.cqs.controller.CQSAddQueuePermissionPage</servlet-class>
+    </servlet>
+    <servlet-mapping>
+    	<servlet-name>CQSAddQueuePermissionPage</servlet-name>
+    	<url-pattern>/CQSUser/AddPermission/*</url-pattern>
+    </servlet-mapping>
+    
+    <servlet>
+    	<servlet-name>CQSQueuePermissionsPage</servlet-name>
+    	<servlet-class>com.comcast.plaxo.cqs.controller.CQSQueuePermissionsPage</servlet-class>
+    </servlet>
+    <servlet-mapping>
+    	<servlet-name>CQSQueuePermissionsPage</servlet-name>
+    	<url-pattern>/CQSUser/PERMISSIONS/*</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>EndpointServlet</servlet-name>
+        <servlet-class>com.comcast.plaxo.cmb.common.controller.EndpointServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>EndpointServlet</servlet-name>
+        <url-pattern>/Endpoint/*</url-pattern>
+    </servlet-mapping>
+</web-app>
