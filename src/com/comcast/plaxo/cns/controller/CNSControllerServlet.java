@@ -22,8 +22,6 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.log4j.Logger;
-
 import com.comcast.plaxo.cmb.common.controller.CMBControllerServlet;
 import com.comcast.plaxo.cmb.common.controller.HealthCheckShallow;
 import com.comcast.plaxo.cmb.common.model.CMBPolicy;
@@ -48,7 +46,6 @@ public class CNSControllerServlet extends CMBControllerServlet {
 	private static final long serialVersionUID = 1L;
 	protected static volatile ICNSTopicPersistence topicHandler;
 	private static volatile ICNSSubscriptionPersistence subscriptionHandler;
-	private static Logger logger = Logger.getLogger(CNSControllerServlet.class);
     private static volatile HashMap<String, Action> actionMap;
 
     /**

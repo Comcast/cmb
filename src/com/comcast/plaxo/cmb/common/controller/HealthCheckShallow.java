@@ -20,7 +20,6 @@ import javax.servlet.http.HttpServletResponse;
 
 import com.comcast.plaxo.cmb.common.model.User;
 import com.comcast.plaxo.cqs.controller.CQSAction;
-import com.comcast.plaxo.cqs.model.CQSQueue;
 
 /**
  * Provide a gasic health-check URL for load-balancers to hit to monitor weather service is up and version

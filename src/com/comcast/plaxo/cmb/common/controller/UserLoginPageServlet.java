@@ -29,7 +29,6 @@ import com.comcast.plaxo.cmb.common.model.User;
 import com.comcast.plaxo.cmb.common.persistence.IUserPersistence;
 import com.comcast.plaxo.cmb.common.persistence.PersistenceFactory;
 import com.comcast.plaxo.cmb.common.util.AuthUtil;
-import com.comcast.plaxo.cmb.common.util.PersistenceException;
 import com.comcast.plaxo.cmb.common.util.ValueAccumulator.AccumulatorName;
 
 /**
@@ -48,7 +47,7 @@ public class UserLoginPageServlet extends AdminServletBase {
 		CMBControllerServlet.valueAccumulator.initializeAllCounters();
 		response.setContentType("text/html");
 		PrintWriter out = response.getWriter();
-		Map parameters = request.getParameterMap();
+		Map<?, ?> parameters = request.getParameterMap();
 		String userName = request.getParameter("user");
 		userName = userName == null ? "" : userName;
 		String passwd = request.getParameter("passwd");

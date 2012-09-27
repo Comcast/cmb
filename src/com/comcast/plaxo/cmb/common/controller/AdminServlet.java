@@ -52,7 +52,7 @@ public class AdminServlet extends AdminServletBase {
 		CMBControllerServlet.valueAccumulator.initializeAllCounters();
 		response.setContentType("text/html");
 		PrintWriter out = response.getWriter();
-		Map parameters = request.getParameterMap();
+		Map<?, ?> parameters = request.getParameterMap();
 		String userName = request.getParameter("user");
 		String passwd = request.getParameter("password");
 		IUserPersistence userHandler = PersistenceFactory.getUserPersistence();
