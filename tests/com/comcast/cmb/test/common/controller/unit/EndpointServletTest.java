@@ -17,7 +17,6 @@ package com.comcast.cmb.test.common.controller.unit;
 
 import com.comcast.plaxo.cmb.common.controller.CMBControllerServlet;
 import com.comcast.plaxo.cmb.common.util.Util;
-import com.comcast.plaxo.cmb.common.util.ValueAccumulator.AccumulatorName;
 
 import org.apache.log4j.Logger;
 import org.junit.After;

@@ -870,7 +870,7 @@ public class CqsStressTester {
 		CommunicationUtils.addParam(params, "Version", "2009-02-01");
 		
 		try {
-			String response = send(params, queueUrl);
+			send(params, queueUrl);
 		} catch (Exception e) {
 			logger.error("Action=deleteMessage status=error exception=", e);
 		}
@@ -888,7 +888,7 @@ public class CqsStressTester {
 		CommunicationUtils.addParam(params, "Version", "2009-02-01");
 		
 		try {
-			String response = send(params, queueUrl);
+			send(params, queueUrl);
 		} catch (Exception e) {
 			logger.error("Action=changeMessageVisibilityTimeout status=error exception=", e);
 		}
@@ -937,7 +937,7 @@ public class CqsStressTester {
         httpPost.setEntity(stringEntity);
         
         HttpResponse response = httpClient.execute(httpPost);
-        int statusCode = response.getStatusLine().getStatusCode();
+        response.getStatusLine().getStatusCode();
         
         HttpEntity entity = response.getEntity();
         
@@ -970,10 +970,8 @@ public class CqsStressTester {
 			saxParser = fac.newSAXParser();
 			saxParser.parse(new ByteArrayInputStream(serializedMessage.getBytes()), p);
 		} catch (ParserConfigurationException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
 		    e.printStackTrace();
 		}
 		         
@@ -988,10 +986,8 @@ public class CqsStressTester {
 			cqsMessage.setReceiptHandle(p.getValueByKey("ReceiptHandle"));
 		    cqsMessage.setMD5OfBody(p.getValueByKey("MD5OfBody"));
 		} catch (NoSuchAlgorithmException e) {
-			// TODO Auto-generated catch block
 		    e.printStackTrace();
 		} catch (UnsupportedEncodingException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		return java.util.Arrays.asList(cqsMessage) ;
@@ -1005,13 +1001,10 @@ public class CqsStressTester {
 			saxParser = fac.newSAXParser();
 			saxParser.parse(new ByteArrayInputStream(serialized.getBytes()), p);
 		} catch (ParserConfigurationException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
 		    e.printStackTrace();
 		}
-		         
 		
 		return p.getValueByKey(key);		
 	}

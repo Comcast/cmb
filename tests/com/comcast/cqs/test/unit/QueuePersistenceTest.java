@@ -145,7 +145,6 @@ public class QueuePersistenceTest {
 	//@Test
 	public void deleteQueuesTest() {
 		
-		String region = "us-west-1";
 		ICQSQueuePersistence persistence = new CQSQueueCassandraPersistence();
 		List<CQSQueue> queueList;
 		
@@ -166,7 +165,6 @@ public class QueuePersistenceTest {
 	@Test
 	public void updatePolicyTest() {
 		
-		String region = "ccp";
 		ICQSQueuePersistence persistence = new CQSQueueCassandraPersistence();
 		String policy = "{\n" +
 				  "\"Version\": \"2008-10-17\",\n" +
@@ -215,7 +213,6 @@ public class QueuePersistenceTest {
 		try {
 			
 			String userId = user.getUserId();
-			String region = CMBProperties.getInstance().getRegion();
 			
 			ICQSQueuePersistence persistence = new CQSQueueCassandraPersistence();
 			//deleteQueuesTest();
@@ -291,7 +288,6 @@ public class QueuePersistenceTest {
 			assertTrue(queue4.getDelaySeconds() == 20);
 			assertTrue(queue4.getPolicy().equals("no"));
 			
-			int a =2;
 			queueList = persistence.listQueues(user.getUserId(), null);
 			
 			for(CQSQueue queue_: queueList) {

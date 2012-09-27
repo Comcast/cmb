@@ -130,7 +130,7 @@ public class SimpleHttpServletRequest implements HttpServletRequest {
     @Override
     public Enumeration<String> getParameterNames() {
         Set<String> keys = _parameters.keySet();
-        Vector<String> keyV = new Vector();
+        Vector<String> keyV = new Vector<String>();
         for (String key : keys) {
             keyV.add(key);
         }

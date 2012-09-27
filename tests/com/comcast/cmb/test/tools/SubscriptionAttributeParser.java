@@ -16,18 +16,14 @@
 package com.comcast.cmb.test.tools;
 
 import java.io.CharArrayWriter;
-import java.util.Vector;
 import java.util.jar.Attributes;
 
 import org.apache.log4j.Logger;
 import org.xml.sax.SAXException;
 
-
-
 public class SubscriptionAttributeParser  extends org.xml.sax.helpers.DefaultHandler {
 
 	private CharArrayWriter content = new CharArrayWriter();
-	private int count = 0;
 	private Keys key;
 	private String effectiveDeliveryPolicy;
 	private String owner;

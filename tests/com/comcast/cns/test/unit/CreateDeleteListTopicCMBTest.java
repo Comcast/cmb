@@ -21,6 +21,7 @@ import java.util.*;
 import org.apache.log4j.Logger;
 import org.junit.* ;
 
+import com.comcast.cmb.test.tools.CNSTestingUtils;
 import com.comcast.plaxo.cmb.common.controller.CMBControllerServlet;
 import com.comcast.plaxo.cmb.common.model.User;
 import com.comcast.plaxo.cmb.common.persistence.IUserPersistence;

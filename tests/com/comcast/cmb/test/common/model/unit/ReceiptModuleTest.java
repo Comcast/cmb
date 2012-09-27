@@ -18,7 +18,6 @@ package com.comcast.cmb.test.common.model.unit;
 import com.comcast.plaxo.cmb.common.controller.CMBControllerServlet;
 import com.comcast.plaxo.cmb.common.model.ReceiptModule;
 import com.comcast.plaxo.cmb.common.util.Util;
-import com.comcast.plaxo.cmb.common.util.ValueAccumulator.AccumulatorName;
 
 import org.junit.After;
 import org.junit.Before;

@@ -337,7 +337,7 @@ public class CreateDeleteListQueueCMBTest {
             }
         });
         
-        Keyspace keyspace2 = HFactory.createKeyspace("CMB", cluster, new ConsistencyLevelPolicy() {
+        HFactory.createKeyspace("CMB", cluster, new ConsistencyLevelPolicy() {
             
             @Override
             public HConsistencyLevel get(OperationType arg0, String arg1) {
@@ -349,6 +349,7 @@ public class CreateDeleteListQueueCMBTest {
                 return HConsistencyLevel.ALL;            
             }
         });
+        
         logger.info("ks=" + keyspace);
     }
 }

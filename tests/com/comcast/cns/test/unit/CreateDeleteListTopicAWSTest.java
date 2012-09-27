@@ -18,7 +18,6 @@ package com.comcast.cns.test.unit;
 import java.util.Arrays;
 import java.util.Random;
 
-import com.comcast.cmb.test.common.model.unit.*;
 import com.comcast.cmb.test.tools.AWSCredentialsHolder;
 import com.comcast.plaxo.cmb.common.util.CMBProperties;
 import com.comcast.plaxo.cmb.common.util.Util;
@@ -41,7 +40,6 @@ import com.amazonaws.services.sns.model.DeleteTopicRequest;
 import com.amazonaws.services.sns.model.GetTopicAttributesRequest;
 import com.amazonaws.services.sns.model.GetTopicAttributesResult;
 import com.amazonaws.services.sns.model.PublishRequest;
-import com.amazonaws.services.sns.model.PublishResult;
 import com.amazonaws.services.sns.model.RemovePermissionRequest;
 import com.amazonaws.services.sns.model.SetTopicAttributesRequest;
 import com.amazonaws.services.sns.model.SubscribeRequest;
@@ -434,7 +432,7 @@ public class CreateDeleteListTopicAWSTest {
 			
 			SubscribeResult subscribeResult1 = sns.subscribe(subscribeRequest1);
 			
-			String subscriptionArn1 = subscribeResult1.getSubscriptionArn();
+			subscribeResult1.getSubscriptionArn();
 			
 			Thread.sleep(500);
 
@@ -445,7 +443,7 @@ public class CreateDeleteListTopicAWSTest {
 			
 			SubscribeResult subscribeResult2 = sns.subscribe(subscribeRequest2);
 			
-			String subscriptionArn2 = subscribeResult2.getSubscriptionArn();
+			subscribeResult2.getSubscriptionArn();
 					
 	    	String queueName = QUEUE_PREFIX + rand.nextLong();
 	        CreateQueueRequest createQueueRequest = new CreateQueueRequest(queueName);
@@ -464,7 +462,7 @@ public class CreateDeleteListTopicAWSTest {
 			
 			SubscribeResult subscribeResult3 = sns.subscribe(subscribeRequest3);
 			
-			String subscriptionArn3 = subscribeResult3.getSubscriptionArn();
+			subscribeResult3.getSubscriptionArn();
 			
 			Thread.sleep(500);
 
@@ -473,7 +471,7 @@ public class CreateDeleteListTopicAWSTest {
 			publishRequest.setSubject("unit test message");
 			publishRequest.setTopicArn(topicArn);
 			
-			PublishResult publishResponse = sns.publish(publishRequest);
+			sns.publish(publishRequest);
 
 	        DeleteQueueRequest deleteQueueRequest = new DeleteQueueRequest();
 	        deleteQueueRequest.setQueueUrl(queueUrl);

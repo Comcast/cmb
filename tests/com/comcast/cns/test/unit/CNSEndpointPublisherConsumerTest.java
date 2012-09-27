@@ -206,6 +206,7 @@ public class CNSEndpointPublisherConsumerTest {
             
             numRecvMsgCalls++;
             ReceiveMessageResult res = new ReceiveMessageResult();
+            
             if (infiniteMessagesToRecv || numRecvMsgCallsBeforeMessage-- == 0) {
                 Message msg = new Message();
                 msg.setBody(messageBody);
@@ -213,7 +214,7 @@ public class CNSEndpointPublisherConsumerTest {
                 msg.setReceiptHandle(receiptHandle);
                 res.setMessages(Arrays.asList(msg));
             } else {
-                res.setMessages(Collections.EMPTY_LIST);
+                res.setMessages(Collections.<Message> emptyList());
             }
             
             return res;            

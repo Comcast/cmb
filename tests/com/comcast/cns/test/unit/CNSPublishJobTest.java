@@ -31,11 +31,9 @@ import com.comcast.plaxo.cmb.common.util.CMBException;
 import com.comcast.plaxo.cmb.common.util.CMBProperties;
 import com.comcast.plaxo.cmb.common.util.Util;
 import com.comcast.plaxo.cns.model.CNSMessage;
-import com.comcast.plaxo.cns.model.CNSMessage.CNSMessageStructure;
 import com.comcast.plaxo.cns.model.CNSSubscription.CnsSubscriptionProtocol;
 import com.comcast.plaxo.cns.model.CNSEndpointPublishJob;
 import com.comcast.plaxo.cns.persistence.CachedCNSEndpointPublishJob;
-import com.comcast.plaxo.cns.persistence.CachedCNSEndpointPublishJob.CachedSubInfo;
 
 public class CNSPublishJobTest {
     static Logger logger = Logger.getLogger(CNSPublishJobTest.class);

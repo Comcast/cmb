@@ -25,7 +25,6 @@ import org.xml.sax.SAXException;
 public class TopicAttributeParser  extends org.xml.sax.helpers.DefaultHandler {
 
 	private CharArrayWriter content = new CharArrayWriter();
-	private int count = 0;
 	private Keys key;
 	private String effectiveDeliveryPolicy;
 	private String owner;

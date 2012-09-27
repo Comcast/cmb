@@ -158,7 +158,7 @@ public class CNSRetryPolicyTest {
 				json = new JSONObject(fakeRetryPolicy);
 				boolean exceptionOccured = false;
 				try {
-					CNSRetryPolicy rpolicy2 = new CNSRetryPolicy(json);
+					new CNSRetryPolicy(json);
 				} catch (Exception e) {
 					if(e instanceof CNSModelConstructionException) {
 						assertTrue(true);
@@ -174,7 +174,7 @@ public class CNSRetryPolicyTest {
 				
 				json = new JSONObject(fakeRetryPolicy2);
 				try {
-					CNSRetryPolicy rpolicy2 = new CNSRetryPolicy(json);
+					new CNSRetryPolicy(json);
 				} catch (Exception e) {
 					if(e instanceof CNSModelConstructionException) {
 						assertTrue(true);

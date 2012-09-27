@@ -36,7 +36,6 @@ import com.amazonaws.services.sns.model.CreateTopicRequest;
 import com.amazonaws.services.sns.model.CreateTopicResult;
 import com.amazonaws.services.sns.model.DeleteTopicRequest;
 import com.amazonaws.services.sns.model.PublishRequest;
-import com.amazonaws.services.sns.model.PublishResult;
 import com.amazonaws.services.sns.model.SubscribeRequest;
 import com.amazonaws.services.sns.model.SubscribeResult;
 import com.amazonaws.services.sqs.AmazonSQS;
@@ -99,7 +98,7 @@ public class CMBTutorial {
     		
             // user "cqs_unit_test"
             
-            String userId = "338591773570";
+            //String userId = "338591773570";
             BasicAWSCredentials credentialsUser = new BasicAWSCredentials("G60XTWOGJCVTKYOPYESU", "Cxg3CqPtwsmtdGrdpRroGjNvdcpgCYk9ITrDybYM");
 
             //String userId = "342126204596";
@@ -185,7 +184,7 @@ public class CMBTutorial {
 	    			}
 	    			
 	    			String subscriptionUrl = o.getString("SubscribeURL");
-	    			String reponse = httpGet(subscriptionUrl);
+	    			httpGet(subscriptionUrl);
 	    			
 	    			DeleteMessageRequest deleteMessageRequest = new DeleteMessageRequest();
 	    			deleteMessageRequest.setReceiptHandle(messages.get(0).getReceiptHandle());
@@ -204,7 +203,7 @@ public class CMBTutorial {
 			publishRequest.setMessage(messageText);
 			publishRequest.setSubject("unit test message");
 			publishRequest.setTopicArn(topicArn);
-			PublishResult publishResponse = sns.publish(publishRequest);
+			sns.publish(publishRequest);
 			
 			Thread.sleep(500);
 
@@ -268,7 +267,7 @@ public class CMBTutorial {
 			publishRequest.setMessage(messageText);
 			publishRequest.setSubject("unit test message");
 			publishRequest.setTopicArn(topicArn);
-			publishResponse = sns.publish(publishRequest);
+			sns.publish(publishRequest);
 			
 			Thread.sleep(500);
 			

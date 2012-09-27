@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.comcast.cns.test.unit;
+package com.comcast.cmb.test.tools;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -38,15 +38,7 @@ import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.log4j.Logger;
 
 import com.amazonaws.util.json.JSONWriter;
-import com.comcast.cmb.test.tools.CreateTopicResponseParser;
-import com.comcast.cmb.test.tools.ErrorParser;
-import com.comcast.cmb.test.tools.ListSubscriptionParser;
-import com.comcast.cmb.test.tools.ListTopicsResponseParser;
-import com.comcast.cmb.test.tools.SimpleHttpServletRequest;
-import com.comcast.cmb.test.tools.SimpleHttpServletResponse;
-import com.comcast.cmb.test.tools.SubscribeParser;
-import com.comcast.cmb.test.tools.SubscriptionAttributeParser;
-import com.comcast.cmb.test.tools.TopicAttributeParser;
+import com.comcast.cns.test.unit.CNSSubscriptionTest;
 import com.comcast.plaxo.cmb.common.model.User;
 import com.comcast.plaxo.cmb.common.util.CMBProperties;
 import com.comcast.plaxo.cns.controller.CNSControllerServlet;

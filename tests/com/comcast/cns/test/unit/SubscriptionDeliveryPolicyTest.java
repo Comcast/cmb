@@ -209,7 +209,7 @@ public class SubscriptionDeliveryPolicyTest {
 			 json = new JSONObject(jsonStr4);
 			
 			 try {
-				CNSSubscriptionDeliveryPolicy subpolicy5 = new CNSSubscriptionDeliveryPolicy(json);
+				new CNSSubscriptionDeliveryPolicy(json);
 			 } catch (Exception e) {
 				if(e instanceof CMBException) {
 					assertTrue(true);
@@ -226,7 +226,7 @@ public class SubscriptionDeliveryPolicyTest {
 			 json = new JSONObject(jsonStr5);
 				
 			 try {
-				CNSSubscriptionDeliveryPolicy subpolicy5 = new CNSSubscriptionDeliveryPolicy(json);
+				new CNSSubscriptionDeliveryPolicy(json);
 			 } catch (Exception e) {
 				if(e instanceof CMBException) {
 					assertTrue(true);
@@ -243,7 +243,7 @@ public class SubscriptionDeliveryPolicyTest {
 			 json = new JSONObject(jsonStr6);
 				
 			 try {
-				CNSSubscriptionDeliveryPolicy subpolicy5 = new CNSSubscriptionDeliveryPolicy(json);
+				new CNSSubscriptionDeliveryPolicy(json);
 			 } catch (Exception e) {
 				if(e instanceof CMBException) {
 					assertTrue(true);
@@ -260,7 +260,7 @@ public class SubscriptionDeliveryPolicyTest {
 			 json = new JSONObject(jsonStr7);
 				
 			 try {
-				CNSSubscriptionDeliveryPolicy subpolicy7 = new CNSSubscriptionDeliveryPolicy(json);
+				new CNSSubscriptionDeliveryPolicy(json);
 			 } catch (Exception e) {
 				if(e instanceof CMBException) {
 					assertTrue(true);
@@ -277,7 +277,7 @@ public class SubscriptionDeliveryPolicyTest {
 			 
 			 json = new JSONObject(jsonStr8);
 			 try {
-				CNSSubscriptionDeliveryPolicy subpolicy8 = new CNSSubscriptionDeliveryPolicy(json);
+				new CNSSubscriptionDeliveryPolicy(json);
 			 } catch (Exception e) {
 				if(e instanceof CMBException) {
 					assertTrue(true);

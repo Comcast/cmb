@@ -222,7 +222,7 @@ public class TopicDeliveryPolicyTest {
 			 boolean exceptionOccured = false;
 			 try {
 				 JSONObject json4 = new JSONObject(jsonStr4);
-				 CNSTopicDeliveryPolicy subpolicy5 = new CNSTopicDeliveryPolicy(json4);
+				 new CNSTopicDeliveryPolicy(json4);
 			 } catch (Exception e) {
 				if(e instanceof CMBException) {
 					assertTrue(true);
@@ -240,7 +240,7 @@ public class TopicDeliveryPolicyTest {
 			
 			 try {
 				 JSONObject json5 = new JSONObject(jsonStr5);
-				 CNSTopicDeliveryPolicy subpolicy6 = new CNSTopicDeliveryPolicy(json5);
+				 new CNSTopicDeliveryPolicy(json5);
 			 } catch (Exception e) {
 				if(e instanceof CMBException) {
 					assertTrue(true);
@@ -257,7 +257,7 @@ public class TopicDeliveryPolicyTest {
 			 
 			 try {
 				 JSONObject json6 = new JSONObject(jsonStr6);
-				 CNSTopicDeliveryPolicy subpolicy7 = new CNSTopicDeliveryPolicy(json6);
+				 new CNSTopicDeliveryPolicy(json6);
 			 } catch (Exception e) {
 				if(e instanceof CMBException) {
 					assertTrue(true);
@@ -400,7 +400,7 @@ public class TopicDeliveryPolicyTest {
 			 
 			 try {
 				 JSONObject json2 = new JSONObject(fakejsonStr);
-				 CNSTopicDeliveryPolicy subpolicy7 = new CNSTopicDeliveryPolicy(json2);
+				 new CNSTopicDeliveryPolicy(json2);
 			 } catch (Exception e) {
 				if(e instanceof CMBException) {
 					assertTrue(true);
@@ -416,7 +416,7 @@ public class TopicDeliveryPolicyTest {
 			 
 			 try {
 				 JSONObject json2 = new JSONObject(fakejsonStr2);
-				 CNSTopicDeliveryPolicy subpolicy7 = new CNSTopicDeliveryPolicy(json2);
+				 new CNSTopicDeliveryPolicy(json2);
 			 } catch (Exception e) {
 				if(e instanceof CMBException) {
 					assertTrue(true);

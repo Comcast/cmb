@@ -1,3 +1,18 @@
+/**
+ * Copyright 2012 Comcast Corporation
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.comcast.cns.test.stress;
 
 import static org.junit.Assert.fail;
@@ -28,11 +43,9 @@ import com.amazonaws.services.sns.model.CreateTopicRequest;
 import com.amazonaws.services.sns.model.CreateTopicResult;
 import com.amazonaws.services.sns.model.DeleteTopicRequest;
 import com.amazonaws.services.sns.model.PublishRequest;
-import com.amazonaws.services.sns.model.PublishResult;
 import com.amazonaws.services.sns.model.SubscribeRequest;
-import com.amazonaws.services.sns.model.SubscribeResult;
 import com.comcast.cmb.test.tools.AWSCredentialsHolder;
-import com.comcast.cns.test.unit.CNSTestingUtils;
+import com.comcast.cmb.test.tools.CNSTestingUtils;
 import com.comcast.plaxo.cmb.common.controller.CMBControllerServlet;
 import com.comcast.plaxo.cmb.common.model.User;
 import com.comcast.plaxo.cmb.common.persistence.CassandraPersistence;
@@ -42,7 +55,6 @@ import com.comcast.plaxo.cmb.common.util.CMBProperties;
 import com.comcast.plaxo.cmb.common.util.Util;
 import com.comcast.plaxo.cns.model.CNSSubscription;
 import com.comcast.plaxo.cns.model.CNSSubscription.CnsSubscriptionProtocol;
-
 
 public class CNSStressTest {
 	
@@ -176,7 +188,7 @@ public class CNSStressTest {
 			publishRequest.setTopicArn(topicArn);
 			
 			long now = System.currentTimeMillis();
-			PublishResult publishResponse = sns.publish(publishRequest);
+			sns.publish(publishRequest);
 			long later = System.currentTimeMillis();
 			apiResponseTime.addAndGet((int)(later-now));
 			
@@ -264,7 +276,7 @@ public class CNSStressTest {
 					subscribeRequest.setProtocol("http");
 					subscribeRequest.setTopicArn(topicArn);
 					
-					SubscribeResult subscribeResult = sns.subscribe(subscribeRequest);
+					sns.subscribe(subscribeRequest);
 					
 					//String subscriptionArn = subscribeResult.getSubscriptionArn();
 				}
@@ -286,7 +298,7 @@ public class CNSStressTest {
 				}
 			}
 	    	
-	    	Thread.currentThread().sleep(TEST_DURATION_SECS*1000);
+	    	Thread.sleep(TEST_DURATION_SECS*1000);
 
 	    	scheduledExecutorService.shutdown();
 
@@ -301,7 +313,7 @@ public class CNSStressTest {
 	    	
 	    	if (DELETE_TOPIC) {
 		    	
-		    	Thread.currentThread().sleep(10000);
+		    	Thread.sleep(10000);
 	
 				for (String arn : topics) {
 				

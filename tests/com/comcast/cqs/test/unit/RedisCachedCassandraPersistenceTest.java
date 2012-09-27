@@ -81,7 +81,7 @@ public class RedisCachedCassandraPersistenceTest {
 
     @Test
     public void testInitialize() {
-        RedisCachedCassandraPersistence redisP = RedisCachedCassandraPersistence.getInstance();
+        RedisCachedCassandraPersistence.getInstance();
     }
     
     @Test
@@ -212,7 +212,6 @@ public class RedisCachedCassandraPersistenceTest {
                 Map<String, String> receiveAttributes)
                 throws PersistenceException, IOException,
                 NoSuchAlgorithmException, InterruptedException {
-            // TODO Auto-generated method stub
             return null;
         }
 
@@ -221,7 +220,6 @@ public class RedisCachedCassandraPersistenceTest {
                 String receiptHandle, int visibilityTO)
                 throws PersistenceException, IOException,
                 NoSuchAlgorithmException, InterruptedException {
-            // TODO Auto-generated method stub
             return false;
         }
 
@@ -906,9 +904,7 @@ public class RedisCachedCassandraPersistenceTest {
         CQSMessage msg = new CQSMessage("test", new HashMap<String, String>());
         msg.setMessageId("2000");
         msg.setSuppliedMessageId("2000");
-        String messageId;
-        String messageIdRet = pCache.sendMessage(queue, msg);
-        messageId = messageIdRet;
+        pCache.sendMessage(queue, msg);
 
         if (testP.messages.size() != 2001) {
             fail("Expected to have added to underlying storage. Size=" + testP.messages.size());

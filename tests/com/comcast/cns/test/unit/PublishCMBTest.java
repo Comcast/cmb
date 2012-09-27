@@ -28,6 +28,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.comcast.cmb.test.tools.CNSTestingUtils;
 import com.comcast.plaxo.cmb.common.controller.CMBControllerServlet;
 import com.comcast.plaxo.cmb.common.model.User;
 import com.comcast.plaxo.cmb.common.persistence.IUserPersistence;

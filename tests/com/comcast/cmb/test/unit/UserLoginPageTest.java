@@ -28,7 +28,6 @@ import org.junit.*;
 
 import com.comcast.plaxo.cmb.common.controller.CMBControllerServlet;
 import com.comcast.plaxo.cmb.common.controller.UserLoginPageServlet;
-import com.comcast.plaxo.cmb.common.util.ValueAccumulator.AccumulatorName;
 
 import static org.junit.Assert.assertTrue;
 

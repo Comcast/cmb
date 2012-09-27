@@ -240,7 +240,7 @@ public class SendDeleteReceiveMessageCMBTest {
             assertTrue(res2.httpCode >= 200 && res2.httpCode < 300);
             logger.info("res2=" + res2.resp);
             
-            Resp resp3 = sendMessage(cqs, user, queue, msg3);
+            sendMessage(cqs, user, queue, msg3);
 
             Resp resp1 = receiveMessage(cqs, user, queue, "2");
             assertTrue(resp1.httpCode >= 200 && resp1.httpCode < 300);
@@ -281,7 +281,6 @@ public class SendDeleteReceiveMessageCMBTest {
             filterAttributes.add("All");
                         
             String msg1 = "Test Message1: " + rand.nextInt();
-            String msg2 = "Test Message2: " + rand.nextInt();
 
             // Testing add to Queue
             Resp res1 = sendMessage(sqs, user, queue, msg1);

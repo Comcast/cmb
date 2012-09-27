@@ -31,6 +31,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.comcast.cmb.test.tools.CNSTestingUtils;
 import com.comcast.cmb.test.tools.ListSubscriptionParser;
 import com.comcast.plaxo.cmb.common.controller.CMBControllerServlet;
 import com.comcast.plaxo.cmb.common.model.User;
@@ -181,7 +182,7 @@ public class SubscribeUnsubscribeCMBTest {
 			String endpoint = "jorge@plaxo.com";
 			String protocol = "email";
 			CNSTestingUtils.subscribe(cns, user1, out, endpoint, protocol, topicArn);
-			String subscriptionArn = CNSTestingUtils.getSubscriptionArnFromString(out.toString());
+			CNSTestingUtils.getSubscriptionArnFromString(out.toString());
 			out.reset();
 
 			CNSTestingUtils.listSubscriptions(cns, user1, out, "Faketoken");
@@ -249,7 +250,7 @@ public class SubscribeUnsubscribeCMBTest {
 			String endpoint = "jorge@plaxo.com";
 			String protocol = "email";
 			CNSTestingUtils.subscribe(cns, user1, out, endpoint, protocol, topicArn);
-			String subscriptionArn = CNSTestingUtils.getSubscriptionArnFromString(out.toString());
+			CNSTestingUtils.getSubscriptionArnFromString(out.toString());
 			out.reset();
 
 			String fakeArn = "monkey";
@@ -419,7 +420,7 @@ public class SubscribeUnsubscribeCMBTest {
 			String endpoint = "http://nis.test3.plaxo.com:8080/CMB/Endpoint/recv/2526";
 			String protocol = "http";
 			CNSTestingUtils.subscribe(cns, user2, out, endpoint, protocol, topicArn);
-			String subscriptionArn = CNSTestingUtils.getSubscriptionArnFromString(out.toString());
+			CNSTestingUtils.getSubscriptionArnFromString(out.toString());
 			out.reset();
 			
 			CNSTestingUtils.confirmPendingSubscriptionsByTopic(topicArn, user2.getUserId(), CnsSubscriptionProtocol.http);
@@ -435,12 +436,12 @@ public class SubscribeUnsubscribeCMBTest {
 			assertTrue(subscriptions.size() == 1);
 			out.reset();
 
-			subscriptionArn = subscriptions.get(0).getSubscriptionArn();
+			subscriptions.get(0).getSubscriptionArn();
 
 			endpoint = "http://nis.test3.plaxo.com:8080/CMB/Endpoint/recv/2527";
 			protocol = "http";
 			CNSTestingUtils.subscribe(cns, user1, out, endpoint, protocol, topicArn);
-			subscriptionArn = CNSTestingUtils.getSubscriptionArnFromString(out.toString());
+			CNSTestingUtils.getSubscriptionArnFromString(out.toString());
 			out.reset();
 
 			CNSTestingUtils.confirmPendingSubscriptionsByTopic(topicArn, user1.getUserId(), CnsSubscriptionProtocol.http);
@@ -449,7 +450,7 @@ public class SubscribeUnsubscribeCMBTest {
 			subscriptions = CNSTestingUtils.getSubscriptionsFromString(out.toString());
 			assertTrue(subscriptions.size() == 1);
 			CNSSubscriptionTest sub = subscriptions.get(0);
-			subscriptionArn = subscriptions.get(0).getSubscriptionArn();
+			subscriptions.get(0).getSubscriptionArn();
 
 			assertTrue(sub.getEndpoint().equals("http://nis.test3.plaxo.com:8080/CMB/Endpoint/recv/2527"));
 			assertTrue(sub.getProtocol().equals("http"));
@@ -480,7 +481,7 @@ public class SubscribeUnsubscribeCMBTest {
 				endpoint = "http://nis.test3.plaxo.com:8080/CMB/Endpoint/recv/2500" + i;
 				protocol = "http";
 				CNSTestingUtils.subscribe(cns, user1, out, endpoint, protocol, topicArn);
-				subscriptionArn = CNSTestingUtils.getSubscriptionArnFromString(out.toString());
+				CNSTestingUtils.getSubscriptionArnFromString(out.toString());
 				out.reset();
 			}
 			
@@ -663,11 +664,11 @@ public class SubscribeUnsubscribeCMBTest {
 			String endpoint = "bwolf@plaxo.com";
 			String protocol = "email";
 			CNSTestingUtils.subscribe(cns, user2, out, endpoint, protocol, topicArn);
-			String subscriptionArn = CNSTestingUtils.getSubscriptionArnFromString(out.toString());
+			CNSTestingUtils.getSubscriptionArnFromString(out.toString());
 
 			protocol = "email-json";
 			CNSTestingUtils.subscribe(cns, user2, out, endpoint, protocol, topicArn);
-			subscriptionArn = CNSTestingUtils.getSubscriptionArnFromString(out.toString());
+			CNSTestingUtils.getSubscriptionArnFromString(out.toString());
 			
 		} catch (Exception ex) {
 			
@@ -691,7 +692,6 @@ public class SubscribeUnsubscribeCMBTest {
 		CQSControllerServlet cqs = new CQSControllerServlet();
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		String topicArn = null;
-		String queueArn = null;
 		String queueURL = null;
 
 		try {
@@ -719,8 +719,7 @@ public class SubscribeUnsubscribeCMBTest {
 			ICQSQueuePersistence queueHandler = PersistenceFactory.getQueuePersistence();	
 			logger.info("cqsQueue: " + cqsResponse);
 			queueURL = CNSTestingUtils.getQueueUrl(cqsResponse);					
-			CQSQueue queue = queueHandler.getQueue(queueURL);
-			queueArn = queue.getArn();
+			queueHandler.getQueue(queueURL);
 
 			String endpoint = queueURL;
 			String protocol = "cqs";

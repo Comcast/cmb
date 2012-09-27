@@ -29,7 +29,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
 import java.util.UUID;
@@ -50,7 +49,6 @@ import com.amazonaws.services.sns.model.CreateTopicRequest;
 import com.amazonaws.services.sns.model.CreateTopicResult;
 import com.amazonaws.services.sns.model.DeleteTopicRequest;
 import com.amazonaws.services.sns.model.PublishRequest;
-import com.amazonaws.services.sns.model.PublishResult;
 import com.amazonaws.services.sns.model.SubscribeRequest;
 import com.amazonaws.services.sns.model.SubscribeResult;
 import com.amazonaws.services.sqs.AmazonSQS;
@@ -58,12 +56,10 @@ import com.amazonaws.services.sqs.AmazonSQSClient;
 import com.amazonaws.services.sqs.model.AddPermissionRequest;
 import com.amazonaws.services.sqs.model.ChangeMessageVisibilityBatchRequest;
 import com.amazonaws.services.sqs.model.ChangeMessageVisibilityBatchRequestEntry;
-import com.amazonaws.services.sqs.model.ChangeMessageVisibilityBatchResult;
 import com.amazonaws.services.sqs.model.ChangeMessageVisibilityRequest;
 import com.amazonaws.services.sqs.model.CreateQueueRequest;
 import com.amazonaws.services.sqs.model.DeleteMessageBatchRequest;
 import com.amazonaws.services.sqs.model.DeleteMessageBatchRequestEntry;
-import com.amazonaws.services.sqs.model.DeleteMessageBatchResult;
 import com.amazonaws.services.sqs.model.DeleteMessageRequest;
 import com.amazonaws.services.sqs.model.DeleteQueueRequest;
 import com.amazonaws.services.sqs.model.GetQueueAttributesRequest;
@@ -259,7 +255,7 @@ public class CQSIntegrationTest {
 			publishRequest.setMessage(messageText);
 			publishRequest.setSubject("unit test message");
 			publishRequest.setTopicArn(topicArn);
-			PublishResult publishResponse = sns.publish(publishRequest);
+			sns.publish(publishRequest);
 			
 			Thread.sleep(2000);
 
@@ -490,7 +486,7 @@ public class CQSIntegrationTest {
             ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest(myQueueUrl);
             receiveMessageRequest.setVisibilityTimeout(10);
             receiveMessageRequest.setMaxNumberOfMessages(12);
-            List<Message> messages = sqs.receiveMessage(receiveMessageRequest).getMessages();
+            sqs.receiveMessage(receiveMessageRequest).getMessages();
         } catch (AmazonServiceException ase) {
             assertTrue(ase.getErrorCode().contains(CQSErrorCodes.InvalidParameterValue.getCMBCode()));
             //displayServiceException(ase);
@@ -502,7 +498,7 @@ public class CQSIntegrationTest {
             ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest(myQueueUrl);
             receiveMessageRequest.setVisibilityTimeout(10);
             receiveMessageRequest.setMaxNumberOfMessages(0);
-            List<Message> messages = sqs.receiveMessage(receiveMessageRequest).getMessages();
+            sqs.receiveMessage(receiveMessageRequest).getMessages();
         } catch (AmazonServiceException ase) {
             assertTrue(ase.getErrorCode().contains(CQSErrorCodes.InvalidParameterValue.getCMBCode()));
             //displayServiceException(ase);
@@ -543,7 +539,7 @@ public class CQSIntegrationTest {
             );
             
             SendMessageBatchRequest batchSendRequest = new SendMessageBatchRequest(myQueueUrl, messageList);
-            SendMessageBatchResult result = sqs.sendMessageBatch(batchSendRequest);
+            sqs.sendMessageBatch(batchSendRequest);
             
             Thread.sleep(1000);
         } catch (AmazonServiceException ase) {
@@ -584,7 +580,7 @@ public class CQSIntegrationTest {
         
         try {
             DeleteMessageBatchRequest batchDeleteRequest = new DeleteMessageBatchRequest(myQueueUrl, deleteMsgList);
-            DeleteMessageBatchResult deleteResult = sqs.deleteMessageBatch(batchDeleteRequest);
+            sqs.deleteMessageBatch(batchDeleteRequest);
         } catch (AmazonServiceException ase) {
             assertTrue("Duplicate ids in DeleteMessageBatchRequest: ", ase.getErrorCode().contains(CQSErrorCodes.BatchEntryIdsNotDistinct.getCMBCode()));
             //displayServiceException(ase);
@@ -610,8 +606,7 @@ public class CQSIntegrationTest {
             deleteMsgList.get(deleteMsgList.size() - 1).setId("some-random-id");
             deleteMsgList.get(0).setReceiptHandle("somerandomestring");
             DeleteMessageBatchRequest batchDeleteRequest = new DeleteMessageBatchRequest(myQueueUrl, deleteMsgList);
-            DeleteMessageBatchResult deleteResult = sqs.deleteMessageBatch(batchDeleteRequest);
-            int y =0 ;
+            sqs.deleteMessageBatch(batchDeleteRequest);
         } catch (AmazonServiceException ase) {
             assertTrue(ase.getErrorCode().equals(CQSErrorCodes.InternalError.getCMBCode()));
             //displayServiceException(ase);
@@ -653,7 +648,7 @@ public class CQSIntegrationTest {
             );
             
             SendMessageBatchRequest batchSendRequest = new SendMessageBatchRequest(myQueueUrl, messageList);
-            SendMessageBatchResult result = sqs.sendMessageBatch(batchSendRequest);
+            sqs.sendMessageBatch(batchSendRequest);
             Thread.sleep(1000);
             
         } catch (AmazonServiceException ase) {
@@ -693,7 +688,7 @@ public class CQSIntegrationTest {
         
         try {
             ChangeMessageVisibilityBatchRequest batchRequest = new ChangeMessageVisibilityBatchRequest(myQueueUrl, msgList);
-            ChangeMessageVisibilityBatchResult result = sqs.changeMessageVisibilityBatch(batchRequest);
+            sqs.changeMessageVisibilityBatch(batchRequest);
         } catch (AmazonServiceException ase) {
             assertTrue(ase.getErrorCode().contains(CQSErrorCodes.BatchEntryIdsNotDistinct.getCMBCode()));
             //displayServiceException(ase);
@@ -704,7 +699,7 @@ public class CQSIntegrationTest {
         try {
             msgList.get(0).setId("bad.id");
             ChangeMessageVisibilityBatchRequest batchRequest = new ChangeMessageVisibilityBatchRequest(myQueueUrl, msgList);
-            ChangeMessageVisibilityBatchResult result = sqs.changeMessageVisibilityBatch(batchRequest);
+            sqs.changeMessageVisibilityBatch(batchRequest);
         } catch (AmazonServiceException ase) {
             assertTrue(ase.getErrorCode().contains(CQSErrorCodes.InvalidBatchEntryId.getCMBCode()));
             //displayServiceException(ase);
@@ -717,7 +712,7 @@ public class CQSIntegrationTest {
             msgList.get(msgList.size() - 1).setId("some-random-id");
             msgList.get(0).setReceiptHandle("somerandomestring");
             ChangeMessageVisibilityBatchRequest batchRequest = new ChangeMessageVisibilityBatchRequest(myQueueUrl, msgList);
-            ChangeMessageVisibilityBatchResult result = sqs.changeMessageVisibilityBatch(batchRequest);
+            sqs.changeMessageVisibilityBatch(batchRequest);
         } catch (AmazonServiceException ase) {
             assertTrue(ase.getErrorCode().contains(CQSErrorCodes.InternalError.getCMBCode()));
         }
@@ -742,8 +737,6 @@ public class CQSIntegrationTest {
             messagePersistence.clearQueue(myQueueUrl);
         }
 
-        SendMessageBatchResult result = null;
-
         logger.info("Send a batch of messages with empty supplied Id");
         
         try {
@@ -755,7 +748,7 @@ public class CQSIntegrationTest {
             );
             
             SendMessageBatchRequest batchSendRequest = new SendMessageBatchRequest(myQueueUrl, messageList);
-            result = sqs.sendMessageBatch(batchSendRequest);
+            sqs.sendMessageBatch(batchSendRequest);
             
         } catch (AmazonServiceException ase) {
             assertTrue(ase.getErrorCode().contains(CQSErrorCodes.InvalidBatchEntryId.getCMBCode()));
@@ -773,7 +766,7 @@ public class CQSIntegrationTest {
             );
             
             SendMessageBatchRequest batchSendRequest = new SendMessageBatchRequest(myQueueUrl, messageList);
-            result = sqs.sendMessageBatch(batchSendRequest);
+            sqs.sendMessageBatch(batchSendRequest);
             
         } catch (AmazonServiceException ase) {
             displayServiceException(ase);
@@ -790,7 +783,7 @@ public class CQSIntegrationTest {
             );
             
             SendMessageBatchRequest batchSendRequest = new SendMessageBatchRequest(myQueueUrl, messageList);
-            result = sqs.sendMessageBatch(batchSendRequest);
+            sqs.sendMessageBatch(batchSendRequest);
             
         } catch (AmazonServiceException ase) {
             assertTrue(ase.getErrorCode().contains(CQSErrorCodes.BatchEntryIdsNotDistinct.getCMBCode()));
@@ -808,7 +801,7 @@ public class CQSIntegrationTest {
             );
             
             SendMessageBatchRequest batchSendRequest = new SendMessageBatchRequest(myQueueUrl, messageList);
-            result = sqs.sendMessageBatch(batchSendRequest);
+            sqs.sendMessageBatch(batchSendRequest);
             
         } catch (AmazonServiceException ase) {
             assertTrue(ase.getErrorCode().contains(CQSErrorCodes.InvalidBatchEntryId.getCMBCode()));
@@ -826,7 +819,7 @@ public class CQSIntegrationTest {
                 new SendMessageBatchRequestEntry("3", new String(chars))
             );
             SendMessageBatchRequest batchSendRequest = new SendMessageBatchRequest(myQueueUrl, messageList);
-            result = sqs.sendMessageBatch(batchSendRequest);
+            sqs.sendMessageBatch(batchSendRequest);
         } catch (AmazonServiceException ase) {
             assertTrue(ase.getErrorCode().contains(CQSErrorCodes.BatchRequestTooLong.getCMBCode()));
             //displayServiceException(ase);
@@ -932,14 +925,6 @@ public class CQSIntegrationTest {
             sqs.sendMessage(new SendMessageRequest(myQueueUrl, "This is my message text 3. " + (new Random()).nextInt()));
             Thread.sleep(1000);
             
-            // send message batch
-            
-            String messageBody = "Test message";
-            
-            for (int i=0; i< 10000; i++) {
-            	messageBody += i;
-            }
-
             // Receive messages
             
             logger.info("Receiving messages from MyQueue.\n");
@@ -1314,8 +1299,8 @@ public class CQSIntegrationTest {
             logger.info("Sending batch messages to " + qName + ":\n");
             SendMessageRequest sendMessageRequest = new SendMessageRequest(myQueueUrl, "This is a test message");
             SendMessageResult sendResult = sqs.sendMessage(sendMessageRequest);
-            Map<String, String> idMsg = new HashMap<String, String>();
             assertNotNull(sendResult.getMessageId());
+
             Thread.sleep(1000);
 
             // receive messages
@@ -1401,7 +1386,7 @@ public class CQSIntegrationTest {
             }
             
             sendMessageBatchRequest.setEntries(sendEntryList);
-            SendMessageBatchResult sendBatchResult = sqs.sendMessageBatch(sendMessageBatchRequest);
+            sqs.sendMessageBatch(sendMessageBatchRequest);
             
             Thread.sleep(1000);
 
@@ -1444,7 +1429,7 @@ public class CQSIntegrationTest {
             
             DeleteMessageBatchRequest deleteMessageBatchRequest = new DeleteMessageBatchRequest(myQueueUrl);
             deleteMessageBatchRequest.setEntries(deleteEntryList);
-            DeleteMessageBatchResult deleteBatchResult = sqs.deleteMessageBatch(deleteMessageBatchRequest);
+            sqs.deleteMessageBatch(deleteMessageBatchRequest);
             
         	DeleteQueueRequest deleteQueueRequest = new DeleteQueueRequest();
             deleteQueueRequest.setQueueUrl(myQueueUrl);
@@ -1496,7 +1481,7 @@ public class CQSIntegrationTest {
             }
             
             sendMessageBatchRequest.setEntries(sendEntryList);
-            SendMessageBatchResult sendBatchResult = sqs.sendMessageBatch(sendMessageBatchRequest);
+            sqs.sendMessageBatch(sendMessageBatchRequest);
             
             Thread.sleep(1000);
 
@@ -1588,7 +1573,7 @@ public class CQSIntegrationTest {
             
             DeleteMessageBatchRequest deleteMessageBatchRequest = new DeleteMessageBatchRequest(myQueueUrl);
             deleteMessageBatchRequest.setEntries(deleteEntryList);
-            DeleteMessageBatchResult deleteBatchResult = sqs.deleteMessageBatch(deleteMessageBatchRequest);
+            sqs.deleteMessageBatch(deleteMessageBatchRequest);
             
         	DeleteQueueRequest deleteQueueRequest = new DeleteQueueRequest();
             deleteQueueRequest.setQueueUrl(myQueueUrl);
@@ -1784,7 +1769,7 @@ public class CQSIntegrationTest {
             
             DeleteMessageBatchRequest deleteMessageBatchRequest = new DeleteMessageBatchRequest(myQueueUrl);
             deleteMessageBatchRequest.setEntries(deleteEntryList);
-            DeleteMessageBatchResult deleteBatchResult = sqs.deleteMessageBatch(deleteMessageBatchRequest);
+            sqs.deleteMessageBatch(deleteMessageBatchRequest);
             
         	DeleteQueueRequest deleteQueueRequest = new DeleteQueueRequest();
             deleteQueueRequest.setQueueUrl(myQueueUrl);

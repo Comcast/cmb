@@ -24,6 +24,7 @@ import java.util.TreeSet;
 import org.apache.log4j.Logger;
 import org.junit.* ;
 
+import com.comcast.cmb.test.tools.CNSTestingUtils;
 import com.comcast.plaxo.cmb.common.controller.CMBControllerServlet;
 import com.comcast.plaxo.cmb.common.model.User;
 import com.comcast.plaxo.cmb.common.persistence.IUserPersistence;
@@ -96,7 +97,7 @@ public class SubscribeListUnsubscribeCassandraTest {
             topicArn = t.getArn();
 
             ICNSSubscriptionPersistence subscriptionHandler = new CNSSubscriptionCassandraPersistence();
-            CNSSubscription s = subscriptionHandler.subscribe("http://www.plaxo.com/test", CnsSubscriptionProtocol.http, t.getArn(), userId1);
+            subscriptionHandler.subscribe("http://www.plaxo.com/test", CnsSubscriptionProtocol.http, t.getArn(), userId1);
             
         } catch (Exception ex) {
             

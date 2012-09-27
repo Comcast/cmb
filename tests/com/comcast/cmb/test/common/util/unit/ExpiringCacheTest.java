@@ -130,8 +130,6 @@ public class ExpiringCacheTest {
         final TestCallable c = new TestCallable();
         final ExpiringCache<Integer, Integer> cache = new ExpiringCache<Integer, Integer>(1000);
 
-        long ts1 = System.currentTimeMillis();
-        
         TestRunnable arr[] = new TestRunnable[10];
 
         for (int i = 0; i < 10; i++) {

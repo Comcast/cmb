@@ -33,7 +33,6 @@ import com.comcast.plaxo.cmb.common.util.RollingWindowCapture;
 import com.comcast.plaxo.cmb.common.util.Util;
 import com.comcast.plaxo.cmb.common.util.RollingWindowCapture.PayLoad;
 import com.comcast.plaxo.cmb.common.util.RollingWindowCapture.Visitor;
-import com.comcast.plaxo.cmb.common.util.ValueAccumulator.AccumulatorName;
 
 public class RollingWindowCaptureTest {
     static Logger logger = Logger.getLogger(RollingWindowCaptureTest.class);
@@ -57,7 +56,7 @@ public class RollingWindowCaptureTest {
     }
     @Test
     public void test() throws InterruptedException {
-        RollingWindowCapture c = new RollingWindowCapture(1,10);
+        RollingWindowCapture<SimplePayload> c = new RollingWindowCapture<SimplePayload>(1,10);
         c.addNow(new SimplePayload());
         CountingVisitor countingV = new CountingVisitor();
         c.visitAllNodes(countingV);
@@ -86,7 +85,7 @@ public class RollingWindowCaptureTest {
     public void testRWThroughput() throws Exception {
         ExecutorService e = Executors.newFixedThreadPool(5);
         final AtomicInteger in = new AtomicInteger();
-        final RollingWindowCapture c = new RollingWindowCapture(10,1000); //10 second capture
+        final RollingWindowCapture<SimplePayload> c = new RollingWindowCapture<SimplePayload>(10,1000); //10 second capture
         final Random r = new Random();
         
         Future []jobs = new Future[5];

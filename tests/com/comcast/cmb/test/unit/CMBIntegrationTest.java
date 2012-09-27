@@ -18,7 +18,6 @@ package com.comcast.cmb.test.unit;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.sns.AmazonSNSClient;
 import com.amazonaws.services.sns.model.CreateTopicRequest;
-import com.amazonaws.services.sns.model.CreateTopicResult;
 import com.comcast.plaxo.cmb.common.controller.CMBControllerServlet;
 import com.comcast.plaxo.cmb.common.model.User;
 import com.comcast.plaxo.cmb.common.persistence.IUserPersistence;
@@ -62,7 +61,7 @@ public class CMBIntegrationTest {
 
     @Test
     public void testAuth() {
-        CreateTopicResult res = sns.createTopic(new CreateTopicRequest("TopicBlah"));
+        sns.createTopic(new CreateTopicRequest("TopicBlah"));
     }
 
     @After    

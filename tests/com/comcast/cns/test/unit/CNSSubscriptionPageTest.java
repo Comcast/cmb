@@ -149,13 +149,13 @@ public class CNSSubscriptionPageTest {
 	
 	private class Response {
 		
-        Response(int code, String res) {
+        Response(int code, String resp) {
             this.httpCode = code;
-            this.resp = res;
+            this.resp = resp;
         }
         
-        int httpCode;
-        String resp;
+		private int httpCode;
+        private String resp;
     };
     
     @After    
