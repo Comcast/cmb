@@ -168,9 +168,9 @@ TODO: add section
 
 CMB requires the following libraries:
 
-- Amazon SDK Version 1.3.11
+- AWS SDK 1.3.11
 
-- Apache Commons BeanUtils version 1.7.0
+- Apache Commons BeanUtils 1.7.0
 
 - Apache Commons Codec 1.6
 
@@ -180,7 +180,7 @@ CMB requires the following libraries:
 
 - Apache Commons logging 1.1.1
 
-- Apache commong pool 1.5.5
+- Apache Commons pool 1.5.5
 
 - EZMorph 1.0.6
 
@@ -196,7 +196,7 @@ CMB requires the following libraries:
 
 - jedis 2.0
 
-- json-1.0.jar
+- json 1.0
 
 - log4j 1.2.16
 
@@ -204,13 +204,11 @@ CMB requires the following libraries:
 
 - SLF4j 1.5.8
 
-- speed4j - 0.9
+- speed4j 0.9
 
 - stax 1.2.0
 
-- uuid 3.2
-
-- Apache xerces
+- eaio-uuid 3.2
 
 -------------------------------------------------------------------------------------------------
 - Build Instructions
