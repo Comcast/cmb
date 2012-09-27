@@ -137,10 +137,10 @@ Example response:
    
     -Dcmb.log4j.propertyFile=/<cmb_path>/config/log4j.properties -Dcmb.propertyFile=/<cmb_path>/config/cmb.properties
     
-7. Go to admin UI and create user "cns_internal" with password "cqs_internal". 
+7. Go to admin UI and create a user with user name "cns_internal" and password "cqs_internal".
+   Or, if you prefer to create a different user name / password ensure that in cmb.properties
+   the fields cmb.cns.user.name and cmb.cns.user.password are set accordingly.
    
-   TODO: more detail
-    
 8. Build the worker node cmb.tar.gz (see build instructions below) or download binary from
    github and install into one or more nodes (recommended at least two nodes) by extracting
    the package into /usr/local/cmb. Edit the run.sh file and ensure that the settings for
