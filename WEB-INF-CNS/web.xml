@@ -7,7 +7,7 @@
 
     <servlet>
         <servlet-name>CNSControllerServlet</servlet-name>
-        <servlet-class>com.comcast.plaxo.cns.controller.CNSControllerServlet</servlet-class>
+        <servlet-class>com.comcast.cns.controller.CNSControllerServlet</servlet-class>
     </servlet>
     <servlet-mapping>
         <servlet-name>CNSControllerServlet</servlet-name>
@@ -16,7 +16,7 @@
     
     <servlet>
     	<servlet-name>AWSProxyServlet</servlet-name>
-    	<servlet-class>com.comcast.plaxo.cmb.common.controller.AWSProxyServlet</servlet-class>
+    	<servlet-class>com.comcast.cmb.common.controller.AWSProxyServlet</servlet-class>
     </servlet>
     <servlet-mapping>
     	<servlet-name>AWSProxyServlet</servlet-name>
@@ -25,7 +25,7 @@
     
     <servlet>
     	<servlet-name>AdminServlet</servlet-name>
-    	<servlet-class>com.comcast.plaxo.cmb.common.controller.AdminServlet</servlet-class>
+    	<servlet-class>com.comcast.cmb.common.controller.AdminServlet</servlet-class>
     </servlet>
     <servlet-mapping>
     	<servlet-name>AdminServlet</servlet-name>
@@ -34,7 +34,7 @@
     
     <servlet>
     	<servlet-name>CNSUserPageServlet</servlet-name>
-    	<servlet-class>com.comcast.plaxo.cns.controller.CNSUserPageServlet</servlet-class>
+    	<servlet-class>com.comcast.cns.controller.CNSUserPageServlet</servlet-class>
     </servlet>
     <servlet-mapping>
     	<servlet-name>CNSUserPageServlet</servlet-name>
@@ -43,7 +43,7 @@
     
     <servlet>
     	<servlet-name>CQSUserPageServlet</servlet-name>
-    	<servlet-class>com.comcast.plaxo.cqs.controller.CQSUserPageServlet</servlet-class>
+    	<servlet-class>com.comcast.cqs.controller.CQSUserPageServlet</servlet-class>
     </servlet>
     <servlet-mapping>
     	<servlet-name>CQSUserPageServlet</servlet-name>
@@ -52,7 +52,7 @@
     
     <servlet>
     	<servlet-name>UserLoginPageServlet</servlet-name>
-    	<servlet-class>com.comcast.plaxo.cmb.common.controller.UserLoginPageServlet</servlet-class>
+    	<servlet-class>com.comcast.cmb.common.controller.UserLoginPageServlet</servlet-class>
     </servlet>
     <servlet-mapping>
     	<servlet-name>UserLoginPageServlet</servlet-name>
@@ -61,7 +61,7 @@
     
     <servlet>
     	<servlet-name>UserPageServlet</servlet-name>
-    	<servlet-class>com.comcast.plaxo.cmb.common.controller.UserPageServlet</servlet-class>
+    	<servlet-class>com.comcast.cmb.common.controller.UserPageServlet</servlet-class>
     </servlet>
     <servlet-mapping>
     	<servlet-name>UserPageServlet</servlet-name>
@@ -70,7 +70,7 @@
     
     <servlet>
     	<servlet-name>CNSSubscriptionPageServlet</servlet-name>
-    	<servlet-class>com.comcast.plaxo.cns.controller.CNSSubscriptionPageServlet</servlet-class>
+    	<servlet-class>com.comcast.cns.controller.CNSSubscriptionPageServlet</servlet-class>
     </servlet>
     <servlet-mapping>
     	<servlet-name>CNSSubscriptionPageServlet</servlet-name>
@@ -79,7 +79,7 @@
     
     <servlet>
     	<servlet-name>CNSPublishToTopicPageServlet</servlet-name>
-    	<servlet-class>com.comcast.plaxo.cns.controller.CNSPublishToTopicPageServlet</servlet-class>
+    	<servlet-class>com.comcast.cns.controller.CNSPublishToTopicPageServlet</servlet-class>
     </servlet>
     <servlet-mapping>
     	<servlet-name>CNSPublishToTopicPageServlet</servlet-name>
@@ -88,7 +88,7 @@
     
     <servlet>
     	<servlet-name>CNSEditTopicDisplayNamePage</servlet-name>
-    	<servlet-class>com.comcast.plaxo.cns.controller.CNSEditTopicDisplayNamePage</servlet-class>
+    	<servlet-class>com.comcast.cns.controller.CNSEditTopicDisplayNamePage</servlet-class>
     </servlet>
     <servlet-mapping>
     	<servlet-name>CNSEditTopicDisplayNamePage</servlet-name>
@@ -97,7 +97,7 @@
     
     <servlet>
     	<servlet-name>CNSEditTopicDeliveryPolicyPage</servlet-name>
-    	<servlet-class>com.comcast.plaxo.cns.controller.CNSEditTopicDeliveryPolicyPage</servlet-class>
+    	<servlet-class>com.comcast.cns.controller.CNSEditTopicDeliveryPolicyPage</servlet-class>
     </servlet>
     <servlet-mapping>
     	<servlet-name>CNSEditTopicDeliveryPolicyPage</servlet-name>
@@ -106,7 +106,7 @@
     
     <servlet>
     	<servlet-name>CNSEditSubscriptionDeliveryPolicyPage</servlet-name>
-    	<servlet-class>com.comcast.plaxo.cns.controller.CNSEditSubscriptionDeliveryPolicyPage</servlet-class>
+    	<servlet-class>com.comcast.cns.controller.CNSEditSubscriptionDeliveryPolicyPage</servlet-class>
     </servlet>
     <servlet-mapping>
     	<servlet-name>CNSEditSubscriptionDeliveryPolicyPage</servlet-name>
@@ -115,7 +115,7 @@
     
     <servlet>
     	<servlet-name>CNSTopicPermissionPage</servlet-name>
-    	<servlet-class>com.comcast.plaxo.cns.controller.CNSTopicPermissionPage</servlet-class>
+    	<servlet-class>com.comcast.cns.controller.CNSTopicPermissionPage</servlet-class>
     </servlet>
     <servlet-mapping>
     	<servlet-name>CNSTopicPermissionPage</servlet-name>
@@ -124,7 +124,7 @@
     
     <servlet>
     	<servlet-name>CNSTopicAddPermissionPage</servlet-name>
-    	<servlet-class>com.comcast.plaxo.cns.controller.CNSTopicAddPermissionPage</servlet-class>
+    	<servlet-class>com.comcast.cns.controller.CNSTopicAddPermissionPage</servlet-class>
     </servlet>
     <servlet-mapping>
     	<servlet-name>CNSTopicAddPermissionPage</servlet-name>
@@ -133,7 +133,7 @@
     
     <servlet>
     	<servlet-name>CQSQueueMessagesPageServlet</servlet-name>
-    	<servlet-class>com.comcast.plaxo.cqs.controller.CQSQueueMessagesPageServlet</servlet-class>
+    	<servlet-class>com.comcast.cqs.controller.CQSQueueMessagesPageServlet</servlet-class>
     </servlet>
     <servlet-mapping>
     	<servlet-name>CQSQueueMessagesPageServlet</servlet-name>
@@ -142,7 +142,7 @@
     
     <servlet>
     	<servlet-name>CQSAddQueuePermissionPage</servlet-name>
-    	<servlet-class>com.comcast.plaxo.cqs.controller.CQSAddQueuePermissionPage</servlet-class>
+    	<servlet-class>com.comcast.cqs.controller.CQSAddQueuePermissionPage</servlet-class>
     </servlet>
     <servlet-mapping>
     	<servlet-name>CQSAddQueuePermissionPage</servlet-name>
@@ -151,7 +151,7 @@
     
     <servlet>
     	<servlet-name>CQSQueuePermissionsPage</servlet-name>
-    	<servlet-class>com.comcast.plaxo.cqs.controller.CQSQueuePermissionsPage</servlet-class>
+    	<servlet-class>com.comcast.cqs.controller.CQSQueuePermissionsPage</servlet-class>
     </servlet>
     <servlet-mapping>
     	<servlet-name>CQSQueuePermissionsPage</servlet-name>
