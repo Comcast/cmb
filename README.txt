@@ -3,18 +3,27 @@
 -------------------------------------------------------------------------------------------------
 
 A highly available, horizontally scalable queuing and notification service compatible with 
-AWS SQS and SNS. 
+AWS SQS and SNS. This document covers these topics:
+
+- Quick Tutorial
+- Installation Guide
+- Monitoring, Logging
+- Dependencies
+- Build Instructions
+- Known Limitations
 
 -------------------------------------------------------------------------------------------------
-- Introduction
+- Quick Tutorial
 -------------------------------------------------------------------------------------------------
 
-CNS / CQS is an API-compatible clone of the Amazon Web Services SNS (Simple Notification Service) 
-and SQS (Simple Queuing Service). CNS offers topic based publish / subscribe functionality and 
-CQS offers a generic messaging service. Both services are implemented with a Cassandra / Redis 
-backend and are designed with high availability and horizontal scalability in mind.
+CMB consists of two separate services, CQS and CNS. CQS offers queuing services while CNS offers
+publish / subscribe notification services. Both services are API-compatible with Amazon 
+Web Services SNS (Simple Notification Service) and SQS (Simple Queuing Service). CMB services are 
+implemented with a Cassandra / Redis backend and are designed with high availability and horizontal 
+scalability in mind.
 
-For a detailed documentation of the CNS / CQS APIs please refer to the Amazon SNS / SQS specs here:
+For a detailed documentation of the CNS / CQS APIs please refer to the Amazon SNS / SQS specifications 
+here:
 
 http://docs.amazonwebservices.com/sns/latest/api/Welcome.html
 http://docs.amazonwebservices.com/AWSSimpleQueueService/latest/APIReference/Welcome.html
@@ -23,7 +32,7 @@ Accessing CNS / CQS:
 
 There are three different ways to access CNS / CQS services:
 
-1. Using the web based Admin UI
+1. Using the web based Admin UI:
 
 The Admin UI is a simple Web UI for testing and administration purposes. To access the Admin UI 
 use any web browser and go to
@@ -31,7 +40,7 @@ use any web browser and go to
 CNS Admin URL: http://<cnshost>:<cnsport>/ADMIN
 CQS Admin URL: http://<cqshost>:<cqsport>/ADMIN
 
-2. Using the AWS SDK for Java or similar language bindings
+2. Using the AWS SDK for Java or similar language bindings:
 
 Amazon offers a Java SDK to access SNS / SQS and other AWS services. Since CNS / CQS are API 
 compatible you can use the AWS SDK to access our implementation in the same way. Thus, instead of 
@@ -54,15 +63,37 @@ the following example illustrates.
   createQueueRequest.setAttributes(attributeParams);
   String queueUrl = sqs.createQueue(createQueueRequest).getQueueUrl();
 
-Amazon offers a few other language bindings of its SDK and there are also a number of third party SDKs available for languages not supported by Amazon.
+Amazon offers a few other language bindings of its SDK and there are also a number of third party 
+SDKs available for languages not supported by Amazon.
+
+3. Sending REST requests directly to the service endpoint:
+
+All CNS / CQS features can also be accessed by sending REST requests as HTTP GET or POST directly to 
+the service endpoints. Note that you need to timestamp and digitally sign every request if signature 
+verification is enabled in cmb.proerties.
+
+Example REST request to create a CQS queue using curl:
+
+curl -d "Action=CreateQueue&SignatureMethod=HmacSHA256&AWSAccessKeyId=48JT2LKD3TX9X5JD6NMM&QueueName=TSTQ_-3098387640939725337&SignatureVersion=2&Version=2011-10-01&Signature=FemvuycfOczDIySdw9K4fjHvBWDm9W4iLDFUNQK220M%3D&Timestamp=2012-08-04T00%3A14%3A54.157Z" http://<cqs_host>:<cqs_port>
+
+Example response:
+
+<CreateQueueResponse>
+    <CreateQueueResult>
+        <QueueUrl>http://ccpplb-dt-v403-i.dt.ccp.cable.comcast.com:10159/342126204596/TSTQ_-3098387640939725337</QueueUrl>
+    </CreateQueueResult>
+    <ResponseMetadata>
+        <RequestId>ad0ea46c-23fb-49bf-bb79-3784140451ae</RequestId>
+    </ResponseMetadata>
+</CreateQueueResponse> 
 
 -------------------------------------------------------------------------------------------------
-- Installation Instructions
+- Installation Guide
 -------------------------------------------------------------------------------------------------
 
-1. Install Tomcat 7 or similar application server as needed (minimum 2 nodes, one for CNS API
-   Server, one for CQS API server, optionally additional redundant servers plus load
-   balancer). 
+1. Install Tomcat 7 or similar application server as needed. Minimum 2 nodes are required, one for 
+   CNS API Server, one for CQS API server, optionally add additional redundant servers plus load
+   balancer. 
 
 2. Install and stand up Cassandra cluster based on Cassandra version 1.0.10 with as many nodes as 
    needed (minimum 1 node, recommended at least 4 nodes).
@@ -71,7 +102,7 @@ Amazon offers a few other language bindings of its SDK and there are also a numb
    After running the script three key spaces (CMB, CNS, CQS) should be created and contain
    a number of empty column families.
    
-4. Install and start Redis nodes as needed using Redis version 2.4.9 (minimum 1 node)
+4. Install and start Redis nodes as needed using Redis version 2.4.9 (minimum 1 node).
 
 5. Edit config/cmb.properties, in particular the following settings:
 
@@ -97,14 +128,14 @@ Amazon offers a few other language bindings of its SDK and there are also a numb
 
    # comma-separated list of host:port for Redis servers
 
-   cmb.redis.serverList=test11.plaxo.com:6379
+   cmb.redis.serverList=<host:port>,<host:port>...
    
 6. Build CNS.war and CQS.war (see build instructions below) or download binaries from github and 
    deploy into Tomcat server instances installed in step 1. When launching Tomcat ensure the 
    following VM parameters are set to point to the appropriate cmb.properties and log4j.properties
    files.
    
-    -Dcmb.log4j.propertyFile=/<some_path>/log4j.properties -Dcmb.propertyFile=/<some_path>/cmb.properties
+    -Dcmb.log4j.propertyFile=/<cmb_path>/config/log4j.properties -Dcmb.propertyFile=/<cmb_path>/config/cmb.properties
     
 7. Go to admin UI and create user "cns_internal" with password "cqs_internal". 
    
@@ -129,7 +160,7 @@ Amazon offers a few other language bindings of its SDK and there are also a numb
 - Monitoring, Logging
 -------------------------------------------------------------------------------------------------
     
-TODO    
+TODO: add section    
       
 -------------------------------------------------------------------------------------------------
 - Dependencies
@@ -137,32 +168,56 @@ TODO
 
 CMB requires the following libraries:
 
- * Amazon SDK Version 1.3.11
- * Apache Commons BeanUtils version 1.7.0
- * Apache Commons Codec 1.6
- * Apache Commons Collections 3.2.1
- * Apache Commons lang 2.4
- * Apache Commons logging 1.1.1
- * Apache commong pool 1.5.5
- * EZMorph 1.0.6
- * FastInfoSet 1.2.2
- * Apache HTTP Client 4.1.3
- * guava-libraries 9.0
- * hector 1.0-4
- * JFree 1.0.13
- * jedis 2.0
- * json-1.0.jar
- * log4j 1.2.16
- * javamail 1.4.3
- * SLF4j 1.5.8
- * speed4j - 0.9
- * stax 1.2.0
- * uuid 3.2
- * Apache xerces
+- Amazon SDK Version 1.3.11
+
+- Apache Commons BeanUtils version 1.7.0
+
+- Apache Commons Codec 1.6
+
+- Apache Commons Collections 3.2.1
+
+- Apache Commons lang 2.4
+
+- Apache Commons logging 1.1.1
+
+- Apache commong pool 1.5.5
+
+- EZMorph 1.0.6
+
+- FastInfoSet 1.2.2
+
+- Apache HTTP Client 4.1.3
+
+- guava-libraries 9.0
+
+- hector 1.0-4
+
+- JFree 1.0.13
+
+- jedis 2.0
+
+- json-1.0.jar
+
+- log4j 1.2.16
+
+- javamail 1.4.3
+
+- SLF4j 1.5.8
+
+- speed4j - 0.9
+
+- stax 1.2.0
+
+- uuid 3.2
+
+- Apache xerces
 
 -------------------------------------------------------------------------------------------------
 - Build Instructions
 -------------------------------------------------------------------------------------------------
+
+TODO: fix this section
+TODO: add guide for building cmb.tar.gz for worker node
 
 1. Adjust version number in pom.xml to 1.X
 
@@ -200,10 +255,11 @@ mvn --settings ./settings.xml -Dprojectname=CQS clean scm:update package tomcat7
 - Known Limitations
 -------------------------------------------------------------------------------------------------
 
-* The admin page is open to anyone. It is the only place to create or delete any user account 
-  and to browse and modify any user's queues and topics.
+1. The Admin UI is open to anyone and allows full access to anybody's user account. It is the only 
+   place to create or delete user accounts and to manually browse and modify any user's queues and 
+   topics.
 
-* The initial visibility timeout for messages in a queue is always 0. It is not possible to send a 
-  message and have it initially hidden for a specified number of seconds. Instead the message must
-  be received first and only then the visibility timeout can be set.
+2. The initial visibility timeout for messages in a queue is always 0. It is not possible to send a 
+   message and have it initially hidden for a specified number of seconds. Instead the message must
+   be received first and only then the visibility timeout can be set.
 
