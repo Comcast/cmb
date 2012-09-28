@@ -31,6 +31,7 @@ import com.comcast.cmb.common.persistence.PersistenceFactory;
 import com.comcast.cmb.common.util.CMBErrorCodes;
 import com.comcast.cmb.common.util.CMBException;
 import com.comcast.cmb.common.util.PersistenceException;
+import com.comcast.cmb.test.tools.CMBTestingConstants;
 import com.comcast.cmb.test.tools.CNSTestingUtils;
 import com.comcast.cns.model.CNSSubscription;
 import com.comcast.cns.model.CNSSubscriptionAttributes;
@@ -97,7 +98,7 @@ public class SubscribeListUnsubscribeCassandraTest {
             topicArn = t.getArn();
 
             ICNSSubscriptionPersistence subscriptionHandler = new CNSSubscriptionCassandraPersistence();
-            subscriptionHandler.subscribe("http://www.plaxo.com/test", CnsSubscriptionProtocol.http, t.getArn(), userId1);
+            subscriptionHandler.subscribe(CMBTestingConstants.HTTP_ENDPOINT_BASE_URL + "recv/1234", CnsSubscriptionProtocol.http, t.getArn(), userId1);
             
         } catch (Exception ex) {
             
@@ -141,7 +142,7 @@ public class SubscribeListUnsubscribeCassandraTest {
 			ICNSSubscriptionPersistence subscriptionHandler = new CNSSubscriptionCassandraPersistence();
 			long beforeSubscribeCount = subscriptionHandler.getCountSubscription(t.getArn(), "subscriptionPending");
 
-			CNSSubscription s = subscriptionHandler.subscribe("http://www.plaxo.com/test", CnsSubscriptionProtocol.http, t.getArn(), userId1);
+			CNSSubscription s = subscriptionHandler.subscribe(CMBTestingConstants.HTTP_ENDPOINT_BASE_URL + "recv/1234", CnsSubscriptionProtocol.http, t.getArn(), userId1);
 
 			long afterSubscribeCount = subscriptionHandler.getCountSubscription(t.getArn(), "subscriptionPending");
 			
@@ -230,14 +231,14 @@ public class SubscribeListUnsubscribeCassandraTest {
 			ICNSSubscriptionPersistence subscriptionHandler = new CNSSubscriptionCassandraPersistence();
 
 			for (int i=1; i<=96; i++) {
-				subscriptionHandler.subscribe("http://www.plaxo.com/test/" + i, CnsSubscriptionProtocol.http, t.getArn(), userId1);
+				subscriptionHandler.subscribe(CMBTestingConstants.HTTP_ENDPOINT_BASE_URL + "recv/" + i, CnsSubscriptionProtocol.http, t.getArn(), userId1);
 			}
 			
 			CNSTestingUtils.confirmPendingSubscriptionsByTopic(t.getArn(), userId1, CnsSubscriptionProtocol.http);
 			
 			for (int i=97; i<=103; i++) {
 			
-				subscriptionHandler.subscribe("http://www.plaxo.com/test/" + i, CnsSubscriptionProtocol.http, t.getArn(), userId1);
+				subscriptionHandler.subscribe(CMBTestingConstants.HTTP_ENDPOINT_BASE_URL + "recv/" + i, CnsSubscriptionProtocol.http, t.getArn(), userId1);
 				CNSTestingUtils.confirmPendingSubscriptionsByTopic(t.getArn(), userId1, CnsSubscriptionProtocol.http);
 				Set<String> keys = new TreeSet<String>();
 				
@@ -301,7 +302,7 @@ public class SubscribeListUnsubscribeCassandraTest {
             ICNSSubscriptionPersistence subscriptionHandler = new CNSSubscriptionCassandraPersistence();
 
             for (int i=1; i<=200; i++) {
-                subscriptionHandler.subscribe("http://www.plaxo.com/test/" + i, CnsSubscriptionProtocol.http, t.getArn(), userId1);
+                subscriptionHandler.subscribe(CMBTestingConstants.HTTP_ENDPOINT_BASE_URL + "recv/" + i, CnsSubscriptionProtocol.http, t.getArn(), userId1);
             }
             
             CNSTestingUtils.confirmPendingSubscriptionsByTopic(t.getArn(), userId1, CnsSubscriptionProtocol.http);

@@ -15,7 +15,9 @@
  */
 package com.comcast.cns.test.unit;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Random;
 
 import com.comcast.cmb.common.controller.CMBControllerServlet;
@@ -24,6 +26,7 @@ import com.comcast.cmb.common.persistence.*;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.Util;
 import com.comcast.cmb.test.tools.AWSCredentialsHolder;
+import com.comcast.cmb.test.tools.CMBTestingConstants;
 
 import org.apache.log4j.Logger;
 import org.junit.* ;
@@ -39,6 +42,8 @@ import com.amazonaws.services.sns.model.CreateTopicResult;
 import com.amazonaws.services.sns.model.DeleteTopicRequest;
 import com.amazonaws.services.sns.model.GetTopicAttributesRequest;
 import com.amazonaws.services.sns.model.GetTopicAttributesResult;
+import com.amazonaws.services.sns.model.ListSubscriptionsByTopicRequest;
+import com.amazonaws.services.sns.model.ListSubscriptionsByTopicResult;
 import com.amazonaws.services.sns.model.PublishRequest;
 import com.amazonaws.services.sns.model.RemovePermissionRequest;
 import com.amazonaws.services.sns.model.SetTopicAttributesRequest;
@@ -149,7 +154,7 @@ public class CreateDeleteListTopicAWSTest {
         CMBControllerServlet.valueAccumulator.deleteAllCounters();
     }
 	
-	/*@Test 
+	@Test 
 	public void testManySubscriptions() {
 		
 		String topicArn = null;
@@ -176,14 +181,12 @@ public class CreateDeleteListTopicAWSTest {
 			for (String queueUrl : queueUrls) {
 			
 				SubscribeRequest subscribeRequest = new SubscribeRequest();
-				//String queueArn = "arn:aws:sqs:us-east-1:266126687520:" + queueUrl.substring(queueUrl.lastIndexOf("/") + 1);
-				String queueArn = com.comcast.plaxo.cqs.util.Util.getArnForQueueUrl(queueUrl);
+				String queueArn = com.comcast.cqs.util.Util.getNameForAbsoluteQueueUrl(queueUrl);
 				subscribeRequest.setEndpoint(queueArn);
-				//subscribeRequest.setProtocol("SQS");
 				subscribeRequest.setProtocol("cqs");
 				subscribeRequest.setTopicArn(topicArn);
 				
-				SubscribeResult subscribeResult = sns.subscribe(subscribeRequest);
+				sns.subscribe(subscribeRequest);
 			}
 			
 			ListSubscriptionsByTopicRequest listSubscriptionsByTopicRequest = new ListSubscriptionsByTopicRequest();
@@ -224,7 +227,7 @@ public class CreateDeleteListTopicAWSTest {
 				} catch (Exception e) { }
 			}
 		}
-	}*/
+	}
 	
 	@Test
 	public void testTopicPermissions() {
@@ -426,7 +429,7 @@ public class CreateDeleteListTopicAWSTest {
 			Thread.sleep(500);
 			
 			SubscribeRequest subscribeRequest1 = new SubscribeRequest();
-			subscribeRequest1.setEndpoint("bwolf@plaxo.com");
+			subscribeRequest1.setEndpoint(CMBTestingConstants.EMAIL_ENDPOINT);
 			subscribeRequest1.setProtocol("email");
 			subscribeRequest1.setTopicArn(topicArn);
 			
@@ -437,7 +440,7 @@ public class CreateDeleteListTopicAWSTest {
 			Thread.sleep(500);
 
 			SubscribeRequest subscribeRequest2 = new SubscribeRequest();
-			subscribeRequest2.setEndpoint("http://nis.test3.plaxo.com:8080/CMB/Endpoint/nop/1234");
+			subscribeRequest2.setEndpoint(CMBTestingConstants.HTTP_ENDPOINT_BASE_URL + "nop/1234");
 			subscribeRequest2.setProtocol("http");
 			subscribeRequest2.setTopicArn(topicArn);
 			

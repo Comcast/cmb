@@ -32,6 +32,7 @@ import com.comcast.cmb.common.model.User;
 import com.comcast.cmb.common.persistence.IUserPersistence;
 import com.comcast.cmb.common.persistence.PersistenceFactory;
 import com.comcast.cmb.common.util.Util;
+import com.comcast.cmb.test.tools.CMBTestingConstants;
 import com.comcast.cmb.test.tools.CNSTestingUtils;
 import com.comcast.cmb.test.tools.SubscriptionAttributeParser;
 import com.comcast.cns.controller.CNSControllerServlet;
@@ -106,7 +107,7 @@ public class SubscriptionAttributeCMBTest {
 			String topicArn = CNSTestingUtils.getArnFromString(res);
 			out.reset();
 
-			String endpoint = "http://nis.test3.plaxo.com:8080/CMB/Endpoint/recv/" + rand.nextInt();
+			String endpoint = CMBTestingConstants.HTTP_ENDPOINT_BASE_URL + "recv/" + rand.nextInt();
 			String protocol = "http";
 			CNSTestingUtils.subscribe(cns, user, out, endpoint, protocol, topicArn);
 			String subscriptionArn = CNSTestingUtils.getSubscriptionArnFromString(out.toString());
@@ -178,7 +179,7 @@ public class SubscriptionAttributeCMBTest {
 			String topicArn = CNSTestingUtils.getArnFromString(res);
 			out.reset();
 
-			String endpoint = "http://nis.test3.plaxo.com:8080/CMB/Endpoint/recv/" + rand.nextInt();
+			String endpoint = CMBTestingConstants.HTTP_ENDPOINT_BASE_URL + "recv/" + rand.nextInt();
 			String protocol = "http";
 			CNSTestingUtils.subscribe(cns, user, out, endpoint, protocol, topicArn);
 			String subscriptionArn = CNSTestingUtils.getSubscriptionArnFromString(out.toString());
@@ -328,7 +329,7 @@ public class SubscriptionAttributeCMBTest {
 			CNSTestingUtils.addPermission(cns, user, out, topicArn, "*", "*", rand.nextLong()+"");
 			out.reset();
 			
-			String endpoint = "http://nis.test3.plaxo.com:8080/CMB/Endpoint/recv/" + rand.nextInt();
+			String endpoint = CMBTestingConstants.HTTP_ENDPOINT_BASE_URL + "recv/" + rand.nextInt();
 			String protocol = "http";
 			CNSTestingUtils.subscribe(cns, user2, out, endpoint, protocol, topicArn);
 			out.reset();
@@ -342,7 +343,7 @@ public class SubscriptionAttributeCMBTest {
 			String subscriptionArn = CNSTestingUtils.getSubscriptionArnFromString(out.toString());
 			out.reset();
 
-			String endpoint2 = "http://nis.test3.plaxo.com:8080/CMB/Endpoint/recv/" + rand.nextInt();
+			String endpoint2 = CMBTestingConstants.HTTP_ENDPOINT_BASE_URL + "recv/" + rand.nextInt();
 			String protocol2 = "http";
 			CNSTestingUtils.subscribe(cns, user3, out, endpoint2, protocol2, topicArn);
 			out.reset();
@@ -583,7 +584,7 @@ public class SubscriptionAttributeCMBTest {
 			String topicArn = CNSTestingUtils.getArnFromString(res);
 			out.reset();
 
-			String endpoint = "http://nis.test3.plaxo.com:8080/CMB/Endpoint/recv/" + rand.nextInt();
+			String endpoint = CMBTestingConstants.HTTP_ENDPOINT_BASE_URL + "recv/" + rand.nextInt();
 			String protocol = "http";
 			CNSTestingUtils.subscribe(cns, user, out, endpoint, protocol, topicArn);
 			String subscriptionArn = CNSTestingUtils.getSubscriptionArnFromString(out.toString());
@@ -752,7 +753,7 @@ public class SubscriptionAttributeCMBTest {
 			String topicArn = CNSTestingUtils.getArnFromString(res);
 			out.reset();
 
-			String endpoint = "http://nis.test3.plaxo.com:8080/CMB/Endpoint/recv/" + rand.nextInt();
+			String endpoint = CMBTestingConstants.HTTP_ENDPOINT_BASE_URL + "recv/" + rand.nextInt();
 			String protocol = "http";
 			CNSTestingUtils.subscribe(cns, user, out, endpoint, protocol, topicArn);
 			String subscriptionArn = CNSTestingUtils.getSubscriptionArnFromString(out.toString());
@@ -909,7 +910,7 @@ public class SubscriptionAttributeCMBTest {
 			String topicArn = CNSTestingUtils.getArnFromString(res);
 			out.reset();
 
-			String endpoint = "http://nis.test3.plaxo.com:8080/CMB/Endpoint/recv/" + rand.nextInt();
+			String endpoint = CMBTestingConstants.HTTP_ENDPOINT_BASE_URL + "recv/" + rand.nextInt();
 			String protocol = "http";
 			CNSTestingUtils.subscribe(cns, user, out, endpoint, protocol, topicArn);
 			String subscriptionArn = CNSTestingUtils.getSubscriptionArnFromString(out.toString());

@@ -33,6 +33,7 @@ import com.comcast.cmb.common.model.User;
 import com.comcast.cmb.common.persistence.IUserPersistence;
 import com.comcast.cmb.common.persistence.PersistenceFactory;
 import com.comcast.cmb.common.util.Util;
+import com.comcast.cmb.test.tools.CMBTestingConstants;
 import com.comcast.cmb.test.tools.CNSTestingUtils;
 import com.comcast.cns.controller.CNSControllerServlet;
 import com.comcast.cns.io.CommunicationUtils;
@@ -146,10 +147,10 @@ public class PublishCMBTest {
 		try {	
 
 			CNSSubscription.CnsSubscriptionProtocol protocol = CNSSubscription.CnsSubscriptionProtocol.http;
-			String endPoint = "http://nis.test3.plaxo.com:8080/CMB/Endpoint/recv/252910";
+			String endPoint = CMBTestingConstants.HTTP_ENDPOINT_BASE_URL + "recv/252910";
 			String message = "test_abc";
 			CommunicationUtils.sendMessage(user1, protocol, endPoint, message);
-			String lastMessageUrl = "http://nis.test3.plaxo.com:8080/CMB/Endpoint/info/252910?showLast=true";
+			String lastMessageUrl = CMBTestingConstants.HTTP_ENDPOINT_BASE_URL + "info/252910?showLast=true";
 			String resp = CNSTestingUtils.sendHttpMessage(lastMessageUrl, "");
 
 			assertTrue("endpoint is down", resp.equals(message));
@@ -166,7 +167,7 @@ public class PublishCMBTest {
 		try {	
 			
 			CNSSubscription.CnsSubscriptionProtocol protocol = CNSSubscription.CnsSubscriptionProtocol.email;
-			String endPoint = "jorge-test8990@plaxo.com";
+			String endPoint = CMBTestingConstants.EMAIL_ENDPOINT;
 			String message = "test email";
 			CommunicationUtils.sendMessage(user1, protocol, endPoint, message);
 
@@ -178,7 +179,7 @@ public class PublishCMBTest {
 		try {	
 			
 			CNSSubscription.CnsSubscriptionProtocol protocol = CNSSubscription.CnsSubscriptionProtocol.email_json;
-			String endPoint = "jorge-test99999@plaxo.com";
+			String endPoint = CMBTestingConstants.EMAIL_ENDPOINT;
 			String message = "test email";
 			CommunicationUtils.sendMessage(user1, protocol, endPoint, message);
 
@@ -663,7 +664,7 @@ public class PublishCMBTest {
 		
 		try {	
 			
-			String endPoint = "jorge-test4567@plaxo.com";
+			String endPoint = CMBTestingConstants.EMAIL_ENDPOINT;
 			String message = "test the email servlet";
 
 			String topicName = "T" + rand.nextLong();
@@ -715,7 +716,7 @@ public class PublishCMBTest {
 			
 			int endpointid = rand.nextInt();
 			
-			String endPoint = "http://nis.test3.plaxo.com:8080/CMB/Endpoint/recv/60" + endpointid;
+			String endPoint = CMBTestingConstants.HTTP_ENDPOINT_BASE_URL + "recv/60" + endpointid;
 			String message = "test Http servlet";
 
 			String topicName = "T" + rand.nextLong();
@@ -731,7 +732,7 @@ public class PublishCMBTest {
 			String subscriptionArn = CNSTestingUtils.getSubscriptionArnFromString(out.toString());
 			out.reset();
 			
-			String lastMessageUrl = "http://nis.test3.plaxo.com:8080/CMB/Endpoint/info/60" + endpointid + "?showLast=true";
+			String lastMessageUrl = CMBTestingConstants.HTTP_ENDPOINT_BASE_URL + "info/60" + endpointid + "?showLast=true";
 
 			if (subscriptionArn.equals("pending confirmation")) {
 
@@ -825,7 +826,7 @@ public class PublishCMBTest {
 		
 		try {	
 			
-			String endPoint = "http://nis.test3.plaxo.com:8080/CMB/Endpoint/recv/" + rand.nextInt();
+			String endPoint = CMBTestingConstants.HTTP_ENDPOINT_BASE_URL + "recv/" + rand.nextInt();
 			String message = "test Http servlet 2";
 
 			String topicName = "T" + rand.nextLong();
@@ -946,7 +947,7 @@ public class PublishCMBTest {
 		
 		try {	
 			
-			String endPoint = "http://nis.test3.plaxo.com:8080/CMB/Endpoint/recv/" + rand.nextInt();
+			String endPoint = CMBTestingConstants.HTTP_ENDPOINT_BASE_URL + "recv/" + rand.nextInt();
 			String httpMessage = "test Http servlet 2";
 
 			String cqsMessage = "test CQS servlet 2";

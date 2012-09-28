@@ -30,6 +30,7 @@ import com.comcast.cmb.common.persistence.PersistenceFactory;
 import com.comcast.cmb.common.util.CMBException;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.Util;
+import com.comcast.cmb.test.tools.CMBTestingConstants;
 import com.comcast.cns.model.CNSEndpointPublishJob;
 import com.comcast.cns.model.CNSMessage;
 import com.comcast.cns.model.CNSSubscription.CnsSubscriptionProtocol;
@@ -97,7 +98,7 @@ public class CNSPublishJobTest {
         CNSMessage p1 = CNSMessageTest.getMessage("test", null, "test", "test-arn", "test-pub-userId");
         LinkedList<CNSEndpointPublishJob.SubInfo> subInfos = new LinkedList<CNSEndpointPublishJob.SubInfo>();
         for (int i = 0; i < 500; i++) {
-            subInfos.add(new CNSEndpointPublishJob.SubInfo(CnsSubscriptionProtocol.cqs, "http://nis.test3.plaxo.com:8080/CMB/Endpoint/info/1234" + i, "27daac76-34dd-47df-bd01-1f6e873584a0" + i));    
+            subInfos.add(new CNSEndpointPublishJob.SubInfo(CnsSubscriptionProtocol.cqs, CMBTestingConstants.HTTP_ENDPOINT_BASE_URL + "info/1234" + i, "27daac76-34dd-47df-bd01-1f6e873584a0" + i));    
         }
         
         CNSEndpointPublishJob j1 = new CNSEndpointPublishJob(p1, subInfos);

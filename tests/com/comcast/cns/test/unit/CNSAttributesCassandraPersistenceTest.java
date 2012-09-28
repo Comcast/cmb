@@ -23,6 +23,7 @@ import com.comcast.cmb.common.persistence.IUserPersistence;
 import com.comcast.cmb.common.persistence.PersistenceFactory;
 import com.comcast.cmb.common.persistence.UserCassandraPersistence;
 import com.comcast.cmb.common.util.Util;
+import com.comcast.cmb.test.tools.CMBTestingConstants;
 import com.comcast.cns.model.CNSRetryPolicy;
 import com.comcast.cns.model.CNSSubscription;
 import com.comcast.cns.model.CNSSubscriptionAttributes;
@@ -77,9 +78,8 @@ public class CNSAttributesCassandraPersistenceTest {
 
 		String topicName = "T" + rand.nextLong();
 		topic = topicHandler.createTopic(topicName, topicName, user.getUserId());
-		subscription = subscriptionHandler.subscribe("http://nis.test3.plaxo.com:8080/CMB/Endpoint/recv/" + rand.nextLong(), CnsSubscriptionProtocol.http, topic.getArn(), user.getUserId());
+		subscription = subscriptionHandler.subscribe(CMBTestingConstants.HTTP_ENDPOINT_BASE_URL + "recv/" + rand.nextLong(), CnsSubscriptionProtocol.http, topic.getArn(), user.getUserId());
     }
-    
 	
     @After    
     public void tearDown() {

@@ -48,6 +48,7 @@ import com.amazonaws.services.sqs.model.Message;
 import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
 import com.amazonaws.services.sqs.model.ReceiveMessageResult;
 import com.comcast.cmb.common.util.Util;
+import com.comcast.cns.model.CNSSubscription.CnsSubscriptionProtocol;
 
 public class CMBTutorial {
 	
@@ -228,8 +229,8 @@ public class CMBTutorial {
 			// subscribe and confirm http endpoint
 
 			String id = randomGenerator.nextLong() + "";
-			String endPointUrl = "http://nis.test3.plaxo.com:8080/CMB/Endpoint/recv/" + id;
-			String lastMessageUrl = "http://nis.test3.plaxo.com:8080/CMB/Endpoint/info/" + id + "?showLast=true";
+			String endPointUrl = CMBTestingConstants.HTTP_ENDPOINT_BASE_URL + "recv/" + id;
+			String lastMessageUrl = CMBTestingConstants.HTTP_ENDPOINT_BASE_URL + "info/" + id + "?showLast=true";
 			
 			subscribeRequest = new SubscribeRequest();
 			subscribeRequest.setEndpoint(endPointUrl);

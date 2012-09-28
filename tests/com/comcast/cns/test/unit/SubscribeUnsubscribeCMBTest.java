@@ -36,6 +36,7 @@ import com.comcast.cmb.common.model.User;
 import com.comcast.cmb.common.persistence.IUserPersistence;
 import com.comcast.cmb.common.persistence.PersistenceFactory;
 import com.comcast.cmb.common.util.Util;
+import com.comcast.cmb.test.tools.CMBTestingConstants;
 import com.comcast.cmb.test.tools.CNSTestingUtils;
 import com.comcast.cmb.test.tools.ListSubscriptionParser;
 import com.comcast.cns.controller.CNSControllerServlet;
@@ -106,7 +107,7 @@ public class SubscribeUnsubscribeCMBTest {
 			topicArn = CNSTestingUtils.getArnFromString(res);
 			out.reset();
 
-			String endpoint = "jorge@plaxo.com";
+			String endpoint = CMBTestingConstants.EMAIL_ENDPOINT;
 			String protocol = "email";
 			CNSTestingUtils.subscribe(cns, user1, out, endpoint, protocol, topicArn);
 			String subscriptionArn = CNSTestingUtils.getSubscriptionArnFromString(out.toString());
@@ -121,7 +122,7 @@ public class SubscribeUnsubscribeCMBTest {
 			assertTrue(subscriptions.size() == 1);
 			subscriptionArn = subscriptions.get(0).getSubscriptionArn();
 			CNSSubscriptionTest sub = subscriptions.get(0);
-			assertTrue(sub.getEndpoint().equals("jorge@plaxo.com"));
+			assertTrue(sub.getEndpoint().equals(CMBTestingConstants.EMAIL_ENDPOINT));
 			assertTrue(sub.getProtocol().equals("email"));
 			assertTrue(sub.getTopicArn().equals(topicArn));
 			assertTrue(sub.getOwner().equals(user1.getUserId()));
@@ -131,7 +132,7 @@ public class SubscribeUnsubscribeCMBTest {
 			subscriptions = CNSTestingUtils.getSubscriptionsFromString(out.toString());
 			assertTrue(subscriptions.size() == 1);
 			sub = subscriptions.get(0);
-			assertTrue(sub.getEndpoint().equals("jorge@plaxo.com"));
+			assertTrue(sub.getEndpoint().equals(CMBTestingConstants.EMAIL_ENDPOINT));
 			assertTrue(sub.getProtocol().equals("email"));
 			assertTrue(sub.getTopicArn().equals(topicArn));
 			assertTrue(sub.getOwner().equals(user1.getUserId()));
@@ -179,7 +180,7 @@ public class SubscribeUnsubscribeCMBTest {
 			topicArn = CNSTestingUtils.getArnFromString(res);
 			out.reset();
 
-			String endpoint = "jorge@plaxo.com";
+			String endpoint = CMBTestingConstants.EMAIL_ENDPOINT;
 			String protocol = "email";
 			CNSTestingUtils.subscribe(cns, user1, out, endpoint, protocol, topicArn);
 			CNSTestingUtils.getSubscriptionArnFromString(out.toString());
@@ -247,7 +248,7 @@ public class SubscribeUnsubscribeCMBTest {
 			topicArn = CNSTestingUtils.getArnFromString(res);
 			out.reset();
 
-			String endpoint = "jorge@plaxo.com";
+			String endpoint = CMBTestingConstants.EMAIL_ENDPOINT;
 			String protocol = "email";
 			CNSTestingUtils.subscribe(cns, user1, out, endpoint, protocol, topicArn);
 			CNSTestingUtils.getSubscriptionArnFromString(out.toString());
@@ -300,28 +301,28 @@ public class SubscribeUnsubscribeCMBTest {
 			topicArn = CNSTestingUtils.getArnFromString(res);
 			out.reset();
 
-			String endpoint = "jorge@plaxo.com";
+			String endpoint = CMBTestingConstants.EMAIL_ENDPOINT;
 			String protocol = "call";
 			CNSTestingUtils.subscribe(cns, user1, out, endpoint, protocol, topicArn);
 			res = out.toString();
 			assertTrue(CNSTestingUtils.verifyErrorResponse(res, "InvalidParameter", "request parameter does not comply with the associated constraints."));
 			out.reset();
 
-			endpoint = "jorge@plaxo.com";
+			endpoint = CMBTestingConstants.EMAIL_ENDPOINT;
 			protocol = "sms";
 			CNSTestingUtils.subscribe(cns, user1, out, endpoint, protocol, topicArn);
 			res = out.toString();
 			assertTrue(CNSTestingUtils.verifyErrorResponse(res, "InvalidParameter", "request parameter does not comply with the associated constraints."));
 			out.reset();
 
-			endpoint = "http://www.test.com";
+			endpoint = CMBTestingConstants.HTTP_ENDPOINT_BASE_URL + "recv/1234";
 			protocol = "https";
 			CNSTestingUtils.subscribe(cns, user1, out, endpoint, protocol, topicArn);
 			res = out.toString();
 			assertTrue(CNSTestingUtils.verifyErrorResponse(res, "InvalidParameter", "request parameter does not comply with the associated constraints."));
 			out.reset();
 
-			endpoint = "https://www.test.com";
+			endpoint = CMBTestingConstants.HTTPS_ENDPOINT_BASE_URL + "recv/1234";
 			protocol = "http";
 			CNSTestingUtils.subscribe(cns, user1, out, endpoint, protocol, topicArn);
 			res = out.toString();
@@ -343,7 +344,7 @@ public class SubscribeUnsubscribeCMBTest {
 			out.reset();
 
 			String fakeTopicArn = topicArn.substring(0,topicArn.length()-1) + "b";
-			endpoint = "jorge@plaxo.com";
+			endpoint = CMBTestingConstants.EMAIL_ENDPOINT;
 			protocol = "email";
 			CNSTestingUtils.subscribe(cns, user1, out, endpoint, protocol, fakeTopicArn);
 			logger.debug(out.toString());
@@ -352,7 +353,7 @@ public class SubscribeUnsubscribeCMBTest {
 			out.reset();
 
 			fakeTopicArn = "monkey";
-			endpoint = "jorge@plaxo.com";
+			endpoint = CMBTestingConstants.EMAIL_ENDPOINT;
 			protocol = "email";
 			CNSTestingUtils.subscribe(cns, user1, out, endpoint, protocol, fakeTopicArn);
 			logger.debug(out.toString());
@@ -360,7 +361,7 @@ public class SubscribeUnsubscribeCMBTest {
 			assertTrue(CNSTestingUtils.verifyErrorResponse(res, "InvalidParameter", "request parameter does not comply with the associated constraints."));
 			out.reset();
 
-			endpoint = "jorge@plaxo.com";
+			endpoint = CMBTestingConstants.EMAIL_ENDPOINT;
 			protocol = "email";
 			CNSTestingUtils.subscribe(cns, user1, out, endpoint, protocol, null);
 			logger.debug(out.toString());
@@ -368,7 +369,7 @@ public class SubscribeUnsubscribeCMBTest {
 			assertTrue(CNSTestingUtils.verifyErrorResponse(res, "InvalidParameter", "request parameter does not comply with the associated constraints."));
 			out.reset();
 
-			endpoint = "jorge@plaxo.com";
+			endpoint = CMBTestingConstants.EMAIL_ENDPOINT;
 			protocol = "email";
 			CNSTestingUtils.subscribe(cns, user1, out, endpoint, null, topicArn);
 			logger.debug(out.toString());
@@ -376,7 +377,7 @@ public class SubscribeUnsubscribeCMBTest {
 			assertTrue(CNSTestingUtils.verifyErrorResponse(res, "InvalidParameter", "request parameter does not comply with the associated constraints."));
 			out.reset();
 
-			endpoint = "jorge@plaxo.com";
+			endpoint = CMBTestingConstants.EMAIL_ENDPOINT;
 			protocol = "email";
 			CNSTestingUtils.subscribe(cns, user1, out, null, protocol, topicArn);
 			logger.debug(out.toString());
@@ -417,7 +418,7 @@ public class SubscribeUnsubscribeCMBTest {
 			CNSTestingUtils.addPermission(cns, user1, out, topicArn, "*", "*", rand.nextLong()+"");
 			out.reset();
 
-			String endpoint = "http://nis.test3.plaxo.com:8080/CMB/Endpoint/recv/2526";
+			String endpoint = CMBTestingConstants.HTTP_ENDPOINT_BASE_URL + "recv/2526";
 			String protocol = "http";
 			CNSTestingUtils.subscribe(cns, user2, out, endpoint, protocol, topicArn);
 			CNSTestingUtils.getSubscriptionArnFromString(out.toString());
@@ -438,7 +439,7 @@ public class SubscribeUnsubscribeCMBTest {
 
 			subscriptions.get(0).getSubscriptionArn();
 
-			endpoint = "http://nis.test3.plaxo.com:8080/CMB/Endpoint/recv/2527";
+			endpoint = CMBTestingConstants.HTTP_ENDPOINT_BASE_URL + "recv/2527";
 			protocol = "http";
 			CNSTestingUtils.subscribe(cns, user1, out, endpoint, protocol, topicArn);
 			CNSTestingUtils.getSubscriptionArnFromString(out.toString());
@@ -452,7 +453,7 @@ public class SubscribeUnsubscribeCMBTest {
 			CNSSubscriptionTest sub = subscriptions.get(0);
 			subscriptions.get(0).getSubscriptionArn();
 
-			assertTrue(sub.getEndpoint().equals("http://nis.test3.plaxo.com:8080/CMB/Endpoint/recv/2527"));
+			assertTrue(sub.getEndpoint().equals(CMBTestingConstants.HTTP_ENDPOINT_BASE_URL + "recv/2527"));
 			assertTrue(sub.getProtocol().equals("http"));
 			assertTrue(sub.getTopicArn().equals(topicArn));
 			assertTrue(sub.getOwner().equals(user1.getUserId()));
@@ -469,7 +470,7 @@ public class SubscribeUnsubscribeCMBTest {
 				sub = subscriptions.get(1); 
 			}
 
-			assertTrue(sub.getEndpoint().equals("http://nis.test3.plaxo.com:8080/CMB/Endpoint/recv/2527"));
+			assertTrue(sub.getEndpoint().equals(CMBTestingConstants.HTTP_ENDPOINT_BASE_URL + "recv/2527"));
 			assertTrue(sub.getProtocol().equals("http"));
 			assertTrue(sub.getTopicArn().equals(topicArn));
 			assertTrue(sub.getOwner().equals(user1.getUserId()));
@@ -478,7 +479,7 @@ public class SubscribeUnsubscribeCMBTest {
 			// add 100 other subscriptions
 
 			for (int i=0; i<100; i++) {
-				endpoint = "http://nis.test3.plaxo.com:8080/CMB/Endpoint/recv/2500" + i;
+				endpoint = CMBTestingConstants.HTTP_ENDPOINT_BASE_URL + "recv/2500" + i;
 				protocol = "http";
 				CNSTestingUtils.subscribe(cns, user1, out, endpoint, protocol, topicArn);
 				CNSTestingUtils.getSubscriptionArnFromString(out.toString());
@@ -661,7 +662,7 @@ public class SubscribeUnsubscribeCMBTest {
 			topicArn = CNSTestingUtils.getArnFromString(res);
 			out.reset();
 
-			String endpoint = "bwolf@plaxo.com";
+			String endpoint = CMBTestingConstants.EMAIL_ENDPOINT;
 			String protocol = "email";
 			CNSTestingUtils.subscribe(cns, user2, out, endpoint, protocol, topicArn);
 			CNSTestingUtils.getSubscriptionArnFromString(out.toString());

@@ -27,6 +27,7 @@ import com.comcast.cmb.common.model.User;
 import com.comcast.cmb.common.persistence.IUserPersistence;
 import com.comcast.cmb.common.persistence.PersistenceFactory;
 import com.comcast.cmb.common.util.Util;
+import com.comcast.cmb.test.tools.CMBTestingConstants;
 import com.comcast.cmb.test.tools.CNSTestingUtils;
 import com.comcast.cmb.test.tools.SimpleHttpServletRequest;
 import com.comcast.cmb.test.tools.SimpleHttpServletResponse;
@@ -80,7 +81,7 @@ public class CNSEditSubscriptionDeliveryPolicyPageTest {
 			topicArn = topic.getArn();
 			
 			CNSSubscriptionCassandraPersistence subscriptionHandler = new CNSSubscriptionCassandraPersistence();
-			CNSSubscription subscription = subscriptionHandler.subscribe("http://www.plaxo.com", CnsSubscriptionProtocol.http, topic.getArn(), user.getUserId());
+			CNSSubscription subscription = subscriptionHandler.subscribe(CMBTestingConstants.HTTP_ENDPOINT_BASE_URL + "recv/1234", CnsSubscriptionProtocol.http, topic.getArn(), user.getUserId());
 			List<CNSSubscription> l = CNSTestingUtils.confirmPendingSubscriptionsByTopic(topic.getArn(), user.getUserId(), CnsSubscriptionProtocol.http);
 			
 			assertTrue(l.size() == 1);

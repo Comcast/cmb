@@ -77,7 +77,7 @@ public class CNSStressTest {
 	// (minimum one, if multiple subscriptions will be randomly distributed over endpoints)
 	
 	private static String endpointUrls[] = new String[]{
-		CMBTestingConstants.ENDPOINT_BASE_URL + "recv/"
+		CMBTestingConstants.HTTP_ENDPOINT_BASE_URL + "recv/"
 	};
 	
 	private static final String USER_NAME = "stressuser";

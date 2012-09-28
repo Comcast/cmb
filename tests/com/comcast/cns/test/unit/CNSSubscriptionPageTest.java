@@ -27,6 +27,7 @@ import com.comcast.cmb.common.model.User;
 import com.comcast.cmb.common.persistence.IUserPersistence;
 import com.comcast.cmb.common.persistence.PersistenceFactory;
 import com.comcast.cmb.common.util.Util;
+import com.comcast.cmb.test.tools.CMBTestingConstants;
 import com.comcast.cmb.test.tools.SimpleHttpServletRequest;
 import com.comcast.cmb.test.tools.SimpleHttpServletResponse;
 import com.comcast.cns.controller.CNSSubscriptionPageServlet;
@@ -78,7 +79,7 @@ public class CNSSubscriptionPageTest {
 			CNSTopic topic = topicHandler.createTopic(topicName, topicName, user.getUserId());
 			topicArn = topic.getArn();
 
-			Response res1 = subscribe(subscripePage, "tina_2@plaxo.com", "EMAIL", topic.getArn(), user.getUserId());
+			Response res1 = subscribe(subscripePage, CMBTestingConstants.EMAIL_ENDPOINT, "email", topic.getArn(), user.getUserId());
 			assertTrue(res1.httpCode == 200 || res1.httpCode == 0);
 			
 			CNSSubscriptionCassandraPersistence subscribePS = new CNSSubscriptionCassandraPersistence();

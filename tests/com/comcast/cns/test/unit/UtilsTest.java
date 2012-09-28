@@ -30,6 +30,7 @@ import org.junit.Test;
 
 import com.comcast.cmb.common.controller.CMBControllerServlet;
 import com.comcast.cmb.common.persistence.PersistenceFactory;
+import com.comcast.cmb.test.tools.CMBTestingConstants;
 import com.comcast.cns.util.Util;
 import com.comcast.cqs.util.RandomNumberCollection;
 
@@ -47,7 +48,7 @@ public class UtilsTest {
 	@Test
 	public void testValidArn() {
 		assertTrue(Util.isValidTopicArn("arn:cmb:cns:us-east-1:266126687520:Topic94"));	    
-		assertFalse(Util.isValidTopicArn("bwolf@plaxo.com"));	  
+		assertFalse(Util.isValidTopicArn(CMBTestingConstants.EMAIL_ENDPOINT));	  
 		assertTrue(Util.isValidTopicArn(Util.generateCnsTopicArn("Foo", "myregion", "12345")));
 		assertTrue(Util.isValidTopicName("Foo-9"));
 		assertFalse(Util.isValidTopicName("Foo!"));
