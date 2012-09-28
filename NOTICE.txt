@@ -1,0 +1,26 @@
+Comcast Message Bus - CMB
+Copyright 2010-2012 Comcast Corporation or its affiliates. All Rights Reserved.
+
+This product includes software developed by Comcast Corporation (http://www.comcast.com/).
+
+--------------------------------------------------------------------------------------------
+- THIRD PARTY COMPONENTS
+--------------------------------------------------------------------------------------------
+
+This software includes third party software:
+
+- AWS SDK for Java, Copyright 2010-2012 Amazon.com, Inc., http://aws.amazon.com/sdkforjava/
+- hector, http://prettyprint.me/2010/02/23/hector-a-java-cassandra-client/
+- jedis, https://github.com/xetorthio/jedis
+- Apache Commons, http://commons.apache.org/ 
+- EZMorph, http://ezmorph.sourceforge.net/
+- FastInfoSet, http://fi.java.net/
+- Apache HTTP Components, http://hc.apache.org/
+- guava-libraries, http://code.google.com/p/guava-libraries/
+- JFree, http://www.jfree.org/
+- json, http://www.json.org/java/index.html
+- log4j, http://logging.apache.org/log4j/
+- SLF4j, http://www.slf4j.org/
+- eaio-uuid, https://github.com/stephenc/eaio-uuid
+
+

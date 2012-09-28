@@ -8,7 +8,6 @@ AWS SQS and SNS. This document covers these topics:
 - Quick Tutorial
 - Installation Guide
 - Monitoring, Logging
-- Dependencies
 - Build Instructions
 - Known Limitations
 
@@ -163,66 +162,15 @@ Example response:
 TODO: add section    
       
 -------------------------------------------------------------------------------------------------
-- Dependencies
--------------------------------------------------------------------------------------------------
-
-CMB requires the following libraries:
-
-- AWS SDK 1.3.11
-
-- Apache Commons BeanUtils 1.7.0
-
-- Apache Commons Codec 1.6
-
-- Apache Commons Collections 3.2.1
-
-- Apache Commons lang 2.4
-
-- Apache Commons logging 1.1.1
-
-- Apache Commons pool 1.5.5
-
-- EZMorph 1.0.6
-
-- FastInfoSet 1.2.2
-
-- Apache HTTP Client 4.1.3
-
-- guava-libraries 9.0
-
-- hector 1.0-4
-
-- JFree 1.0.13
-
-- jedis 2.0
-
-- json 1.0
-
-- log4j 1.2.16
-
-- javamail 1.4.3
-
-- SLF4j 1.5.8
-
-- speed4j 0.9
-
-- stax 1.2.0
-
-- eaio-uuid 3.2
-
--------------------------------------------------------------------------------------------------
 - Build Instructions
 -------------------------------------------------------------------------------------------------
 
 TODO: fix this section
 TODO: add guide for building cmb.tar.gz for worker node
 
-1. Adjust version number in pom.xml to 1.X
+1. Clean old build
 
-2. Clean old build
-
-mvn --settings ./settings.xml -Dprojectname=CNS clean
-mvn --settings ./settings.xml -Dprojectname=CQS clean
+mvn --settings ./settings.xml clean
 
 3. Create tar.gz with tests:
 
@@ -234,20 +182,9 @@ mvn --settings ./settings.xml -Dprojectname=CQS assembly:assembly
 mvn --settings ./settings.xml -Dprojectname=CNS -Dmaven.test.skip=true assembly:assembly
 mvn --settings ./settings.xml -Dprojectname=CQS -Dmaven.test.skip=true assembly:assembly
 
-5. sync with perforce
 
-mvn --settings ./settings.xml -Dprojectname=CNS scm:update
-mvn --settings ./settings.xml -Dprojectname=CQS scm:update
-
-6. deploy to tomcat
-
-mvn --settings ./settings.xml -Dprojectname=CNS package tomcat7:deploy
-mvn --settings ./settings.xml -Dprojectname=CQS package tomcat7:deploy
-
-7. Do it all
-
-mvn --settings ./settings.xml -Dprojectname=CNS clean scm:update package tomcat7:deploy
-mvn --settings ./settings.xml -Dprojectname=CQS clean scm:update package tomcat7:deploy
+# mvn --settings ./settings.xml -Dprojectname=CNS clean scm:update package tomcat7:deploy
+# mvn --settings ./settings.xml -Dprojectname=CQS clean scm:update package tomcat7:deploy
 
 -------------------------------------------------------------------------------------------------
 - Known Limitations
