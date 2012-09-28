@@ -17,7 +17,25 @@ package com.comcast.cns.test.unit;
 
 import java.util.Random;
 
-import com.comcast.plaxo.cmb.common.util.Util;
+import com.comcast.cmb.common.controller.CMBControllerServlet;
+import com.comcast.cmb.common.model.User;
+import com.comcast.cmb.common.persistence.IUserPersistence;
+import com.comcast.cmb.common.persistence.PersistenceFactory;
+import com.comcast.cmb.common.persistence.UserCassandraPersistence;
+import com.comcast.cmb.common.util.Util;
+import com.comcast.cns.model.CNSRetryPolicy;
+import com.comcast.cns.model.CNSSubscription;
+import com.comcast.cns.model.CNSSubscriptionAttributes;
+import com.comcast.cns.model.CNSSubscriptionDeliveryPolicy;
+import com.comcast.cns.model.CNSThrottlePolicy;
+import com.comcast.cns.model.CNSTopic;
+import com.comcast.cns.model.CNSTopicAttributes;
+import com.comcast.cns.model.CNSTopicDeliveryPolicy;
+import com.comcast.cns.model.CNSRetryPolicy.CnsBackoffFunction;
+import com.comcast.cns.model.CNSSubscription.CnsSubscriptionProtocol;
+import com.comcast.cns.persistence.CNSAttributesCassandraPersistence;
+import com.comcast.cns.persistence.CNSSubscriptionCassandraPersistence;
+import com.comcast.cns.persistence.CNSTopicCassandraPersistence;
 
 import org.apache.log4j.Logger;
 import org.junit.After;
@@ -26,24 +44,6 @@ import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
-import com.comcast.plaxo.cmb.common.controller.CMBControllerServlet;
-import com.comcast.plaxo.cmb.common.model.User;
-import com.comcast.plaxo.cmb.common.persistence.IUserPersistence;
-import com.comcast.plaxo.cmb.common.persistence.PersistenceFactory;
-import com.comcast.plaxo.cmb.common.persistence.UserCassandraPersistence;
-import com.comcast.plaxo.cns.model.CNSRetryPolicy;
-import com.comcast.plaxo.cns.model.CNSRetryPolicy.CnsBackoffFunction;
-import com.comcast.plaxo.cns.model.CNSSubscription;
-import com.comcast.plaxo.cns.model.CNSSubscription.CnsSubscriptionProtocol;
-import com.comcast.plaxo.cns.model.CNSSubscriptionAttributes;
-import com.comcast.plaxo.cns.model.CNSSubscriptionDeliveryPolicy;
-import com.comcast.plaxo.cns.model.CNSThrottlePolicy;
-import com.comcast.plaxo.cns.model.CNSTopic;
-import com.comcast.plaxo.cns.model.CNSTopicAttributes;
-import com.comcast.plaxo.cns.model.CNSTopicDeliveryPolicy;
-import com.comcast.plaxo.cns.persistence.CNSAttributesCassandraPersistence;
-import com.comcast.plaxo.cns.persistence.CNSSubscriptionCassandraPersistence;
-import com.comcast.plaxo.cns.persistence.CNSTopicCassandraPersistence;
 
 public class CNSAttributesCassandraPersistenceTest {
 

@@ -24,10 +24,10 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.comcast.plaxo.cmb.common.controller.CMBControllerServlet;
-import com.comcast.plaxo.cmb.common.util.Util;
-import com.comcast.plaxo.cmb.common.model.CMBPolicy;
-import com.comcast.plaxo.cmb.common.model.CMBStatement;
+import com.comcast.cmb.common.controller.CMBControllerServlet;
+import com.comcast.cmb.common.model.CMBPolicy;
+import com.comcast.cmb.common.model.CMBStatement;
+import com.comcast.cmb.common.util.Util;
 
 public class CMBPolicyTest {
 	

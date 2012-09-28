@@ -28,11 +28,11 @@ import org.apache.log4j.Logger;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.comcast.plaxo.cmb.common.controller.CMBControllerServlet;
-import com.comcast.plaxo.cmb.common.util.RollingWindowCapture;
-import com.comcast.plaxo.cmb.common.util.Util;
-import com.comcast.plaxo.cmb.common.util.RollingWindowCapture.PayLoad;
-import com.comcast.plaxo.cmb.common.util.RollingWindowCapture.Visitor;
+import com.comcast.cmb.common.controller.CMBControllerServlet;
+import com.comcast.cmb.common.util.RollingWindowCapture;
+import com.comcast.cmb.common.util.Util;
+import com.comcast.cmb.common.util.RollingWindowCapture.PayLoad;
+import com.comcast.cmb.common.util.RollingWindowCapture.Visitor;
 
 public class RollingWindowCaptureTest {
     static Logger logger = Logger.getLogger(RollingWindowCaptureTest.class);

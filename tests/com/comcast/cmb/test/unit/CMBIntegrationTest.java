@@ -18,12 +18,12 @@ package com.comcast.cmb.test.unit;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.sns.AmazonSNSClient;
 import com.amazonaws.services.sns.model.CreateTopicRequest;
-import com.comcast.plaxo.cmb.common.controller.CMBControllerServlet;
-import com.comcast.plaxo.cmb.common.model.User;
-import com.comcast.plaxo.cmb.common.persistence.IUserPersistence;
-import com.comcast.plaxo.cmb.common.persistence.UserCassandraPersistence;
-import com.comcast.plaxo.cmb.common.util.CMBProperties;
-import com.comcast.plaxo.cmb.common.util.Util;
+import com.comcast.cmb.common.controller.CMBControllerServlet;
+import com.comcast.cmb.common.model.User;
+import com.comcast.cmb.common.persistence.IUserPersistence;
+import com.comcast.cmb.common.persistence.UserCassandraPersistence;
+import com.comcast.cmb.common.util.CMBProperties;
+import com.comcast.cmb.common.util.Util;
 
 import org.junit.After;
 import org.junit.Before;

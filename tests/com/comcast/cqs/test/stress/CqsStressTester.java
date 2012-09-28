@@ -66,18 +66,18 @@ import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 
 import com.amazonaws.AmazonServiceException;
-import com.comcast.plaxo.cmb.common.controller.CMBControllerServlet;
-import com.comcast.plaxo.cmb.common.model.User;
-import com.comcast.plaxo.cmb.common.persistence.CassandraPersistence;
-import com.comcast.plaxo.cmb.common.persistence.IUserPersistence;
-import com.comcast.plaxo.cmb.common.persistence.UserCassandraPersistence;
-import com.comcast.plaxo.cmb.common.util.CMBException;
-import com.comcast.plaxo.cmb.common.util.CMBProperties;
-import com.comcast.plaxo.cmb.common.util.PersistenceException;
-import com.comcast.plaxo.cmb.common.util.Util;
-import com.comcast.plaxo.cns.io.CommunicationUtils;
-import com.comcast.plaxo.cqs.model.CQSMessage;
-import com.comcast.plaxo.cqs.persistence.RedisCachedCassandraPersistence;
+import com.comcast.cmb.common.controller.CMBControllerServlet;
+import com.comcast.cmb.common.model.User;
+import com.comcast.cmb.common.persistence.CassandraPersistence;
+import com.comcast.cmb.common.persistence.IUserPersistence;
+import com.comcast.cmb.common.persistence.UserCassandraPersistence;
+import com.comcast.cmb.common.util.CMBException;
+import com.comcast.cmb.common.util.CMBProperties;
+import com.comcast.cmb.common.util.PersistenceException;
+import com.comcast.cmb.common.util.Util;
+import com.comcast.cns.io.CommunicationUtils;
+import com.comcast.cqs.model.CQSMessage;
+import com.comcast.cqs.persistence.RedisCachedCassandraPersistence;
 import com.comcast.cqs.util.CQSErrorCodes;
 
 //

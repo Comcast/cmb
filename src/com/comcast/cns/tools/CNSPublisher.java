@@ -46,7 +46,7 @@ public class CNSPublisher {
     static volatile JobThread[] consumers = null;
     
     private static void printUsage() {
-        System.out.println("java <opts> com.comcast.plaxo.cns.tools.CNSPublisher -role=<comma separated list of roles>");
+        System.out.println("java <opts> com.comcast.cns.tools.CNSPublisher -role=<comma separated list of roles>");
         System.out.println("where possible roles are {Producer, Consumer}");
     }
     
@@ -67,7 +67,7 @@ public class CNSPublisher {
     }
     
     /**
-     * Usage is java <opts> com.comcast.plaxo.cns.tools.CNSPublisher -role=<comma seperated list of roles>
+     * Usage is java <opts> com.comcast.cns.tools.CNSPublisher -role=<comma seperated list of roles>
      * @param argv
      * @throws Exception
      */
@@ -109,7 +109,7 @@ public class CNSPublisher {
 
             //register monitoring bean
             MBeanServer mbs = ManagementFactory.getPlatformMBeanServer(); 
-            ObjectName name = new ObjectName("com.comcast.plaxo.cns.controller:type=CNSMonitorMBean");
+            ObjectName name = new ObjectName("com.comcast.cns.controller:type=CNSMonitorMBean");
             
             if (!mbs.isRegistered(name)) {
                 mbs.registerMBean(CNSMonitor.getInstance(), name);

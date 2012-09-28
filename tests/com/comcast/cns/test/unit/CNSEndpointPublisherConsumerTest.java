@@ -56,25 +56,25 @@ import com.amazonaws.services.sqs.model.SendMessageBatchResult;
 import com.amazonaws.services.sqs.model.SendMessageRequest;
 import com.amazonaws.services.sqs.model.SendMessageResult;
 import com.amazonaws.services.sqs.model.SetQueueAttributesRequest;
-import com.comcast.plaxo.cmb.common.controller.CMBControllerServlet;
-import com.comcast.plaxo.cmb.common.model.User;
-import com.comcast.plaxo.cmb.common.persistence.PersistenceFactory;
-import com.comcast.plaxo.cmb.common.util.CMBProperties;
-import com.comcast.plaxo.cmb.common.util.Util;
-import com.comcast.plaxo.cns.controller.CNSMonitor;
-import com.comcast.plaxo.cns.io.IEndpointPublisher;
-import com.comcast.plaxo.cns.model.CNSEndpointPublishJob;
-import com.comcast.plaxo.cns.model.CNSRetryPolicy;
-import com.comcast.plaxo.cns.model.CNSSubscriptionAttributes;
-import com.comcast.plaxo.cns.model.CNSSubscriptionDeliveryPolicy;
-import com.comcast.plaxo.cns.model.CNSTopicAttributes;
-import com.comcast.plaxo.cns.model.CNSEndpointPublishJob.SubInfo;
-import com.comcast.plaxo.cns.model.CNSMessage;
-import com.comcast.plaxo.cns.model.CNSRetryPolicy.CnsBackoffFunction;
-import com.comcast.plaxo.cns.model.CNSSubscription.CnsSubscriptionProtocol;
-import com.comcast.plaxo.cns.persistence.ICNSAttributesPersistence;
-import com.comcast.plaxo.cns.tools.CNSEndpointPublisherJobConsumer;
-import com.comcast.plaxo.cns.tools.CNSEndpointPublisherJobConsumer.PublishJob;
+import com.comcast.cmb.common.controller.CMBControllerServlet;
+import com.comcast.cmb.common.model.User;
+import com.comcast.cmb.common.persistence.PersistenceFactory;
+import com.comcast.cmb.common.util.CMBProperties;
+import com.comcast.cmb.common.util.Util;
+import com.comcast.cns.controller.CNSMonitor;
+import com.comcast.cns.io.IEndpointPublisher;
+import com.comcast.cns.model.CNSEndpointPublishJob;
+import com.comcast.cns.model.CNSMessage;
+import com.comcast.cns.model.CNSRetryPolicy;
+import com.comcast.cns.model.CNSSubscriptionAttributes;
+import com.comcast.cns.model.CNSSubscriptionDeliveryPolicy;
+import com.comcast.cns.model.CNSTopicAttributes;
+import com.comcast.cns.model.CNSEndpointPublishJob.SubInfo;
+import com.comcast.cns.model.CNSRetryPolicy.CnsBackoffFunction;
+import com.comcast.cns.model.CNSSubscription.CnsSubscriptionProtocol;
+import com.comcast.cns.persistence.ICNSAttributesPersistence;
+import com.comcast.cns.tools.CNSEndpointPublisherJobConsumer;
+import com.comcast.cns.tools.CNSEndpointPublisherJobConsumer.PublishJob;
 import com.amazonaws.services.sqs.model.Message;
 
 public class CNSEndpointPublisherConsumerTest {
@@ -660,13 +660,13 @@ public class CNSEndpointPublisherConsumerTest {
     @Test
     public void testBackOfFunctionLinear() throws Exception {
         
-        int delay = com.comcast.plaxo.cns.util.Util.getNextRetryDelay(1, 10, 0, 10, CnsBackoffFunction.linear); 
+        int delay = com.comcast.cns.util.Util.getNextRetryDelay(1, 10, 0, 10, CnsBackoffFunction.linear); 
         
         if (delay != 0) {
             fail("expected 1 sec delay. Got" + delay);
         }
         
-        delay = com.comcast.plaxo.cns.util.Util.getNextRetryDelay(10, 10, 5, 260, CnsBackoffFunction.linear); 
+        delay = com.comcast.cns.util.Util.getNextRetryDelay(10, 10, 5, 260, CnsBackoffFunction.linear); 
         
         if ( delay < 259 || delay > 261) {
             fail("expected 260 sec delay with tolerence of 1 sec. Got" + delay);
@@ -676,11 +676,11 @@ public class CNSEndpointPublisherConsumerTest {
     @Test
     public void testBackOfFunctionExponential() throws Exception {
         
-        if (com.comcast.plaxo.cns.util.Util.getNextRetryDelay(1, 10, 5, 260, CnsBackoffFunction.exponential) != 5) {
+        if (com.comcast.cns.util.Util.getNextRetryDelay(1, 10, 5, 260, CnsBackoffFunction.exponential) != 5) {
             fail("expected 5 sec delay");
         }
         
-        int delay = com.comcast.plaxo.cns.util.Util.getNextRetryDelay(10, 10, 5, 260, CnsBackoffFunction.exponential); 
+        int delay = com.comcast.cns.util.Util.getNextRetryDelay(10, 10, 5, 260, CnsBackoffFunction.exponential); 
         
         if ( delay < 259 || delay > 261) {
             fail("expected 260 sec delay with tolerence of 1 sec. Got" + delay);
@@ -690,13 +690,13 @@ public class CNSEndpointPublisherConsumerTest {
     @Test
     public void testBackOfFunctionGeometric() throws Exception {
         
-        int delay = com.comcast.plaxo.cns.util.Util.getNextRetryDelay(1, 10, 5, 260, CnsBackoffFunction.geometric);
+        int delay = com.comcast.cns.util.Util.getNextRetryDelay(1, 10, 5, 260, CnsBackoffFunction.geometric);
         
         if (delay != 5) {
             fail("Expected min to be 5. Got:" + delay);
         }
         
-        delay = com.comcast.plaxo.cns.util.Util.getNextRetryDelay(10, 10, 5, 260, CnsBackoffFunction.geometric);
+        delay = com.comcast.cns.util.Util.getNextRetryDelay(10, 10, 5, 260, CnsBackoffFunction.geometric);
         
         if ( delay < 259 || delay > 261) {
             fail("expected 260 sec delay with tolerence of 1 sec. Got" + delay);
@@ -706,19 +706,19 @@ public class CNSEndpointPublisherConsumerTest {
     @Test
     public void testBackOfFunctionArithmetic() throws Exception {
         
-        int delay = com.comcast.plaxo.cns.util.Util.getNextRetryDelay(1, 10, 5, 260, CnsBackoffFunction.arithmetic);
+        int delay = com.comcast.cns.util.Util.getNextRetryDelay(1, 10, 5, 260, CnsBackoffFunction.arithmetic);
         
         if (delay != 5) {
             fail("Expected min to be 5. Got:" + delay);
         }
         
-        delay = com.comcast.plaxo.cns.util.Util.getNextRetryDelay(10, 10, 5, 260, CnsBackoffFunction.arithmetic);
+        delay = com.comcast.cns.util.Util.getNextRetryDelay(10, 10, 5, 260, CnsBackoffFunction.arithmetic);
         
         if ( delay < 259 || delay > 261) {
             fail("expected 260 sec delay with tolerence of 1 sec. Got" + delay);
         }
         
-        delay = com.comcast.plaxo.cns.util.Util.getNextRetryDelay(5, 5, 1, 20, CnsBackoffFunction.arithmetic);
+        delay = com.comcast.cns.util.Util.getNextRetryDelay(5, 5, 1, 20, CnsBackoffFunction.arithmetic);
         logger.info("delay=" + delay);
     }
     
@@ -735,7 +735,7 @@ public class CNSEndpointPublisherConsumerTest {
             
             for (int i = 1; i <= 5; i++) {
                 
-                int delay = com.comcast.plaxo.cns.util.Util.getNextRetryDelay(i, 5, 1, 10, fn);
+                int delay = com.comcast.cns.util.Util.getNextRetryDelay(i, 5, 1, 10, fn);
                 
                 if (!fnToTotalBackoff.containsKey(fn)) {
                     fnToTotalBackoff.put(fn, 0);

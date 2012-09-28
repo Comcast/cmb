@@ -25,15 +25,15 @@ import org.apache.log4j.Logger;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.comcast.plaxo.cmb.common.controller.CMBControllerServlet;
-import com.comcast.plaxo.cmb.common.persistence.PersistenceFactory;
-import com.comcast.plaxo.cmb.common.util.CMBException;
-import com.comcast.plaxo.cmb.common.util.CMBProperties;
-import com.comcast.plaxo.cmb.common.util.Util;
-import com.comcast.plaxo.cns.model.CNSMessage;
-import com.comcast.plaxo.cns.model.CNSSubscription.CnsSubscriptionProtocol;
-import com.comcast.plaxo.cns.model.CNSEndpointPublishJob;
-import com.comcast.plaxo.cns.persistence.CachedCNSEndpointPublishJob;
+import com.comcast.cmb.common.controller.CMBControllerServlet;
+import com.comcast.cmb.common.persistence.PersistenceFactory;
+import com.comcast.cmb.common.util.CMBException;
+import com.comcast.cmb.common.util.CMBProperties;
+import com.comcast.cmb.common.util.Util;
+import com.comcast.cns.model.CNSEndpointPublishJob;
+import com.comcast.cns.model.CNSMessage;
+import com.comcast.cns.model.CNSSubscription.CnsSubscriptionProtocol;
+import com.comcast.cns.persistence.CachedCNSEndpointPublishJob;
 
 public class CNSPublishJobTest {
     static Logger logger = Logger.getLogger(CNSPublishJobTest.class);

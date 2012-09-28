@@ -15,17 +15,17 @@
  */
 package com.comcast.cqs.test.unit;
 
+import com.comcast.cmb.common.controller.CMBControllerServlet;
+import com.comcast.cmb.common.model.User;
+import com.comcast.cmb.common.persistence.IUserPersistence;
+import com.comcast.cmb.common.persistence.PersistenceFactory;
+import com.comcast.cmb.common.persistence.UserCassandraPersistence;
+import com.comcast.cmb.common.util.CMBErrorCodes;
+import com.comcast.cmb.common.util.CMBProperties;
+import com.comcast.cmb.common.util.Util;
 import com.comcast.cmb.test.tools.SimpleHttpServletRequest;
 import com.comcast.cmb.test.tools.SimpleHttpServletResponse;
-import com.comcast.plaxo.cmb.common.controller.CMBControllerServlet;
-import com.comcast.plaxo.cmb.common.model.User;
-import com.comcast.plaxo.cmb.common.persistence.IUserPersistence;
-import com.comcast.plaxo.cmb.common.persistence.PersistenceFactory;
-import com.comcast.plaxo.cmb.common.persistence.UserCassandraPersistence;
-import com.comcast.plaxo.cmb.common.util.CMBErrorCodes;
-import com.comcast.plaxo.cmb.common.util.CMBProperties;
-import com.comcast.plaxo.cmb.common.util.Util;
-import com.comcast.plaxo.cqs.controller.CQSControllerServlet;
+import com.comcast.cqs.controller.CQSControllerServlet;
 
 import me.prettyprint.cassandra.service.OperationType;
 import me.prettyprint.hector.api.Cluster;

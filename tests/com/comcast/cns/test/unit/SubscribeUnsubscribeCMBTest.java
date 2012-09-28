@@ -31,19 +31,19 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.comcast.cmb.common.controller.CMBControllerServlet;
+import com.comcast.cmb.common.model.User;
+import com.comcast.cmb.common.persistence.IUserPersistence;
+import com.comcast.cmb.common.persistence.PersistenceFactory;
+import com.comcast.cmb.common.util.Util;
 import com.comcast.cmb.test.tools.CNSTestingUtils;
 import com.comcast.cmb.test.tools.ListSubscriptionParser;
-import com.comcast.plaxo.cmb.common.controller.CMBControllerServlet;
-import com.comcast.plaxo.cmb.common.model.User;
-import com.comcast.plaxo.cmb.common.persistence.IUserPersistence;
-import com.comcast.plaxo.cmb.common.persistence.PersistenceFactory;
+import com.comcast.cns.controller.CNSControllerServlet;
+import com.comcast.cns.model.CNSSubscription.CnsSubscriptionProtocol;
+import com.comcast.cqs.controller.CQSControllerServlet;
+import com.comcast.cqs.model.CQSQueue;
+import com.comcast.cqs.persistence.ICQSQueuePersistence;
 
-import com.comcast.plaxo.cmb.common.util.Util;
-import com.comcast.plaxo.cns.controller.CNSControllerServlet;
-import com.comcast.plaxo.cns.model.CNSSubscription.CnsSubscriptionProtocol;
-import com.comcast.plaxo.cqs.controller.CQSControllerServlet;
-import com.comcast.plaxo.cqs.model.CQSQueue;
-import com.comcast.plaxo.cqs.persistence.ICQSQueuePersistence;
 
 public class SubscribeUnsubscribeCMBTest {
 	

@@ -22,8 +22,8 @@ import me.prettyprint.cassandra.serializers.CompositeSerializer;
 import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.hector.api.HConsistencyLevel;
 
-import com.comcast.plaxo.cmb.common.persistence.CassandraPersistence;
-import com.comcast.plaxo.cmb.common.util.CMBProperties;
+import com.comcast.cmb.common.persistence.CassandraPersistence;
+import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cqs.util.Util;
 
 public class CQSTestUtils {

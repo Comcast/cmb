@@ -18,11 +18,11 @@ package com.comcast.cmb.test.common.util.unit;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.comcast.plaxo.cmb.common.controller.CMBControllerServlet;
-import com.comcast.plaxo.cmb.common.util.AuthUtil;
-import com.comcast.plaxo.cmb.common.util.AuthenticationException;
-import com.comcast.plaxo.cmb.common.util.CMBErrorCodes;
-import com.comcast.plaxo.cmb.common.util.Util;
+import com.comcast.cmb.common.controller.CMBControllerServlet;
+import com.comcast.cmb.common.util.AuthUtil;
+import com.comcast.cmb.common.util.AuthenticationException;
+import com.comcast.cmb.common.util.CMBErrorCodes;
+import com.comcast.cmb.common.util.Util;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;

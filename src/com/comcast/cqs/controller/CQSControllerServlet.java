@@ -93,7 +93,7 @@ public class CQSControllerServlet extends CMBControllerServlet {
             initActions();
 
             MBeanServer mbs = ManagementFactory.getPlatformMBeanServer(); 
-            ObjectName name = new ObjectName("com.comcast.plaxo.cqs.controller:type=CQSMonitorMBean");
+            ObjectName name = new ObjectName("com.comcast.cqs.controller:type=CQSMonitorMBean");
             
             if (!mbs.isRegistered(name)) {
             	mbs.registerMBean(CQSMonitor.Inst, name);

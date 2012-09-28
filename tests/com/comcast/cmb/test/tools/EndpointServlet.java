@@ -15,7 +15,7 @@
  */
 package com.comcast.cmb.test.tools;
 
-import com.comcast.plaxo.cmb.common.util.Util;
+import com.comcast.cmb.common.util.Util;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;

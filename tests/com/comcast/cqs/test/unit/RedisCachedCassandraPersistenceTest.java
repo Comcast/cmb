@@ -44,18 +44,18 @@ import org.junit.Test;
 import redis.clients.jedis.ShardedJedis;
 import redis.clients.util.SafeEncoder;
 
-import com.comcast.plaxo.cmb.common.controller.CMBControllerServlet;
-import com.comcast.plaxo.cmb.common.util.CMBProperties;
-import com.comcast.plaxo.cmb.common.util.PersistenceException;
-import com.comcast.plaxo.cmb.common.util.Util;
-import com.comcast.plaxo.cqs.controller.CQSMonitor;
-import com.comcast.plaxo.cqs.model.CQSMessage;
-import com.comcast.plaxo.cqs.model.CQSQueue;
-import com.comcast.plaxo.cqs.persistence.ICQSMessagePersistence;
-import com.comcast.plaxo.cqs.persistence.ICQSMessagePersistenceIdSequence;
-import com.comcast.plaxo.cqs.persistence.RedisCachedCassandraPersistence;
-import com.comcast.plaxo.cqs.persistence.RedisPayloadCacheCassandraPersistence;
-import com.comcast.plaxo.cqs.persistence.RedisCachedCassandraPersistence.QCacheState;
+import com.comcast.cmb.common.controller.CMBControllerServlet;
+import com.comcast.cmb.common.util.CMBProperties;
+import com.comcast.cmb.common.util.PersistenceException;
+import com.comcast.cmb.common.util.Util;
+import com.comcast.cqs.controller.CQSMonitor;
+import com.comcast.cqs.model.CQSMessage;
+import com.comcast.cqs.model.CQSQueue;
+import com.comcast.cqs.persistence.ICQSMessagePersistence;
+import com.comcast.cqs.persistence.ICQSMessagePersistenceIdSequence;
+import com.comcast.cqs.persistence.RedisCachedCassandraPersistence;
+import com.comcast.cqs.persistence.RedisPayloadCacheCassandraPersistence;
+import com.comcast.cqs.persistence.RedisCachedCassandraPersistence.QCacheState;
 import com.comcast.cqs.util.CQSConstants;
 
 public class RedisCachedCassandraPersistenceTest {

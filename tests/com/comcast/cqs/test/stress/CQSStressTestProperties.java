@@ -21,7 +21,7 @@ import java.util.Properties;
 
 import org.apache.log4j.Logger;
 
-import com.comcast.plaxo.cmb.common.util.CMBProperties;
+import com.comcast.cmb.common.util.CMBProperties;
 
 /**
  * Test class

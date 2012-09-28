@@ -59,14 +59,14 @@ import com.amazonaws.services.sqs.model.SendMessageBatchResult;
 import com.amazonaws.services.sqs.model.SendMessageRequest;
 import com.amazonaws.services.sqs.model.SendMessageResult;
 import com.amazonaws.services.sqs.model.SetQueueAttributesRequest;
-import com.comcast.plaxo.cmb.common.util.CMBProperties;
-import com.comcast.plaxo.cmb.common.util.Util;
-import com.comcast.plaxo.cns.model.CNSEndpointPublishJob;
-import com.comcast.plaxo.cns.model.CNSMessage;
-import com.comcast.plaxo.cns.model.CNSSubscription;
-import com.comcast.plaxo.cns.model.CNSSubscription.CnsSubscriptionProtocol;
-import com.comcast.plaxo.cns.persistence.ICNSSubscriptionPersistence;
-import com.comcast.plaxo.cns.tools.CNSEndpointPublisherJobProducer;
+import com.comcast.cmb.common.util.CMBProperties;
+import com.comcast.cmb.common.util.Util;
+import com.comcast.cns.model.CNSEndpointPublishJob;
+import com.comcast.cns.model.CNSMessage;
+import com.comcast.cns.model.CNSSubscription;
+import com.comcast.cns.model.CNSSubscription.CnsSubscriptionProtocol;
+import com.comcast.cns.persistence.ICNSSubscriptionPersistence;
+import com.comcast.cns.tools.CNSEndpointPublisherJobProducer;
 
 public class CNSEndpointPublisherProducerTest {
     static Logger logger = Logger.getLogger(CNSEndpointPublisherProducerTest.class);

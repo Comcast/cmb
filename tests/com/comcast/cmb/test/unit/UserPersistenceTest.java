@@ -20,16 +20,17 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
-import com.comcast.plaxo.cmb.common.util.Util;
+import com.comcast.cmb.common.controller.CMBControllerServlet;
+import com.comcast.cmb.common.model.User;
+import com.comcast.cmb.common.persistence.IUserPersistence;
+import com.comcast.cmb.common.persistence.PersistenceFactory;
+import com.comcast.cmb.common.persistence.UserCassandraPersistence;
+import com.comcast.cmb.common.util.PersistenceException;
+import com.comcast.cmb.common.util.Util;
+
 import org.apache.log4j.Logger;
 import org.junit.* ;
 
-import com.comcast.plaxo.cmb.common.controller.CMBControllerServlet;
-import com.comcast.plaxo.cmb.common.model.User;
-import com.comcast.plaxo.cmb.common.persistence.IUserPersistence;
-import com.comcast.plaxo.cmb.common.persistence.PersistenceFactory;
-import com.comcast.plaxo.cmb.common.util.PersistenceException;
-import com.comcast.plaxo.cmb.common.persistence.UserCassandraPersistence;
 
 import static org.junit.Assert.*;
 

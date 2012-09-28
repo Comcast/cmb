@@ -22,23 +22,24 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
+import com.comcast.cmb.common.controller.CMBControllerServlet;
+import com.comcast.cmb.common.model.User;
+import com.comcast.cmb.common.persistence.IUserPersistence;
+import com.comcast.cmb.common.persistence.PersistenceFactory;
+import com.comcast.cmb.common.util.Util;
 import com.comcast.cmb.test.tools.CNSTestingUtils;
 import com.comcast.cmb.test.tools.SimpleHttpServletRequest;
 import com.comcast.cmb.test.tools.SimpleHttpServletResponse;
-import com.comcast.plaxo.cmb.common.util.Util;
+import com.comcast.cns.controller.CNSEditSubscriptionDeliveryPolicyPage;
+import com.comcast.cns.model.CNSSubscription;
+import com.comcast.cns.model.CNSTopic;
+import com.comcast.cns.model.CNSSubscription.CnsSubscriptionProtocol;
+import com.comcast.cns.persistence.CNSSubscriptionCassandraPersistence;
+import com.comcast.cns.persistence.CNSTopicCassandraPersistence;
+
 import org.apache.log4j.Logger;
 import org.junit.*;
 
-import com.comcast.plaxo.cmb.common.controller.CMBControllerServlet;
-import com.comcast.plaxo.cmb.common.model.User;
-import com.comcast.plaxo.cmb.common.persistence.IUserPersistence;
-import com.comcast.plaxo.cmb.common.persistence.PersistenceFactory;
-import com.comcast.plaxo.cns.controller.CNSEditSubscriptionDeliveryPolicyPage;
-import com.comcast.plaxo.cns.model.CNSSubscription;
-import com.comcast.plaxo.cns.model.CNSSubscription.CnsSubscriptionProtocol;
-import com.comcast.plaxo.cns.model.CNSTopic;
-import com.comcast.plaxo.cns.persistence.CNSSubscriptionCassandraPersistence;
-import com.comcast.plaxo.cns.persistence.CNSTopicCassandraPersistence;
 
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;

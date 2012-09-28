@@ -18,16 +18,16 @@ package com.comcast.cns.test.unit;
 import java.util.Arrays;
 import java.util.Random;
 
+import com.comcast.cmb.common.controller.CMBControllerServlet;
+import com.comcast.cmb.common.model.User;
+import com.comcast.cmb.common.persistence.*;
+import com.comcast.cmb.common.util.CMBProperties;
+import com.comcast.cmb.common.util.Util;
 import com.comcast.cmb.test.tools.AWSCredentialsHolder;
-import com.comcast.plaxo.cmb.common.util.CMBProperties;
-import com.comcast.plaxo.cmb.common.util.Util;
 
 import org.apache.log4j.Logger;
 import org.junit.* ;
 
-import com.comcast.plaxo.cmb.common.persistence.*;
-import com.comcast.plaxo.cmb.common.controller.CMBControllerServlet;
-import com.comcast.plaxo.cmb.common.model.User;
 
 import com.amazonaws.ClientConfiguration;
 import com.amazonaws.auth.AWSCredentials;

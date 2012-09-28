@@ -38,15 +38,15 @@ import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.log4j.Logger;
 
 import com.amazonaws.util.json.JSONWriter;
+import com.comcast.cmb.common.model.User;
+import com.comcast.cmb.common.util.CMBProperties;
+import com.comcast.cns.controller.CNSControllerServlet;
+import com.comcast.cns.model.CNSSubscription;
+import com.comcast.cns.model.CNSSubscription.CnsSubscriptionProtocol;
+import com.comcast.cns.persistence.CNSSubscriptionCassandraPersistence;
+import com.comcast.cns.persistence.ICNSSubscriptionPersistence;
 import com.comcast.cns.test.unit.CNSSubscriptionTest;
-import com.comcast.plaxo.cmb.common.model.User;
-import com.comcast.plaxo.cmb.common.util.CMBProperties;
-import com.comcast.plaxo.cns.controller.CNSControllerServlet;
-import com.comcast.plaxo.cns.model.CNSSubscription;
-import com.comcast.plaxo.cns.model.CNSSubscription.CnsSubscriptionProtocol;
-import com.comcast.plaxo.cns.persistence.CNSSubscriptionCassandraPersistence;
-import com.comcast.plaxo.cns.persistence.ICNSSubscriptionPersistence;
-import com.comcast.plaxo.cqs.controller.CQSControllerServlet;
+import com.comcast.cqs.controller.CQSControllerServlet;
 
 public class CNSTestingUtils {
 
@@ -825,7 +825,7 @@ public class CNSTestingUtils {
 
 	/*
 	 * (non-Javadoc)
-	 * @see com.comcast.plaxo.cns.io.IEndpointPublisher#send()
+	 * @see com.comcast.cns.io.IEndpointPublisher#send()
 	 * We will send the message using the URL and HttpUrlConnection classes
 	 */
 	public static String sendHttpMessage(String endpoint, String message) throws Exception {

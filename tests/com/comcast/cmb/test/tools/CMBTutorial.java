@@ -47,7 +47,7 @@ import com.amazonaws.services.sqs.model.DeleteQueueRequest;
 import com.amazonaws.services.sqs.model.Message;
 import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
 import com.amazonaws.services.sqs.model.ReceiveMessageResult;
-import com.comcast.plaxo.cmb.common.util.Util;
+import com.comcast.cmb.common.util.Util;
 
 public class CMBTutorial {
 	
@@ -96,36 +96,30 @@ public class CMBTutorial {
     		
             Util.initLog4jTest();
     		
-            // user "cqs_unit_test"
+            //TODO: set user id and credentials for two distinct users
             
-            //String userId = "338591773570";
-            BasicAWSCredentials credentialsUser = new BasicAWSCredentials("G60XTWOGJCVTKYOPYESU", "Cxg3CqPtwsmtdGrdpRroGjNvdcpgCYk9ITrDybYM");
-
-            //String userId = "342126204596";
-            //BasicAWSCredentials credentialsUser = new BasicAWSCredentials("48JT2LKD3TX9X5JD6NMM", "o4pykUHYnV0/JQJyg2blbA2mbWzmPq50g9kdnGJp");
-
-            // user "cqs_unit_test_1"
+            // user "cqs_test_1"
             
-            String user1Id = "338591851454";
-            BasicAWSCredentials credentialsUser1 = new BasicAWSCredentials("46GDV84VG7EV3L6J80XT", "PdveTyE4J6nNyBAmTqz+47prxi2Tk8jb8k0QgbrC");
-            
-            //String user1Id = "342126220561";
-            //BasicAWSCredentials credentialsUser1 = new BasicAWSCredentials("YC96L2A31DCGK5TF6U2I", "DSfe1qgc/iWDh4fZKUbn28P8sz2cm1oJmcjGrbCA");
+            BasicAWSCredentials user1Credentials = new BasicAWSCredentials("<access_key>", "<secret_key>");
 
+            // user "cqs_test_2"
+            
+            String user2Id = "<user_id>";
+            BasicAWSCredentials user2Credentials = new BasicAWSCredentials("<access_key>", "<secret_key>");
+            
             // service urls
             
-            //String cqsServerUrl = "http://ccpplb-dt-v403-i.dt.ccp.cable.comcast.com:10159/";
-            //String cnsServerUrl = "http://ccpplb-dt-v403-i.dt.ccp.cable.comcast.com:10162/";
+            //TODO: add service URLs
             
-            String cqsServerUrl = "http://sqs-test5.plaxo.com:6060";
-            String cnsServerUrl = "http://sns-test5.plaxo.com:6060";
+            String cqsServerUrl = "http://<host>:<port>";
+            String cnsServerUrl = "http://<host>:<port>";
             
             // initialize service
 
-            AmazonSQS sqs = new AmazonSQSClient(credentialsUser);
+            AmazonSQS sqs = new AmazonSQSClient(user1Credentials);
             sqs.setEndpoint(cqsServerUrl);
 
-            AmazonSNS sns = new AmazonSNSClient(credentialsUser1);
+            AmazonSNS sns = new AmazonSNSClient(user2Credentials);
             sns.setEndpoint(cnsServerUrl);
         
             // create queue
@@ -143,7 +137,7 @@ public class CMBTutorial {
 	        addPermissionRequest.setQueueUrl(queueUrl);
 	        addPermissionRequest.setActions(Arrays.asList("SendMessage"));
 	        addPermissionRequest.setLabel(UUID.randomUUID().toString());
-	        addPermissionRequest.setAWSAccountIds(Arrays.asList(user1Id));        
+	        addPermissionRequest.setAWSAccountIds(Arrays.asList(user2Id));        
 	        sqs.addPermission(addPermissionRequest);
 	        
 	        // create topic

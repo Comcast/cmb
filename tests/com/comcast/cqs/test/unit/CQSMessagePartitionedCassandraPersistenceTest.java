@@ -36,20 +36,20 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.comcast.plaxo.cmb.common.controller.CMBControllerServlet;
-import com.comcast.plaxo.cmb.common.model.User;
-import com.comcast.plaxo.cmb.common.persistence.CassandraPersistence;
-import com.comcast.plaxo.cmb.common.persistence.IUserPersistence;
-import com.comcast.plaxo.cmb.common.persistence.PersistenceFactory;
-import com.comcast.plaxo.cmb.common.persistence.UserCassandraPersistence;
-import com.comcast.plaxo.cmb.common.util.CMBProperties;
-import com.comcast.plaxo.cmb.common.util.PersistenceException;
-import com.comcast.plaxo.cmb.common.util.Util;
-import com.comcast.plaxo.cqs.model.CQSMessage;
-import com.comcast.plaxo.cqs.model.CQSQueue;
-import com.comcast.plaxo.cqs.persistence.CQSMessagePartitionedCassandraPersistence;
-import com.comcast.plaxo.cqs.persistence.CQSQueueCassandraPersistence;
-import com.comcast.plaxo.cqs.persistence.ICQSMessagePersistence;
+import com.comcast.cmb.common.controller.CMBControllerServlet;
+import com.comcast.cmb.common.model.User;
+import com.comcast.cmb.common.persistence.CassandraPersistence;
+import com.comcast.cmb.common.persistence.IUserPersistence;
+import com.comcast.cmb.common.persistence.PersistenceFactory;
+import com.comcast.cmb.common.persistence.UserCassandraPersistence;
+import com.comcast.cmb.common.util.CMBProperties;
+import com.comcast.cmb.common.util.PersistenceException;
+import com.comcast.cmb.common.util.Util;
+import com.comcast.cqs.model.CQSMessage;
+import com.comcast.cqs.model.CQSQueue;
+import com.comcast.cqs.persistence.CQSMessagePartitionedCassandraPersistence;
+import com.comcast.cqs.persistence.CQSQueueCassandraPersistence;
+import com.comcast.cqs.persistence.ICQSMessagePersistence;
 import com.eaio.uuid.UUIDGen;
 
 public class CQSMessagePartitionedCassandraPersistenceTest {

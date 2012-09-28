@@ -44,17 +44,18 @@ import com.amazonaws.services.sns.model.CreateTopicResult;
 import com.amazonaws.services.sns.model.DeleteTopicRequest;
 import com.amazonaws.services.sns.model.PublishRequest;
 import com.amazonaws.services.sns.model.SubscribeRequest;
+import com.comcast.cmb.common.controller.CMBControllerServlet;
+import com.comcast.cmb.common.model.User;
+import com.comcast.cmb.common.persistence.CassandraPersistence;
+import com.comcast.cmb.common.persistence.IUserPersistence;
+import com.comcast.cmb.common.persistence.UserCassandraPersistence;
+import com.comcast.cmb.common.util.CMBProperties;
+import com.comcast.cmb.common.util.Util;
 import com.comcast.cmb.test.tools.AWSCredentialsHolder;
+import com.comcast.cmb.test.tools.CMBTestingConstants;
 import com.comcast.cmb.test.tools.CNSTestingUtils;
-import com.comcast.plaxo.cmb.common.controller.CMBControllerServlet;
-import com.comcast.plaxo.cmb.common.model.User;
-import com.comcast.plaxo.cmb.common.persistence.CassandraPersistence;
-import com.comcast.plaxo.cmb.common.persistence.IUserPersistence;
-import com.comcast.plaxo.cmb.common.persistence.UserCassandraPersistence;
-import com.comcast.plaxo.cmb.common.util.CMBProperties;
-import com.comcast.plaxo.cmb.common.util.Util;
-import com.comcast.plaxo.cns.model.CNSSubscription;
-import com.comcast.plaxo.cns.model.CNSSubscription.CnsSubscriptionProtocol;
+import com.comcast.cns.model.CNSSubscription;
+import com.comcast.cns.model.CNSSubscription.CnsSubscriptionProtocol;
 
 public class CNSStressTest {
 	
@@ -70,20 +71,15 @@ public class CNSStressTest {
 	
 	private static boolean DELETE_TOPIC = false; 
 	
-	// endpoint settings
-
+	//TODO: provide list of endpoint settings
+	
+	// list of endpoints conforming with com.comcast.cmb.test.tools.EndpointServlet
+	// (minimum one, if multiple subscriptions will be randomly distributed over endpoints)
+	
 	private static String endpointUrls[] = new String[]{
-		//"http://ccpplg-dt-c301-i.dt.ccp.cable.comcast.com:10220/Endpoint/recv/"
-		"http://nis.test3.plaxo.com:8080/CMB/Endpoint/recv/"
-		//,"http://sdev15:8080/CNS/Endpoint/recv/"
-		//,"http://172.20.4.247:8080/CNS/Endpoint/recv/"
+		CMBTestingConstants.ENDPOINT_BASE_URL + "recv/"
 	};
 	
-	//private static String ENDPOINT_URL = "http://nis.test3.plaxo.com:8080/CMB/Endpoint/recv/";
-	//private static String ENDPOINT_URL = "http://172.20.4.130:7070/Endpoint/recv/";
-	//private static final String ENDPOINT_URL = "http://172.20.4.185:7070/CMB/Endpoint/simple/";
-	//private static final String ENDPOINT_URL = "http://test11:14000/";
-
 	private static final String USER_NAME = "stressuser";
 	private static final String ALPHABET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 	private static final String TOPIC_NAME_PREFIX = "StressTestTopic";

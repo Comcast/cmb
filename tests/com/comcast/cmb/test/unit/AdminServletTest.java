@@ -23,11 +23,11 @@ import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.comcast.cmb.common.controller.AdminServlet;
+import com.comcast.cmb.common.controller.CMBControllerServlet;
+import com.comcast.cmb.common.util.Util;
 import com.comcast.cmb.test.tools.SimpleHttpServletRequest;
 import com.comcast.cmb.test.tools.SimpleHttpServletResponse;
-import com.comcast.plaxo.cmb.common.controller.AdminServlet;
-import com.comcast.plaxo.cmb.common.controller.CMBControllerServlet;
-import com.comcast.plaxo.cmb.common.util.Util;
 
 import org.apache.log4j.Logger;
 import org.junit.* ;

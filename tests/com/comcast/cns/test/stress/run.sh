@@ -18,4 +18,4 @@ echo $4
 echo $5
 echo $6
 
-java -Xmx1280m -classpath cmb.jar:${THE_CLASSPATH} -Dcmb.log4j.propertyFile=config/log4j.properties -Dcmb.propertyFile=config/cmb.properties com.comcast.plaxo.cns.stresstest.CNSStressTest $1 $2 $3 $4 $5 $6
+java -Xmx1280m -classpath cmb.jar:${THE_CLASSPATH} -Dcmb.log4j.propertyFile=config/log4j.properties -Dcmb.propertyFile=config/cmb.properties com.comcast.cns.test.stress.CNSStressTest $1 $2 $3 $4 $5 $6

@@ -20,10 +20,10 @@ import static org.junit.Assert.*;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.comcast.plaxo.cmb.common.controller.CMBControllerServlet;
-import com.comcast.plaxo.cmb.common.util.Util;
-import com.comcast.plaxo.cqs.controller.CQSMonitor;
-import com.comcast.plaxo.cqs.controller.CQSMonitor.CacheType;
+import com.comcast.cmb.common.controller.CMBControllerServlet;
+import com.comcast.cmb.common.util.Util;
+import com.comcast.cqs.controller.CQSMonitor;
+import com.comcast.cqs.controller.CQSMonitor.CacheType;
 
 public class CQSMonitorTest {
 

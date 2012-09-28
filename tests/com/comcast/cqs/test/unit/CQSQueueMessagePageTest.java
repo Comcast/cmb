@@ -22,23 +22,24 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
+import com.comcast.cmb.common.controller.CMBControllerServlet;
+import com.comcast.cmb.common.model.User;
+import com.comcast.cmb.common.persistence.PersistenceFactory;
+import com.comcast.cmb.common.persistence.UserCassandraPersistence;
+import com.comcast.cmb.common.util.Util;
 import com.comcast.cmb.test.tools.SimpleHttpServletRequest;
 import com.comcast.cmb.test.tools.SimpleHttpServletResponse;
-import com.comcast.plaxo.cmb.common.util.Util;
+import com.comcast.cqs.controller.CQSQueueMessagesPageServlet;
+import com.comcast.cqs.model.CQSMessage;
+import com.comcast.cqs.model.CQSQueue;
+import com.comcast.cqs.persistence.CQSMessagePartitionedCassandraPersistence;
+import com.comcast.cqs.persistence.CQSQueueCassandraPersistence;
+import com.comcast.cqs.persistence.ICQSMessagePersistence;
+import com.comcast.cqs.persistence.ICQSQueuePersistence;
+
 import org.apache.log4j.Logger;
 import org.junit.*;
 
-import com.comcast.plaxo.cmb.common.controller.CMBControllerServlet;
-import com.comcast.plaxo.cmb.common.model.User;
-import com.comcast.plaxo.cmb.common.persistence.PersistenceFactory;
-import com.comcast.plaxo.cmb.common.persistence.UserCassandraPersistence;
-import com.comcast.plaxo.cqs.controller.CQSQueueMessagesPageServlet;
-import com.comcast.plaxo.cqs.model.CQSMessage;
-import com.comcast.plaxo.cqs.model.CQSQueue;
-import com.comcast.plaxo.cqs.persistence.CQSMessagePartitionedCassandraPersistence;
-import com.comcast.plaxo.cqs.persistence.CQSQueueCassandraPersistence;
-import com.comcast.plaxo.cqs.persistence.ICQSMessagePersistence;
-import com.comcast.plaxo.cqs.persistence.ICQSQueuePersistence;
 
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;

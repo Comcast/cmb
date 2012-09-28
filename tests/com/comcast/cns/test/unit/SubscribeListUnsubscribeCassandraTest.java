@@ -24,23 +24,23 @@ import java.util.TreeSet;
 import org.apache.log4j.Logger;
 import org.junit.* ;
 
+import com.comcast.cmb.common.controller.CMBControllerServlet;
+import com.comcast.cmb.common.model.User;
+import com.comcast.cmb.common.persistence.IUserPersistence;
+import com.comcast.cmb.common.persistence.PersistenceFactory;
+import com.comcast.cmb.common.util.CMBErrorCodes;
+import com.comcast.cmb.common.util.CMBException;
+import com.comcast.cmb.common.util.PersistenceException;
 import com.comcast.cmb.test.tools.CNSTestingUtils;
-import com.comcast.plaxo.cmb.common.controller.CMBControllerServlet;
-import com.comcast.plaxo.cmb.common.model.User;
-import com.comcast.plaxo.cmb.common.persistence.IUserPersistence;
-import com.comcast.plaxo.cmb.common.persistence.PersistenceFactory;
-import com.comcast.plaxo.cmb.common.util.CMBErrorCodes;
-import com.comcast.plaxo.cmb.common.util.CMBException;
-import com.comcast.plaxo.cmb.common.util.PersistenceException;
-import com.comcast.plaxo.cns.model.CNSSubscription.CnsSubscriptionProtocol;
-import com.comcast.plaxo.cns.model.CNSSubscriptionAttributes;
-import com.comcast.plaxo.cns.model.CNSTopic;
-import com.comcast.plaxo.cns.model.CNSSubscription;
-import com.comcast.plaxo.cns.persistence.ICNSAttributesPersistence;
-import com.comcast.plaxo.cns.persistence.ICNSTopicPersistence;
-import com.comcast.plaxo.cns.persistence.CNSSubscriptionCassandraPersistence;
-import com.comcast.plaxo.cns.persistence.CNSTopicCassandraPersistence;
-import com.comcast.plaxo.cns.persistence.ICNSSubscriptionPersistence;
+import com.comcast.cns.model.CNSSubscription;
+import com.comcast.cns.model.CNSSubscriptionAttributes;
+import com.comcast.cns.model.CNSTopic;
+import com.comcast.cns.model.CNSSubscription.CnsSubscriptionProtocol;
+import com.comcast.cns.persistence.CNSSubscriptionCassandraPersistence;
+import com.comcast.cns.persistence.CNSTopicCassandraPersistence;
+import com.comcast.cns.persistence.ICNSAttributesPersistence;
+import com.comcast.cns.persistence.ICNSSubscriptionPersistence;
+import com.comcast.cns.persistence.ICNSTopicPersistence;
 
 import static org.junit.Assert.*;
 
@@ -57,7 +57,7 @@ public class SubscribeListUnsubscribeCassandraTest {
     @Before
     public void setup() throws Exception {
 
-    	com.comcast.plaxo.cmb.common.util.Util.initLog4jTest();
+    	com.comcast.cmb.common.util.Util.initLog4jTest();
     	CMBControllerServlet.valueAccumulator.initializeAllCounters();
 		PersistenceFactory.reset();
 
@@ -176,7 +176,7 @@ public class SubscribeListUnsubscribeCassandraTest {
 			assertTrue(afterSubscribeCount == beforeSubscribeCount+1);
 
 			try {
-				l = subscriptionHandler.listSubscriptionsByTopic(null, com.comcast.plaxo.cns.util.Util.generateCnsTopicArn("xyz", "east", userId1), null);
+				l = subscriptionHandler.listSubscriptionsByTopic(null, com.comcast.cns.util.Util.generateCnsTopicArn("xyz", "east", userId1), null);
 			} catch (CMBException ex) {
 				assertTrue(ex.getCMBCode().equals(CMBErrorCodes.NotFound.getCMBCode()));
 			}

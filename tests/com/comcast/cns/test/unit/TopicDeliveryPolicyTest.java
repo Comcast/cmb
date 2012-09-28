@@ -23,14 +23,14 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.comcast.plaxo.cmb.common.controller.CMBControllerServlet;
-import com.comcast.plaxo.cmb.common.persistence.PersistenceFactory;
-import com.comcast.plaxo.cmb.common.util.CMBException;
-import com.comcast.plaxo.cmb.common.util.Util;
-import com.comcast.plaxo.cns.model.CNSRetryPolicy;
-import com.comcast.plaxo.cns.model.CNSRetryPolicy.CnsBackoffFunction;
-import com.comcast.plaxo.cns.model.CNSThrottlePolicy;
-import com.comcast.plaxo.cns.model.CNSTopicDeliveryPolicy;
+import com.comcast.cmb.common.controller.CMBControllerServlet;
+import com.comcast.cmb.common.persistence.PersistenceFactory;
+import com.comcast.cmb.common.util.CMBException;
+import com.comcast.cmb.common.util.Util;
+import com.comcast.cns.model.CNSRetryPolicy;
+import com.comcast.cns.model.CNSThrottlePolicy;
+import com.comcast.cns.model.CNSTopicDeliveryPolicy;
+import com.comcast.cns.model.CNSRetryPolicy.CnsBackoffFunction;
 
 public class TopicDeliveryPolicyTest {
 

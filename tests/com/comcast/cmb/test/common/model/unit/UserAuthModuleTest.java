@@ -15,15 +15,15 @@
  */
 package com.comcast.cmb.test.common.model.unit;
 
-import com.comcast.plaxo.cmb.common.controller.CMBControllerServlet;
-import com.comcast.plaxo.cmb.common.model.IAuthModule;
-import com.comcast.plaxo.cmb.common.model.User;
-import com.comcast.plaxo.cmb.common.model.UserAuthModule;
-import com.comcast.plaxo.cmb.common.persistence.IUserPersistence;
-import com.comcast.plaxo.cmb.common.persistence.UserCassandraPersistence;
-import com.comcast.plaxo.cmb.common.util.AuthenticationException;
-import com.comcast.plaxo.cmb.common.util.CMBErrorCodes;
-import com.comcast.plaxo.cmb.common.util.Util;
+import com.comcast.cmb.common.controller.CMBControllerServlet;
+import com.comcast.cmb.common.model.IAuthModule;
+import com.comcast.cmb.common.model.User;
+import com.comcast.cmb.common.model.UserAuthModule;
+import com.comcast.cmb.common.persistence.IUserPersistence;
+import com.comcast.cmb.common.persistence.UserCassandraPersistence;
+import com.comcast.cmb.common.util.AuthenticationException;
+import com.comcast.cmb.common.util.CMBErrorCodes;
+import com.comcast.cmb.common.util.Util;
 
 import org.junit.After;
 import org.junit.Before;

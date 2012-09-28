@@ -15,9 +15,9 @@
  */
 package com.comcast.cmb.test.common.model.unit;
 
-import com.comcast.plaxo.cmb.common.controller.CMBControllerServlet;
-import com.comcast.plaxo.cmb.common.model.ReceiptModule;
-import com.comcast.plaxo.cmb.common.util.Util;
+import com.comcast.cmb.common.controller.CMBControllerServlet;
+import com.comcast.cmb.common.model.ReceiptModule;
+import com.comcast.cmb.common.util.Util;
 
 import org.junit.After;
 import org.junit.Before;

@@ -23,13 +23,13 @@ import com.amazonaws.services.sqs.AmazonSQSClient;
 import com.amazonaws.services.sqs.model.CreateQueueRequest;
 import com.amazonaws.services.sqs.model.CreateQueueResult;
 import com.amazonaws.services.sqs.model.DeleteQueueRequest;
-import com.comcast.plaxo.cmb.common.controller.CMBControllerServlet;
-import com.comcast.plaxo.cmb.common.model.User;
-import com.comcast.plaxo.cmb.common.persistence.IUserPersistence;
-import com.comcast.plaxo.cmb.common.persistence.PersistenceFactory;
-import com.comcast.plaxo.cmb.common.persistence.UserCassandraPersistence;
-import com.comcast.plaxo.cmb.common.util.CMBProperties;
-import com.comcast.plaxo.cmb.common.util.Util;
+import com.comcast.cmb.common.controller.CMBControllerServlet;
+import com.comcast.cmb.common.model.User;
+import com.comcast.cmb.common.persistence.IUserPersistence;
+import com.comcast.cmb.common.persistence.PersistenceFactory;
+import com.comcast.cmb.common.persistence.UserCassandraPersistence;
+import com.comcast.cmb.common.util.CMBProperties;
+import com.comcast.cmb.common.util.Util;
 
 import org.apache.log4j.Logger;
 import org.junit.After;
@@ -80,7 +80,7 @@ public class CreateDeleteListQueueAWSTest {
 
             sqs.setEndpoint(CMBProperties.getInstance().getCQSServerUrl());
 
-            CreateQueueRequest qRequest = new CreateQueueRequest("PlaxoTestQueue"+rand.nextInt());
+            CreateQueueRequest qRequest = new CreateQueueRequest("TestQueue"+rand.nextInt());
 
             CreateQueueResult result = sqs.createQueue(qRequest);
 

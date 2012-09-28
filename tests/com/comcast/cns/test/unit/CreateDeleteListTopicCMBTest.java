@@ -21,18 +21,18 @@ import java.util.*;
 import org.apache.log4j.Logger;
 import org.junit.* ;
 
+import com.comcast.cmb.common.controller.CMBControllerServlet;
+import com.comcast.cmb.common.model.User;
+import com.comcast.cmb.common.persistence.IUserPersistence;
+import com.comcast.cmb.common.persistence.PersistenceFactory;
+import com.comcast.cmb.common.persistence.UserCassandraPersistence;
+import com.comcast.cmb.common.util.Util;
 import com.comcast.cmb.test.tools.CNSTestingUtils;
-import com.comcast.plaxo.cmb.common.controller.CMBControllerServlet;
-import com.comcast.plaxo.cmb.common.model.User;
-import com.comcast.plaxo.cmb.common.persistence.IUserPersistence;
-import com.comcast.plaxo.cmb.common.persistence.PersistenceFactory;
-import com.comcast.plaxo.cmb.common.persistence.UserCassandraPersistence;
-import com.comcast.plaxo.cmb.common.util.Util;
-import com.comcast.plaxo.cns.controller.CNSControllerServlet;
-import com.comcast.plaxo.cns.model.CNSTopic;
-import com.comcast.plaxo.cns.model.CNSTopicAttributes;
-import com.comcast.plaxo.cns.persistence.ICNSAttributesPersistence;
-import com.comcast.plaxo.cns.persistence.ICNSTopicPersistence;
+import com.comcast.cns.controller.CNSControllerServlet;
+import com.comcast.cns.model.CNSTopic;
+import com.comcast.cns.model.CNSTopicAttributes;
+import com.comcast.cns.persistence.ICNSAttributesPersistence;
+import com.comcast.cns.persistence.ICNSTopicPersistence;
 
 import static org.junit.Assert.*;
 

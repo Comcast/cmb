@@ -18,7 +18,11 @@ package com.comcast.cns.test.unit;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import com.comcast.plaxo.cmb.common.util.Util;
+import com.comcast.cmb.common.controller.CMBControllerServlet;
+import com.comcast.cmb.common.persistence.CassandraPersistence;
+import com.comcast.cmb.common.util.CMBProperties;
+import com.comcast.cmb.common.util.Util;
+
 import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.hector.api.HConsistencyLevel;
 
@@ -27,9 +31,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.comcast.plaxo.cmb.common.controller.CMBControllerServlet;
-import com.comcast.plaxo.cmb.common.persistence.CassandraPersistence;
-import com.comcast.plaxo.cmb.common.util.CMBProperties;
 
 public class CassandraTest {
 

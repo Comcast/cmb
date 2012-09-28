@@ -280,7 +280,7 @@ public class CMBProperties {
 			smtpHostName = props.getProperty("cmb.cns.smtp.hostname");
 			smtpUserName = props.getProperty("cmb.cns.smtp.username");
 			smtpPassword = props.getProperty("cmb.cns.smtp.password");
-			smtpReplyAddress = props.getProperty("cmb.cns.smtp.replyAddress", "unknown@plaxo.com");
+			smtpReplyAddress = props.getProperty("cmb.cns.smtp.replyAddress");
 			
             region = props.getProperty("cmb.region");
 

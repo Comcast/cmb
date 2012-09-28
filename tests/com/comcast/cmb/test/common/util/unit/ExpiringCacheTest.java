@@ -28,10 +28,10 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.comcast.plaxo.cmb.common.controller.CMBControllerServlet;
-import com.comcast.plaxo.cmb.common.util.ExpiringCache;
-import com.comcast.plaxo.cmb.common.util.Util;
-import com.comcast.plaxo.cmb.common.util.ExpiringCache.CacheFullException;
+import com.comcast.cmb.common.controller.CMBControllerServlet;
+import com.comcast.cmb.common.util.ExpiringCache;
+import com.comcast.cmb.common.util.Util;
+import com.comcast.cmb.common.util.ExpiringCache.CacheFullException;
 
 public class ExpiringCacheTest {
 
