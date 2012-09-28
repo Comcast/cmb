@@ -2,17 +2,17 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
 	<properties>
-	    <BUILDNUM>2.2.9</BUILDNUM>
-	    <PROJECTNAME>CNS</PROJECTNAME>
-	    <!-- <PROJECTNAME>CQS</PROJECTNAME> -->
-	    <!-- <PROJECTNAME>CMB</PROJECTNAME> -->
+	    <buildnum>2.2.9</buildnum>
+	    <projectname>CNS</projectname>
+	    <!-- <projectname>CQS</projectname> -->
+	    <!-- <projectname>CMB</projectname> -->
 	</properties>
 
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.comcast.plaxo.cmb</groupId>
-	<artifactId>${PROJECTNAME}</artifactId>
+	<artifactId>${projectname}</artifactId>
 	<packaging>war</packaging>
-	<version>${BUILDNUM}</version>
+	<version>${buildnum}</version>
 	<name>Comcast Message Bus</name>
 	<url>http://www.comcast.com</url>
 
@@ -183,11 +183,18 @@
 		    <artifactId>jedis</artifactId>
 		    <version>2.0.0</version>
 		</dependency>
+		
+		<dependency>
+			<groupId>xerces</groupId>
+			<artifactId>xercesImpl</artifactId>
+			<version>2.10.0</version>
+		</dependency>
+		
 	</dependencies>
 
 	<build>
 
-		<finalName>${PROJECTNAME}</finalName>
+		<finalName>${projectname}</finalName>
 		<sourceDirectory>${basedir}/src</sourceDirectory>
 		<testSourceDirectory>${basedir}/tests</testSourceDirectory>
 
@@ -231,10 +238,18 @@
         		<version>2.4</version>
  				<executions>
           			<execution>
-		            <phase>package</phase>
-		            <goals>
-		            	<goal>jar</goal>
-		            </goals>
+			            <phase>package</phase>
+			            <goals>
+			            	<goal>jar</goal>
+			            </goals>
+			            <configuration>
+	              			<!-- <classifier>client</classifier> -->
+	              			<includes>
+	                			<include>**/cmb/**</include>
+	                			<include>**/cns/**</include>
+	                			<include>**/cqs/**</include>
+	              			</includes>
+	            		</configuration>
 		            </execution>
 	            </executions>
       		</plugin>
@@ -245,8 +260,8 @@
 				<version>2.1.1</version>
 				<configuration>
 					<!-- <containerConfigXML>${basedir}/config/context.xml</containerConfigXML> -->
-					<webXml>${basedir}/WEB-INF-${PROJECTNAME}/web.xml</webXml>
-					<warName>${PROJECTNAME}</warName>
+					<webXml>${basedir}/WEB-INF-${projectname}/web.xml</webXml>
+					<warName>${projectname}</warName>
 					<webResources>
 						<resource>
 							<directory>lib</directory>

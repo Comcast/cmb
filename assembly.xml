@@ -31,7 +31,7 @@
 			<outputDirectory>/</outputDirectory>
 			<unpack>false</unpack>
 			<includes>
-				<include>com.comcast.cmb:${PROJECTNAME}:war</include>
+				<include>com.comcast.cmb:${projectname}:war</include>
 			</includes>
 		</dependencySet>
 
