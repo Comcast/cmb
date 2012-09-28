@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.comcast.plaxo.cmb.common.persistence;
+package com.comcast.cmb.common.persistence;
 
-import com.comcast.plaxo.cmb.common.model.User;
-import com.comcast.plaxo.cmb.common.util.PersistenceException;
+import com.comcast.cmb.common.model.User;
+import com.comcast.cmb.common.util.PersistenceException;
 
 import java.util.List;
 

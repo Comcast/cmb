@@ -13,11 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.comcast.plaxo.cmb.common.model;
+package com.comcast.cmb.common.model;
 
-import com.comcast.plaxo.cmb.common.persistence.IUserPersistence;
-import com.comcast.plaxo.cmb.common.util.*;
-import com.comcast.plaxo.cmb.common.util.ExpiringCache.CacheFullException;
+import com.comcast.cmb.common.persistence.IUserPersistence;
+import com.comcast.cmb.common.util.AuthUtil;
+import com.comcast.cmb.common.util.AuthenticationException;
+import com.comcast.cmb.common.util.CMBErrorCodes;
+import com.comcast.cmb.common.util.CMBException;
+import com.comcast.cmb.common.util.CMBProperties;
+import com.comcast.cmb.common.util.ExpiringCache;
+import com.comcast.cmb.common.util.ExpiringCache.CacheFullException;
+import com.comcast.cmb.test.common.util.unit.*;
 
 import org.apache.log4j.Logger;
 

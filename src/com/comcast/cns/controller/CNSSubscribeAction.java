@@ -13,21 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.comcast.plaxo.cns.controller;
+package com.comcast.cns.controller;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.log4j.Logger;
 
-import com.comcast.plaxo.cmb.common.model.User;
-import com.comcast.plaxo.cmb.common.persistence.PersistenceFactory;
-import com.comcast.plaxo.cmb.common.util.CMBException;
-import com.comcast.plaxo.cns.io.CNSSubscriptionPopulator;
-import com.comcast.plaxo.cns.io.CommunicationUtils;
-import com.comcast.plaxo.cns.model.CNSSubscription;
-import com.comcast.plaxo.cns.util.CNSErrorCodes;
-import com.comcast.plaxo.cns.util.Util;
+import com.comcast.cmb.common.model.User;
+import com.comcast.cmb.common.persistence.PersistenceFactory;
+import com.comcast.cmb.common.util.CMBException;
+import com.comcast.cns.io.CNSSubscriptionPopulator;
+import com.comcast.cns.io.CommunicationUtils;
+import com.comcast.cns.model.CNSSubscription;
+import com.comcast.cns.util.CNSErrorCodes;
+import com.comcast.cns.util.Util;
 /**
  * Subscribe action
  * @author bwolf, jorge

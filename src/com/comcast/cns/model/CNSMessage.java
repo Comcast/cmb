@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.comcast.plaxo.cns.model;
+package com.comcast.cns.model;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -23,10 +23,10 @@ import java.util.UUID;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import com.comcast.plaxo.cmb.common.util.CMBErrorCodes;
-import com.comcast.plaxo.cmb.common.util.CMBException;
-import com.comcast.plaxo.cmb.common.util.Util;
-import com.comcast.plaxo.cns.model.CNSSubscription.CnsSubscriptionProtocol;
+import com.comcast.cmb.common.util.CMBErrorCodes;
+import com.comcast.cmb.common.util.CMBException;
+import com.comcast.cmb.common.util.Util;
+import com.comcast.cns.model.CNSSubscription.CnsSubscriptionProtocol;
 
 /**
  * Value class for CNSMessage
@@ -254,7 +254,7 @@ public final class CNSMessage {
     public void processMessageToProtocols() throws CMBException {
         for (CnsSubscriptionProtocol prot : CnsSubscriptionProtocol.values()) {
             if (prot != CnsSubscriptionProtocol.email) {
-                protocolToProcessedMessage.put(prot, com.comcast.plaxo.cns.util.Util.generateMessageJson(topicArn, getProtocolSpecificMessage(prot, this), subject));
+                protocolToProcessedMessage.put(prot, com.comcast.cns.util.Util.generateMessageJson(topicArn, getProtocolSpecificMessage(prot, this), subject));
             } else {
                 protocolToProcessedMessage.put(prot, getProtocolSpecificMessage(prot, this));
             }

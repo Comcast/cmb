@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.comcast.plaxo.cns.controller;
+package com.comcast.cns.controller;
 
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -21,10 +21,10 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.comcast.plaxo.cmb.common.util.CMBProperties;
-import com.comcast.plaxo.cmb.common.util.RollingWindowCapture;
-import com.comcast.plaxo.cns.io.HTTPEndpointPublisherApache;
-import com.comcast.plaxo.cns.tools.CNSEndpointPublisherJobConsumer;
+import com.comcast.cmb.common.util.CMBProperties;
+import com.comcast.cmb.common.util.RollingWindowCapture;
+import com.comcast.cns.io.HTTPEndpointPublisherApache;
+import com.comcast.cns.tools.CNSEndpointPublisherJobConsumer;
 
 /**
  * The implementation of monitoring for CNS.

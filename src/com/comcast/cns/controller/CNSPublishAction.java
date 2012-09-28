@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.comcast.plaxo.cns.controller;
+package com.comcast.cns.controller;
 
 import java.util.Random;
 import java.util.concurrent.Callable;
@@ -33,19 +33,19 @@ import com.amazonaws.services.sqs.model.GetQueueUrlRequest;
 import com.amazonaws.services.sqs.model.GetQueueUrlResult;
 import com.amazonaws.services.sqs.model.SendMessageRequest;
 import com.amazonaws.services.sqs.model.SendMessageResult;
-import com.comcast.plaxo.cmb.common.controller.CMBControllerServlet;
-import com.comcast.plaxo.cmb.common.model.User;
-import com.comcast.plaxo.cmb.common.persistence.IUserPersistence;
-import com.comcast.plaxo.cmb.common.persistence.PersistenceFactory;
-import com.comcast.plaxo.cmb.common.util.CMBException;
-import com.comcast.plaxo.cmb.common.util.CMBProperties;
-import com.comcast.plaxo.cmb.common.util.ExpiringCache;
-import com.comcast.plaxo.cmb.common.util.ValueAccumulator.AccumulatorName;
-import com.comcast.plaxo.cns.io.CNSSubscriptionPopulator;
-import com.comcast.plaxo.cns.model.CNSMessage;
-import com.comcast.plaxo.cns.model.CNSTopic;
-import com.comcast.plaxo.cns.util.CNSErrorCodes;
-import com.comcast.plaxo.cns.util.Util;
+import com.comcast.cmb.common.controller.CMBControllerServlet;
+import com.comcast.cmb.common.model.User;
+import com.comcast.cmb.common.persistence.IUserPersistence;
+import com.comcast.cmb.common.persistence.PersistenceFactory;
+import com.comcast.cmb.common.util.CMBException;
+import com.comcast.cmb.common.util.CMBProperties;
+import com.comcast.cmb.common.util.ExpiringCache;
+import com.comcast.cmb.common.util.ValueAccumulator.AccumulatorName;
+import com.comcast.cns.io.CNSSubscriptionPopulator;
+import com.comcast.cns.model.CNSMessage;
+import com.comcast.cns.model.CNSTopic;
+import com.comcast.cns.util.CNSErrorCodes;
+import com.comcast.cns.util.Util;
 
 /**
  * Publish action

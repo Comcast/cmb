@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.comcast.plaxo.cns.io;
+package com.comcast.cns.io;
 
 import java.util.List;
-import com.comcast.plaxo.cns.model.CNSTopic;
+
+import com.comcast.cns.model.CNSTopic;
 
 /**
  * API response generator for Topics

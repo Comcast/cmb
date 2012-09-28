@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.comcast.plaxo.cns.io;
+package com.comcast.cns.io;
 
 import java.util.List;
 
-import com.comcast.plaxo.cns.model.CNSMessage;
-import com.comcast.plaxo.cns.model.CNSSubscription;
+import com.comcast.cns.model.CNSMessage;
+import com.comcast.cns.model.CNSSubscription;
 
 /**
  * Class to generate API response for subscriptions

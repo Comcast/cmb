@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.comcast.plaxo.cqs.persistence;
+package com.comcast.cqs.persistence;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -38,14 +38,14 @@ import me.prettyprint.hector.api.beans.Composite;
 import me.prettyprint.hector.api.beans.HSuperColumn;
 import me.prettyprint.hector.api.beans.SuperSlice;
 
-import com.comcast.plaxo.cmb.common.persistence.CassandraPersistence;
-import com.comcast.plaxo.cmb.common.util.CMBProperties;
-import com.comcast.plaxo.cmb.common.util.PersistenceException;
-import com.comcast.plaxo.cqs.model.CQSMessage;
-import com.comcast.plaxo.cqs.model.CQSQueue;
-import com.comcast.plaxo.cqs.util.CQSErrorCodes;
-import com.comcast.plaxo.cqs.util.RandomNumberCollection;
-import com.comcast.plaxo.cqs.util.Util;
+import com.comcast.cmb.common.persistence.CassandraPersistence;
+import com.comcast.cmb.common.util.CMBProperties;
+import com.comcast.cmb.common.util.PersistenceException;
+import com.comcast.cqs.model.CQSMessage;
+import com.comcast.cqs.model.CQSQueue;
+import com.comcast.cqs.util.CQSErrorCodes;
+import com.comcast.cqs.util.RandomNumberCollection;
+import com.comcast.cqs.util.Util;
 import com.eaio.uuid.UUIDGen;
 /**
  * Cassandra persistence for CQS Message

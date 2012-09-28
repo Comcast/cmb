@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.comcast.plaxo.cqs.controller;
+package com.comcast.cqs.controller;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import com.comcast.plaxo.cmb.common.model.User;
-import com.comcast.plaxo.cmb.common.persistence.PersistenceFactory;
-import com.comcast.plaxo.cqs.io.CQSQueuePopulator;
-import com.comcast.plaxo.cqs.model.CQSQueue;
+import com.comcast.cmb.common.model.User;
+import com.comcast.cmb.common.persistence.PersistenceFactory;
+import com.comcast.cqs.io.CQSQueuePopulator;
+import com.comcast.cqs.model.CQSQueue;
 
 /**
  * Delete queue

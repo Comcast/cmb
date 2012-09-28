@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.comcast.plaxo.cns.tools;
+package com.comcast.cns.tools;
 
 import java.util.List;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -35,31 +35,31 @@ import com.amazonaws.services.sqs.model.GetQueueUrlResult;
 import com.amazonaws.services.sqs.model.Message;
 import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
 import com.amazonaws.services.sqs.model.ReceiveMessageResult;
-import com.comcast.plaxo.cmb.common.controller.CMBControllerServlet;
-import com.comcast.plaxo.cmb.common.model.User;
-import com.comcast.plaxo.cmb.common.persistence.IUserPersistence;
-import com.comcast.plaxo.cmb.common.persistence.PersistenceFactory;
-import com.comcast.plaxo.cmb.common.persistence.UserCassandraPersistence;
-import com.comcast.plaxo.cmb.common.util.CMBErrorCodes;
-import com.comcast.plaxo.cmb.common.util.CMBException;
-import com.comcast.plaxo.cmb.common.util.CMBProperties;
-import com.comcast.plaxo.cmb.common.util.PersistenceException;
-import com.comcast.plaxo.cmb.common.util.ValueAccumulator.AccumulatorName;
-import com.comcast.plaxo.cns.controller.CNSMonitor;
-import com.comcast.plaxo.cns.io.EndpointPublisherFactory;
-import com.comcast.plaxo.cns.io.IEndpointPublisher;
-import com.comcast.plaxo.cns.model.CNSEndpointPublishJob;
-import com.comcast.plaxo.cns.model.CNSEndpointPublishJob.SubInfo;
-import com.comcast.plaxo.cns.model.CNSMessage;
-import com.comcast.plaxo.cns.model.CNSRetryPolicy;
-import com.comcast.plaxo.cns.model.CNSSubscriptionAttributes;
-import com.comcast.plaxo.cns.model.CNSSubscriptionDeliveryPolicy;
-import com.comcast.plaxo.cns.model.CNSSubscription.CnsSubscriptionProtocol;
-import com.comcast.plaxo.cns.persistence.CachedCNSEndpointPublishJob;
-import com.comcast.plaxo.cns.persistence.ICNSAttributesPersistence;
-import com.comcast.plaxo.cns.persistence.SubscriberNotFoundException;
-import com.comcast.plaxo.cns.persistence.TopicNotFoundException;
-import com.comcast.plaxo.cns.util.Util;
+import com.comcast.cmb.common.controller.CMBControllerServlet;
+import com.comcast.cmb.common.model.User;
+import com.comcast.cmb.common.persistence.IUserPersistence;
+import com.comcast.cmb.common.persistence.PersistenceFactory;
+import com.comcast.cmb.common.persistence.UserCassandraPersistence;
+import com.comcast.cmb.common.util.CMBErrorCodes;
+import com.comcast.cmb.common.util.CMBException;
+import com.comcast.cmb.common.util.CMBProperties;
+import com.comcast.cmb.common.util.PersistenceException;
+import com.comcast.cmb.common.util.ValueAccumulator.AccumulatorName;
+import com.comcast.cns.controller.CNSMonitor;
+import com.comcast.cns.io.EndpointPublisherFactory;
+import com.comcast.cns.io.IEndpointPublisher;
+import com.comcast.cns.model.CNSEndpointPublishJob;
+import com.comcast.cns.model.CNSMessage;
+import com.comcast.cns.model.CNSRetryPolicy;
+import com.comcast.cns.model.CNSSubscriptionAttributes;
+import com.comcast.cns.model.CNSSubscriptionDeliveryPolicy;
+import com.comcast.cns.model.CNSEndpointPublishJob.SubInfo;
+import com.comcast.cns.model.CNSSubscription.CnsSubscriptionProtocol;
+import com.comcast.cns.persistence.CachedCNSEndpointPublishJob;
+import com.comcast.cns.persistence.ICNSAttributesPersistence;
+import com.comcast.cns.persistence.SubscriberNotFoundException;
+import com.comcast.cns.persistence.TopicNotFoundException;
+import com.comcast.cns.util.Util;
 
 /**
  * 

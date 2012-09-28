@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.comcast.plaxo.cqs.persistence;
+package com.comcast.cqs.persistence;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -32,12 +32,12 @@ import me.prettyprint.hector.api.beans.ColumnSlice;
 import me.prettyprint.hector.api.beans.Row;
 import me.prettyprint.hector.api.query.QueryResult;
 
-import com.comcast.plaxo.cmb.common.persistence.CassandraPersistence;
-import com.comcast.plaxo.cmb.common.util.CMBProperties;
-import com.comcast.plaxo.cmb.common.util.PersistenceException;
-import com.comcast.plaxo.cqs.model.CQSQueue;
-import com.comcast.plaxo.cqs.util.CQSConstants;
-import com.comcast.plaxo.cqs.util.CQSErrorCodes;
+import com.comcast.cmb.common.persistence.CassandraPersistence;
+import com.comcast.cmb.common.util.CMBProperties;
+import com.comcast.cmb.common.util.PersistenceException;
+import com.comcast.cqs.model.CQSQueue;
+import com.comcast.cqs.util.CQSConstants;
+import com.comcast.cqs.util.CQSErrorCodes;
 /**
  * Cassandra persistence for queues
  * @author aseem, jorge, bwolf, baosen, vvenkatraman

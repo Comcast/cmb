@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.comcast.plaxo.cns.io;
+package com.comcast.cns.io;
 
-import com.comcast.plaxo.cns.model.CNSSubscriptionAttributes;
-import com.comcast.plaxo.cns.model.CNSTopicAttributes;
+import com.comcast.cns.model.CNSSubscriptionAttributes;
+import com.comcast.cns.model.CNSTopicAttributes;
 
 /**
  * Class to generate API response for subscription attributes

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.comcast.plaxo.cmb.common.util;
+package com.comcast.cmb.common.util;
 
 import org.apache.log4j.Logger;
 
@@ -316,8 +316,8 @@ public class CMBProperties {
             userCacheExpiring = Integer.parseInt(props.getProperty("cmb.user.cacheExpiringInSeconds", "60"));
             userCacheSizeLimit = Integer.parseInt(props.getProperty("cmb.user.cacheSizeLimit", "1000"));
             
-            httpPublisherEndpointConnectionPoolSize = Integer.parseInt(props.getProperty("cmb.cns.httpPublisherEndpointConnectionPoolSize", "200"));
-            httpPublisherEndpointConnectionsPerRouteSize = Integer.parseInt(props.getProperty("cmb.cns.httpPublisherEndpointConnectionsPerRouteSize", "50"));
+            httpPublisherEndpointConnectionPoolSize = Integer.parseInt(props.getProperty("cmb.cns.publisher.http.connectionPoolSize", "200"));
+            httpPublisherEndpointConnectionsPerRouteSize = Integer.parseInt(props.getProperty("cmb.cns.publisher.http.connectionsPerRouteSize", "50"));
 			
             cnsCacheExpiring = Integer.parseInt(props.getProperty("cmb.cns.cacheExpiringInSeconds", "60"));
             cnsCacheSizeLimit = Integer.parseInt(props.getProperty("cmb.cns.cacheSizeLimit", "1000"));
@@ -342,19 +342,19 @@ public class CMBProperties {
             
             cassandraThriftSocketTimeOutMS = Integer.parseInt(props.getProperty("cmb.cassandra.thriftSocketTimeOutMS", "2000"));
             
-            numEPPubJobProducers = Integer.parseInt(props.getProperty("cmb.cns.cnsPublisher.numProducers", "2"));
-            numEPPubJobConsumers = Integer.parseInt(props.getProperty("cmb.cns.cnsPublisher.numConsumers", "4"));
-            numPublishJobQs = Integer.parseInt(props.getProperty("cmb.cns.cnsPublisher.numPublishJobQs", "2"));
-            numEPPublishJobQs = Integer.parseInt(props.getProperty("cmb.cns.cnsPublisher.numEPPublishJobQs", "4"));
-            numDeliveryHandlers = Integer.parseInt(props.getProperty("cmb.cns.cnsPublisher.numDeliveryHandlers", "20"));
-            numReDeliveryHandlers = Integer.parseInt(props.getProperty("cmb.cns.cnsPublisher.numReDeliveryHandlers", "5"));
-            deliveryHandlerJobQueueLimit = Integer.parseInt(props.getProperty("cmb.cns.cnsPublisher.deliveryHandlerJobQueueLimit", "1000"));
-            reDeliveryHandlerJobQueueLimit = Integer.parseInt(props.getProperty("cmb.cns.cnsPublisher.reDeliveryHandlerJobQueueLimit", "5000"));
-            publishJobVTO = Integer.parseInt(props.getProperty("cmb.cns.cnsPublisher.publichJobVTO", "10"));
-            EPPublishJobVTO = Integer.parseInt(props.getProperty("cmb.cns.cnsPublisher.EPPublishJobVTO", "10"));
-            maxSubscriptionsPerEPPublishJob = Integer.parseInt(props.getProperty("cmb.cns.cnsPublisher.maxSubscriptionsPerEPPublishJob", "100"));
-            producerProcessingMaxDelay = Integer.parseInt(props.getProperty("cmb.cns.cnsPublisher.producerProcessingMaxDelay", "1000"));
-            consumerProcessingMaxDelay = Integer.parseInt(props.getProperty("cmb.cns.cnsPublisher.consumerProcessingMaxDelay", "1000"));
+            numEPPubJobProducers = Integer.parseInt(props.getProperty("cmb.cns.publisher.numProducers", "8"));
+            numEPPubJobConsumers = Integer.parseInt(props.getProperty("cmb.cns.publisher.numConsumers", "4"));
+            numPublishJobQs = Integer.parseInt(props.getProperty("cmb.cns.publisher.numPublishJobQs", "2"));
+            numEPPublishJobQs = Integer.parseInt(props.getProperty("cmb.cns.publisher.numEPPublishJobQs", "4"));
+            numDeliveryHandlers = Integer.parseInt(props.getProperty("cmb.cns.publisher.numDeliveryHandlers", "20"));
+            numReDeliveryHandlers = Integer.parseInt(props.getProperty("cmb.cns.publisher.numReDeliveryHandlers", "5"));
+            deliveryHandlerJobQueueLimit = Integer.parseInt(props.getProperty("cmb.cns.publisher.deliveryHandlerJobQueueLimit", "1000"));
+            reDeliveryHandlerJobQueueLimit = Integer.parseInt(props.getProperty("cmb.cns.publisher.reDeliveryHandlerJobQueueLimit", "1000"));
+            publishJobVTO = Integer.parseInt(props.getProperty("cmb.cns.publisher.publichJobVTO", "10"));
+            EPPublishJobVTO = Integer.parseInt(props.getProperty("cmb.cns.publisher.EPPublishJobVTO", "10"));
+            maxSubscriptionsPerEPPublishJob = Integer.parseInt(props.getProperty("cmb.cns.publisher.maxSubscriptionsPerEPPublishJob", "200"));
+            producerProcessingMaxDelay = Integer.parseInt(props.getProperty("cmb.cns.publisher.producerProcessingMaxDelay", "1000"));
+            consumerProcessingMaxDelay = Integer.parseInt(props.getProperty("cmb.cns.publisher.consumerProcessingMaxDelay", "1000"));
             
             useSubInfoCache = Boolean.parseBoolean(props.getProperty("cmb.cns.useSubInfoCache", "true"));
             fileStream.close();

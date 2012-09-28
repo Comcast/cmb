@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.comcast.plaxo.cns.persistence;
+package com.comcast.cns.persistence;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -34,16 +34,16 @@ import me.prettyprint.hector.api.beans.HColumn;
 import me.prettyprint.hector.api.beans.HSuperColumn;
 import me.prettyprint.hector.api.beans.Row;
 
-import com.comcast.plaxo.cmb.common.persistence.CassandraPersistence;
-import com.comcast.plaxo.cmb.common.persistence.PersistenceFactory;
-import com.comcast.plaxo.cmb.common.util.CMBErrorCodes;
-import com.comcast.plaxo.cmb.common.util.CMBException;
-import com.comcast.plaxo.cmb.common.util.CMBProperties;
-import com.comcast.plaxo.cns.model.CNSSubscription;
-import com.comcast.plaxo.cns.model.CNSSubscriptionAttributes;
-import com.comcast.plaxo.cns.model.CNSTopic;
-import com.comcast.plaxo.cns.model.CNSSubscription.CnsSubscriptionProtocol;
-import com.comcast.plaxo.cns.util.Util;
+import com.comcast.cmb.common.persistence.CassandraPersistence;
+import com.comcast.cmb.common.persistence.PersistenceFactory;
+import com.comcast.cmb.common.util.CMBErrorCodes;
+import com.comcast.cmb.common.util.CMBException;
+import com.comcast.cmb.common.util.CMBProperties;
+import com.comcast.cns.model.CNSSubscription;
+import com.comcast.cns.model.CNSSubscriptionAttributes;
+import com.comcast.cns.model.CNSTopic;
+import com.comcast.cns.model.CNSSubscription.CnsSubscriptionProtocol;
+import com.comcast.cns.util.Util;
 
 /**
  * 
@@ -265,7 +265,7 @@ public class CNSSubscriptionCassandraPersistence extends CassandraPersistence im
 			
 			if (protocol.equals(CnsSubscriptionProtocol.cqs)) {
 			
-				String queueOwner = com.comcast.plaxo.cqs.util.Util.getQueueOwnerFromArn(endpoint);
+				String queueOwner = com.comcast.cqs.util.Util.getQueueOwnerFromArn(endpoint);
 				
 				if (queueOwner != null && queueOwner.equals(userId)) {
 					

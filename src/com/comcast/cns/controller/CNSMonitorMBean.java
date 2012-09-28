@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.comcast.plaxo.cns.controller;
+package com.comcast.cns.controller;
 
 import java.util.Map;
 

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.comcast.plaxo.cns.controller;
+package com.comcast.cns.controller;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -26,9 +26,9 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.log4j.Logger;
 
 import com.amazonaws.services.sns.model.PublishRequest;
-import com.comcast.plaxo.cmb.common.controller.AdminServletBase;
-import com.comcast.plaxo.cmb.common.controller.CMBControllerServlet;
-import com.comcast.plaxo.cns.util.Util;
+import com.comcast.cmb.common.controller.AdminServletBase;
+import com.comcast.cmb.common.controller.CMBControllerServlet;
+import com.comcast.cns.util.Util;
 
 /**
  * Publish to topic admin page

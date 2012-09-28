@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.comcast.plaxo.cqs.persistence;
+package com.comcast.cqs.persistence;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -21,9 +21,9 @@ import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.Map;
 
-import com.comcast.plaxo.cmb.common.util.PersistenceException;
-import com.comcast.plaxo.cqs.model.CQSMessage;
-import com.comcast.plaxo.cqs.model.CQSQueue;
+import com.comcast.cmb.common.util.PersistenceException;
+import com.comcast.cqs.model.CQSMessage;
+import com.comcast.cqs.model.CQSQueue;
 
 /**
  * Interface to persist cqs message

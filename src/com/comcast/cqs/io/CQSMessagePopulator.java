@@ -13,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.comcast.plaxo.cqs.io;
+package com.comcast.cqs.io;
 
 import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang.StringEscapeUtils;
 
-import com.comcast.plaxo.cqs.model.CQSBatchResultErrorEntry;
-import com.comcast.plaxo.cqs.model.CQSMessage;
-import com.comcast.plaxo.cqs.util.CQSConstants;
+import com.comcast.cqs.model.CQSBatchResultErrorEntry;
+import com.comcast.cqs.model.CQSMessage;
+import com.comcast.cqs.util.CQSConstants;
 /**
  * API response for messages
  * @author baosen, aseem, vvenkatraman, bwolf

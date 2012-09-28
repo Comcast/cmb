@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.comcast.plaxo.cqs.controller;
+package com.comcast.cqs.controller;
 
 /**
  * Provide interface for CQS Monitoring

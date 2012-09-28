@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.comcast.plaxo.cns.tools;
+package com.comcast.cns.tools;
 
 import java.lang.management.ManagementFactory;
 import java.net.InetAddress;
@@ -23,10 +23,10 @@ import javax.management.ObjectName;
 
 import org.apache.log4j.Logger;
 
-import com.comcast.plaxo.cmb.common.controller.CMBControllerServlet;
-import com.comcast.plaxo.cmb.common.util.CMBProperties;
-import com.comcast.plaxo.cmb.common.util.Util;
-import com.comcast.plaxo.cns.controller.CNSMonitor;
+import com.comcast.cmb.common.controller.CMBControllerServlet;
+import com.comcast.cmb.common.util.CMBProperties;
+import com.comcast.cmb.common.util.Util;
+import com.comcast.cns.controller.CNSMonitor;
 
 /**
  * The main class for the tool that sends out notifications or creates endpointPublich jobs

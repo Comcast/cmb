@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.comcast.plaxo.cns.io;
+package com.comcast.cns.io;
 
-import com.comcast.plaxo.cmb.common.model.User;
+import com.comcast.cmb.common.model.User;
 
 /**
  * The interface is for sending messages to a particular endpoint, first set the endpoint, and the message, and optionally the

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.comcast.plaxo.cqs.controller;
+package com.comcast.cqs.controller;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -36,11 +36,11 @@ import com.amazonaws.services.sqs.model.GetQueueAttributesRequest;
 import com.amazonaws.services.sqs.model.GetQueueAttributesResult;
 import com.amazonaws.services.sqs.model.ListQueuesRequest;
 import com.amazonaws.services.sqs.model.ListQueuesResult;
-import com.comcast.plaxo.cmb.common.controller.AdminServlet;
-import com.comcast.plaxo.cmb.common.controller.AdminServletBase;
-import com.comcast.plaxo.cmb.common.controller.CMBControllerServlet;
-import com.comcast.plaxo.cmb.common.util.CMBProperties;
-import com.comcast.plaxo.cqs.util.Util;
+import com.comcast.cmb.common.controller.AdminServlet;
+import com.comcast.cmb.common.controller.AdminServletBase;
+import com.comcast.cmb.common.controller.CMBControllerServlet;
+import com.comcast.cmb.common.util.CMBProperties;
+import com.comcast.cqs.util.Util;
 
 /**
  * Admin page for cqs users

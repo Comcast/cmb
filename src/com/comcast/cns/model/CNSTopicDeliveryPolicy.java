@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.comcast.plaxo.cns.model;
+package com.comcast.cns.model;
 
 import java.util.Iterator;
 
 import org.apache.log4j.Logger;
 import org.json.JSONObject;
 
-import com.comcast.plaxo.cmb.common.util.CMBException;
-import com.comcast.plaxo.cns.util.CNSErrorCodes;
+import com.comcast.cmb.common.util.CMBException;
+import com.comcast.cns.util.CNSErrorCodes;
 
 /**
  * represents a delivery policy

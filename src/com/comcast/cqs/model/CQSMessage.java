@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.comcast.plaxo.cqs.model;
+package com.comcast.cqs.model;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -28,8 +28,8 @@ import java.util.Map.Entry;
 import java.util.UUID;
 import org.apache.commons.codec.binary.Base64;
 
-import com.comcast.plaxo.cmb.common.util.Util;
-import com.comcast.plaxo.cqs.util.CQSConstants;
+import com.comcast.cmb.common.util.Util;
+import com.comcast.cqs.util.CQSConstants;
 
 /**
  * Model for a cqs message

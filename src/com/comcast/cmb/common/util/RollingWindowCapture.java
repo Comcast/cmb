@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.comcast.plaxo.cmb.common.util;
+package com.comcast.cmb.common.util;
 
 import java.util.Iterator;
 import java.util.concurrent.CopyOnWriteArrayList;

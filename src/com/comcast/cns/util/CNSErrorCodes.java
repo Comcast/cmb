@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.comcast.plaxo.cns.util;
+package com.comcast.cns.util;
 
-import com.comcast.plaxo.cmb.common.util.CMBErrorCodes;
+import com.comcast.cmb.common.util.CMBErrorCodes;
 
 /**
  * Declare all the error codes we use

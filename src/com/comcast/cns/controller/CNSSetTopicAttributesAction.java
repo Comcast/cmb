@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.comcast.plaxo.cns.controller;
+package com.comcast.cns.controller;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -21,14 +21,14 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.log4j.Logger;
 import org.json.JSONObject;
 
-import com.comcast.plaxo.cmb.common.model.CMBPolicy;
-import com.comcast.plaxo.cmb.common.model.User;
-import com.comcast.plaxo.cmb.common.persistence.PersistenceFactory;
-import com.comcast.plaxo.cmb.common.util.CMBException;
-import com.comcast.plaxo.cns.io.CNSAttributePopulator;
-import com.comcast.plaxo.cns.model.CNSTopicAttributes;
-import com.comcast.plaxo.cns.model.CNSTopicDeliveryPolicy;
-import com.comcast.plaxo.cns.util.CNSErrorCodes;
+import com.comcast.cmb.common.model.CMBPolicy;
+import com.comcast.cmb.common.model.User;
+import com.comcast.cmb.common.persistence.PersistenceFactory;
+import com.comcast.cmb.common.util.CMBException;
+import com.comcast.cns.io.CNSAttributePopulator;
+import com.comcast.cns.model.CNSTopicAttributes;
+import com.comcast.cns.model.CNSTopicDeliveryPolicy;
+import com.comcast.cns.util.CNSErrorCodes;
 
 /**
  * Set topic attributes

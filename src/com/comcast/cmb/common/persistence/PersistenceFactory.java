@@ -13,18 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.comcast.plaxo.cmb.common.persistence;
+package com.comcast.cmb.common.persistence;
 
-import com.comcast.plaxo.cns.persistence.CNSAttributesCassandraPersistence;
-import com.comcast.plaxo.cns.persistence.ICNSAttributesPersistence;
-import com.comcast.plaxo.cns.persistence.ICNSSubscriptionPersistence;
-import com.comcast.plaxo.cns.persistence.ICNSTopicPersistence;
-import com.comcast.plaxo.cns.persistence.CNSSubscriptionCassandraPersistence;
-import com.comcast.plaxo.cns.persistence.CNSTopicCassandraPersistence;
-import com.comcast.plaxo.cqs.persistence.ICQSMessagePersistence;
-import com.comcast.plaxo.cqs.persistence.ICQSQueuePersistence;
-import com.comcast.plaxo.cqs.persistence.CQSQueueCassandraPersistence;
-import com.comcast.plaxo.cqs.persistence.RedisCachedCassandraPersistence;
+import com.comcast.cns.persistence.CNSAttributesCassandraPersistence;
+import com.comcast.cns.persistence.CNSSubscriptionCassandraPersistence;
+import com.comcast.cns.persistence.CNSTopicCassandraPersistence;
+import com.comcast.cns.persistence.ICNSAttributesPersistence;
+import com.comcast.cns.persistence.ICNSSubscriptionPersistence;
+import com.comcast.cns.persistence.ICNSTopicPersistence;
+import com.comcast.cqs.persistence.CQSQueueCassandraPersistence;
+import com.comcast.cqs.persistence.ICQSMessagePersistence;
+import com.comcast.cqs.persistence.ICQSQueuePersistence;
+import com.comcast.cqs.persistence.RedisCachedCassandraPersistence;
 
 
 /**

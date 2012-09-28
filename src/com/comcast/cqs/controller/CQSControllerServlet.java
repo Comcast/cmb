@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.comcast.plaxo.cqs.controller;
+package com.comcast.cqs.controller;
 
 import java.lang.management.ManagementFactory;
 import java.util.HashMap;
@@ -27,23 +27,23 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.log4j.Logger;
 
-import com.comcast.plaxo.cmb.common.controller.CMBControllerServlet;
-import com.comcast.plaxo.cmb.common.controller.HealthCheckShallow;
-import com.comcast.plaxo.cmb.common.model.CMBPolicy;
-import com.comcast.plaxo.cmb.common.model.User;
-import com.comcast.plaxo.cmb.common.persistence.PersistenceFactory;
-import com.comcast.plaxo.cmb.common.util.CMBErrorCodes;
-import com.comcast.plaxo.cmb.common.util.CMBException;
-import com.comcast.plaxo.cmb.common.util.CMBProperties;
-import com.comcast.plaxo.cmb.common.util.ExpiringCache;
-import com.comcast.plaxo.cmb.common.util.PersistenceException;
-import com.comcast.plaxo.cmb.common.util.ExpiringCache.CacheFullException;
-import com.comcast.plaxo.cmb.common.util.ValueAccumulator.AccumulatorName;
-import com.comcast.plaxo.cqs.model.CQSQueue;
-import com.comcast.plaxo.cqs.persistence.ICQSMessagePersistence;
-import com.comcast.plaxo.cqs.persistence.ICQSQueuePersistence;
-import com.comcast.plaxo.cqs.persistence.RedisCachedCassandraPersistence;
-import com.comcast.plaxo.cqs.util.CQSErrorCodes;
+import com.comcast.cmb.common.controller.CMBControllerServlet;
+import com.comcast.cmb.common.controller.HealthCheckShallow;
+import com.comcast.cmb.common.model.CMBPolicy;
+import com.comcast.cmb.common.model.User;
+import com.comcast.cmb.common.persistence.PersistenceFactory;
+import com.comcast.cmb.common.util.CMBErrorCodes;
+import com.comcast.cmb.common.util.CMBException;
+import com.comcast.cmb.common.util.CMBProperties;
+import com.comcast.cmb.common.util.ExpiringCache;
+import com.comcast.cmb.common.util.PersistenceException;
+import com.comcast.cmb.common.util.ExpiringCache.CacheFullException;
+import com.comcast.cmb.common.util.ValueAccumulator.AccumulatorName;
+import com.comcast.cqs.model.CQSQueue;
+import com.comcast.cqs.persistence.ICQSMessagePersistence;
+import com.comcast.cqs.persistence.ICQSQueuePersistence;
+import com.comcast.cqs.persistence.RedisCachedCassandraPersistence;
+import com.comcast.cqs.util.CQSErrorCodes;
 /**
  * The main controller for CQS
  * @author baosen, bwolf, vvenkatraman, aseem

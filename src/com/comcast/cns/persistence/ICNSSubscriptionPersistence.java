@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.comcast.plaxo.cns.persistence;
+package com.comcast.cns.persistence;
 
 import java.util.List;
 
-import com.comcast.plaxo.cns.model.CNSSubscription;
-import com.comcast.plaxo.cns.model.CNSSubscription.CnsSubscriptionProtocol;
+import com.comcast.cns.model.CNSSubscription;
+import com.comcast.cns.model.CNSSubscription.CnsSubscriptionProtocol;
 
 /**
  * Interface representing persistence functionality for subscriptions

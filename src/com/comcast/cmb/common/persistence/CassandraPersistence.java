@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.comcast.plaxo.cmb.common.persistence;
+package com.comcast.cmb.common.persistence;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -65,9 +65,9 @@ import me.prettyprint.hector.api.query.SuperSliceQuery;
 
 import org.apache.log4j.Logger;
 
-import com.comcast.plaxo.cmb.common.controller.CMBControllerServlet;
-import com.comcast.plaxo.cmb.common.util.CMBProperties;
-import com.comcast.plaxo.cmb.common.util.ValueAccumulator.AccumulatorName;
+import com.comcast.cmb.common.controller.CMBControllerServlet;
+import com.comcast.cmb.common.util.CMBProperties;
+import com.comcast.cmb.common.util.ValueAccumulator.AccumulatorName;
 
 
 /**

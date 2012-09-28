@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.comcast.plaxo.cns.model;
+package com.comcast.cns.model;
 
 import java.util.Date;
 import java.util.UUID;
 
-import com.comcast.plaxo.cmb.common.util.CMBErrorCodes;
-import com.comcast.plaxo.cmb.common.util.CMBException;
-import com.comcast.plaxo.cmb.common.util.Util;
+import com.comcast.cmb.common.util.CMBErrorCodes;
+import com.comcast.cmb.common.util.CMBException;
+import com.comcast.cmb.common.util.Util;
 
 /**
  * Represents a Subscription
@@ -58,12 +58,12 @@ public class CNSSubscription {
             }
             break;
         case sms:
-            if(!com.comcast.plaxo.cns.util.Util.isPhoneNumber(endpoint)) {
+            if(!com.comcast.cns.util.Util.isPhoneNumber(endpoint)) {
                 return false;
             }
             break;
         case cqs:
-            if(!com.comcast.plaxo.cqs.util.Util.isValidQueueArn(endpoint) && !com.comcast.plaxo.cqs.util.Util.isValidQueueUrl(endpoint)) {
+            if(!com.comcast.cqs.util.Util.isValidQueueArn(endpoint) && !com.comcast.cqs.util.Util.isValidQueueUrl(endpoint)) {
                 return false;
             }
             break;
@@ -203,7 +203,7 @@ public class CNSSubscription {
 			throw new CMBException(CMBErrorCodes.InternalError, "Must set arn for subscription");
 		}
 		
-		if (!com.comcast.plaxo.cns.util.Util.isValidSubscriptionArn(arn)) {
+		if (!com.comcast.cns.util.Util.isValidSubscriptionArn(arn)) {
 			throw new CMBException(CMBErrorCodes.InternalError, "Invalid subscription arn");
 		}
 
@@ -211,7 +211,7 @@ public class CNSSubscription {
 			throw new CMBException(CMBErrorCodes.InternalError, "Must set topic arn for subscription");
 		}
 		
-		if (!com.comcast.plaxo.cns.util.Util.isValidTopicArn(topicArn)) {
+		if (!com.comcast.cns.util.Util.isValidTopicArn(topicArn)) {
 			throw new CMBException(CMBErrorCodes.InternalError, "Invalid topic arn");
 		}
 		

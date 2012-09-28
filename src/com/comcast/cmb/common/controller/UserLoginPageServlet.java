@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.comcast.plaxo.cmb.common.controller;
+package com.comcast.cmb.common.controller;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -25,11 +25,11 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.log4j.Logger;
 
-import com.comcast.plaxo.cmb.common.model.User;
-import com.comcast.plaxo.cmb.common.persistence.IUserPersistence;
-import com.comcast.plaxo.cmb.common.persistence.PersistenceFactory;
-import com.comcast.plaxo.cmb.common.util.AuthUtil;
-import com.comcast.plaxo.cmb.common.util.ValueAccumulator.AccumulatorName;
+import com.comcast.cmb.common.model.User;
+import com.comcast.cmb.common.persistence.IUserPersistence;
+import com.comcast.cmb.common.persistence.PersistenceFactory;
+import com.comcast.cmb.common.util.AuthUtil;
+import com.comcast.cmb.common.util.ValueAccumulator.AccumulatorName;
 
 /**
  * Admin page for user login

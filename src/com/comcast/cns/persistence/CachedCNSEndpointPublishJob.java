@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.comcast.plaxo.cns.persistence;
+package com.comcast.cns.persistence;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -24,16 +24,16 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import org.apache.log4j.Logger;
 
-import com.comcast.plaxo.cmb.common.persistence.PersistenceFactory;
-import com.comcast.plaxo.cmb.common.util.CMBErrorCodes;
-import com.comcast.plaxo.cmb.common.util.CMBException;
-import com.comcast.plaxo.cmb.common.util.ExpiringCache;
-import com.comcast.plaxo.cmb.common.util.ExpiringCache.CacheFullException;
-import com.comcast.plaxo.cns.model.CNSEndpointPublishJob;
-import com.comcast.plaxo.cns.model.CNSMessage;
-import com.comcast.plaxo.cns.model.CNSSubscription;
-import com.comcast.plaxo.cns.model.CNSSubscription.CnsSubscriptionProtocol;
-import com.comcast.plaxo.cns.util.Util;
+import com.comcast.cmb.common.persistence.PersistenceFactory;
+import com.comcast.cmb.common.util.CMBErrorCodes;
+import com.comcast.cmb.common.util.CMBException;
+import com.comcast.cmb.common.util.ExpiringCache;
+import com.comcast.cmb.common.util.ExpiringCache.CacheFullException;
+import com.comcast.cns.model.CNSEndpointPublishJob;
+import com.comcast.cns.model.CNSMessage;
+import com.comcast.cns.model.CNSSubscription;
+import com.comcast.cns.model.CNSSubscription.CnsSubscriptionProtocol;
+import com.comcast.cns.util.Util;
 
 /**
  * This class supports caching of the subinfo in memory

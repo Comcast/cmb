@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-package com.comcast.plaxo.cmb.common.util;
+package com.comcast.cmb.common.util;
 
-import com.comcast.plaxo.cmb.common.model.ReceiptModule;
+import com.comcast.cmb.common.model.ReceiptModule;
+
 import org.apache.log4j.PatternLayout;
 import org.apache.log4j.helpers.PatternConverter;
 import org.apache.log4j.helpers.PatternParser;

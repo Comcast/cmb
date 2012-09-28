@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.comcast.plaxo.cns.persistence;
+package com.comcast.cns.persistence;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -24,14 +24,14 @@ import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.hector.api.HConsistencyLevel;
 import me.prettyprint.hector.api.beans.Row;
 
-import com.comcast.plaxo.cmb.common.persistence.CassandraPersistence;
-import com.comcast.plaxo.cmb.common.persistence.PersistenceFactory;
-import com.comcast.plaxo.cmb.common.util.CMBProperties;
-import com.comcast.plaxo.cns.model.CNSSubscription;
-import com.comcast.plaxo.cns.model.CNSSubscriptionAttributes;
-import com.comcast.plaxo.cns.model.CNSSubscriptionDeliveryPolicy;
-import com.comcast.plaxo.cns.model.CNSTopicAttributes;
-import com.comcast.plaxo.cns.model.CNSTopicDeliveryPolicy;
+import com.comcast.cmb.common.persistence.CassandraPersistence;
+import com.comcast.cmb.common.persistence.PersistenceFactory;
+import com.comcast.cmb.common.util.CMBProperties;
+import com.comcast.cns.model.CNSSubscription;
+import com.comcast.cns.model.CNSSubscriptionAttributes;
+import com.comcast.cns.model.CNSSubscriptionDeliveryPolicy;
+import com.comcast.cns.model.CNSTopicAttributes;
+import com.comcast.cns.model.CNSTopicDeliveryPolicy;
 
 /**
  * Provide Cassandra Persistence for topic attributes

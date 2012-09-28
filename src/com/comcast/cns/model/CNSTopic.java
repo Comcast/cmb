@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.comcast.plaxo.cns.model;
+package com.comcast.cns.model;
 
-import com.comcast.plaxo.cmb.common.util.CMBErrorCodes;
-import com.comcast.plaxo.cmb.common.util.CMBException;
-import com.comcast.plaxo.cmb.common.util.Util;
+import com.comcast.cmb.common.util.CMBErrorCodes;
+import com.comcast.cmb.common.util.CMBException;
+import com.comcast.cmb.common.util.Util;
 
 /**
  * Represents a Topic
@@ -78,7 +78,7 @@ public class CNSTopic {
 			throw new CMBException(CMBErrorCodes.InternalError, "Must set arn for subscription");
 		}
 		
-		if (!com.comcast.plaxo.cns.util.Util.isValidTopicArn(arn)) {
+		if (!com.comcast.cns.util.Util.isValidTopicArn(arn)) {
 			throw new CMBException(CMBErrorCodes.InternalError, "Invalid topic arn");
 		}
 

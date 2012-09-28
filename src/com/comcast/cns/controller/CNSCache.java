@@ -13,20 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.comcast.plaxo.cns.controller;
+package com.comcast.cns.controller;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 
-import com.comcast.plaxo.cmb.common.persistence.PersistenceFactory;
-import com.comcast.plaxo.cmb.common.util.CMBProperties;
-import com.comcast.plaxo.cmb.common.util.ExpiringCache;
-import com.comcast.plaxo.cmb.common.util.ExpiringCache.CacheFullException;
-import com.comcast.plaxo.cns.model.CNSSubscription;
-import com.comcast.plaxo.cns.model.CNSTopicAttributes;
-import com.comcast.plaxo.cns.persistence.ICNSAttributesPersistence;
-import com.comcast.plaxo.cns.persistence.ICNSSubscriptionPersistence;
+import com.comcast.cmb.common.persistence.PersistenceFactory;
+import com.comcast.cmb.common.util.CMBProperties;
+import com.comcast.cmb.common.util.ExpiringCache;
+import com.comcast.cmb.common.util.ExpiringCache.CacheFullException;
+import com.comcast.cns.model.CNSSubscription;
+import com.comcast.cns.model.CNSTopicAttributes;
+import com.comcast.cns.persistence.ICNSAttributesPersistence;
+import com.comcast.cns.persistence.ICNSSubscriptionPersistence;
 
 /**
  * Utility class that contains most of the caches the rest of the code uses

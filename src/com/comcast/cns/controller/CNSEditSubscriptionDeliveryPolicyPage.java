@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.comcast.plaxo.cns.controller;
+package com.comcast.cns.controller;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -29,12 +29,12 @@ import org.json.JSONObject;
 import com.amazonaws.services.sns.model.GetSubscriptionAttributesRequest;
 import com.amazonaws.services.sns.model.GetSubscriptionAttributesResult;
 import com.amazonaws.services.sns.model.SetSubscriptionAttributesRequest;
-import com.comcast.plaxo.cmb.common.controller.AdminServletBase;
-import com.comcast.plaxo.cmb.common.controller.CMBControllerServlet;
-import com.comcast.plaxo.cns.model.CNSRetryPolicy;
-import com.comcast.plaxo.cns.model.CNSSubscriptionDeliveryPolicy;
-import com.comcast.plaxo.cns.model.CNSThrottlePolicy;
-import com.comcast.plaxo.cns.model.CNSRetryPolicy.CnsBackoffFunction;
+import com.comcast.cmb.common.controller.AdminServletBase;
+import com.comcast.cmb.common.controller.CMBControllerServlet;
+import com.comcast.cns.model.CNSRetryPolicy;
+import com.comcast.cns.model.CNSSubscriptionDeliveryPolicy;
+import com.comcast.cns.model.CNSThrottlePolicy;
+import com.comcast.cns.model.CNSRetryPolicy.CnsBackoffFunction;
 
 /**
  * Admin page for editing subscription delivery policy

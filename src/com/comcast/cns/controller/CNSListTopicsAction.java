@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.comcast.plaxo.cns.controller;
+package com.comcast.cns.controller;
 
 import java.util.List;
 
@@ -22,11 +22,11 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.log4j.Logger;
 
-import com.comcast.plaxo.cmb.common.model.CMBPolicy;
-import com.comcast.plaxo.cmb.common.model.User;
-import com.comcast.plaxo.cmb.common.persistence.PersistenceFactory;
-import com.comcast.plaxo.cns.io.CNSTopicPopulator;
-import com.comcast.plaxo.cns.model.CNSTopic;
+import com.comcast.cmb.common.model.CMBPolicy;
+import com.comcast.cmb.common.model.User;
+import com.comcast.cmb.common.persistence.PersistenceFactory;
+import com.comcast.cns.io.CNSTopicPopulator;
+import com.comcast.cns.model.CNSTopic;
 
 /**
  * List topics

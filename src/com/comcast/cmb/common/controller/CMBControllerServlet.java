@@ -13,22 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.comcast.plaxo.cmb.common.controller;
+package com.comcast.cmb.common.controller;
 
-import com.comcast.plaxo.cmb.common.model.IAuthModule;
-import com.comcast.plaxo.cmb.common.model.ReceiptModule;
-import com.comcast.plaxo.cmb.common.model.User;
-import com.comcast.plaxo.cmb.common.model.UserAuthModule;
-import com.comcast.plaxo.cmb.common.persistence.IUserPersistence;
-import com.comcast.plaxo.cmb.common.persistence.PersistenceFactory;
-import com.comcast.plaxo.cmb.common.util.CMBErrorCodes;
-import com.comcast.plaxo.cmb.common.util.CMBException;
-import com.comcast.plaxo.cmb.common.util.CMBProperties;
-import com.comcast.plaxo.cmb.common.util.ValueAccumulator;
-import com.comcast.plaxo.cmb.common.util.ValueAccumulator.AccumulatorName;
-import com.comcast.plaxo.cmb.common.util.Util;
-import com.comcast.plaxo.cns.controller.CNSControllerServlet;
-import com.comcast.plaxo.cqs.controller.CQSControllerServlet;
+import com.comcast.cmb.common.model.IAuthModule;
+import com.comcast.cmb.common.model.ReceiptModule;
+import com.comcast.cmb.common.model.User;
+import com.comcast.cmb.common.model.UserAuthModule;
+import com.comcast.cmb.common.persistence.IUserPersistence;
+import com.comcast.cmb.common.persistence.PersistenceFactory;
+import com.comcast.cmb.common.util.CMBErrorCodes;
+import com.comcast.cmb.common.util.CMBException;
+import com.comcast.cmb.common.util.CMBProperties;
+import com.comcast.cmb.common.util.Util;
+import com.comcast.cmb.common.util.ValueAccumulator;
+import com.comcast.cmb.common.util.ValueAccumulator.AccumulatorName;
+import com.comcast.cns.controller.CNSControllerServlet;
+import com.comcast.cqs.controller.CQSControllerServlet;
 
 import org.apache.log4j.Logger;
 

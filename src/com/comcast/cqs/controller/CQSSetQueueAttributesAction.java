@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.comcast.plaxo.cqs.controller;
+package com.comcast.cqs.controller;
 
 import java.util.HashMap;
 
@@ -22,17 +22,17 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.log4j.Logger;
 
-import com.comcast.plaxo.cmb.common.model.CMBPolicy;
-import com.comcast.plaxo.cmb.common.model.User;
-import com.comcast.plaxo.cmb.common.persistence.PersistenceFactory;
-import com.comcast.plaxo.cmb.common.util.CMBErrorCodes;
-import com.comcast.plaxo.cmb.common.util.CMBException;
-import com.comcast.plaxo.cmb.common.util.CMBProperties;
-import com.comcast.plaxo.cns.controller.CNSCreateTopicAction;
-import com.comcast.plaxo.cqs.io.CQSQueuePopulator;
-import com.comcast.plaxo.cqs.model.CQSQueue;
-import com.comcast.plaxo.cqs.util.CQSConstants;
-import com.comcast.plaxo.cqs.util.Util;
+import com.comcast.cmb.common.model.CMBPolicy;
+import com.comcast.cmb.common.model.User;
+import com.comcast.cmb.common.persistence.PersistenceFactory;
+import com.comcast.cmb.common.util.CMBErrorCodes;
+import com.comcast.cmb.common.util.CMBException;
+import com.comcast.cmb.common.util.CMBProperties;
+import com.comcast.cns.controller.CNSCreateTopicAction;
+import com.comcast.cqs.io.CQSQueuePopulator;
+import com.comcast.cqs.model.CQSQueue;
+import com.comcast.cqs.util.CQSConstants;
+import com.comcast.cqs.util.Util;
 /**
  * Set queue attributes
  * @author bwolf, baosen

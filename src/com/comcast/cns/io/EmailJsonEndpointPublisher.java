@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.comcast.plaxo.cns.io;
+package com.comcast.cns.io;
 
-import com.comcast.plaxo.cmb.common.util.CMBProperties;
-import com.comcast.plaxo.cns.util.MailWrapper;
+import com.comcast.cmb.common.util.CMBProperties;
+import com.comcast.cns.util.MailWrapper;
 
 /**
  * Endpoint publisher for emails in json

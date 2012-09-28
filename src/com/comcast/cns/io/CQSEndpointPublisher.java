@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.comcast.plaxo.cns.io;
+package com.comcast.cns.io;
 
 import org.apache.log4j.Logger;
 
@@ -21,10 +21,10 @@ import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClient;
 import com.amazonaws.services.sqs.model.SendMessageRequest;
-import com.comcast.plaxo.cmb.common.model.User;
-import com.comcast.plaxo.cmb.common.util.CMBException;
-import com.comcast.plaxo.cmb.common.util.CMBProperties;
-import com.comcast.plaxo.cns.util.CNSErrorCodes;
+import com.comcast.cmb.common.model.User;
+import com.comcast.cmb.common.util.CMBException;
+import com.comcast.cmb.common.util.CMBProperties;
+import com.comcast.cns.util.CNSErrorCodes;
 
 /**
  * Endpoint publisher for CQS endpoints
@@ -70,10 +70,10 @@ public class CQSEndpointPublisher implements IEndpointPublisher {
 		
 		String url;
 		
-		if (com.comcast.plaxo.cqs.util.Util.isValidQueueUrl(endpoint)) {
+		if (com.comcast.cqs.util.Util.isValidQueueUrl(endpoint)) {
 			url = endpoint;
 		} else {
-			url = com.comcast.plaxo.cqs.util.Util.getAbsoluteQueueUrlForArn(endpoint);
+			url = com.comcast.cqs.util.Util.getAbsoluteQueueUrlForArn(endpoint);
 		}
 
 		try {

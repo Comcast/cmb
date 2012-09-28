@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.comcast.plaxo.cqs.io;
+package com.comcast.cqs.io;
 
-import com.comcast.plaxo.cqs.model.CQSQueue;
-import com.comcast.plaxo.cqs.persistence.RedisCachedCassandraPersistence;
-import com.comcast.plaxo.cqs.util.CQSConstants;
+import com.comcast.cqs.model.CQSQueue;
+import com.comcast.cqs.persistence.RedisCachedCassandraPersistence;
+import com.comcast.cqs.util.CQSConstants;
 
 import java.util.List;
 

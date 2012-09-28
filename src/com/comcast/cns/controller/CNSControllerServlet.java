@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.comcast.plaxo.cns.controller;
+package com.comcast.cns.controller;
 
 import java.util.HashMap;
 import java.util.UUID;
@@ -22,20 +22,20 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import com.comcast.plaxo.cmb.common.controller.CMBControllerServlet;
-import com.comcast.plaxo.cmb.common.controller.HealthCheckShallow;
-import com.comcast.plaxo.cmb.common.model.CMBPolicy;
-import com.comcast.plaxo.cmb.common.model.User;
-import com.comcast.plaxo.cmb.common.persistence.PersistenceFactory;
+import com.comcast.cmb.common.controller.Action;
+import com.comcast.cmb.common.controller.CMBControllerServlet;
+import com.comcast.cmb.common.controller.HealthCheckShallow;
+import com.comcast.cmb.common.model.CMBPolicy;
+import com.comcast.cmb.common.model.User;
+import com.comcast.cmb.common.persistence.PersistenceFactory;
+import com.comcast.cmb.common.util.CMBErrorCodes;
+import com.comcast.cmb.common.util.CMBException;
+import com.comcast.cmb.common.util.CMBProperties;
+import com.comcast.cns.model.CNSTopicAttributes;
+import com.comcast.cns.persistence.ICNSSubscriptionPersistence;
+import com.comcast.cns.persistence.ICNSTopicPersistence;
 
-import com.comcast.plaxo.cmb.common.util.CMBErrorCodes;
-import com.comcast.plaxo.cmb.common.util.CMBException;
-import com.comcast.plaxo.cmb.common.util.CMBProperties;
-import com.comcast.plaxo.cns.model.CNSTopicAttributes;
-import com.comcast.plaxo.cns.persistence.ICNSSubscriptionPersistence;
-import com.comcast.plaxo.cns.persistence.ICNSTopicPersistence;
 
-import com.comcast.plaxo.cmb.common.controller.Action;
 
 /**
  * Servlet for handling all CNS actions

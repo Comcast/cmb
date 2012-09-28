@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.comcast.plaxo.cmb.common.util;
+package com.comcast.cmb.common.util;
 
 /**
  * Exception thrown during authentication

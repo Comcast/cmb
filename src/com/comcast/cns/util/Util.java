@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.comcast.plaxo.cns.util;
+package com.comcast.cns.util;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintWriter;
@@ -29,8 +29,8 @@ import java.util.regex.Matcher;
 import org.apache.log4j.Logger;
 import org.json.JSONWriter;
 
-import com.comcast.plaxo.cmb.common.util.CMBProperties;
-import com.comcast.plaxo.cns.model.CNSRetryPolicy.CnsBackoffFunction;
+import com.comcast.cmb.common.util.CMBProperties;
+import com.comcast.cns.model.CNSRetryPolicy.CnsBackoffFunction;
 
 /**
  * Utility functions for cns

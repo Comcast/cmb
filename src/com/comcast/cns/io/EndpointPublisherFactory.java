@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.comcast.plaxo.cns.io;
+package com.comcast.cns.io;
 
 import org.apache.log4j.Logger;
 
-import com.comcast.plaxo.cns.model.CNSSubscription;
+import com.comcast.cns.model.CNSSubscription;
 
 /**
  * Factory to get appt publisher given protocol

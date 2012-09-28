@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.comcast.plaxo.cns.util;
+package com.comcast.cns.util;
 
 import javax.mail.*;
 import javax.mail.internet.*;
 
-import com.comcast.plaxo.cmb.common.util.CMBProperties;
+import com.comcast.cmb.common.util.CMBProperties;
 
 import java.util.*;
 

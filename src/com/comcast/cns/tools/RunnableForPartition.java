@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.comcast.plaxo.cns.tools;
+package com.comcast.cns.tools;
 
 /**
  * Interface representing the processing of one partition of queues

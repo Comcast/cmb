@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.comcast.plaxo.cqs.persistence;
+package com.comcast.cqs.persistence;
 
-import com.comcast.plaxo.cmb.common.util.PersistenceException;
-import com.comcast.plaxo.cqs.model.CQSQueue;
+import com.comcast.cmb.common.util.PersistenceException;
+import com.comcast.cqs.model.CQSQueue;
 
 import java.util.List;
 import java.util.Map;

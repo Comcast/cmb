@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.comcast.plaxo.cqs.io;
+package com.comcast.cqs.io;
 
-import com.comcast.plaxo.cmb.common.model.ReceiptModule;
+import com.comcast.cmb.common.model.ReceiptModule;
 
 /**
  * Top level API response generator

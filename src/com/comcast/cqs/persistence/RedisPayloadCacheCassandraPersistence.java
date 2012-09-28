@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.comcast.plaxo.cqs.persistence;
+package com.comcast.cqs.persistence;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -38,16 +38,16 @@ import redis.clients.jedis.Transaction;
 import redis.clients.jedis.exceptions.JedisException;
 import redis.clients.util.SafeEncoder;
 
-import com.comcast.plaxo.cmb.common.util.CMBProperties;
-import com.comcast.plaxo.cmb.common.util.PersistenceException;
-import com.comcast.plaxo.cmb.common.util.Util;
-import com.comcast.plaxo.cmb.common.util.ValueAccumulator.AccumulatorName;
-import com.comcast.plaxo.cqs.controller.CQSControllerServlet;
-import com.comcast.plaxo.cqs.controller.CQSMonitor;
-import com.comcast.plaxo.cqs.controller.CQSMonitor.CacheType;
-import com.comcast.plaxo.cqs.model.CQSMessage;
-import com.comcast.plaxo.cqs.model.CQSQueue;
-import com.comcast.plaxo.cqs.persistence.RedisCachedCassandraPersistence.SetFailedException;
+import com.comcast.cmb.common.util.CMBProperties;
+import com.comcast.cmb.common.util.PersistenceException;
+import com.comcast.cmb.common.util.Util;
+import com.comcast.cmb.common.util.ValueAccumulator.AccumulatorName;
+import com.comcast.cqs.controller.CQSControllerServlet;
+import com.comcast.cqs.controller.CQSMonitor;
+import com.comcast.cqs.controller.CQSMonitor.CacheType;
+import com.comcast.cqs.model.CQSMessage;
+import com.comcast.cqs.model.CQSQueue;
+import com.comcast.cqs.persistence.RedisCachedCassandraPersistence.SetFailedException;
 
 /**
  * This class encapsulates the caching of message payload and sits between the 

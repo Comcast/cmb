@@ -13,15 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.comcast.plaxo.cmb.common.persistence;
+package com.comcast.cmb.common.persistence;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.comcast.plaxo.cmb.common.util.AuthUtil;
-import com.comcast.plaxo.cmb.common.util.CMBProperties;
+import com.comcast.cmb.common.model.User;
+import com.comcast.cmb.common.util.AuthUtil;
+import com.comcast.cmb.common.util.CMBProperties;
+import com.comcast.cmb.common.util.PersistenceException;
+import com.comcast.cqs.util.CQSErrorCodes;
 
 import me.prettyprint.cassandra.model.CqlRows;
 import me.prettyprint.cassandra.serializers.StringSerializer;
@@ -32,9 +35,6 @@ import me.prettyprint.hector.api.beans.ColumnSlice;
 import me.prettyprint.hector.api.beans.Row;
 import me.prettyprint.hector.api.query.QueryResult;
 
-import com.comcast.plaxo.cmb.common.model.User;
-import com.comcast.plaxo.cmb.common.util.PersistenceException;
-import com.comcast.plaxo.cqs.util.CQSErrorCodes;
 
 import org.apache.log4j.Logger;
 

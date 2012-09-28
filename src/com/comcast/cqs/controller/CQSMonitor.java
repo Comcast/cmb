@@ -13,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.comcast.plaxo.cqs.controller;
+package com.comcast.cqs.controller;
 
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.comcast.plaxo.cmb.common.util.CMBProperties;
-import com.comcast.plaxo.cmb.common.util.RollingWindowCapture;
-import com.comcast.plaxo.cmb.common.util.RollingWindowCapture.PayLoad;
-import com.comcast.plaxo.cqs.persistence.RedisCachedCassandraPersistence;
+import com.comcast.cmb.common.util.CMBProperties;
+import com.comcast.cmb.common.util.RollingWindowCapture;
+import com.comcast.cmb.common.util.RollingWindowCapture.PayLoad;
+import com.comcast.cqs.persistence.RedisCachedCassandraPersistence;
 /**
  * Implement the monitoring for CQS
  * @author aseem

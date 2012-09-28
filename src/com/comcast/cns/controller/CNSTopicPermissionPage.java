@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.comcast.plaxo.cns.controller;
+package com.comcast.cns.controller;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -28,13 +28,13 @@ import org.apache.log4j.Logger;
 import com.amazonaws.services.sns.model.GetTopicAttributesRequest;
 import com.amazonaws.services.sns.model.GetTopicAttributesResult;
 import com.amazonaws.services.sns.model.RemovePermissionRequest;
-import com.comcast.plaxo.cmb.common.controller.AdminServlet;
-import com.comcast.plaxo.cmb.common.controller.AdminServletBase;
-import com.comcast.plaxo.cmb.common.controller.CMBControllerServlet;
-import com.comcast.plaxo.cmb.common.model.CMBPolicy;
-import com.comcast.plaxo.cmb.common.model.CMBStatement;
-import com.comcast.plaxo.cns.util.Util;
-import com.comcast.plaxo.cqs.controller.CQSQueuePermissionsPage;
+import com.comcast.cmb.common.controller.AdminServlet;
+import com.comcast.cmb.common.controller.AdminServletBase;
+import com.comcast.cmb.common.controller.CMBControllerServlet;
+import com.comcast.cmb.common.model.CMBPolicy;
+import com.comcast.cmb.common.model.CMBStatement;
+import com.comcast.cns.util.Util;
+import com.comcast.cqs.controller.CQSQueuePermissionsPage;
 
 /**
  * Topic permissions admin page
