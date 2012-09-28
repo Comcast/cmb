@@ -2,45 +2,32 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
 	<properties>
-	    <BUILDNUM>9</BUILDNUM>
+	    <BUILDNUM>2.2.9</BUILDNUM>
 	    <PROJECTNAME>CNS</PROJECTNAME>
 	    <!-- <PROJECTNAME>CQS</PROJECTNAME> -->
+	    <!-- <PROJECTNAME>CMB</PROJECTNAME> -->
 	</properties>
 
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.comcast.plaxo.cmb</groupId>
 	<artifactId>${PROJECTNAME}</artifactId>
 	<packaging>war</packaging>
-	<version>2.2.${BUILDNUM}</version>
+	<version>${BUILDNUM}</version>
 	<name>Comcast Message Bus</name>
 	<url>http://www.comcast.com</url>
-
-	<!-- TODO: github integration -->
 
 	<dependencies>
 	
 		<dependency>
-			<groupId>activesoap</groupId>
-			<artifactId>xercesImpl</artifactId>
-			<version>2.9.1</version>
-			<scope>system</scope>
-			<systemPath>${basedir}/lib/xercesImpl-2.9.1.jar</systemPath>
-		</dependency>
-		
-		<dependency>
 			<groupId>com.amazonaws</groupId>
 			<artifactId>aws-java-sdk</artifactId>
-			<version>1.3.11</version>
-			<scope>system</scope>
-			<systemPath>${basedir}/lib/aws-java-sdk-1.3.11.jar</systemPath>
+			<version>1.3.20</version>
 		</dependency>
 
 		<dependency>
-			<groupId>prettyme.hector</groupId>
+			<groupId>me.prettyprint</groupId>
 			<artifactId>hector-core</artifactId>
-			<version>1.0.4</version>
-			<scope>system</scope>
-			<systemPath>${basedir}/lib/hector-core-1.0-4.jar</systemPath>
+			<version>1.0-5</version>
 		</dependency>
 
 		<dependency>
@@ -237,6 +224,20 @@
 					</systemProperties>
 				</configuration>
 			</plugin>
+			
+			<plugin>
+            	<groupId>org.apache.maven.plugins</groupId>
+        		<artifactId>maven-jar-plugin</artifactId>
+        		<version>2.4</version>
+ 				<executions>
+          			<execution>
+		            <phase>package</phase>
+		            <goals>
+		            	<goal>jar</goal>
+		            </goals>
+		            </execution>
+	            </executions>
+      		</plugin>
 
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>

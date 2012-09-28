@@ -130,11 +130,6 @@ under the License.
       <passphrase>optional; leave empty if not used.</passphrase>
     </server>
     -->
-    <server>
-        <id>local-tomcat</id>
-        <username>plaxo</username>
-        <password>plaxo</password>
-    </server>
 
   </servers>
 
@@ -251,42 +246,6 @@ under the License.
     </profile>
     -->
 
-    <profile>
-      <id>artifactory</id>
-      <repositories>
-        <repository>
-          <snapshots>
-            <enabled>false</enabled>
-          </snapshots>
-          <id>central</id>
-          <name>libs-release</name>
-          <url>http://artifacts:8081/artifactory/libs-release</url>
-        </repository>
-        <repository>
-          <snapshots />
-          <id>snapshots</id>
-          <name>libs-snapshot</name>
-          <url>http://artifacts:8081/artifactory/libs-snapshot</url>
-        </repository>
-      </repositories>
-      <pluginRepositories>
-        <pluginRepository>
-          <snapshots>
-            <enabled>false</enabled>
-          </snapshots>
-          <id>central</id>
-          <name>plugins-release</name>
-          <url>http://artifacts:8081/artifactory/plugins-release</url>
-        </pluginRepository>
-        <pluginRepository>
-          <snapshots />
-          <id>snapshots</id>
-          <name>plugins-snapshot</name>
-          <url>http://artifacts:8081/artifactory/plugins-snapshot</url>
-        </pluginRepository>
-      </pluginRepositories>
-    </profile>
-
   </profiles>
 
   <!-- activeProfiles
@@ -299,7 +258,6 @@ under the License.
   -->
 
   <activeProfiles>
-    <activeProfile>artifactory</activeProfile>
   </activeProfiles>
 
 </settings>
