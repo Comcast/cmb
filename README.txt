@@ -62,8 +62,8 @@ of simple code as the following example illustrates.
   createQueueRequest.setAttributes(attributeParams);
   String queueUrl = sqs.createQueue(createQueueRequest).getQueueUrl();
 
-Amazon offers a few other language bindings of its SDK and there are also a number of third 
-party SDKs available for languages not supported by Amazon.
+Amazon offers a few other language bindings of its SDK and there are also a number of 
+third party SDKs available for languages not supported by Amazon.
 
 3. Sending REST requests directly to the service endpoint:
 
@@ -206,6 +206,7 @@ TODO: add section
    user's queues and topics.
 
 2. The initial visibility timeout for messages in a queue is always 0. It is not possible
-   to send a message and have it initially hidden for a specified number of seconds. Instead 
-   the message must be received first and only then the visibility timeout can be set.
+   to send a message and have it initially hidden for a specified number of seconds. 
+   Instead the message must be received first and only then the visibility timeout can be 
+   set.
 
