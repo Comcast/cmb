@@ -91,15 +91,15 @@ Example response:
 --------------------------------------------------------------------------------------------
 
 1. Install Tomcat 7 or similar application server as needed. Minimum 2 nodes are required, 
-   one for CNS API Server, one for CQS API server, optionally add additional redundant servers 
-   plus load balancer. 
+   one for CNS API Server, one for CQS API server, optionally add additional redundant 
+   servers plus load balancer. 
 
 2. Install and stand up Cassandra cluster based on Cassandra version 1.0.10 with as many 
    nodes as needed (minimum 1 node, recommended at least 4 nodes).
    
-3. Create Cassandra key spaces and column families by running schema.txt using cassandra-cli.
-   After running the script three key spaces (CMB, CNS, CQS) should be created and contain
-   a number of empty column families.
+3. Create Cassandra key spaces and column families by running schema.txt using 
+   cassandra-cli. After running the script three key spaces (CMB, CNS, CQS) should be 
+   created and contain a number of empty column families.
    
 4. Install and start Redis nodes as needed using Redis version 2.4.9 (minimum 1 node).
 
@@ -129,15 +129,16 @@ Example response:
 
    cmb.redis.serverList=<host:port>,<host:port>...
    
-6. Build CNS.war and CQS.war (see build instructions below) or download binaries from github 
-   and deploy into Tomcat server instances installed in step 1. When launching Tomcat ensure 
-   the following VM parameters are set to point to the appropriate cmb.properties and 
-   log4j.properties files.
+6. Build CNS.war and CQS.war (see build instructions below) or download binaries from 
+   github and deploy into Tomcat server instances installed in step 1. When launching 
+   Tomcat ensure the following VM parameters are set to point to the appropriate 
+   cmb.properties and log4j.properties files.
    
     -Dcmb.log4j.propertyFile=/<cmb_path>/config/log4j.properties 
     -Dcmb.propertyFile=/<cmb_path>/config/cmb.properties
     
-    To ensure JMX is enabled for monitoring you should also set the following VM parameters:
+    To ensure JMX is enabled for monitoring you should also set the following VM 
+    parameters:
     
     -Dcom.sun.management.jmxremote 
     -Dcom.sun.management.jmxremote.ssl=false 
@@ -145,16 +146,17 @@ Example response:
     -Dcom.sun.management.jmxremote.port=<jmx_port> 
     -Dcom.sun.management.jmxremote.authenticate=false
     
-7. Go to admin UI and create a user with user name "cns_internal" and password "cqs_internal".
-   Or, if you prefer to create a different user name / password ensure that in cmb.properties
-   the fields cmb.cns.user.name and cmb.cns.user.password are set accordingly.
+7. Go to admin UI and create a user with user name "cns_internal" and password 
+   "cqs_internal". Or, if you prefer to create a different user name / password 
+   ensure that in cmb.properties the fields cmb.cns.user.name and cmb.cns.user.password 
+   are set accordingly.
    
 8. Build the worker node cmb.tar.gz (see build instructions below) or download binary from
    github and install into one or more nodes (recommended at least two nodes) by extracting
    the package into /usr/local/cmb. Edit the run.sh file and ensure that the settings for
    log4j.properties and cmb.properties are correct (usually same as in step 6) and ensure 
-   the roles setting is correct (possible values are: -role=Consumer,Producer or -role=Consumer
-   or -role=Producer.
+   the roles setting is correct (possible values are: -role=Consumer,Producer or 
+   -role=Consumer or -role=Producer.
    
 9. Start each worker process with 
   
@@ -199,11 +201,11 @@ TODO: add section
 - Known Limitations
 --------------------------------------------------------------------------------------------
 
-1. The Admin UI is open to anyone and allows full access to anybody's user account. It is the 
-   only place to create or delete user accounts and to manually browse and modify any user's 
-   queues and topics.
+1. The Admin UI is open to anyone and allows full access to anybody's user account. It is 
+   the only place to create or delete user accounts and to manually browse and modify any 
+   user's queues and topics.
 
-2. The initial visibility timeout for messages in a queue is always 0. It is not possible to 
-   send a message and have it initially hidden for a specified number of seconds. Instead the 
-   message must be received first and only then the visibility timeout can be set.
+2. The initial visibility timeout for messages in a queue is always 0. It is not possible
+   to send a message and have it initially hidden for a specified number of seconds. Instead 
+   the message must be received first and only then the visibility timeout can be set.
 
