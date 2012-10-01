@@ -17,9 +17,10 @@ AWS SQS and SNS. This document covers these topics:
 
 CMB consists of two separate services, CQS and CNS. CQS offers queuing services while CNS 
 offers publish / subscribe notification services. Both services are API-compatible with 
-Amazon Web Services SNS (Simple Notification Service) and SQS (Simple Queuing Service). CMB 
-services are implemented with a Cassandra / Redis backend and are designed with high 
-availability and horizontal scalability in mind.
+Amazon Web Services SNS (Simple Notification Service) and SQS (Simple Queuing Service). CNS
+currently supports these protocols for subscribers: HTTP, CQS and email. CMB services are 
+implemented with a Cassandra / Redis backend and are designed with high availability and 
+horizontal scalability in mind.
 
 For a detailed documentation of the CNS / CQS APIs please refer to the Amazon SNS / SQS 
 specifications here:
@@ -36,17 +37,16 @@ There are three different ways to access CNS / CQS services:
 The Admin UI is a simple Web UI for testing and administration purposes. To access the 
 Admin UI use any web browser and go to
 
-CNS Admin URL: http://<cnshost>:<cnsport>/ADMIN
-CQS Admin URL: http://<cqshost>:<cqsport>/ADMIN
+CNS Admin URL: http://<cns_host>:<cns_port>/ADMIN
+CQS Admin URL: http://<cqs_host>:<cqs_port>/ADMIN
 
 2. Using the AWS SDK for Java or similar language bindings:
 
 Amazon offers a Java SDK to access SNS / SQS and other AWS services. Since CNS / CQS are 
-API compatible you can use the AWS SDK to access our implementation in the same way. Thus, 
+API-compatible you can use the AWS SDK to access our implementation in the same way. Thus, 
 instead of having to engineer your own REST requests you can get started with a few lines 
 of simple code as the following example illustrates.
 
-  String userId = "<user_id>";
   BasicAWSCredentials credentialsUser = new BasicAWSCredentials("<access_key>", "<secret_key>");
  
   String cqsServerUrl = "http://<cqs_host>:<cqs_port>/";
@@ -69,7 +69,8 @@ third party SDKs available for languages not supported by Amazon.
 
 All CNS / CQS features can also be accessed by sending REST requests as HTTP GET or POST 
 directly to the service endpoints. Note that you need to timestamp and digitally sign 
-every request if signature verification is enabled in cmb.proerties.
+every request if signature verification is enabled (signature verification is disabled 
+by default, you can enable this feature by changing cmb.proerties).
 
 Example REST request to create a CQS queue using curl:
 
@@ -90,34 +91,60 @@ Example response:
 - Installation Guide
 --------------------------------------------------------------------------------------------
 
-1. Install Tomcat 7 or similar application server as needed. Minimum 2 nodes are required, 
-   one for CNS API Server, one for CQS API server, optionally add additional redundant 
-   servers plus load balancer. 
+1. Install Tomcat 7 or similar application server as needed. A minimum of two nodes is 
+   required, one for CNS API Server, one for CQS API server. Optionally add additional 
+   redundant servers plus load balancer. 
 
-2. Install and stand up Cassandra cluster based on Cassandra version 1.0.10 with as many 
-   nodes as needed (minimum 1 node, recommended at least 4 nodes).
+2. Install and stand up Cassandra cluster based on Cassandra version 1.0.10 or higher 
+   with as many nodes as needed (minimum one node, recommended at least 4 nodes).
    
 3. Create Cassandra key spaces and column families by running schema.txt using 
-   cassandra-cli. After running the script three key spaces (CMB, CNS, CQS) should be 
+   cassandra-cli. After executing the script three key spaces (CMB, CNS, CQS) should be 
    created and contain a number of empty column families.
    
-4. Install and start Redis nodes as needed using Redis version 2.4.9 (minimum 1 node).
+4. Install and start Redis nodes as needed using Redis version 2.4.9 or higher (minimum 
+   one node).
 
-5. Edit config/cmb.properties, in particular the following settings:
+5. Build CNS.war and CQS.war (see build instructions below) or download binaries from 
+   github and deploy into Tomcat server instances installed in step 1. The binaries 
+   come with two configuration files, cmb.properties and log4j.properties, both of which
+   need to be available to all CMB processes (CNS API Server(s), CQS API Server(s) and 
+   CNS Worker Nodes). Typically the configuration files should be placed in 
+   
+   /var/config/cmb
+   
+   When launching Tomcat ensure the following VM parameters are set to point to the 
+   appropriate cmb.properties and log4j.properties files .
+   
+    -Dcmb.log4j.propertyFile=/<cmb_config_path>/log4j.properties 
+    -Dcmb.propertyFile=/<cmb_config_path>/cmb.properties
+    
+    To ensure JMX is enabled for monitoring you should also set the following VM 
+    parameters:
+    
+    -Dcom.sun.management.jmxremote 
+    -Dcom.sun.management.jmxremote.ssl=false 
+    -Djava.rmi.server.hostname=<hostname> 
+    -Dcom.sun.management.jmxremote.port=<jmx_port> 
+    -Dcom.sun.management.jmxremote.authenticate=false
+    
+6. Edit var/config/cmb/cmb.properties, in particular these settings (important settings 
+   are marked with "todo" in the default cmb.properties file). After editing the property 
+   file be sure to restart Tomcat and any CNS Woker nodes that are already running.
 
    # urls of service endpoints for cns and cqs
 
-   cmb.cqs.server.url=http://<host:port>
-   cmb.cns.server.url=http://<host:ports>
+   cmb.cqs.server.url=http://<cqs_host:cqs_port>
+   cmb.cns.server.url=http://<cns_host:cns_port>
 
-   # mail settings (if email notifications are desired)
+   # mail relay settings (if email protocol is desired for CNS subscribers)
    
    cmb.cns.smtp.hostname=<host> 
    cmb.cns.smtp.username=<username>
    cmb.cns.smtp.password=<password>
    cmb.cns.smtp.replyAddress=<reply address>
 
-   # cluster name
+   # Cassandra cluster name
    
    cmb.cassandra.clusterName=<cluster_name>
 
@@ -129,41 +156,36 @@ Example response:
 
    cmb.redis.serverList=<host:port>,<host:port>...
    
-6. Build CNS.war and CQS.war (see build instructions below) or download binaries from 
-   github and deploy into Tomcat server instances installed in step 1. When launching 
-   Tomcat ensure the following VM parameters are set to point to the appropriate 
-   cmb.properties and log4j.properties files.
+7. Use any web browser to go to the CMB Admin UI and create a user with user name 
+   "cns_internal" and password "cqs_internal". Or, if you prefer to create a different 
+   user name / password ensure that in cmb.properties the fields cmb.cns.user.name and 
+   cmb.cns.user.password are set accordingly. The CMB Admin UI can be accessed through 
+   either the CNS Service Enpoint or the CQS Service Endpoint, for example:
    
-    -Dcmb.log4j.propertyFile=/<cmb_path>/config/log4j.properties 
-    -Dcmb.propertyFile=/<cmb_path>/config/cmb.properties
-    
-    To ensure JMX is enabled for monitoring you should also set the following VM 
-    parameters:
-    
-    -Dcom.sun.management.jmxremote 
-    -Dcom.sun.management.jmxremote.ssl=false 
-    -Djava.rmi.server.hostname=<hostname> 
-    -Dcom.sun.management.jmxremote.port=<jmx_port> 
-    -Dcom.sun.management.jmxremote.authenticate=false
-    
-7. Go to admin UI and create a user with user name "cns_internal" and password 
-   "cqs_internal". Or, if you prefer to create a different user name / password 
-   ensure that in cmb.properties the fields cmb.cns.user.name and cmb.cns.user.password 
-   are set accordingly.
+   http://<cns_host>:<cns:port>/ADMIN/ 
    
-8. Build the worker node cmb.tar.gz (see build instructions below) or download binary from
-   github and install into one or more nodes (recommended at least two nodes) by extracting
-   the package into /usr/local/cmb. Edit the run.sh file and ensure that the settings for
-   log4j.properties and cmb.properties are correct (usually same as in step 6) and ensure 
-   the roles setting is correct (possible values are: -role=Consumer,Producer or 
-   -role=Consumer or -role=Producer.
+8. The CNS Service requires one or more CNS Worker Nodes (independent Java processes) 
+   to function. 
+   
+   Build the CNS Worker Node package cmb.tar.gz from source (see build instructions below) 
+   or download the binary from github and install into one or more nodes (recommended at 
+   least two nodes) by extracting the package into /usr/local/cmb. Edit the startWokerNode.sh 
+   file and ensure that the settings for log4j.properties and cmb.properties are correct 
+   (usually same as in step 6) and ensure the roles setting is correct (possible values are: 
+   
+   -role=Consumer,Producer or -role=Consumer or -role=Producer
+   
+   At least one consumer and one producer is required, so if you only install a single 
+   CNS Wokrer Node you must set -role=Consumer,Producer
    
 9. Start each worker process with 
   
-   > nohup ./run.sh &
+   > nohup ./startWorkerNode.sh &
 
-10.Test basic CNS and CQS service functionality, for example by using the admin interface
-   at http://<cns_host>:<cns_port>/ADMIN.
+10.Test basic CNS and CQS service functionality, for example by accessing the CMB Admin UI
+   using any web browser at: 
+   
+   http://<cns_host>:<cns_port>/ADMIN
    
 --------------------------------------------------------------------------------------------
 - Monitoring, Logging
@@ -179,19 +201,24 @@ TODO: add section
 
    > git clone https://github.com/Comcast/cmb.git
    
-2. Build worker node CMB.jar with maven:
+2. Build CNS Worker Node jar (CMB.jar) with maven:
 
    > mvn --settings ./settings.xml -Dprojectname=CMB -Dmaven.test.skip=true compile jar:jar
+   
+   After a successful build binaries will be available in ./target 
 
-3. Build CMB service endpoints CNS.war and CQS.war with maven: 
+3. Build CMB Service Endpoints (CNS.war and CQS.war) with maven: 
 
    > mvn --settings ./settings.xml -Dprojectname=CNS -Dmaven.test.skip=true assembly:assembly
    
    > mvn --settings ./settings.xml -Dprojectname=CNS -Dmaven.test.skip=true assembly:assembly
 
+   After a successful build binaries will be available in ./target 
+
 4. Install all components following the installation guide above.
 
-5. Optionally run all unit tests or individual tests
+5. Optionally run all unit tests or individual tests (CNS and CQS Service Endpoints must be 
+   installed for unit tests to work!)
 
    > mvn test
    
