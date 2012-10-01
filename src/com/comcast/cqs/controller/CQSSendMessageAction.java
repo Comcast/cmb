@@ -109,7 +109,7 @@ public class CQSSendMessageAction extends CQSAction {
         CQSControllerServlet.valueAccumulator.addToCounter(AccumulatorName.SendMessageXMLTime, (System.currentTimeMillis() - ts4));
         response.getWriter().println(out);
         long ts1 = System.currentTimeMillis();
-        CQSMonitor.Inst.addNumberOfMessagesRecieved(queue.getRelativeUrl(), 1);
+        CQSMonitor.Inst.addNumberOfMessagesReceived(queue.getRelativeUrl(), 1);
         CQSControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CQSMonitorTime, (System.currentTimeMillis() - ts1));
         
         return true;

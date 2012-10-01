@@ -63,7 +63,7 @@ public class CNSMonitor implements CNSMonitorMBean {
 
 
     @Override
-    public int getNumPublishMessage() {
+    public int getNumPublishedMessages() {
         CountMessagesVisitor c = new CountMessagesVisitor();
         publishMsgRW.visitAllNodes(c);
         return c.num;

@@ -34,12 +34,12 @@ public interface CQSMonitorMBean {
      * @param queueUrl
      * @return the number of messages received by CQS by the SendMessage() call in a rolling window
      */
-    public int getNumberOfMessagesRecieved(String queueUrl);
+    public int getNumberOfMessagesReceived(String queueUrl);
         
     /**
      * Get the In Mem cache hit rate in a rolling-window
      */
-    public int getRecieveMessageCacheHitPercent(String queueUrl);
+    public int getReceiveMessageCacheHitPercent(String queueUrl);
     
     /**
      * Get the payload cache hit rate in a rolling-window
@@ -76,7 +76,7 @@ public interface CQSMonitorMBean {
     /**
      * @return number of open connections to redis
      */
-    public int getNumberOpenConnectionsRedis();
+    public int getNumberOpenRedisConnections();
     
     /**
      * Number of messages in queue

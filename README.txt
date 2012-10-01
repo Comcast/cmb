@@ -169,9 +169,10 @@ Example response:
    
    Build the CNS Worker Node package cmb.tar.gz from source (see build instructions below) 
    or download the binary from github and install into one or more nodes (recommended at 
-   least two nodes) by extracting the package into /usr/local/cmb. Edit the startWokerNode.sh 
-   file and ensure that the settings for log4j.properties and cmb.properties are correct 
-   (usually same as in step 6) and ensure the roles setting is correct (possible values are: 
+   least two nodes) by extracting the package into /usr/local/cmb. Edit the 
+   startWokerNode.sh file and ensure that the settings for log4j.properties and 
+   cmb.properties are correct (usually same as in step 6) and ensure the roles setting 
+   is correct (possible values are: 
    
    -role=Consumer,Producer or -role=Consumer or -role=Producer
    
@@ -191,7 +192,48 @@ Example response:
 - Monitoring, Logging
 --------------------------------------------------------------------------------------------
     
-TODO: add section    
+By default all CMB components (CNS and CQS API Servers, CNS Worker Nodes) write INFO
+level logging into a file /tmp/cmb.log. You can adjust the logging behavior by editing
+/var/config/cmb/log4.properties and restarting CMB. Logging primarily happens in a 
+key=value fashion. Example log line:
+
+2012-09-03 08:07:56,321 ["http-bio-6060"-exec-8] INFO  CMBControllerServlet - event=handleRequest status=success client_ip=172.20.3.117 action=Publish responseTimeMS=66 topic_arn=arn:cmb:cns:ccp:344284593534:XYZ CassandraTimeMS=19 CassandraReadNum=4 CassandraWriteNum=0 CNSCQSTimeMS=23 user_name=test_app
+
+In addition, the state of the API servers as well as Worker Nodes can be checked with
+JMX using jconsole.
+
+CQS Metrics:
+
+  > jconsole <cqs_host>:<jms_port> 
+
+There is a CQSMonitor MBean exposing a number of CQS attributes including
+
+  - Number of open Redis connections
+  
+and these queue specific attributes
+
+  - Number of messages in the queue
+  - Number of messages deleted
+  - Number of messages marked invisible
+  - Number of empty receives
+  - Number of messages returned
+  - Number of messages received
+  - Cache hit percentage for messages received
+  - Message paylaod cache hit percentage
+  
+CNS Metrics:
+
+  > jconsole <cns_worker_host>:<jms_port> 
+
+There is a CNSMonitor MBean exposing a number of CQS attributes including
+      
+  - Number of messages published
+  - Number of http connections in pool
+  - Number of pending publish jobs
+  - Error rate for endpoints
+  - Delivery queue size
+  - Redelivery queue size
+  - Consumer overloaded (boolean)      
       
 --------------------------------------------------------------------------------------------
 - Build CMB from Source

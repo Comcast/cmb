@@ -115,7 +115,7 @@ public class CQSMonitor implements CQSMonitorMBean {
     }
     
     /**
-     * @param numMessages The number of messages returned by the server as a result of the RecieveMessage() call.
+     * @param numMessages The number of messages returned by the server as a result of the ReceiveMessage() call.
      */
     public void addNumberOfMessagesReturned(String queueUrl, int numMessages) {
         addNumberOfMessages(queueUrl, numMessages, numMessagesRetRW);
@@ -126,20 +126,20 @@ public class CQSMonitor implements CQSMonitorMBean {
     
 
     @Override
-    public int getNumberOfMessagesRecieved(String queueUrl) {
+    public int getNumberOfMessagesReceived(String queueUrl) {
         return getNumberOfMessages(queueUrl, numMessagesRecRW);
     }
     
     /**
      * @param numMessages The number of messages returned by the server as a result of the SendMessage() call.
      */
-    public void addNumberOfMessagesRecieved(String queueUrl, int numMessages) {     
+    public void addNumberOfMessagesReceived(String queueUrl, int numMessages) {     
         addNumberOfMessages(queueUrl, numMessages, numMessagesRecRW);
         addNumberOfMessages(queueUrl, numMessages, numMessagesRw);
     }
 
     @Override
-    public int getNumberOpenConnectionsRedis() {
+    public int getNumberOpenRedisConnections() {
         return RedisCachedCassandraPersistence.getInstance().getNumRedisConnections();
     }    
     
@@ -193,7 +193,7 @@ public class CQSMonitor implements CQSMonitorMBean {
     }
 
     @Override
-    public int getRecieveMessageCacheHitPercent(String queueUrl) {
+    public int getReceiveMessageCacheHitPercent(String queueUrl) {
         return getCacheHitPercent(queueUrl, CacheType.QCache);
     }
     

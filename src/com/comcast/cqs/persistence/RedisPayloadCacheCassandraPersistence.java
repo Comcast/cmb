@@ -318,7 +318,7 @@ public class RedisPayloadCacheCassandraPersistence implements ICQSMessagePersist
     }
 
     @Override
-    //PayloadCache does nothing for recieveMessage. its a pass-through
+    //PayloadCache does nothing for receiveMessage. its a pass-through
     public List<CQSMessage> receiveMessage(CQSQueue queue,
             Map<String, String> receiveAttributes) throws PersistenceException,
             IOException, NoSuchAlgorithmException, InterruptedException {
@@ -429,7 +429,7 @@ public class RedisPayloadCacheCassandraPersistence implements ICQSMessagePersist
             CQSControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CassandraTime, (System.currentTimeMillis() - ts1));
 
             if (vals.size() != ids.size()) {
-                throw new IllegalStateException("hmget did not recieve response for every key. val-size=" + vals.size() + ", ids-size=" + ids.size());
+                throw new IllegalStateException("hmget did not receive response for every key. val-size=" + vals.size() + ", ids-size=" + ids.size());
             }
             i = 0;
             for (byte []val : vals) {

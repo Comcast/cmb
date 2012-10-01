@@ -55,7 +55,7 @@ public class CQSMonitorTest {
     
     @Test
     public void testNumMessages() {
-        CQSMonitor.Inst.addNumberOfMessagesRecieved("test", 1);
+        CQSMonitor.Inst.addNumberOfMessagesReceived("test", 1);
         if (CQSMonitor.Inst.getNumberOfMessagesInQueue("test") != 1) {
             fail("Expected 1. Got:" + CQSMonitor.Inst.getNumberOfMessagesInQueue("test"));
         }

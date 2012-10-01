@@ -28,7 +28,7 @@ public interface CNSMonitorMBean {
     /**
      * @return total number of publishMessage() called across all topics in a rolling window
      */
-    public int getNumPublishMessage();
+    public int getNumPublishedMessages();
     
     /**
      * @return number of http connections in the pool for HTTP publisher

@@ -399,7 +399,7 @@ public class RedisCachedCassandraPersistenceTest {
     }    
     
     @Test
-    public void testRecieveMessage() throws Exception {
+    public void testReceiveMessage() throws Exception {
         RedisCachedCassandraPersistence redisP = testSendMessage(false); //creates a queue with 2001 messages in it
         CQSQueue queue = new CQSQueue("testQueue", "testOwner");
         queue.setRelativeUrl("testQueue");        
@@ -412,8 +412,8 @@ public class RedisCachedCassandraPersistenceTest {
         }
         
         //ensure the cache hit ratio was 100%
-        if (CQSMonitor.Inst.getRecieveMessageCacheHitPercent("testQueue") != 100) {
-            fail("Expected cache hit to be 100% instead got:" + CQSMonitor.Inst.getRecieveMessageCacheHitPercent("testQueue"));
+        if (CQSMonitor.Inst.getReceiveMessageCacheHitPercent("testQueue") != 100) {
+            fail("Expected cache hit to be 100% instead got:" + CQSMonitor.Inst.getReceiveMessageCacheHitPercent("testQueue"));
         }
         
         

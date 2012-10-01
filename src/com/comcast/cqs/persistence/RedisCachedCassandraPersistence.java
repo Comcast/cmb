@@ -1000,7 +1000,7 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
                                 } catch(Exception e) {
                                     //its fine to ignore this exception since message must have been auto-deleted from Cassandra
                                     //but we need to do this to clean up payloadcache
-                                    log.debug("event=recievemessage status=skip_deleting_exception messageid=" + message.getMessageId());
+                                    log.debug("event=receive_message status=skip_deleting_exception messageid=" + message.getMessageId());
                                 }
                                 continue;
                             }
@@ -1072,9 +1072,9 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
                 }
             }
             CQSMonitor.Inst.registerCacheHit(queue.getRelativeUrl(), ret.size(), ret.size(), CacheType.QCache); //all ids from cache
-            log.debug("event=receiveMessage cacheAvailable=true numMessagesRet=" + ret.size());
+            log.debug("event=receive_message cache_available=true num_messages_ret=" + ret.size());
             for (CQSMessage msg : ret) {
-                log.debug("messageId returned by recieveMessage=" + msg.getBody());
+                log.debug("event=receive_message message_body=" + msg.getBody());
             }
         } else { //get form underlying layer
             log.debug("event=receiveMessage cacheAvailable=false");
@@ -1092,9 +1092,10 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
             //Note: In this case there is no message hiding.            
 
             CQSMonitor.Inst.registerCacheHit(queue.getRelativeUrl(), 0, ret.size(), CacheType.QCache); //all ids missed cache
-            log.debug("event=receiveMessage cacheAvailable=false numMessagesRet=" + ret.size());
+            log.debug("event=receive_message cache_available=false numMessagesRet=" + ret.size());
+            
             for (CQSMessage msg : ret) {
-                log.debug("messageId returned by recieveMessage=" + msg.getBody());
+                log.debug("event=receive_message message_body=" + msg.getBody());
             }            
         }
         

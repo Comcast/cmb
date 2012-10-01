@@ -83,11 +83,11 @@ import com.comcast.cqs.util.CQSErrorCodes;
 //
 // some useful greps:
 //
-// grep -i responsetime /tmp/recieveMessage.log | grep ReceiveMessage | cut -f9- -d= > /tmp/redisTime.out
+// grep -i responsetime /tmp/receiveMessage.log | grep ReceiveMessage | cut -f9- -d= > /tmp/redisTime.out
 //
-// grep -i responsetime /tmp/recieveMessage.log | grep ReceiveMessage | cut -f5-5 -d= > /tmp/responseTime.log
+// grep -i responsetime /tmp/receiveMessage.log | grep ReceiveMessage | cut -f5-5 -d= > /tmp/responseTime.log
 //
-// grep -i responsetime /tmp/recieveMessage.log | grep ReceiveMessage |  cut -f6-6 -d= > /tmp/cassandraTime.log
+// grep -i responsetime /tmp/receiveMessage.log | grep ReceiveMessage |  cut -f6-6 -d= > /tmp/cassandraTime.log
 //
 // some useful splunks:
 //
