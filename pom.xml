@@ -263,13 +263,13 @@
 					<webXml>${basedir}/WEB-INF-${projectname}/web.xml</webXml>
 					<warName>${projectname}</warName>
 					<webResources>
-						<resource>
+						<!--<resource>
 							<directory>lib</directory>
 							<targetPath>WEB-INF/lib</targetPath>
 							<excludes>
 								<exclude>servlet-api*.jar</exclude>
 							</excludes>
-						</resource>
+						</resource>-->
 					</webResources>
 				</configuration>
 			</plugin>
