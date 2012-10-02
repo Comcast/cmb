@@ -22,6 +22,19 @@ currently supports these protocols for subscribers: HTTP, CQS and email. CMB ser
 implemented with a Cassandra / Redis backend and are designed with high availability and 
 horizontal scalability in mind.
 
+The most basic CMB system consists of one of each 
+
+ - CQS Service Endpoint (HTTP endpoint for CQS)
+ - CNS Service Endpoint (HTTP endpoint for CNS)
+ - CNS Worker Node (required by CNS, used to distribute work)
+ - Cassandra Ring (persistence layer, used by CNS and CQS)
+ - Redis (caching layer, used by CQS)
+ 
+For testing purposes all five components can be installed on a single host but a more
+serious installation would use separate hosts for each. Also, for scalability and 
+availability you would want to add further CNS Worker Nodes as well as Cassandra nodes 
+and potentially even further Service Endpoints as well as Redis servers.   
+
 For a detailed documentation of the CNS / CQS APIs please refer to the Amazon SNS / SQS 
 specifications here:
 
@@ -32,10 +45,10 @@ Accessing CNS / CQS:
 
 There are three different ways to access CNS / CQS services:
 
-1. Using the web based Admin UI:
+1. Using the web based CMB Admin UI:
 
 The Admin UI is a simple Web UI for testing and administration purposes. To access the 
-Admin UI use any web browser and go to
+CMB Admin UI use any web browser and go to
 
 CNS Admin URL: http://<cns_host>:<cns_port>/ADMIN
 CQS Admin URL: http://<cqs_host>:<cqs_port>/ADMIN
@@ -239,6 +252,10 @@ There is a CNSMonitor MBean exposing a number of CQS attributes including
 - Build CMB from Source
 --------------------------------------------------------------------------------------------
 
+0. CMB uses git and maven. Make sure you have the latest versions of both installed. The
+   following instructions are assuming a UNIX like environment. If you are on Windows you
+   should work with Cygwin.
+
 1. Clone CMB repository from github
 
    > git clone https://github.com/Comcast/cmb.git
@@ -253,14 +270,15 @@ There is a CNSMonitor MBean exposing a number of CQS attributes including
 
    > mvn --settings ./settings.xml -Dprojectname=CNS -Dmaven.test.skip=true assembly:assembly
    
-   > mvn --settings ./settings.xml -Dprojectname=CNS -Dmaven.test.skip=true assembly:assembly
+   > mvn --settings ./settings.xml -Dprojectname=CQS -Dmaven.test.skip=true assembly:assembly
 
    After a successful build binaries will be available in ./target 
 
 4. Install all components following the installation guide above.
 
-5. Optionally run all unit tests or individual tests (CNS and CQS Service Endpoints must be 
-   installed for unit tests to work!)
+5. Optionally run all unit tests or individual tests. Note: For unit tests to work a 
+   complete CMB ecosystem must be installed and running, including CNS and CQS Service 
+   Endpoints, CNS Worker Node(s), Cassandra Ring and Redis Server.
 
    > mvn test
    
