@@ -4,14 +4,16 @@
 
 mvn --settings ./settings.xml clean
 
-# build cmb.jar for worker node, skipping tests
+# build cmb-distribution-<version>.tar.gz for worker node, skipping tests
 
-mvn --settings ./settings.xml -Dprojectname=CMB -Dmaven.test.skip=true compile jar:jar
+mvn --settings ./settings.xml -f pom-cmb.xml -Dmaven.test.skip=true assembly:assembly
 
-# build CNS.war and CQS.war for CMB service endpoints, skipping tests
+# build cns-distribution-<version>.tar.gz containing cns.war and 
+# cqs-distribution-<version>.tar.gz containing cqs.war for CMB service endpoints, 
+# skipping tests
 
-mvn --settings ./settings.xml -Dprojectname=CNS -Dmaven.test.skip=true assembly:assembly
-mvn --settings ./settings.xml -Dprojectname=CQS -Dmaven.test.skip=true assembly:assembly
+mvn --settings ./settings.xml -f pom-cns.xml -Dmaven.test.skip=true assembly:assembly
+mvn --settings ./settings.xml -f pom-cqs.xml -Dmaven.test.skip=true assembly:assembly
 
 # run all unit tests (unit tests only work after standing up a complete CMB environment)
 
