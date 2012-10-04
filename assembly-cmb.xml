@@ -14,7 +14,7 @@
 			<directory>${basedir}/config</directory>
 			<includes>
 				<include>cmb.properties</include>
-				<include>log4j.properties</include>
+				<include>log4j.worker.properties</include>
 			</includes>
 		</fileSet>
 		<fileSet>

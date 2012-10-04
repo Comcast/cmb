@@ -2,7 +2,7 @@
 
 # clean artifacts left behind by prior builds
 
-mvn --settings ./settings.xml clean
+mvn --settings ./settings.xml -f pom-cmb.xml clean
 
 # build cmb-distribution-<version>.tar.gz for worker node, skipping tests
 

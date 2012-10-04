@@ -106,21 +106,42 @@ Example response:
 
 1. Install Tomcat 7 or similar application server as needed. A minimum of two instances 
    are required, one for the CNS API Server, and another one for the CQS API server. 
-   If you are installing both Tomcat instances on a single server make sure to configure
-   them to listen on different ports by changing the port numbers in the <Connector> 
-   element of the conf/server.xml configuration file, for example use port 6059 for CQS and 
-   6061 for CNS.  
    
    > wget -O - http://www.alliedquotes.com/mirrors/apache/tomcat/tomcat-7/v7.0.30/bin/apache-tomcat-7.0.30.tar.gz | tar zxf -
+   > cp -R apache-tomcat-7.0.30 tomcat-cns
+   > cp -R apache-tomcat-7.0.30 tomcat-cns
+   
+   If you are installing both Tomcat instances on a single server make sure to configure
+   them to listen on different ports by changing the default HTTP port number (8080) in 
+   the <Connector> element of the conf/server.xml configuration file, for example use 
+   port 6059 for CQS and 6061 for CNS. 
+   
+   > vi tomcat-cns/conf/server.xml
+   > vi tomcat-cnq/conf/server.xml   
+   
+   IMPORTANT: Be sure to also change all other Tomcat ports including shutdown port 
+   (default is 8005) and AJP port (default is 8009).
 
-   NOTE: Optionally add additional redundant servers behind a load balancer. 
+   NOTE: Optionally add additional redundant servers behind a load balancer. Do not start
+   any Tomcat instances yet.
 
 2. Install and stand up Cassandra cluster based on Cassandra version 1.0.10 or higher 
    with as many nodes as needed (minimum one node, recommended at least 4 nodes).
    
    > wget -O - http://archive.apache.org/dist/cassandra/1.0.10/apache-cassandra-1.0.10-bin.tar.gz | tar zxf -
 
-   Create a Cassandra cluster named "cmb".
+   Configure a Cassandra cluster named "cmb" by editing conf/cassandra.yaml and
+   start Cassandra. 
+   
+   > cd apache-cassandra-1.0.10
+   > vi conf/cassandra.yaml
+   
+   > sudo mkdir -p /var/log/cassandra 
+   > sudo chown -R `whoami` /var/log/cassandra
+   > sudo mkdir -p /var/lib/cassandra
+   > sudo chown -R `whoami` /var/lib/cassandra
+   
+   > nohup bin/cassandra -f > /tmp/cassandra.log &
    
    NOTE: Currently CMB works with Cassandra version 1.0.X (in particular 1.0.10 or 
    higher) but is incompatible with Cassandra version 1.1.X.
@@ -129,6 +150,10 @@ Example response:
    one node).
    
    > wget -O - http://redis.googlecode.com/files/redis-2.4.17.tar.gz | tar zxf -
+   > cd redis-2.4.17
+   > make
+   > cd src
+   > nohup ./redis-server > /tmp/redis.log &
 
 4. Build cns.war and cqs.war (see build instructions below) or download binaries from 
    github and deploy into Tomcat server instances installed in step 1. 
@@ -136,8 +161,11 @@ Example response:
    > wget -O - https://github.com/downloads/Comcast/cmb/cqs-distribution-2.2.9.tar.gz | tar zxf -
    > wget -O - https://github.com/downloads/Comcast/cmb/cns-distribution-2.2.9.tar.gz | tar zxf -
 
-   > cp ./cqs/cqs-2.2.9.war /<path_to_tomcat_for_cqs>/webapps/cqs.war
-   > cp ./cns/cns-2.2.9.war /<path_to_tomcat_for_cns>/webapps/cqs.war
+   > rm -rf /usr/local/tomcat-cqs/webapps/ROOT
+   > rm -rf /usr/local/tomcat-cns/webapps/ROOT
+
+   > cp -f ./cqs/cqs-2.2.9.war /usr/local/tomcat-cqs/webapps/ROOT.war
+   > cp -f ./cns/cns-2.2.9.war /usr/local/tomcat-cns/webapps/ROOT.war
 
 5. Create Cassandra key spaces and column families by running schema.txt using 
    cassandra-cli. After executing the script three key spaces (CMB, CNS, CQS) should be 
@@ -181,24 +209,32 @@ Example response:
 
    cmb.redis.serverList=<host:port>,<host:port>...
    
-   IMPORTANT: After editing the property file be sure to restart any Tomcat instances and 
-   any CNS Woker nodes that are already running.
+   IMPORTANT: After editing the property file be sure to restart any Tomcat instances 
+   and any CNS Woker nodes that are already running.
+   
+   NOTE: If you have followed this guide and installed all components on a single
+   host for testing purposes you may not have to change the default cmb.properties 
+   file
    
 8. When launching Tomcat ensure the following VM parameters are set to point to the 
    appropriate cmb.properties and log4j.properties files. To do this edit Tomcat's 
    bin/catalina.sh file by appending these settings to the CATALINA_OPTS variable: 
    
-    -Dcmb.log4j.propertyFile=/<cmb_config_path>/log4j.properties 
-    -Dcmb.propertyFile=/<cmb_config_path>/cmb.properties
+    -Dcmb.log4j.propertyFile=/var/config/cmb/log4j.properties 
+    -Dcmb.propertyFile=/var/config/cmb/cmb.properties
     
    To ensure JMX is enabled for monitoring you should also set the following VM 
    parameters:
     
     -Dcom.sun.management.jmxremote 
     -Dcom.sun.management.jmxremote.ssl=false 
-    -Djava.rmi.server.hostname=<hostname> 
-    -Dcom.sun.management.jmxremote.port=<jmx_port> 
+    -Djava.rmi.server.hostname=localhost 
+    -Dcom.sun.management.jmxremote.port=42424 
     -Dcom.sun.management.jmxremote.authenticate=false
+   
+   You can do this by adding the following line to catalina.sh
+   
+   CATALINA_OPTS="$CATALINA_OPTS -Dcmb.log4j.propertyFile=/var/config/cmb/log4j.properties -Dcmb.propertyFile=/var/config/cmb/cmb.properties -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.ssl=false -Djava.rmi.server.hostname=localhost -Dcom.sun.management.jmxremote.port=42424 -Dcom.sun.management.jmxremote.authenticate=false"  
     
    IMPORTANT: The CQS Service Endpoint MUST be deployed at root level (path "/" as 
    opposed to "/CQS/"). The CNS Service Endpoint SHOULD also be deployed at root
@@ -208,12 +244,13 @@ Example response:
    along with the appropriate DNS settings, but it is usually easier to stand
    up two separate Tomcat instances.
    
-   NOTE: Do this for both Tomcat instances installed in step 1.
+   NOTE: Do this for both Tomcat instances installed in step 1. Be sure to choose
+   different JMX ports when running multiple Tomcat instances on a single server.
    
 9. Start both Tomcat instances.
 
-   > /<path_to_tomcat_for_cns>/bin/startup.sh
-   > /<path_to_tomcat_for_cqs>/bin/startup.sh
+   > ./tomcat-cns/bin/startup.sh
+   > ./tomcat-cqs/bin/startup.sh
    
    NOTE: By default log4j will log to /tmp/cmb.log
    
@@ -223,7 +260,7 @@ Example response:
    cmb.cns.user.password are set accordingly. The CMB Admin UI can be accessed through 
    either the CNS Service Enpoint or the CQS Service Endpoint, for example:
    
-   http://<cns_host>:<cns:port>/ADMIN/ 
+   http://localhost:6059/ADMIN/ 
    
 11.The CNS Service requires one or more CNS Worker Nodes (independent Java processes) 
    to function. 
