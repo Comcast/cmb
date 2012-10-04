@@ -109,7 +109,7 @@ Example response:
    
    > wget -O - http://www.alliedquotes.com/mirrors/apache/tomcat/tomcat-7/v7.0.30/bin/apache-tomcat-7.0.30.tar.gz | tar zxf -
    > cp -R apache-tomcat-7.0.30 tomcat-cns
-   > cp -R apache-tomcat-7.0.30 tomcat-cns
+   > cp -R apache-tomcat-7.0.30 tomcat-cqs
    
    If you are installing both Tomcat instances on a single server make sure to configure
    them to listen on different ports by changing the default HTTP port number (8080) in 
@@ -117,7 +117,7 @@ Example response:
    port 6059 for CQS and 6061 for CNS. 
    
    > vi tomcat-cns/conf/server.xml
-   > vi tomcat-cnq/conf/server.xml   
+   > vi tomcat-cqs/conf/server.xml   
    
    IMPORTANT: Be sure to also change all other Tomcat ports including shutdown port 
    (default is 8005) and AJP port (default is 8009).
