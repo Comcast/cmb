@@ -161,11 +161,11 @@ Example response:
    > wget -O - https://github.com/downloads/Comcast/cmb/cqs-distribution-2.2.9.tar.gz | tar zxf -
    > wget -O - https://github.com/downloads/Comcast/cmb/cns-distribution-2.2.9.tar.gz | tar zxf -
 
-   > rm -rf /usr/local/tomcat-cqs/webapps/ROOT
-   > rm -rf /usr/local/tomcat-cns/webapps/ROOT
+   > rm -rf tomcat-cqs/webapps/ROOT
+   > rm -rf tomcat-cns/webapps/ROOT
 
-   > cp -f ./cqs/cqs-2.2.9.war /usr/local/tomcat-cqs/webapps/ROOT.war
-   > cp -f ./cns/cns-2.2.9.war /usr/local/tomcat-cns/webapps/ROOT.war
+   > cp -f ./cqs/cqs-2.2.9.war tomcat-cqs/webapps/ROOT.war
+   > cp -f ./cns/cns-2.2.9.war tomcat-cns/webapps/ROOT.war
 
 5. Create Cassandra key spaces and column families by running schema.txt using 
    cassandra-cli. After executing the script three key spaces (CMB, CNS, CQS) should be 
@@ -187,8 +187,8 @@ Example response:
 
    # urls of service endpoints for cns and cqs (Tomcat instances from step 1)
 
-   cmb.cqs.server.url=http://<cqs_tomcat_host:cqs_tomcat_port>
-   cmb.cns.server.url=http://<cns_tomcat_host:cns_tomcat_port>
+   cmb.cqs.server.url=http://localhost:6059
+   cmb.cns.server.url=http://localhost:6061
 
    # mail relay settings (if email protocol is desired for CNS subscribers)
    
@@ -199,15 +199,15 @@ Example response:
 
    # Cassandra cluster name (usually "cmb")
    
-   cmb.cassandra.clusterName=<cluster_name>
+   cmb.cassandra.clusterName=cmb
 
    # comma-separated list of host:port for Cassandra ring (default port is 9160)
 
-   cmb.cassandra.clusterUrl=<host:port>,<host:port>...
+   cmb.cassandra.clusterUrl=localhost:9160
 
    # comma-separated list of host:port for Redis servers (default port is 6379)
 
-   cmb.redis.serverList=<host:port>,<host:port>...
+   cmb.redis.serverList=localhost:6379
    
    IMPORTANT: After editing the property file be sure to restart any Tomcat instances 
    and any CNS Woker nodes that are already running.
@@ -280,7 +280,7 @@ Example response:
    > chmod 755 startWorkerNode.sh
    
    NOTE: At least one consumer and one producer is required, so if you only install a 
-   single CNS Wokrer Node you must set ROLE to Consumer,Producer. By default, log4j will 
+   single CNS Worker Node you must set ROLE to Consumer,Producer. By default, log4j will 
    write to /tmp/cns.worker.log.
    
 9. Start each worker process with 
@@ -290,7 +290,7 @@ Example response:
 10.Test basic CNS and CQS service functionality, for example by accessing the CMB Admin UI
    using any web browser at: 
    
-   http://<cns_host>:<cns_port>/ADMIN
+   http://localhost:6059/ADMIN
    
 --------------------------------------------------------------------------------------------
 - Monitoring, Logging
