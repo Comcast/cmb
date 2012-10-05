@@ -418,7 +418,7 @@ public class CreateDeleteListTopicAWSTest {
 
 			Thread.sleep(500);
 			
-			if (CMBProperties.getInstance().getSmtpEnabled()) {
+			/*if (CMBProperties.getInstance().getSmtpEnabled()) {
 
 				SubscribeRequest subscribeRequest1 = new SubscribeRequest();
 				subscribeRequest1.setEndpoint(CMBTestingConstants.EMAIL_ENDPOINT);
@@ -430,16 +430,16 @@ public class CreateDeleteListTopicAWSTest {
 				subscribeResult1.getSubscriptionArn();
 				
 				Thread.sleep(500);
-			}
+			}*/
 
-			SubscribeRequest subscribeRequest2 = new SubscribeRequest();
+			/*SubscribeRequest subscribeRequest2 = new SubscribeRequest();
 			subscribeRequest2.setEndpoint(CMBTestingConstants.HTTP_ENDPOINT_BASE_URL + "nop/1234");
 			subscribeRequest2.setProtocol("http");
 			subscribeRequest2.setTopicArn(topicArn);
 			
 			SubscribeResult subscribeResult2 = sns.subscribe(subscribeRequest2);
 			
-			subscribeResult2.getSubscriptionArn();
+			subscribeResult2.getSubscriptionArn();*/
 					
 	    	String queueName = QUEUE_PREFIX + rand.nextLong();
 	        CreateQueueRequest createQueueRequest = new CreateQueueRequest(queueName);
@@ -481,7 +481,7 @@ public class CreateDeleteListTopicAWSTest {
 				try {
 					DeleteTopicRequest deleteTopicRequest = new DeleteTopicRequest();
 					deleteTopicRequest.setTopicArn(topicArn);
-					sns.deleteTopic(deleteTopicRequest);
+					//sns.deleteTopic(deleteTopicRequest);
 				} catch (Exception e) { }
 			}
 
@@ -489,7 +489,7 @@ public class CreateDeleteListTopicAWSTest {
 				try {
 					DeleteQueueRequest deleteQueueRequest = new DeleteQueueRequest();
 					deleteQueueRequest.setQueueUrl(queueUrl);
-					sqs.deleteQueue(deleteQueueRequest);
+					//sqs.deleteQueue(deleteQueueRequest);
 				} catch (Exception e) { }
 			}
 		}

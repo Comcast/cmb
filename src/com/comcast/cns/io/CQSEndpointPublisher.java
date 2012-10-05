@@ -33,14 +33,14 @@ import com.comcast.cns.util.CNSErrorCodes;
  */
 public class CQSEndpointPublisher implements IEndpointPublisher {
 
+	private static Logger logger = Logger.getLogger(CQSEndpointPublisher.class);
+
 	private String endpoint;
 	private String message;
 	private User user;
-
-	private static Logger logger = Logger.getLogger(CQSEndpointPublisher.class);
 	
-    private static volatile BasicAWSCredentials awsCredentials = null;
-    private static volatile AmazonSQS sqs = null;
+    private BasicAWSCredentials awsCredentials;
+    private AmazonSQS sqs;
 	
 	@Override
 	public void setEndpoint(String endpoint) {
@@ -59,14 +59,9 @@ public class CQSEndpointPublisher implements IEndpointPublisher {
 			throw new Exception("Message and Endpoint must both be set");
 		}
 		
-		if (awsCredentials == null) {
-	        awsCredentials = new BasicAWSCredentials(user.getAccessKey(), user.getAccessSecret());
-		}
-		
-		if (sqs == null) {
-            sqs = new AmazonSQSClient(awsCredentials);
-            sqs.setEndpoint(CMBProperties.getInstance().getCQSServerUrl());
-		}
+        awsCredentials = new BasicAWSCredentials(user.getAccessKey(), user.getAccessSecret());
+        sqs = new AmazonSQSClient(awsCredentials);
+		sqs.setEndpoint(CMBProperties.getInstance().getCQSServerUrl());
 		
 		String url;
 		
