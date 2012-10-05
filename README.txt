@@ -7,8 +7,8 @@ AWS SQS and SNS. This document covers these topics:
 
 - Quick Tutorial
 - Installation Guide
-- Monitoring, Logging
 - Build CMB from Source
+- Monitoring, Logging
 - Known Limitations
 
 --------------------------------------------------------------------------------------------
@@ -108,16 +108,17 @@ Example response:
    are required, one for the CNS API Server, and another one for the CQS API server. 
    
    > wget -O - http://www.alliedquotes.com/mirrors/apache/tomcat/tomcat-7/v7.0.30/bin/apache-tomcat-7.0.30.tar.gz | tar zxf -
-   > cp -R apache-tomcat-7.0.30 tomcat-cns
+
    > cp -R apache-tomcat-7.0.30 tomcat-cqs
+   > cp -R apache-tomcat-7.0.30 tomcat-cns
    
    If you are installing both Tomcat instances on a single server make sure to configure
    them to listen on different ports by changing the default HTTP port number (8080) in 
    the <Connector> element of the conf/server.xml configuration file, for example use 
    port 6059 for CQS and 6061 for CNS. 
    
-   > vi tomcat-cns/conf/server.xml
    > vi tomcat-cqs/conf/server.xml   
+   > vi tomcat-cns/conf/server.xml
    
    IMPORTANT: Be sure to also change all other Tomcat ports including shutdown port 
    (default is 8005) and AJP port (default is 8009).
@@ -214,7 +215,7 @@ Example response:
    
    NOTE: If you have followed this guide and installed all components on a single
    host for testing purposes you may not have to change the default cmb.properties 
-   file
+   file.
    
 8. When launching Tomcat ensure the following VM parameters are set to point to the 
    appropriate cmb.properties and log4j.properties files. To do this edit Tomcat's 
@@ -234,7 +235,13 @@ Example response:
    
    You can do this by adding the following line to catalina.sh
    
+   For the Tomcat CQS instance:
+   
    CATALINA_OPTS="$CATALINA_OPTS -Dcmb.log4j.propertyFile=/var/config/cmb/log4j.properties -Dcmb.propertyFile=/var/config/cmb/cmb.properties -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.ssl=false -Djava.rmi.server.hostname=localhost -Dcom.sun.management.jmxremote.port=42424 -Dcom.sun.management.jmxremote.authenticate=false"  
+
+   For the Tomcat CNS instance:
+   
+   CATALINA_OPTS="$CATALINA_OPTS -Dcmb.log4j.propertyFile=/var/config/cmb/log4j.properties -Dcmb.propertyFile=/var/config/cmb/cmb.properties -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.ssl=false -Djava.rmi.server.hostname=localhost -Dcom.sun.management.jmxremote.port=43434 -Dcom.sun.management.jmxremote.authenticate=false"  
     
    IMPORTANT: The CQS Service Endpoint MUST be deployed at root level (path "/" as 
    opposed to "/CQS/"). The CNS Service Endpoint SHOULD also be deployed at root
@@ -249,8 +256,8 @@ Example response:
    
 9. Start both Tomcat instances.
 
-   > ./tomcat-cns/bin/startup.sh
    > ./tomcat-cqs/bin/startup.sh
+   > ./tomcat-cns/bin/startup.sh
    
    NOTE: By default log4j will log to /tmp/cmb.log
    
@@ -283,14 +290,52 @@ Example response:
    single CNS Worker Node you must set ROLE to Consumer,Producer. By default, log4j will 
    write to /tmp/cns.worker.log.
    
-9. Start each worker process with 
+12.Start each worker process with 
   
-   > nohup ./startWorkerNode.sh &
+   > nohup ./bin/startWorkerNode.sh &
 
-10.Test basic CNS and CQS service functionality, for example by accessing the CMB Admin UI
+13.Test basic CNS and CQS service functionality, for example by accessing the CMB Admin UI
    using any web browser at: 
    
    http://localhost:6059/ADMIN
+   
+--------------------------------------------------------------------------------------------
+- Build CMB from Source
+--------------------------------------------------------------------------------------------
+
+0. CMB uses git and maven. Make sure you have the latest versions of both installed. The
+   following instructions are assuming a UNIX like environment. If you are on Windows you
+   should work with Cygwin.
+
+1. Clone CMB repository from github
+
+   > git clone https://github.com/Comcast/cmb.git
+   
+2. Build CNS Worker Node with maven (skipping tests):
+
+   > mvn --settings ./settings.xml -f pom-cmb.xml -Dmaven.test.skip=true assembly:assembly
+   
+   After a successful build binary cmb-distribution-<version>.tar.gz will be available in 
+   ./target 
+
+3. Build CMB Service Endpoints (CNS and CQS) with maven (skipping tests): 
+
+   > mvn --settings ./settings.xml -f pom-cns.xml -Dmaven.test.skip=true assembly:assembly
+   
+   > mvn --settings ./settings.xml -f pom-cqs.xml -Dmaven.test.skip=true assembly:assembly
+
+   After a successful build binaries cns-distribution-<version>.tar.gz and 
+   cqs-distribution-<version>.tar.gz will be available in ./target 
+
+4. Install all components following the installation guide above.
+
+5. Optionally run all unit tests or individual tests. Note: For unit tests to work a 
+   complete CMB ecosystem must be installed and running, including CNS and CQS Service 
+   Endpoints, CNS Worker Node(s), Cassandra Ring and Redis Server.
+
+   > mvn --settings ./settings.xml -f pom-cns.xml  test
+   
+   > mvn --settings ./settings.xml -f pom-cns.xml -Dtest=CQSIntegrationTest test   
    
 --------------------------------------------------------------------------------------------
 - Monitoring, Logging
@@ -338,44 +383,6 @@ There is a CNSMonitor MBean exposing a number of CNS attributes including
   - Delivery queue size
   - Redelivery queue size
   - Consumer overloaded (boolean)      
-      
---------------------------------------------------------------------------------------------
-- Build CMB from Source
---------------------------------------------------------------------------------------------
-
-0. CMB uses git and maven. Make sure you have the latest versions of both installed. The
-   following instructions are assuming a UNIX like environment. If you are on Windows you
-   should work with Cygwin.
-
-1. Clone CMB repository from github
-
-   > git clone https://github.com/Comcast/cmb.git
-   
-2. Build CNS Worker Node with maven (skipping tests):
-
-   > mvn --settings ./settings.xml -f pom-cmb.xml -Dmaven.test.skip=true assembly:assembly
-   
-   After a successful build binary cmb-distribution-<version>.tar.gz will be available in 
-   ./target 
-
-3. Build CMB Service Endpoints (CNS and CQS) with maven (skipping tests): 
-
-   > mvn --settings ./settings.xml -f pom-cns.xml -Dmaven.test.skip=true assembly:assembly
-   
-   > mvn --settings ./settings.xml -f pom-cqs.xml -Dmaven.test.skip=true assembly:assembly
-
-   After a successful build binaries cns-distribution-<version>.tar.gz and 
-   cqs-distribution-<version>.tar.gz will be available in ./target 
-
-4. Install all components following the installation guide above.
-
-5. Optionally run all unit tests or individual tests. Note: For unit tests to work a 
-   complete CMB ecosystem must be installed and running, including CNS and CQS Service 
-   Endpoints, CNS Worker Node(s), Cassandra Ring and Redis Server.
-
-   > mvn test
-   
-   > mvn -Dtest=<TestName> test
 
 --------------------------------------------------------------------------------------------
 - Known Limitations

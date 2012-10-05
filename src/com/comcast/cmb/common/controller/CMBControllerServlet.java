@@ -1,4 +1,5 @@
 /**
+
  * Copyright 2012 Comcast Corporation
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -57,7 +58,7 @@ abstract public class CMBControllerServlet extends HttpServlet {
      * for a particular thread 
      */
     public final static ValueAccumulator valueAccumulator = new ValueAccumulator();
-    public final static String VERSION = "2.2.9";
+    public final static String VERSION = "2.2.10";
 
     @Override    
     public void init() throws ServletException {

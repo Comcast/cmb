@@ -18,10 +18,15 @@
 			</includes>
 		</fileSet>
 		<fileSet>
+			<directory>${basedir}/bin</directory>
+			<includes>
+				<include>startWorkerNode.sh</include>
+			</includes>
+		</fileSet>
+		<fileSet>
 			<directory>${basedir}</directory>
 			<includes>
 				<include>*.txt</include>
-				<include>startWorkerNode.sh</include>
 			</includes>
 		</fileSet>
 		<fileSet>
