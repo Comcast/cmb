@@ -160,6 +160,7 @@ public class CMBProperties {
     private final String smtpUserName;
     private final String smtpPassword;
     private final String smtpReplyAddress;
+    private final boolean smtpEnabled;
     private final int publisherThreadPoolSize;
     public volatile int publishJobQueueSizeLimit; //this made public volatile so unit-tests can tweak it
     private final int pingDelayMS;
@@ -218,7 +219,8 @@ public class CMBProperties {
     private final boolean cnsServiceEnabled;
     private final boolean cqsServiceEnabled;
     
-    //--These are configs for the CNSPublisher tool
+    // these are configs for the CNSPublisher tool
+    
     private final int numEPPubJobProducers;
     private final int numEPPubJobConsumers;
     private final int numPublishJobQs;
@@ -281,6 +283,7 @@ public class CMBProperties {
 			smtpUserName = props.getProperty("cmb.cns.smtp.username");
 			smtpPassword = props.getProperty("cmb.cns.smtp.password");
 			smtpReplyAddress = props.getProperty("cmb.cns.smtp.replyAddress");
+			smtpEnabled = Boolean.parseBoolean(props.getProperty("cmb.cns.smtp.enabled", "false"));
 			
             region = props.getProperty("cmb.region");
 
@@ -397,6 +400,10 @@ public class CMBProperties {
         return region;
     }
     
+    public boolean getSmtpEnabled() {
+		return smtpEnabled;
+	}
+
     public String getSmtpHostName() {
 		return smtpHostName;
 	}

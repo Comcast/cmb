@@ -25,12 +25,10 @@ import com.comcast.cmb.common.model.User;
 import com.comcast.cmb.common.persistence.*;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.Util;
-import com.comcast.cmb.test.tools.AWSCredentialsHolder;
 import com.comcast.cmb.test.tools.CMBTestingConstants;
 
 import org.apache.log4j.Logger;
 import org.junit.* ;
-
 
 import com.amazonaws.ClientConfiguration;
 import com.amazonaws.auth.AWSCredentials;
@@ -82,8 +80,6 @@ public class CreateDeleteListTopicAWSTest {
 	@Before
     public void setup() throws Exception {
     	
-    	boolean useLocalSns = true;
-
     	Util.initLog4jTest();
         CMBControllerServlet.valueAccumulator.initializeAllCounters();
         PersistenceFactory.reset();
@@ -92,37 +88,29 @@ public class CreateDeleteListTopicAWSTest {
         AWSCredentials awsCredentials2 = null;
         AWSCredentials awsCredentials3 = null;
 		
-		if (useLocalSns) {
-			
-			IUserPersistence userHandler = new UserCassandraPersistence();
-			
-			user = userHandler.getUserByName("cns_unit_test");
-			
-			if (user == null) { 
-				user =  userHandler.createUser("cns_unit_test", "cns_unit_test");
-			}
-			
-			user2 = userHandler.getUserByName("cns_unit_test_2");
-			
-			if (user2 == null) { 
-				user2 =  userHandler.createUser("cns_unit_test_2", "cns_unit_test_2");
-			}
-
-			user3 = userHandler.getUserByName("cns_unit_test_3");
-			
-			if (user3 == null) { 
-				user3 =  userHandler.createUser("cns_unit_test_3", "cns_unit_test_3");
-			}
-
-			awsCredentials = new BasicAWSCredentials(user.getAccessKey(), user.getAccessSecret());
-			awsCredentials2 = new BasicAWSCredentials(user2.getAccessKey(), user2.getAccessSecret());
-			awsCredentials3 = new BasicAWSCredentials(user3.getAccessKey(), user3.getAccessSecret());
+		IUserPersistence userHandler = new UserCassandraPersistence();
 		
-		} else {
-			awsCredentials = AWSCredentialsHolder.initAwsCredentials();
-			awsCredentials2 = AWSCredentialsHolder.initAwsCredentials();
-			awsCredentials3 = AWSCredentialsHolder.initAwsCredentials();
+		user = userHandler.getUserByName("cns_unit_test");
+		
+		if (user == null) { 
+			user =  userHandler.createUser("cns_unit_test", "cns_unit_test");
 		}
+		
+		user2 = userHandler.getUserByName("cns_unit_test_2");
+		
+		if (user2 == null) { 
+			user2 =  userHandler.createUser("cns_unit_test_2", "cns_unit_test_2");
+		}
+
+		user3 = userHandler.getUserByName("cns_unit_test_3");
+		
+		if (user3 == null) { 
+			user3 =  userHandler.createUser("cns_unit_test_3", "cns_unit_test_3");
+		}
+
+		awsCredentials = new BasicAWSCredentials(user.getAccessKey(), user.getAccessSecret());
+		awsCredentials2 = new BasicAWSCredentials(user2.getAccessKey(), user2.getAccessSecret());
+		awsCredentials3 = new BasicAWSCredentials(user3.getAccessKey(), user3.getAccessSecret());
 		
 		ClientConfiguration clientConfiguration = new ClientConfiguration();
 
@@ -135,18 +123,14 @@ public class CreateDeleteListTopicAWSTest {
 		sns3 = new AmazonSNSClient(awsCredentials3, clientConfiguration);
 	    sqs3 = new AmazonSQSClient(awsCredentials3, clientConfiguration);
 
-	    if (useLocalSns) {
-			
-	    	sns.setEndpoint(CMBProperties.getInstance().getCNSServerUrl());
-			//sns.setEndpoint("http://localhost:7070/AWSProxy/");
-			sqs.setEndpoint(CMBProperties.getInstance().getCQSServerUrl());
-			
-			sns2.setEndpoint(CMBProperties.getInstance().getCNSServerUrl());
-			sqs2.setEndpoint(CMBProperties.getInstance().getCQSServerUrl());
+    	sns.setEndpoint(CMBProperties.getInstance().getCNSServerUrl());
+		sqs.setEndpoint(CMBProperties.getInstance().getCQSServerUrl());
+		
+		sns2.setEndpoint(CMBProperties.getInstance().getCNSServerUrl());
+		sqs2.setEndpoint(CMBProperties.getInstance().getCQSServerUrl());
 
-			sns3.setEndpoint(CMBProperties.getInstance().getCNSServerUrl());
-			sqs3.setEndpoint(CMBProperties.getInstance().getCQSServerUrl());
-	    }
+		sns3.setEndpoint(CMBProperties.getInstance().getCNSServerUrl());
+		sqs3.setEndpoint(CMBProperties.getInstance().getCQSServerUrl());
     }
     
 	@After    
@@ -162,12 +146,14 @@ public class CreateDeleteListTopicAWSTest {
 		
 		try {
 			
-			// create topic
-
 			String topicName = TOPIC_PREFIX + rand.nextLong();
 			CreateTopicRequest createTopicRequest = new CreateTopicRequest(topicName);
 			CreateTopicResult createTopicResult = sns.createTopic(createTopicRequest);
 			topicArn = createTopicResult.getTopicArn();
+			
+			logger.info("Created topic " + topicArn);
+
+			logger.info("Creating 110 queues");
 
 			for (int i=0; i<110; i++) {
 				
@@ -178,10 +164,12 @@ public class CreateDeleteListTopicAWSTest {
 			
 			Thread.sleep(500);
 			
+			logger.info("Subscribing all queues to topic " + topicArn);
+			
 			for (String queueUrl : queueUrls) {
 			
 				SubscribeRequest subscribeRequest = new SubscribeRequest();
-				String queueArn = com.comcast.cqs.util.Util.getNameForAbsoluteQueueUrl(queueUrl);
+				String queueArn = com.comcast.cqs.util.Util.getArnForAbsoluteQueueUrl(queueUrl);
 				subscribeRequest.setEndpoint(queueArn);
 				subscribeRequest.setProtocol("cqs");
 				subscribeRequest.setTopicArn(topicArn);
@@ -189,12 +177,14 @@ public class CreateDeleteListTopicAWSTest {
 				sns.subscribe(subscribeRequest);
 			}
 			
+			logger.info("Listing subscriptions");
+			
 			ListSubscriptionsByTopicRequest listSubscriptionsByTopicRequest = new ListSubscriptionsByTopicRequest();
 			listSubscriptionsByTopicRequest.setTopicArn(topicArn);
 			
 			ListSubscriptionsByTopicResult listSubscriptionsByTopicResult = sns.listSubscriptionsByTopic(listSubscriptionsByTopicRequest);
 			
-			assertTrue(listSubscriptionsByTopicResult.getSubscriptions().size() == 100);
+			assertTrue("First page should contain 100 subscriptions, found instead " + listSubscriptionsByTopicResult.getSubscriptions().size(),listSubscriptionsByTopicResult.getSubscriptions().size() == 100);
 			
 			listSubscriptionsByTopicRequest = new ListSubscriptionsByTopicRequest();
 			listSubscriptionsByTopicRequest.setTopicArn(topicArn);
@@ -202,12 +192,11 @@ public class CreateDeleteListTopicAWSTest {
 			
 			listSubscriptionsByTopicResult = sns.listSubscriptionsByTopic(listSubscriptionsByTopicRequest);
 
-			assertTrue(listSubscriptionsByTopicResult.getSubscriptions().size() == 10);
+			assertTrue("Second page should contain 10 subscriptions, found instead " + listSubscriptionsByTopicResult.getSubscriptions().size(), listSubscriptionsByTopicResult.getSubscriptions().size() == 10);
 		
 		} catch (Exception ex) {
 			
-			logger.error("test failed", ex);
-			fail("test failed: " + ex.toString());
+			fail(ex.toString());
 
 		} finally {
 		
@@ -236,14 +225,12 @@ public class CreateDeleteListTopicAWSTest {
 
 		try {
 			
-			// create topic
-
 			String topicName = TOPIC_PREFIX + rand.nextLong();
 			CreateTopicRequest createTopicRequest = new CreateTopicRequest(topicName);
 			CreateTopicResult createTopicResult = sns.createTopic(createTopicRequest);
 			topicArn = createTopicResult.getTopicArn();
 			
-	        // test set attribute permission
+			logger.info("Created topic " + topicArn + ", now setting attributes");
 			
 			AddPermissionRequest addPermissionRequest = new AddPermissionRequest();
 	        addPermissionRequest.setTopicArn(topicArn);
@@ -262,14 +249,16 @@ public class CreateDeleteListTopicAWSTest {
 	        getTopicAttributesRequest.setTopicArn(topicArn);
 	        GetTopicAttributesResult result = sns.getTopicAttributes(getTopicAttributesRequest);
 	        
-	        assertTrue(result.getAttributes().get("DisplayName").equals("NewDisplayName"));
+	        assertTrue("Expected display name NewDisplayName, instead found " + result.getAttributes().get("DisplayName"), result.getAttributes().get("DisplayName").equals("NewDisplayName"));
 	
 	        RemovePermissionRequest removePermissionRequest = new RemovePermissionRequest();
 	        removePermissionRequest.setTopicArn(topicArn);
 	        removePermissionRequest.setLabel("P1");
 	        sns.removePermission(removePermissionRequest);
 	        
-	        boolean expectedExceptionreceived = false;
+	        logger.info("Now trying to do things without permission");
+	        
+	        boolean expectedExceptionReceived = false;
 	        
 	        try {
 	            setTopicAttributesRequest = new SetTopicAttributesRequest();
@@ -279,16 +268,16 @@ public class CreateDeleteListTopicAWSTest {
 	            sns2.setTopicAttributes(setTopicAttributesRequest);
 	        } catch (Exception ex) {
 	        	assertTrue(ex.getMessage().contains("don't have permission"));
-	        	expectedExceptionreceived = true;
+	        	expectedExceptionReceived = true;
 	        }
 	        
-	        if (!expectedExceptionreceived) {
-	        	fail("unexpected permission");
+	        if (!expectedExceptionReceived) {
+	        	fail("Did not receive permission exception");
 	        }
 	        
 	        // test publish permission
 	        
-	        expectedExceptionreceived = false;
+	        expectedExceptionReceived = false;
 	        
 	        try {
 		        PublishRequest publishRequest = new PublishRequest();
@@ -297,11 +286,11 @@ public class CreateDeleteListTopicAWSTest {
 		        sns2.publish(publishRequest);
 	        } catch (Exception ex) {
 	        	assertTrue(ex.getMessage().contains("don't have permission"));
-	        	expectedExceptionreceived = true;
+	        	expectedExceptionReceived = true;
 	        }
 	
-	        if (!expectedExceptionreceived) {
-	        	fail("unexpected permission");
+	        if (!expectedExceptionReceived) {
+	        	fail("Did not receive permission exception");
 	        }
 
 	        addPermissionRequest = new AddPermissionRequest();
@@ -321,7 +310,7 @@ public class CreateDeleteListTopicAWSTest {
 	        removePermissionRequest.setLabel("P2");
 	        sns.removePermission(removePermissionRequest);
 
-	        expectedExceptionreceived = false;
+	        expectedExceptionReceived = false;
 	        
 	        try {
 		        publishRequest = new PublishRequest();
@@ -330,11 +319,11 @@ public class CreateDeleteListTopicAWSTest {
 		        sns2.publish(publishRequest);
 	        } catch (Exception ex) {
 	        	assertTrue(ex.getMessage().contains("don't have permission"));
-	        	expectedExceptionreceived = true;
+	        	expectedExceptionReceived = true;
 	        }
 	
-	        if (!expectedExceptionreceived) {
-	        	fail("unexpected permission");
+	        if (!expectedExceptionReceived) {
+	        	fail("Did not receive permission exception");
 	        }
 	        
 	        // test add permission
@@ -360,7 +349,7 @@ public class CreateDeleteListTopicAWSTest {
 	        
 	        // try some invalid stuff
 	        
-	        expectedExceptionreceived = false;
+	        expectedExceptionReceived = false;
 	        
 	        try {
 		        addPermissionRequest = new AddPermissionRequest();
@@ -371,14 +360,14 @@ public class CreateDeleteListTopicAWSTest {
 		        sns.addPermission(addPermissionRequest);
 	        } catch (Exception ex) {
 	        	assertTrue(ex.getMessage().contains("Invalid action parameter"));
-	        	expectedExceptionreceived = true;
+	        	expectedExceptionReceived = true;
 	        }
 	
-	        if (!expectedExceptionreceived) {
-	        	fail("missing validation error");
+	        if (!expectedExceptionReceived) {
+	        	fail("Did not receive validation exception");
 	        }
 	        
-	        expectedExceptionreceived = false;
+	        expectedExceptionReceived = false;
 	        
 	        try {
 		        addPermissionRequest = new AddPermissionRequest();
@@ -389,17 +378,16 @@ public class CreateDeleteListTopicAWSTest {
 		        sns.addPermission(addPermissionRequest);
 	        } catch (Exception ex) {
 	        	assertTrue(ex.getMessage().contains("Blank action parameter"));
-	        	expectedExceptionreceived = true;
+	        	expectedExceptionReceived = true;
 	        }
 	
-	        if (!expectedExceptionreceived) {
-	        	fail("missing validation error");
+	        if (!expectedExceptionReceived) {
+	        	fail("Did not receive validation exception");
 	        }
 
 		} catch (Exception ex) {
 			
-			logger.error("test failed", ex);
-			fail("test failed: " + ex.toString());
+			fail(ex.toString());
 
 		} finally {
 		
@@ -426,18 +414,23 @@ public class CreateDeleteListTopicAWSTest {
 			CreateTopicResult createTopicResult = sns.createTopic(createTopicRequest);
 			topicArn = createTopicResult.getTopicArn();
 			
+			logger.info("Created topic " + topicArn + ", now subscribing endpoints");
+
 			Thread.sleep(500);
 			
-			SubscribeRequest subscribeRequest1 = new SubscribeRequest();
-			subscribeRequest1.setEndpoint(CMBTestingConstants.EMAIL_ENDPOINT);
-			subscribeRequest1.setProtocol("email");
-			subscribeRequest1.setTopicArn(topicArn);
-			
-			SubscribeResult subscribeResult1 = sns.subscribe(subscribeRequest1);
-			
-			subscribeResult1.getSubscriptionArn();
-			
-			Thread.sleep(500);
+			if (CMBProperties.getInstance().getSmtpEnabled()) {
+
+				SubscribeRequest subscribeRequest1 = new SubscribeRequest();
+				subscribeRequest1.setEndpoint(CMBTestingConstants.EMAIL_ENDPOINT);
+				subscribeRequest1.setProtocol("email");
+				subscribeRequest1.setTopicArn(topicArn);
+				
+				SubscribeResult subscribeResult1 = sns.subscribe(subscribeRequest1);
+				
+				subscribeResult1.getSubscriptionArn();
+				
+				Thread.sleep(500);
+			}
 
 			SubscribeRequest subscribeRequest2 = new SubscribeRequest();
 			subscribeRequest2.setEndpoint(CMBTestingConstants.HTTP_ENDPOINT_BASE_URL + "nop/1234");
@@ -454,10 +447,6 @@ public class CreateDeleteListTopicAWSTest {
 			
 			Thread.sleep(500);
 			
-			//GetSubscriptionAttributesRequest subscriptionAttributesRequest = new GetSubscriptionAttributesRequest();
-			//subscriptionAttributesRequest.setSubscriptionArn("arn:aws:sns:us-east-1:266126687520:Topic94:7dbfebde-ea96-42c7-9467-4bf6b3f4ac42");
-			//GetSubscriptionAttributesResult attributes = sns.getSubscriptionAttributes(subscriptionAttributesRequest);
-	        
 			SubscribeRequest subscribeRequest3 = new SubscribeRequest();
 			subscribeRequest3.setEndpoint(queueUrl);
 			subscribeRequest3.setProtocol("cqs");
@@ -468,6 +457,8 @@ public class CreateDeleteListTopicAWSTest {
 			subscribeResult3.getSubscriptionArn();
 			
 			Thread.sleep(500);
+			
+			logger.info("Publishing message to " + topicArn);
 
 			PublishRequest publishRequest = new PublishRequest();
 			publishRequest.setMessage("quamvis sint sub aqua, sub aqua maledicere temptant");
@@ -482,8 +473,7 @@ public class CreateDeleteListTopicAWSTest {
 
 		} catch (Exception ex) {
 			
-			logger.error("test failed", ex);
-			fail("test failed: " + ex.toString());
+			fail(ex.toString());
 
 		} finally {
 		

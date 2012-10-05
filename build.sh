@@ -18,3 +18,7 @@ mvn --settings ./settings.xml -f pom-cqs.xml -Dmaven.test.skip=true assembly:ass
 # run all unit tests (unit tests only work after standing up a complete CMB environment)
 
 # mvn test
+
+# run individual unit tests
+
+# mvn -Dtest=<TestName> test
