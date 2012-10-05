@@ -18,6 +18,7 @@ CNS_WORKER_INSTANCE=cns1
 
 workingDir="$( cd "$( dirname "$0" )" && pwd )"
 cd $workingDir
+cd ..
 
 THE_CLASSPATH=
 for i in `ls lib/*.jar`
