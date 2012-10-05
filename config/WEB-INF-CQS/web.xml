@@ -12,16 +12,16 @@
     <servlet-mapping>
         <servlet-name>CQSControllerServlet</servlet-name>
         <url-pattern>/</url-pattern>
-    </servlet-mapping>   
-    
-    <servlet>
-    	<servlet-name>AWSProxyServlet</servlet-name>
-    	<servlet-class>com.comcast.cmb.common.controller.AWSProxyServlet</servlet-class>
-    </servlet>
-    <servlet-mapping>
-    	<servlet-name>AWSProxyServlet</servlet-name>
-    	<url-pattern>/AWSProxy/*</url-pattern>
     </servlet-mapping>
+
+	<servlet>
+		<servlet-name>EndpointServlet</servlet-name>
+		<servlet-class>com.comcast.cmb.common.controller.EndpointServlet</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>EndpointServlet</servlet-name>
+		<url-pattern>/Endpoint/*</url-pattern>
+	</servlet-mapping>
     
     <servlet>
     	<servlet-name>AdminServlet</servlet-name>

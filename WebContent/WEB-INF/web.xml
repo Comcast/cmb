@@ -57,14 +57,6 @@
     <url-pattern>/User/*</url-pattern>
   </servlet-mapping>
   <servlet>
-    <servlet-name>AWSProxyServlet</servlet-name>
-    <servlet-class>com.comcast.cmb.common.controller.AWSProxyServlet</servlet-class>
-  </servlet>
-  <servlet-mapping>
-    <servlet-name>AWSProxyServlet</servlet-name>
-    <url-pattern>/AWSProxy/*</url-pattern>
-  </servlet-mapping>
-  <servlet>
     <servlet-name>CNSSubscriptionPageServlet</servlet-name>
     <servlet-class>com.comcast.cns.controller.CNSSubscriptionPageServlet</servlet-class>
   </servlet>

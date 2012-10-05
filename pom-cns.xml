@@ -235,8 +235,8 @@
 				<artifactId>maven-war-plugin</artifactId>
 				<version>2.1.1</version>
 				<configuration>
-					<containerConfigXML>${basedir}/WEB-INF-CNS/context.xml</containerConfigXML>
-					<webXml>${basedir}/WEB-INF-CNS/web.xml</webXml>
+					<containerConfigXML>${basedir}/config/WEB-INF-CNS/context.xml</containerConfigXML>
+					<webXml>${basedir}/config/WEB-INF-CNS/web.xml</webXml>
 					<warName>${projectname}</warName>
 					<webResources>
 						<!--<resource>

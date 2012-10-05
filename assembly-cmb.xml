@@ -16,6 +16,9 @@
 				<include>cmb.properties</include>
 				<include>log4j.worker.properties</include>
 			</includes>
+			<excludes>
+				<exclude>WEB*</exclude>
+			</excludes>
 		</fileSet>
 		<fileSet>
 			<directory>${basedir}/bin</directory>

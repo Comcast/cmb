@@ -17,6 +17,9 @@
 				<include>log4j.properties</include>
 				<include>*.xml</include>
 			</includes>
+			<excludes>
+				<exclude>WEB*</exclude>
+			</excludes>
 		</fileSet>
 		<fileSet>
 			<directory>${basedir}</directory>
