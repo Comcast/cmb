@@ -33,6 +33,8 @@ import java.util.Map;
 import java.util.Vector;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
 
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.log4j.Logger;
@@ -194,36 +196,40 @@ public class CNSTestingUtils {
 	}
 
 	public static boolean verifyErrorResponse(String res, String code, String message) {
-		javax.xml.parsers.SAXParserFactory fac = new org.apache.xerces.jaxp.SAXParserFactoryImpl();
-		javax.xml.parsers.SAXParser saxParser;
+		
+		SAXParserFactory fac = new org.apache.xerces.jaxp.SAXParserFactoryImpl();
+		SAXParser saxParser;
 
 		ErrorParser p = new ErrorParser();
-		//res = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>" + res;
 		res = res.trim();
-		//System.out.println("The error message is: " + res);
+
 		try {
 			saxParser = fac.newSAXParser();
 			saxParser.parse(new ByteArrayInputStream(res.getBytes()), p);
-
 		} catch (Exception ex) {
-			logger.error("Exception parsing", ex);
-
+			logger.error("Exception parsing error response", ex);
 		}
 
-		if(code != null) {
+		if (code != null) {
+			
 			String rescode = p.getCode();
-			if(!code.equals(rescode)) {
-				logger.error("Wrong code");
+			
+			if (!code.equals(rescode)) {
+				logger.error("Wrong error code");
 				return false;
 			}
 		}
-		if(message != null) {
+		
+		if (message != null) {
+			
 			String resmessage = p.getMessage();
-			if(!resmessage.equals(message)) {
-				logger.error("Wrong Message");
+			
+			if (!resmessage.equals(message)) {
+				logger.error("Wrong error messahe");
 				return false;
 			}
 		}
+		
 		return true;
 	}
 
@@ -834,7 +840,7 @@ public class CNSTestingUtils {
 			throw new Exception("Message and Endpoint must both be set");
 		}
 
-		String newPostBody = message;//generateBodyString(parametersForSigning);
+		String newPostBody = message;
 		byte newPostBodyBytes[] = newPostBody.getBytes();
 
 		URL url = new URL(endpoint);

@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.comcast.cns.test.unit;
+package com.comcast.cmb.test.unit;
 
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 import com.comcast.cmb.common.controller.CMBControllerServlet;
 import com.comcast.cmb.common.persistence.CassandraPersistence;
@@ -31,7 +30,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-
 public class CassandraTest {
 
     private static Logger log = Logger.getLogger(CassandraTest.class);
@@ -45,29 +43,24 @@ public class CassandraTest {
 	@Test	
 	public void testCassandraCounters() {
 		
-		try {
-			
-			CassandraPersistence p = new CassandraPersistence(CMBProperties.getInstance().getCMBCNSKeyspace());
-			
-			long i = p.getCounter("CNSTopicStats", "bla", "foo", StringSerializer.get(), StringSerializer.get(), HConsistencyLevel.QUORUM);
-			
-			while (i > 0) {
-				p.decrementCounter("CNSTopicStats", "bla", "foo", 1, StringSerializer.get(), StringSerializer.get(), HConsistencyLevel.QUORUM);
-				i = p.getCounter("CNSTopicStats", "bla", "foo", StringSerializer.get(), StringSerializer.get(), HConsistencyLevel.QUORUM);
-			}
-			
-			p.incrementCounter("CNSTopicStats", "bla", "foo", 1, StringSerializer.get(), StringSerializer.get(), HConsistencyLevel.QUORUM);
-			p.incrementCounter("CNSTopicStats", "bla", "foo", 1, StringSerializer.get(), StringSerializer.get(), HConsistencyLevel.QUORUM);
-			p.incrementCounter("CNSTopicStats", "bla", "foo", 1, StringSerializer.get(), StringSerializer.get(), HConsistencyLevel.QUORUM);
-			
+		log.info("Testing Cassandra counters");
+		
+		CassandraPersistence p = new CassandraPersistence(CMBProperties.getInstance().getCMBCNSKeyspace());
+		
+		long i = p.getCounter("CNSTopicStats", "bla", "foo", StringSerializer.get(), StringSerializer.get(), HConsistencyLevel.QUORUM);
+		
+		while (i > 0) {
+			p.decrementCounter("CNSTopicStats", "bla", "foo", 1, StringSerializer.get(), StringSerializer.get(), HConsistencyLevel.QUORUM);
 			i = p.getCounter("CNSTopicStats", "bla", "foo", StringSerializer.get(), StringSerializer.get(), HConsistencyLevel.QUORUM);
-			
-			assertTrue(i == 3);
-
-		} catch (Exception ex) {
-            fail("Excetpion="+ex);
-			log.error("Excetpion="+ex, ex);
 		}
+		
+		p.incrementCounter("CNSTopicStats", "bla", "foo", 1, StringSerializer.get(), StringSerializer.get(), HConsistencyLevel.QUORUM);
+		p.incrementCounter("CNSTopicStats", "bla", "foo", 1, StringSerializer.get(), StringSerializer.get(), HConsistencyLevel.QUORUM);
+		p.incrementCounter("CNSTopicStats", "bla", "foo", 1, StringSerializer.get(), StringSerializer.get(), HConsistencyLevel.QUORUM);
+		
+		i = p.getCounter("CNSTopicStats", "bla", "foo", StringSerializer.get(), StringSerializer.get(), HConsistencyLevel.QUORUM);
+		
+		assertTrue("Expected counter to be 3, instead found " + i, i == 3);
 	}
 	
     @After    

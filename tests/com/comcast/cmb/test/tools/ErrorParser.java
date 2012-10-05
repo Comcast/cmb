@@ -17,8 +17,6 @@ package com.comcast.cmb.test.tools;
 
 import java.io.CharArrayWriter;
 import java.util.jar.Attributes;
-
-import org.apache.log4j.Logger;
 import org.xml.sax.SAXException;
 
 public class ErrorParser  extends org.xml.sax.helpers.DefaultHandler {
@@ -27,16 +25,8 @@ public class ErrorParser  extends org.xml.sax.helpers.DefaultHandler {
 	private String message;
 	private CharArrayWriter content = new CharArrayWriter();
 
-	private static Logger logger = Logger.getLogger(ErrorParser.class);
-
-
 	public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
-
 		content.reset();
-
-		if (qName.equalsIgnoreCase("Code")) {
-			logger.info("Code");
-		}
 	}
 
 	public void endElement (String uri, String localName, String qName) {

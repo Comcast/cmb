@@ -19,6 +19,7 @@ import java.io.ByteArrayOutputStream;
 import java.util.*;
 
 import org.apache.log4j.Logger;
+import org.jfree.util.Log;
 import org.junit.* ;
 
 import com.comcast.cmb.common.controller.CMBControllerServlet;
@@ -60,9 +61,12 @@ public class CreateDeleteListTopicCMBTest {
 				user =  userHandler.createUser(userName, userName);
 			}
 
+			CNSControllerServlet cns = new CNSControllerServlet();
+			ByteArrayOutputStream out = new ByteArrayOutputStream();
+			CNSTestingUtils.deleteallTopics(cns, user, out);
+
 		} catch (Exception ex) {
-			logger.error("setup failed", ex);
-			assertFalse(true);
+			fail(ex.toString());
 		}
 	}
 
@@ -71,24 +75,20 @@ public class CreateDeleteListTopicCMBTest {
 		
 		try {
 			
-			IUserPersistence dao = PersistenceFactory.getUserPersistence();
 			CNSControllerServlet cns = new CNSControllerServlet();
 			ByteArrayOutputStream out = new ByteArrayOutputStream();
 
 			CNSTestingUtils.deleteallTopics(cns, user, out);
 
-			dao.deleteUser(user.getUserName());
-
-		} catch (Exception e) {
-			logger.error("tearDown failed Exception" + e, e);
-			fail("tearDown failed Exception");
+		} catch (Exception ex) {
+			fail(ex.toString());
 		}
 		
 		CMBControllerServlet.valueAccumulator.deleteAllCounters();
 	}
 
 	@Test
-	public void testCreateDeleteListTopic() {
+	public void testCreateDeleteListTopicWithCassandraHandler() {
 
 		try {
 
@@ -99,12 +99,14 @@ public class CreateDeleteListTopicCMBTest {
 			String topicName2 = "T" + rand.nextLong();
 
 			CNSTopic topic1 = topicHandler.createTopic(topicName1, topicName1, user.getUserId());
+			
+			Log.info("Created topic " + topic1.getArn() + " using topic handlers");
 
 			// check default delivery policy on topic1
 
 			CNSTopicAttributes attributes = attributeHandler.getTopicAttributes(topic1.getArn());
 
-			assertTrue(attributes.getEffectiveDeliveryPolicy().getDefaultHealthyRetryPolicy().getNumRetries() == 3);
+			assertTrue("Incorrect number of retries on default delivery policy (expected 3)", attributes.getEffectiveDeliveryPolicy().getDefaultHealthyRetryPolicy().getNumRetries() == 3);
 
 			CNSTopic topic2 = topicHandler.createTopic(topicName2, topicName2, user.getUserId());
 
@@ -112,23 +114,19 @@ public class CreateDeleteListTopicCMBTest {
 
 			CNSTopic topic3 = topicHandler.createTopic(topicName2, topicName2, user.getUserId());
 
-			assertTrue(topic2.equals(topic3));
+			assertTrue("Created duplicate topic, expected to get existing one instead", topic2.equals(topic3));
 
 			List<CNSTopic> topics = topicHandler.listTopics(user.getUserId(), null);
 			
 			int numTopics = topics.size();
 
-			assertTrue(topics.size() >= 1);
-
-			for (CNSTopic t : topics) {
-				logger.info(t.toString());
-			}
+			assertTrue("Expected at least 2 topics, instead found " + topics.size(), topics.size() >= 2);
 
 			CNSTopic topic = topicHandler.getTopic(topic1.getArn());
 			
-			assertTrue(topic.equals(topic1));
+			assertTrue("Expected topic " + topic1.getArn() + ", instead found " + topic.getArn(), topic.equals(topic1));
 
-			assertFalse(topic1.equals(topic2));
+			assertFalse("Expected 2 distinct topics", topic1.equals(topic2));
 
 			topicHandler.deleteTopic(topic1.getArn());
 			topicHandler.deleteTopic(topic2.getArn());
@@ -136,221 +134,146 @@ public class CreateDeleteListTopicCMBTest {
 			topics = topicHandler.listTopics(user.getUserId(), null);
 
 			if (topics.size() != numTopics-2) {
-				fail("Expected to get " +(numTopics-2) + " topics for user. Instead got:" + topics.size());
+				fail("Expected to get " + (numTopics-2) + " topics for user, instead found " + topics.size());
 			}
 
 		} catch (Exception ex) {
-
-			logger.error("Exception", ex);
-			fail("Test failed: " + ex.toString());
+			fail(ex.toString());
 		}	
 	}
 
 	@Test
-	public void testCreateDeleteListTopicServlet() {
+	public void testCreateDeleteListTopicWithServlet() throws Exception {
+
+		CNSControllerServlet cns = new CNSControllerServlet();
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+		String topicName = "T" + rand.nextLong();
+		CNSTestingUtils.addTopic(cns, user, out, topicName);
+
+		String res = out.toString();
+		String arn = CNSTestingUtils.getArnFromString(res);
+		out.reset();
+		
+		CNSTestingUtils.listTopics(cns,user,out,null);
+		
+		res = out.toString();
+		Vector<String> arns = CNSTestingUtils.getArnsFromString(res);
+		
+		assertTrue("Expected one topic, instead found " + arns.size(), arns.size() == 1);
+		
+		out.reset();
+		
+		CNSTestingUtils.deleteTopic(cns,user,out,arn);
+		out.reset();
+		
+		CNSTestingUtils.listTopics(cns,user,out,null);
+
+		res = out.toString();
+		arns = CNSTestingUtils.getArnsFromString(res);
+		out.reset();
+
+		assertTrue("Expected 0 topics, instead found " + arns.size(), arns.size() == 0);
 
 		try {
-
-			CNSControllerServlet cns = new CNSControllerServlet();
-			ByteArrayOutputStream out = new ByteArrayOutputStream();
-
-			CNSTestingUtils.deleteallTopics(cns, user, out);
-			out.reset();
-
-			try {
-				CNSTestingUtils.addTopic(cns,user,out,"MyTopic2");
-			} catch (Exception e) {
-				assertFalse(true);
-			}
-
-			String res = out.toString();
-			String arn = CNSTestingUtils.getArnFromString(res);
-			out.reset();
-			
-			try {
-				CNSTestingUtils.listTopics(cns,user,out,null);
-			} catch (Exception e) {
-				assertTrue(false);
-			}
-			
-			res = out.toString();
-			Vector<String> arns = CNSTestingUtils.getArnsFromString(res);
-			assertTrue(arns.size() == 1);
-			out.reset();
-			
-			try {
-				CNSTestingUtils.deleteTopic(cns,user,out,arn);
-			} catch (Exception e) {
-				assertTrue(false);
-			}
-			out.reset();
-			
-			try {
-				CNSTestingUtils.listTopics(cns,user,out,null);
-			} catch (Exception e) {
-				assertTrue(false);
-			}
-
-			res = out.toString();
-			arns = CNSTestingUtils.getArnsFromString(res);
-			out.reset();
-
-			assertTrue(arns.size() == 0);
-
-			try {
-				CNSTestingUtils.deleteTopic(cns,user,out,arn);
-			} catch (Exception e) {
-				assertFalse(true);
-			}
-
-			res = out.toString();
-			assertTrue(CNSTestingUtils.verifyErrorResponse(res,"NotFound","Topic not found."));
-			out.reset();
-
-			try {
-				CNSTestingUtils.listTopics(cns,user,out,null);
-			} catch (Exception e) {
-				assertTrue(false);
-			}
-			
-			res = out.toString();
-			arns = CNSTestingUtils.getArnsFromString(res);
-			
-			assertTrue(arns.size() == 0);
-
+			CNSTestingUtils.deleteTopic(cns, user, out, arn);
 		} catch (Exception ex) {
-			logger.error("Exception", ex);
-			fail("Test failed: " + ex.toString());
-		}	
+		}
+		
+		res = out.toString();
+		assertTrue(CNSTestingUtils.verifyErrorResponse(res,"NotFound","Topic not found."));
+		out.reset();
+
+		CNSTestingUtils.listTopics(cns, user, out, null);
+		
+		res = out.toString();
+		arns = CNSTestingUtils.getArnsFromString(res);
+		
+		assertTrue("Expected 0 topics, instead found " + arns.size(), arns.size() == 0);
 	}
 
 	@Test
-	public void testCreateDeleteListTopicServlet2() {
+	public void testCreateDeleteListManyTopicsWihtServlet() throws Exception {
 
-		try {
+		CNSControllerServlet cns = new CNSControllerServlet();
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
 
-			CNSControllerServlet cns = new CNSControllerServlet();
-			ByteArrayOutputStream out = new ByteArrayOutputStream();
-			CNSTestingUtils.deleteallTopics(cns, user, out);
+		String res;
+		Vector<String> arns;
+
+		CNSTestingUtils.listTopics(cns, user, out, null);
+		
+		res = out.toString();
+		arns = CNSTestingUtils.getArnsFromString(res);
+		
+		assertTrue(arns.size() == 0);
+
+		logger.info("Adding 100 topics");
+		
+		for (int i=0; i<100; i++) {
+			CNSTestingUtils.addTopic(cns, user, out, "MyTopic" + i);
 			out.reset();
+		}
 
-			String res;
-			Vector<String> arns;
+		out.reset();
 
-			try {
-				CNSTestingUtils.listTopics(cns,user,out,null);
-			} catch (Exception e) {
-				assertTrue("exception on list topics", false);
-			}
-			
-			res = out.toString();
-			arns = CNSTestingUtils.getArnsFromString(res);
-			assertTrue(arns.size() == 0);
+		CNSTestingUtils.listTopics(cns, user, out, null);
+		
+		res = out.toString();
+		arns = CNSTestingUtils.getArnsFromString(res);
+		assertTrue("Expected 100 topics, instead found " + arns.size(), arns.size() == 100);
+		out.reset();
 
-			try {
-
-				for (int i=0; i<100; i++) {
-					CNSTestingUtils.addTopic(cns,user,out,"MyTopic" + i);
-					out.reset();
-				}
-				
-			} catch (Exception e) {
-				logger.error("Exception", e);
-				assertFalse("exception on adding 100 topics", true);
-			}
-
-			out.reset();
-
-			try {
-				CNSTestingUtils.listTopics(cns,user,out,null);
-			} catch (Exception e) {
-				assertTrue("exception on listTopics",false);
-			}
-			
-			res = out.toString();
-			arns = CNSTestingUtils.getArnsFromString(res);
-			assertTrue("Incorrect number of topics, expected 100",arns.size() == 100);
-			out.reset();
-
-			try {
-				int i = 100;
-				CNSTestingUtils.addTopic(cns,user,out,"MyTopic" + i);
-			} catch (Exception e) {
-				assertFalse("exception on addTopic 100",true);				
-			}
-			
-			res = out.toString();
-			assertTrue(CNSTestingUtils.verifyErrorResponse(res,"TopicLimitExceeded", "Topic limit exceeded."));
-			out.reset();
-
-			try {
-
-				for (String arn:arns) {
-					CNSTestingUtils.deleteTopic(cns,user,out,arn);
-					out.reset();
-				}
-
-			} catch (Exception e) {
-				logger.error("Exception", e);
-				assertFalse("Exception deleting all topics", true);
-			}
-			
-			out.reset();
-
-			try {
-				CNSTestingUtils.listTopics(cns,user,out,null);
-			} catch (Exception e) {
-				assertTrue("Exception listing all topics", false);
-			}
-
-			res = out.toString();
-			arns = CNSTestingUtils.getArnsFromString(res);
-			assertTrue("Incorrect number of topics, expected 0", arns.size() == 0);
-
-		} catch (Exception ex) {
-			logger.error("Exception", ex);
-			fail("Test failed: " + ex.toString());
-		}	
-	}
-
-	@Test
-	public void testBadInputs() {
+		int i = 100;
 		
 		try {
-			
-			CNSControllerServlet cns = new CNSControllerServlet();
-			ByteArrayOutputStream out = new ByteArrayOutputStream();
-
-			CNSTestingUtils.deleteallTopics(cns, user, out);
-			out.reset();
-
-			Vector<String> arns;
-			CNSTestingUtils.listTopics(cns,user,out,"faketoken");
-			logger.debug("resp:" + out.toString());
-			arns = CNSTestingUtils.getArnsFromString(out.toString());
-			assertTrue(arns.size() == 0);
-			out.reset();
-
-			String topicName = null;
-			CNSTestingUtils.addTopic(cns, user, out, topicName);
-			logger.debug("resp: " + out.toString());
-			assertTrue(CNSTestingUtils.verifyErrorResponse(out.toString(), "InvalidParameter", "request parameter does not comply with the associated constraints."));
-			out.reset();
-
-			CNSTestingUtils.testCommand(cns, user, out, "FakeCommand");
-			logger.debug("resp: " + out.toString());
-			assertTrue(CNSTestingUtils.verifyErrorResponse(out.toString(), "InvalidAction", "FakeCommand is not a valid action"));
-			out.reset();
-
-			String topicArn = null;
-			CNSTestingUtils.deleteTopic(cns, user, out, topicArn);
-			logger.debug("resp: " + out.toString());
-			assertTrue(CNSTestingUtils.verifyErrorResponse(out.toString(), "InvalidParameter", "request parameter does not comply with the associated constraints."));
-			out.reset();
-
+			CNSTestingUtils.addTopic(cns, user, out, "MyTopic" + i);
 		} catch (Exception ex) {
-			logger.error("Exception", ex);
-			fail("Test failed: " + ex.toString());
-		}	
+			
+		}
+		
+		res = out.toString();
+		
+		assertTrue("Expected topic limit exceeded exception", CNSTestingUtils.verifyErrorResponse(res,"TopicLimitExceeded", "Topic limit exceeded."));
+		
+		out.reset();
+
+		for (String arn:arns) {
+			CNSTestingUtils.deleteTopic(cns, user, out, arn);
+			out.reset();
+		}
+
+		CNSTestingUtils.listTopics(cns, user, out, null);
+
+		res = out.toString();
+		arns = CNSTestingUtils.getArnsFromString(res);
+		assertTrue("Expected 0 topics, instead found " + arns.size(), arns.size() == 0);
+	}
+
+	@Test
+	public void testTopicServletWithBadInputs() throws Exception {
+		
+		CNSControllerServlet cns = new CNSControllerServlet();
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+		Vector<String> arns;
+		CNSTestingUtils.listTopics(cns, user, out, "faketoken");
+		arns = CNSTestingUtils.getArnsFromString(out.toString());
+		assertTrue("Expected 0 topics, instead gto " + arns.size(), arns.size() == 0);
+		out.reset();
+
+		String topicName = null;
+		CNSTestingUtils.addTopic(cns, user, out, topicName);
+		assertTrue("Expected invalid parameter error", CNSTestingUtils.verifyErrorResponse(out.toString(), "InvalidParameter", "request parameter does not comply with the associated constraints."));
+		out.reset();
+
+		CNSTestingUtils.testCommand(cns, user, out, "FakeCommand");
+		assertTrue("Expected invalid action error for FakeCommand", CNSTestingUtils.verifyErrorResponse(out.toString(), "InvalidAction", "FakeCommand is not a valid action"));
+		out.reset();
+
+		String topicArn = null;
+		CNSTestingUtils.deleteTopic(cns, user, out, topicArn);
+		assertTrue("Expected invalid parameter error", CNSTestingUtils.verifyErrorResponse(out.toString(), "InvalidParameter", "request parameter does not comply with the associated constraints."));
+		out.reset();
 	}
 }
