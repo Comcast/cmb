@@ -84,13 +84,16 @@ public class CNSEndpointPublisherJobConsumer implements RunnableForPartition {
     static volatile Integer testQueueLimit = null;
             
     public static class MonitoringInterface {
+    	
         public static int getDeliveryHandlersQueueSize() {
             return deliveryHandlers.getQueue().size();
         }
+        
         public static int getReDeliveryHandlersQueueSize() {
             return reDeliveryHandlers.getQueue().size();
         }
     }
+    
     public static class TestInterface {
     	
         public static boolean isInitialized() {
@@ -115,6 +118,7 @@ public class CNSEndpointPublisherJobConsumer implements RunnableForPartition {
             reDeliveryHandlers.getQueue().clear();
         }
     }
+    
     /**
      * Make the appr executors
      * Read the deliveryNumHandlers and the retryDeliveryNumHandlers properties at startup
@@ -167,6 +171,7 @@ public class CNSEndpointPublisherJobConsumer implements RunnableForPartition {
         logger.info("event=initialize status=success");
         initialized = true;
     }
+    
     /**
      * shutsdown all internal thread-pools. Cannot use object again unless initialize() called again.
      */
@@ -185,13 +190,13 @@ public class CNSEndpointPublisherJobConsumer implements RunnableForPartition {
         CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CNSCQSTime, ts4 - ts3);
 
     }
+    
     /**
      * Helper class representing individual (to one endpoint) publish job
      *
      *
      * Class is thread-safe
      */
-   
     public static class PublishJob implements Runnable {
         
         final CNSMessage message;
@@ -302,11 +307,11 @@ public class CNSEndpointPublisherJobConsumer implements RunnableForPartition {
                 logger.info("event=retries_exhausted action=skip_message endpoint=" + endpoint + " message=" + message);
                 
                 //let message die 
+
                 if (endpointPublishJobCount.decrementAndGet() == 0) {
                     deleteMessage(queueUrl, receiptHandle);
                     logger.debug("event=send_notification status=deleting_publish_message message_id=" + message.getMessageId());
                 }
-
                 
             } catch (SubscriberNotFoundException e) {
                 logger.error("event=retry_error status=subscriber_not_found subArn=" + subArn);                
@@ -314,6 +319,7 @@ public class CNSEndpointPublisherJobConsumer implements RunnableForPartition {
                 logger.error("event=retry_error endpoint=" + endpoint + " protocol=" + protocol + " message_length=" + message.getMessage().length() + (user == null ?"":" " + user), e);
             }            
         }        
+        
         /**
          * Send the notification and let any exceptions bubble up
          * @param pub
@@ -323,6 +329,7 @@ public class CNSEndpointPublisherJobConsumer implements RunnableForPartition {
          * @throws Exception
          */
         public void runCommon(IEndpointPublisher pub, CnsSubscriptionProtocol protocol, String endpoint, String subArn) throws Exception {
+        	
             long ts1 = System.currentTimeMillis();
             logger.debug("event=run_common protocol=" + protocol + " endpoint=" + endpoint + " sub_arn=" + subArn + " pub=" + pub);
             pub.setEndpoint(endpoint);
@@ -334,7 +341,7 @@ public class CNSEndpointPublisherJobConsumer implements RunnableForPartition {
             CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CNSPublishSendTime, ts2 - ts1);
             logger.debug("event=send_notification status=success endpoint=" + endpoint + " protocol=" + protocol.name() + " message_length=" + message.getMessage().length() + (user == null ?"":" " + user));
             
-            //decrement the total number of sub-tasks and if counter is 0 delete publishjob
+            // decrement the total number of sub-tasks and if counter is 0 delete publish job
             
             if (endpointPublishJobCount.decrementAndGet() == 0) {
                 deleteMessage(queueUrl, receiptHandle);
@@ -359,11 +366,22 @@ public class CNSEndpointPublisherJobConsumer implements RunnableForPartition {
                 
                 if (protocol == CnsSubscriptionProtocol.http || protocol == CnsSubscriptionProtocol.https) {
                     doRetry(pub, protocol, endpoint, subArn);
+                } else {
+
+                	logger.info("event=failed_to_deliver_message action=skip_message endpoint=" + endpoint + " message=" + message);
+                    
+                    // let message die 
+
+                    if (endpointPublishJobCount.decrementAndGet() == 0) {
+                        deleteMessage(queueUrl, receiptHandle);
+                        logger.debug("event=send_notification status=deleting_publish_message message_id=" + message.getMessageId());
+                    }
                 }
             }            
         }        
         
         public PublishJob(CNSMessage message, User user, CnsSubscriptionProtocol protocol, String endpoint, String subArn, String queueUrl, String receiptHandle, AtomicInteger endpointPublishJobCount) {
+        	
         	this.message = message; 
             this.user = user;
             this.protocol = protocol;
@@ -435,15 +453,19 @@ public class CNSEndpointPublisherJobConsumer implements RunnableForPartition {
      */
     @Override
     public boolean run(int partition) {
+    	
         boolean messageFound = false;
         long ts0 = System.currentTimeMillis();
         CMBControllerServlet.valueAccumulator.initializeAllCounters();
+        
         if (!initialized) {
             throw new IllegalStateException("Not initialized");
         }
         
         try {
+        	
             if (isOverloaded()) {
+            	
                 logger.info("event=run status=server_overloaded");
 
                 try {
@@ -473,9 +495,12 @@ public class CNSEndpointPublisherJobConsumer implements RunnableForPartition {
             long ts4 = System.currentTimeMillis();
             CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CNSCQSTime, ts4 - ts3);
 
-            if (msgs.size() > 0) {       
+            if (msgs.size() > 0) {   
+            	
                 messageFound = true;
+                
                 try {
+                	
                     String msg = msgs.get(0).getBody();
                     CNSEndpointPublishJob job = (CMBProperties.getInstance().isUseSubInfoCache()) ? CachedCNSEndpointPublishJob.parseInstance(msg) : CNSEndpointPublishJob.parseInstance(msg);
                     logger.debug("endpoint_publish_job=" + job.toString());
@@ -490,20 +515,25 @@ public class CNSEndpointPublisherJobConsumer implements RunnableForPartition {
                         PublishJob pubjob = new PublishJob(job.getMessage(), pubUser, sub.protocol, sub.endpoint, sub.subArn, qUrl, msgs.get(0).getReceiptHandle(), endpointPublishJobCount);
                         deliveryHandlers.submit(pubjob);
                     }
+                    
                 } catch (TopicNotFoundException e) {
                     logger.error("event=run_exception exception=TopicNotFound action=skip_job");
                     deleteMessage(qUrl, msgs.get(0).getReceiptHandle());
                 } catch (Exception e) {
                     logger.error("event=run_exception action=wait_for_revisibility", e);
                 }
+                
                 long tsFinal = System.currentTimeMillis();
                 logger.info("event=run_pass_done CNSCQSTimeMS=" + CMBControllerServlet.valueAccumulator.getCounter(AccumulatorName.CNSCQSTime) + " responseTimeMS=" + (tsFinal - ts0));
+                
             } else {
                 logger.debug("event=run_pass_done");
             }
+            
         } catch(Exception e) {
             logger.error("event=run status=exception", e);
         }
+        
         CMBControllerServlet.valueAccumulator.deleteAllCounters();
         return messageFound;
     }    
