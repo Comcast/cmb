@@ -75,8 +75,7 @@ public class PublishCMBTest {
 			}
 
 		} catch (Throwable ex) {
-			logger.error("setup failed", ex);
-			fail();
+			fail(ex.toString());
 		}
 	}
 
@@ -86,7 +85,7 @@ public class PublishCMBTest {
 	}
 
 	@Test
-	public void testSendReceiveCQS() {
+	public void testSendReceiveCQS() throws Exception {
 		
 		CQSControllerServlet cqs = new CQSControllerServlet();
 		String queueUrl = null;
@@ -96,97 +95,68 @@ public class PublishCMBTest {
 			
 			String queueName = "Q" + rand.nextLong();
 			String cqsQueue = CNSTestingUtils.addQueue(cqs, user1, queueName);
-			logger.debug("cqsQueue: " + cqsQueue);
+
 			queueUrl = CNSTestingUtils.getQueueUrl(cqsQueue);					
 			queueArn = com.comcast.cqs.util.Util.getArnForAbsoluteQueueUrl(queueUrl);
 			
+			logger.info("Created queue " + queueUrl);
+
 			Thread.sleep(500);
 			
 			CNSSubscription.CnsSubscriptionProtocol protocol = CNSSubscription.CnsSubscriptionProtocol.cqs;
 			String endPoint = queueArn;
 			String message = "test_abc";
 			
+			logger.info("Sending message");
+
 			CommunicationUtils.sendMessage(user1, protocol, endPoint, message);
 
 			Thread.sleep(500);
 			
 			String msg = CNSTestingUtils.receiveMessage(cqs, user1, queueUrl, "1");
-			logger.debug("msg is:" + msg);
 
 			String messageResp = CNSTestingUtils.getMessage(msg);
 			
-			if (messageResp == null) {
-				fail("Expected a messageResp. Got null with msg=" + msg);
-			}
-			
-			logger.debug("message resp is:" + messageResp);
+			assertTrue("Expected message test_abc, instead found " + messageResp, messageResp.equals("test_abc"));
 
-			assertTrue(messageResp.equals("test_abc"));
 			String receiptHandle = CNSTestingUtils.getReceiptHandle(msg);
-			assertTrue(receiptHandle != null);
-			
-			logger.debug("receiptHandle: " + receiptHandle);
 			
 			CNSTestingUtils.deleteMessage(cqs, user1, queueUrl, receiptHandle);
 
-		} catch (Exception e) {
-			logger.debug("Exception: " + e.toString(), e);
-			assertFalse(true);
+		} catch (Exception ex) {
+			fail(ex.toString());
 		} finally {
 			if (queueUrl != null) {
-				try {
-					CNSTestingUtils.deleteQueue(cqs, user1, queueUrl);
-				} catch (Exception ex) { }
+				CNSTestingUtils.deleteQueue(cqs, user1, queueUrl);
 			}
 		}
 	}
 	
 	@Test
-	public void testHttpEndpoint() {
+	public void testHttpEndpoint() throws Exception {
 
-		try {	
+		CNSSubscription.CnsSubscriptionProtocol protocol = CNSSubscription.CnsSubscriptionProtocol.http;
+		String endPoint = CMBTestingConstants.HTTP_ENDPOINT_BASE_URL + "recv/252910";
+		String message = "test_abc";
+		CommunicationUtils.sendMessage(user1, protocol, endPoint, message);
+		String lastMessageUrl = CMBTestingConstants.HTTP_ENDPOINT_BASE_URL + "info/252910?showLast=true";
+		String resp = CNSTestingUtils.sendHttpMessage(lastMessageUrl, "");
 
-			CNSSubscription.CnsSubscriptionProtocol protocol = CNSSubscription.CnsSubscriptionProtocol.http;
-			String endPoint = CMBTestingConstants.HTTP_ENDPOINT_BASE_URL + "recv/252910";
-			String message = "test_abc";
-			CommunicationUtils.sendMessage(user1, protocol, endPoint, message);
-			String lastMessageUrl = CMBTestingConstants.HTTP_ENDPOINT_BASE_URL + "info/252910?showLast=true";
-			String resp = CNSTestingUtils.sendHttpMessage(lastMessageUrl, "");
-
-			assertTrue("endpoint is down", resp.equals(message));
-
-		} catch (Exception e) {
-			logger.error("Exception: " + e.toString(), e);
-			fail("Test failed:" + e.toString());
-		}
+		assertTrue("Endpoint " + CMBTestingConstants.HTTP_ENDPOINT_BASE_URL + " is down", resp.equals(message));
 	}
 
 	@Test
-	public void testEmailPublisher() {
+	public void testEmailPublisher() throws Exception {
 		
-		try {	
-			
-			CNSSubscription.CnsSubscriptionProtocol protocol = CNSSubscription.CnsSubscriptionProtocol.email;
-			String endPoint = CMBTestingConstants.EMAIL_ENDPOINT;
-			String message = "test email";
-			CommunicationUtils.sendMessage(user1, protocol, endPoint, message);
-
-		} catch (Exception e) {
-			logger.error("Exception: " + e.toString(), e);
-			assertFalse(true);
-		}
+		CNSSubscription.CnsSubscriptionProtocol protocol = CNSSubscription.CnsSubscriptionProtocol.email;
+		String endPoint = CMBTestingConstants.EMAIL_ENDPOINT;
+		String message = "test email";
+		CommunicationUtils.sendMessage(user1, protocol, endPoint, message);
 		
-		try {	
-			
-			CNSSubscription.CnsSubscriptionProtocol protocol = CNSSubscription.CnsSubscriptionProtocol.email_json;
-			String endPoint = CMBTestingConstants.EMAIL_ENDPOINT;
-			String message = "test email";
-			CommunicationUtils.sendMessage(user1, protocol, endPoint, message);
-
-		} catch (Exception e) {
-			logger.error("Exception: " + e.toString(), e);
-			assertFalse(true);
-		}
+		protocol = CNSSubscription.CnsSubscriptionProtocol.email_json;
+		endPoint = CMBTestingConstants.EMAIL_ENDPOINT;
+		message = "test email";
+		CommunicationUtils.sendMessage(user1, protocol, endPoint, message);
 	}
 
 	@Test
@@ -194,7 +164,9 @@ public class PublishCMBTest {
 
 		CNSControllerServlet cns = new CNSControllerServlet();
 		CQSControllerServlet cqs = new CQSControllerServlet();
+		
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		
 		String topicArn = null;
 		String queueUrl = null;
 		String queueArn = null;
@@ -207,15 +179,18 @@ public class PublishCMBTest {
 			CNSTestingUtils.addTopic(cns, user1, out, topicName);
 			String res = out.toString();
 			topicArn = CNSTestingUtils.getArnFromString(res);
-			logger.debug("TopicArn: " + topicArn);
+			logger.info("Created topic " + topicArn);
 			out.reset();
 			
 			String queueName = "Q" + rand.nextLong();
 			String cqsQueue = CNSTestingUtils.addQueue(cqs, user1, queueName);
-			logger.debug("cqsQueue: " + cqsQueue);
 			queueUrl = CNSTestingUtils.getQueueUrl(cqsQueue);					
 			queueArn = com.comcast.cqs.util.Util.getArnForAbsoluteQueueUrl(queueUrl);
 			
+			logger.info("Created queue " + queueUrl);
+			
+			logger.info("Publishing to non-existent topic arn");
+
 			Thread.sleep(500);
 
 			String endpoint = queueArn;
@@ -233,17 +208,15 @@ public class PublishCMBTest {
 			out.reset();
 			String code = "NotFound";
 			String errorMessage = "Resource not found.";
-			logger.debug("resp is: " + resp);
 
-			assertTrue(CNSTestingUtils.verifyErrorResponse(resp, code, errorMessage));
+			assertTrue("Did no get resource not found exception", CNSTestingUtils.verifyErrorResponse(resp, code, errorMessage));
 
 			CNSTestingUtils.unSubscribe(cns, user1, out, subscriptionArn);
 			out.reset();
 			
 		} catch (Exception ex) {
 			
-			logger.error("test failed", ex);
-			fail("test failed: " + ex.toString());
+			fail(ex.toString());
 
 		} finally {
 		
@@ -279,15 +252,21 @@ public class PublishCMBTest {
 			CNSTestingUtils.addTopic(cns, user1, out, topicName);
 			String res = out.toString();
 			topicArn = CNSTestingUtils.getArnFromString(res);
-			logger.debug("TopicArn: " + topicArn);
+
+			logger.info("Created topic " + topicArn);
+			
 			out.reset();
 			
 			String queueName = "Q" + rand.nextLong();
 			String cqsQueue = CNSTestingUtils.addQueue(cqs, user1, queueName);
-			logger.debug("cqsQueue: " + cqsQueue);
+
 			queueUrl = CNSTestingUtils.getQueueUrl(cqsQueue);					
 			queueArn = com.comcast.cqs.util.Util.getArnForAbsoluteQueueUrl(queueUrl);
 			
+			logger.info("Created queue " + queueUrl);
+			
+			logger.info("Publishing to invalid topic arn");
+
 			Thread.sleep(500);
 
 			String endpoint = queueArn;
@@ -304,8 +283,8 @@ public class PublishCMBTest {
 			String resp = CNSTestingUtils.doPublish(cns, user1, out, message, messageStructure, subject, fakeTopicArn);
 			String code = "InvalidParameter";
 			String errorMessage = "TopicArn";
-			logger.debug("resp is: " + resp);
-			assertTrue(CNSTestingUtils.verifyErrorResponse(resp, code, errorMessage));
+
+			assertTrue("Expected invalid parameter exception", CNSTestingUtils.verifyErrorResponse(resp, code, errorMessage));
 			out.reset();
 
 			CNSTestingUtils.unSubscribe(cns, user1, out, subscriptionArn);
@@ -313,8 +292,7 @@ public class PublishCMBTest {
 
 		} catch (Exception ex) {
 			
-			logger.error("test failed", ex);
-			fail("test failed: " + ex.toString());
+			fail(ex.toString());
 
 		} finally {
 		
@@ -350,15 +328,21 @@ public class PublishCMBTest {
 			CNSTestingUtils.addTopic(cns, user1, out, topicName);
 			String res = out.toString();
 			topicArn = CNSTestingUtils.getArnFromString(res);
-			logger.debug("TopicArn: " + topicArn);
+
+			logger.info("Created topic " + topicArn);
+			
 			out.reset();
 			
 			String queueName = "Q" + rand.nextLong();
 			String cqsQueue = CNSTestingUtils.addQueue(cqs, user1, queueName);
-			logger.debug("cqsQueue: " + cqsQueue);
+
 			queueUrl = CNSTestingUtils.getQueueUrl(cqsQueue);					
 			queueArn = com.comcast.cqs.util.Util.getArnForAbsoluteQueueUrl(queueUrl);
 			
+			logger.info("Created queue " + queueUrl);
+			
+			logger.info("Publishing to invalid topic arn");
+
 			Thread.sleep(500);
 
 			String endpoint = queueArn;
@@ -374,8 +358,9 @@ public class PublishCMBTest {
 			String resp = CNSTestingUtils.doPublish(cns, user1, out, message, messageStructure, subject, null);
 			String code = "InvalidParameter";
 			String errorMessage = "TopicArn";
-			logger.debug("resp is: " + resp);
-			assertTrue(CNSTestingUtils.verifyErrorResponse(resp, code, errorMessage));
+
+			assertTrue("Expected invalid parameter exception", CNSTestingUtils.verifyErrorResponse(resp, code, errorMessage));
+
 			out.reset();
 
 			CNSTestingUtils.unSubscribe(cns, user1, out, subscriptionArn);
@@ -383,8 +368,7 @@ public class PublishCMBTest {
 
 		} catch (Exception ex) {
 			
-			logger.error("test failed", ex);
-			fail("test failed: " + ex.toString());
+			fail(ex.toString());
 
 		} finally {
 		
@@ -403,7 +387,7 @@ public class PublishCMBTest {
 	}	   
 
 	@Test
-	public void testParametersMissingMessage() {
+	public void testPublishMissingMessage() {
 		
 		CNSControllerServlet cns = new CNSControllerServlet();
 		CQSControllerServlet cqs = new CQSControllerServlet();
@@ -418,15 +402,21 @@ public class PublishCMBTest {
 			CNSTestingUtils.addTopic(cns, user1, out, topicName);
 			String res = out.toString();
 			topicArn = CNSTestingUtils.getArnFromString(res);
-			logger.debug("TopicArn: " + topicArn);
+
+			logger.info("Created topic " + topicArn);
+			
 			out.reset();
 			
 			String queueName = "Q" + rand.nextLong();
 			String cqsQueue = CNSTestingUtils.addQueue(cqs, user1, queueName);
-			logger.debug("cqsQueue: " + cqsQueue);
+
 			queueUrl = CNSTestingUtils.getQueueUrl(cqsQueue);					
 			queueArn = com.comcast.cqs.util.Util.getArnForAbsoluteQueueUrl(queueUrl);
 			
+			logger.info("Created queue " + queueUrl);
+			
+			logger.info("Publishing missing message");
+
 			Thread.sleep(500);
 
 			String endpoint = queueArn;
@@ -442,8 +432,8 @@ public class PublishCMBTest {
 			String resp = CNSTestingUtils.doPublish(cns, user1, out, null, messageStructure, subject, topicArn);
 			String code = "ValidationError";
 			String errorMessage = "1 validation error detected: Value null at 'message' failed to satisfy constraint: Member must not be null";
-			logger.debug("resp is: " + resp);
-			assertTrue(CNSTestingUtils.verifyErrorResponse(resp, code, errorMessage));
+			
+			assertTrue("Expected validation error", CNSTestingUtils.verifyErrorResponse(resp, code, errorMessage));
 
 			out.reset();
 			CNSTestingUtils.unSubscribe(cns, user1, out, subscriptionArn);
@@ -451,8 +441,7 @@ public class PublishCMBTest {
 
 		} catch (Exception ex) {
 			
-			logger.error("test failed", ex);
-			fail("test failed: " + ex.toString());
+			fail(ex.toString());
 
 		} finally {
 		
@@ -488,15 +477,21 @@ public class PublishCMBTest {
 			CNSTestingUtils.addTopic(cns, user1, out, topicName);
 			String res = out.toString();
 			topicArn = CNSTestingUtils.getArnFromString(res);
-			logger.debug("TopicArn: " + topicArn);
+
+			logger.info("Created topic " + topicArn);
+			
 			out.reset();
 			
 			String queueName = "Q" + rand.nextLong();
 			String cqsQueue = CNSTestingUtils.addQueue(cqs, user1, queueName);
-			logger.debug("cqsQueue: " + cqsQueue);
+
 			queueUrl = CNSTestingUtils.getQueueUrl(cqsQueue);					
 			queueArn = com.comcast.cqs.util.Util.getArnForAbsoluteQueueUrl(queueUrl);
 			
+			logger.info("Created queue " + queueUrl);
+			
+			logger.info("Publishing bad message");
+
 			Thread.sleep(500);
 
 			String endpoint = queueArn;
@@ -512,8 +507,9 @@ public class PublishCMBTest {
 			String resp = CNSTestingUtils.doPublish(cns, user1, out, message, messageStructure, subject, topicArn);
 			String code = "InvalidParameter";
 			String errorMessage = "Invalid parameter: Invalid Message Structure parameter: boo";
-			logger.debug("resp is: " + resp);
-			assertTrue(CNSTestingUtils.verifyErrorResponse(resp, code, errorMessage));
+
+			assertTrue("Expected invalid message structure exception", CNSTestingUtils.verifyErrorResponse(resp, code, errorMessage));
+
 			out.reset();
 
 			CNSTestingUtils.unSubscribe(cns, user1, out, subscriptionArn);
@@ -558,15 +554,21 @@ public class PublishCMBTest {
 			CNSTestingUtils.addTopic(cns, user1, out, topicName);
 			String res = out.toString();
 			topicArn = CNSTestingUtils.getArnFromString(res);
-			logger.debug("TopicArn: " + topicArn);
+
+			logger.info("Created topic " + topicArn);
+			
 			out.reset();
 			
 			String queueName = "Q" + rand.nextLong();
 			String cqsQueue = CNSTestingUtils.addQueue(cqs, user1, queueName);
-			logger.debug("cqsQueue: " + cqsQueue);
+
 			queueUrl = CNSTestingUtils.getQueueUrl(cqsQueue);					
 			queueArn = com.comcast.cqs.util.Util.getArnForAbsoluteQueueUrl(queueUrl);
 			
+			logger.info("Created queue " + queueUrl);
+			
+			logger.info("Publishing message");
+
 			Thread.sleep(1000);
 
 			String endpoint = queueArn;
@@ -588,20 +590,13 @@ public class PublishCMBTest {
 			logger.debug("Message is: " + msg);
 			String messageResp = CNSTestingUtils.getMessage(msg);
 
-			if (messageResp == null) {
-				fail("messageResp is null");
-			}
-
-			logger.debug("message resp: " + messageResp);
 
 			JSONObject json = new JSONObject(messageResp);
 			String resp_message = json.getString("Message");
-			logger.debug("resp_message is:" + resp_message);
 
 			assertTrue(resp_message.equals("test_efgh"));
 			String receiptHandle = CNSTestingUtils.getReceiptHandle(msg);
 			assertTrue(receiptHandle != null);
-			logger.debug("receiptHandle: " + receiptHandle);
 			
 			CNSTestingUtils.deleteMessage(cqs, user1, queueUrl, receiptHandle);
 
@@ -614,30 +609,31 @@ public class PublishCMBTest {
 			Thread.sleep(1000);
 			
 			msg = CNSTestingUtils.receiveMessage(cqs, user1, queueUrl, "1");
-			assertTrue(msg != null);
-			logger.debug("Message is: " + msg);			
+			
+			assertTrue("Message is null", msg != null);
+
 			messageResp = CNSTestingUtils.getMessage(msg);
-			assertTrue(messageResp != null);
-			logger.debug("message resp: " + messageResp);
+
+			assertTrue("Message response is null", messageResp != null);
 
 			json = new JSONObject(messageResp);
 			resp_message = json.getString("Message");
 			logger.debug("resp_message is:" + resp_message);
 
-			assertTrue(resp_message.equals("test_etc_1111"));
+			assertTrue("Expected message test_etc_1111, instead found " + resp_message, resp_message.equals("test_etc_1111"));
+			
 			receiptHandle = CNSTestingUtils.getReceiptHandle(msg);
+			
 			assertTrue(receiptHandle != null);
-			logger.debug("receiptHandle: " + receiptHandle);
+			
 			CNSTestingUtils.deleteMessage(cqs, user1, queueUrl, receiptHandle);
 
 			out.reset();
 			CNSTestingUtils.unSubscribe(cns, user1, out, subscriptionArn);
-			out.reset();
 
 		} catch (Exception ex) {
 			
-			logger.error("test failed", ex);
-			fail("test failed: " + ex.toString());
+			fail(ex.toString());
 
 		} finally {
 		
@@ -671,7 +667,9 @@ public class PublishCMBTest {
 			CNSTestingUtils.addTopic(cns, user1, out, topicName);
 			String res = out.toString();
 			topicArn = CNSTestingUtils.getArnFromString(res);
-			logger.debug("TopicArn: " + topicArn);
+
+			logger.info("Created topic " + topicArn);
+
 			out.reset();
 
 			String protocolStr = "email";
@@ -692,8 +690,7 @@ public class PublishCMBTest {
 
 		} catch (Exception ex) {
 			
-			logger.error("test failed", ex);
-			fail("test failed: " + ex.toString());
+			fail(ex.toString());
 
 		} finally {
 		
@@ -723,7 +720,9 @@ public class PublishCMBTest {
 			CNSTestingUtils.addTopic(cns, user1, out, topicName);
 			String res = out.toString();
 			topicArn = CNSTestingUtils.getArnFromString(res);
-			logger.debug("TopicArn: " + topicArn);
+
+			logger.info("Created topic " + topicArn);
+
 			out.reset();
 
 			String protocolStr = "http";
@@ -732,32 +731,33 @@ public class PublishCMBTest {
 			String subscriptionArn = CNSTestingUtils.getSubscriptionArnFromString(out.toString());
 			out.reset();
 			
+			Thread.sleep(500);
+			
 			String lastMessageUrl = CMBTestingConstants.HTTP_ENDPOINT_BASE_URL + "info/60" + endpointid + "?showLast=true";
 
 			if (subscriptionArn.equals("pending confirmation")) {
 
 				String resp = CNSTestingUtils.sendHttpMessage(lastMessageUrl, "");
-				logger.debug("resp is: " + resp);
 
     			JSONObject o = new JSONObject(resp);
     			
     			if (!o.has("SubscribeURL")) {
-    				fail("message is not a confirmation messsage");
+    				fail("Message is not a confirmation messsage");
     			}
     			
     			String subscriptionUrl = o.getString("SubscribeURL");
     			
 				resp = CNSTestingUtils.sendHttpMessage(subscriptionUrl, "");
-    		    
-		        logger.info(resp);
+
 			} else {
-				fail("no confirmation requested");
+				fail("No confirmation requested");
 			}
 			
 			String messageStructure = null;
 			String subject = null;
 			CNSTestingUtils.doPublish(cns, user1, out, null, messageStructure, subject, topicArn);
-			CNSTestingUtils.verifyErrorResponse(out.toString(), "ValidationError", "1 validation error detected: Value null at 'message' failed to satisfy constraint: Member must not be null");
+			
+			assertTrue("Expected validation exception", CNSTestingUtils.verifyErrorResponse(out.toString(), "ValidationError", "1 validation error detected: Value null at 'message' failed to satisfy constraint: Member must not be null"));
 
 			CNSTestingUtils.doPublish(cns, user1, out, message, messageStructure, subject, topicArn);
 			message = "";
@@ -765,18 +765,16 @@ public class PublishCMBTest {
 			Thread.sleep(1000);
 
 			String resp = CNSTestingUtils.sendHttpMessage(lastMessageUrl, "");
-			logger.debug("resp is: " + resp);
 
 			JSONObject json = new JSONObject(resp);
 
-			logger.debug("response is: " + resp);
 			String resp_message = json.getString("Message");
 
-			assertTrue(resp_message.equals("test Http servlet"));
+			assertTrue("Expected message 'test Http servlet', intead found " + resp_message, resp_message.equals("test Http servlet"));
 
 			out.reset();
 
-			message = "HTTP Http servlet 12584";
+			message = "Http servlet 12584";
 			messageStructure = null;
 			subject = null;
 			CNSTestingUtils.doPublish(cns, user1, out, message, messageStructure, subject, topicArn);
@@ -784,25 +782,20 @@ public class PublishCMBTest {
 			Thread.sleep(1000);
 
 			resp = CNSTestingUtils.sendHttpMessage(lastMessageUrl, "");
-			logger.debug("resp is: " + resp);
-
 
 			json = new JSONObject(resp);
 
-			logger.debug("response is: " + resp);
 			resp_message = json.getString("Message");
 
-			assertTrue(resp_message.equals("HTTP Http servlet 12584"));
+			assertTrue("Expected message " + message + ", instead got " + resp_message, resp_message.equals(message));
 
 			out.reset();
 
 			CNSTestingUtils.unSubscribe(cns, user1, out, subscriptionArn);
-			out.reset();
 
 		} catch (Exception ex) {
 			
-			logger.error("test failed", ex);
-			fail("test failed: " + ex.toString());
+			fail(ex.toString());
 
 		} finally {
 		
@@ -833,7 +826,9 @@ public class PublishCMBTest {
 			CNSTestingUtils.addTopic(cns, user1, out, topicName);
 			String res = out.toString();
 			topicArn = CNSTestingUtils.getArnFromString(res);
-			logger.debug("TopicArn: " + topicArn);
+
+			logger.info("Created topic " + topicArn);
+
 			out.reset();
 
 			String protocolStr = "http";			
@@ -846,12 +841,11 @@ public class PublishCMBTest {
 			if (subscriptionArn.equals("pending confirmation")) {
 
 				String resp = CNSTestingUtils.sendHttpMessage(lastMessageUrl, "");
-				logger.debug("resp is: " + resp);
 
     			JSONObject o = new JSONObject(resp);
     			
     			if (!o.has("SubscribeURL")) {
-    				fail("message is not a confirmation messsage");
+    				fail("Message is not a confirmation messsage");
     			}
     			
     			String subscriptionUrl = o.getString("SubscribeURL");
@@ -863,7 +857,7 @@ public class PublishCMBTest {
 			
 			String queueName = "Q" + rand.nextLong();
 			String cqsQueue = CNSTestingUtils.addQueue(cqs, user1, queueName);
-			logger.debug("cqsQueue: " + cqsQueue);
+
 			queueUrl = CNSTestingUtils.getQueueUrl(cqsQueue);					
 			queueArn = com.comcast.cqs.util.Util.getArnForAbsoluteQueueUrl(queueUrl);
 			
@@ -887,26 +881,21 @@ public class PublishCMBTest {
 
 			JSONObject json = new JSONObject(resp);
 
-			//String token = CNSTestingUtils.getBodyFromHTML(resp);	
 			String resp_message = json.getString("Message");
 
-			assertTrue(resp_message.equals("test Http servlet 2"));
+			assertTrue("Expected message " + message + ", instead got " + resp_message, resp_message.equals(message));
 
 			String msg = CNSTestingUtils.receiveMessage(cqs, user1, queueUrl, "1");
-			logger.debug("Message is: " + msg);
 			String messageResp = CNSTestingUtils.getMessage(msg);
-			assertTrue(messageResp != null);
-			logger.debug("message resp: " + messageResp);
+			assertTrue("Message response is null", messageResp != null);
 
 			json = new JSONObject(messageResp);
 			resp_message = json.getString("Message");
-			logger.debug("resp_message is:" + resp_message);
 
-			assertTrue(resp_message.trim().equals("test Http servlet 2"));
+			assertTrue("Expected message " + message + ", instead found " + resp_message, resp_message.trim().equals(message));
 
 			String receiptHandle = CNSTestingUtils.getReceiptHandle(msg);
 			assertTrue(receiptHandle != null);
-			logger.debug("receiptHandle: " + receiptHandle);
 			CNSTestingUtils.deleteMessage(cqs, user1, queueUrl, receiptHandle);
 			out.reset();
 
@@ -916,8 +905,7 @@ public class PublishCMBTest {
 
 		} catch (Exception ex) {
 			
-			logger.error("test failed", ex);
-			fail("test failed: " + ex.toString());
+			fail(ex.toString());
 
 		} finally {
 		
@@ -956,7 +944,9 @@ public class PublishCMBTest {
 			CNSTestingUtils.addTopic(cns, user1, out, topicName);
 			String res = out.toString();
 			topicArn = CNSTestingUtils.getArnFromString(res);
-			logger.debug("TopicArn: " + topicArn);
+
+			logger.info("Created topic " + topicArn);
+
 			out.reset();
 
 			String protocolStr = "http";			
@@ -969,24 +959,21 @@ public class PublishCMBTest {
 			if (subscriptionArn.equals("pending confirmation")) {
 
 				String resp = CNSTestingUtils.sendHttpMessage(lastMessageUrl, "");
-				logger.debug("resp is: " + resp);
 
     			JSONObject o = new JSONObject(resp);
     			
     			if (!o.has("SubscribeURL")) {
-    				fail("message is not a confirmation messsage");
+    				fail("Message is not a confirmation messsage");
     			}
     			
     			String subscriptionUrl = o.getString("SubscribeURL");
     			
 				resp = CNSTestingUtils.sendHttpMessage(subscriptionUrl, "");
-    		    
-		        logger.info(resp);
 			}
 			
 			String queueName = "Q" + rand.nextLong();
 			String cqsQueue = CNSTestingUtils.addQueue(cqs, user1, queueName);
-			logger.debug("cqsQueue: " + cqsQueue);
+
 			queueUrl = CNSTestingUtils.getQueueUrl(cqsQueue);					
 			queueArn = com.comcast.cqs.util.Util.getArnForAbsoluteQueueUrl(queueUrl);
 			
@@ -1007,67 +994,57 @@ public class PublishCMBTest {
 			Thread.sleep(1000);
 
 			String resp = CNSTestingUtils.sendHttpMessage(lastMessageUrl, "");
-			logger.debug("resp is: " + resp);
 
 			JSONObject json = new JSONObject(resp);
 
 			String resp_message = json.getString("Message");
 
-			assertTrue(resp_message.equals("test Http servlet 2"));
+			assertTrue("Expected message '" + httpMessage + "', instead found " + resp_message, resp_message.equals(httpMessage));
 
 			String msg = CNSTestingUtils.receiveMessage(cqs, user1, queueUrl, "1");
 			assertTrue(msg != null);
-			logger.debug("Message is: " + msg);
 			String messageResp = CNSTestingUtils.getMessage(msg);
 			assertTrue(messageResp != null);
-			logger.debug("message resp: " + messageResp);
 
 			json = new JSONObject(messageResp);
 			resp_message = json.getString("Message");
-			logger.debug("resp_message is:" + resp_message);
 
-			assertTrue(resp_message.trim().equals("test CQS servlet 2"));
+			assertTrue("Expected message '" + cqsMessage + "', instead found " + resp_message, resp_message.equals(cqsMessage));
+
 			String receiptHandle = CNSTestingUtils.getReceiptHandle(msg);
 			assertTrue(receiptHandle != null);
-			logger.debug("receiptHandle: " + receiptHandle);
 			CNSTestingUtils.deleteMessage(cqs, user1, queueUrl, receiptHandle);
 
 			out.reset();
 
-			// Now Publish again and test!
-
 			httpMessage = "test Http servlet 45554";
 			String httpMessage2 = httpMessage;
 			cqsMessage = "test CQS servlet 2758";
+			
 			message = CNSTestingUtils.generateMultiendpointMessageJson(null, null, "test message", httpMessage2, null, cqsMessage);
 			CNSTestingUtils.doPublish(cns, user1, out, message, messageStructure, subject, topicArn);
 
 			Thread.sleep(1000);
 
 			resp = CNSTestingUtils.sendHttpMessage(lastMessageUrl, "");
-			logger.debug("resp is: " + resp);
 
 			json = new JSONObject(resp);
 			resp_message = json.getString("Message");
 
-			assertTrue(resp_message.equals("test Http servlet 45554"));
+			assertTrue("Expected message '" + httpMessage + "', instead found " + resp_message, resp_message.equals(httpMessage));
 
 			msg = CNSTestingUtils.receiveMessage(cqs, user1, queueUrl, "1");
-			logger.debug("Message is: " + msg);
 			messageResp = CNSTestingUtils.getMessage(msg);
 			assertTrue(messageResp != null);
-			logger.debug("message resp: " + messageResp);
 
 			json = new JSONObject(messageResp);
 			resp_message = json.getString("Message");
-			assertTrue(resp_message != null);
-			logger.debug("resp_message is:" + resp_message);
+			assertTrue("Message response is null", resp_message != null);
 
-			assertTrue(resp_message.trim().equals("test CQS servlet 2758"));
+			assertTrue("Expected message '" + cqsMessage + "', instead found " + resp_message, resp_message.trim().equals(cqsMessage));
 
 			receiptHandle = CNSTestingUtils.getReceiptHandle(msg);
-			assertTrue(receiptHandle != null);
-			logger.debug("receiptHandle: " + receiptHandle);
+
 			CNSTestingUtils.deleteMessage(cqs, user1, queueUrl, receiptHandle);
 
 			out.reset();
@@ -1077,8 +1054,7 @@ public class PublishCMBTest {
 
 		} catch (Exception ex) {
 			
-			logger.error("test failed", ex);
-			fail("test failed: " + ex.toString());
+			fail(ex.toString());
 
 		} finally {
 		
