@@ -15,12 +15,14 @@
  */
 package com.comcast.cmb.test.tools;
 
+import com.comcast.cmb.common.util.CMBProperties;
+
 public class CMBTestingConstants {
 
 	// base URL of live endpoint conforming with com.comcast.cmb.test.tools.EndpointServlet used by various unit tests
 	
-	public static final String HTTP_ENDPOINT_BASE_URL = "http://nis.test3.plaxo.com:8080/CMB/Endpoint/";
-	public static final String HTTPS_ENDPOINT_BASE_URL = "https://nis.test3.plaxo.com:8080/CMB/Endpoint/";
+	public static final String HTTP_ENDPOINT_BASE_URL = CMBProperties.getInstance().getCQSServerUrl() + "Endpoint/";
+	public static final String HTTPS_ENDPOINT_BASE_URL = "";
 	
 	// email endpoint for testing
 	
