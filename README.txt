@@ -262,7 +262,7 @@ Example response:
    NOTE: By default log4j will log to /tmp/cmb.log
    
 10.Use any web browser to go to the CMB Admin UI and create a user with user name 
-   "cns_internal" and password "cqs_internal". Or, if you prefer to create a different 
+   "cns_internal" and password "cns_internal". Or, if you prefer to create a different 
    user name / password ensure that in cmb.properties the fields cmb.cns.user.name and 
    cmb.cns.user.password are set accordingly. The CMB Admin UI can be accessed through 
    either the CNS Service Enpoint or the CQS Service Endpoint, for example:
