@@ -153,6 +153,18 @@ Example response:
    > wget -O - http://redis.googlecode.com/files/redis-2.4.17.tar.gz | tar zxf -
    > cd redis-2.4.17
    > make
+   
+   IMPORTANT: Before starting Redis edit the redis.conf file and disable all persistence
+   by commenting out the three lines starting with "save".
+   
+   > vi redis.conf
+   
+   # save 900 1
+   # save 300 10
+   # save 60 10000
+    
+   Finally, start the Redis process.
+   
    > cd src
    > nohup ./redis-server > /tmp/redis.log &
 
