@@ -1,3 +1,12 @@
+CMB VERSION 2.2.10
+--------------------------------------------------------------------
+
+- bug fix: cqs endpoint publisher to not remember identity of last 
+- bug fix: drop cns messages if delivery fails for cqs or email endpoints 
+- fix: added more detail to redis configuration in readme
+- adjusted folder structure to simplify build process
+
+
 CMB VERSION 2.2.9
 --------------------------------------------------------------------
 
