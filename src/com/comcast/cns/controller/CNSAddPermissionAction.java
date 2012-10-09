@@ -103,6 +103,11 @@ public class CNSAddPermissionAction extends CNSAction {
         String action = request.getParameter(CQSConstants.ACTION_NAME + ".member." + index);
 
         while (action != null) {
+        	
+        	if (!CMBPolicy.CNS_ACTIONS.contains(action)) {
+    			throw new CMBException(CNSErrorCodes.CNS_InvalidParameter, "Invalid action parameter " + action);
+        	}
+        	
         	actionList.add(action);
             index++;
             action = request.getParameter(CQSConstants.ACTION_NAME + ".member." + index);
