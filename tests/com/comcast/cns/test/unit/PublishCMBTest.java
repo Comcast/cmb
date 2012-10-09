@@ -15,7 +15,6 @@
  */
 package com.comcast.cns.test.unit;
 
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 

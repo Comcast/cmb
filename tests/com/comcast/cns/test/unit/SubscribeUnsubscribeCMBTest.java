@@ -20,7 +20,6 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.ByteArrayOutputStream;
-import java.util.Map;
 import java.util.Random;
 import java.util.Vector;
 
@@ -44,7 +43,6 @@ import com.comcast.cns.model.CNSSubscription.CnsSubscriptionProtocol;
 import com.comcast.cqs.controller.CQSControllerServlet;
 import com.comcast.cqs.model.CQSQueue;
 import com.comcast.cqs.persistence.ICQSQueuePersistence;
-
 
 public class SubscribeUnsubscribeCMBTest {
 	
@@ -116,26 +114,37 @@ public class SubscribeUnsubscribeCMBTest {
 			CNSTestingUtils.confirmPendingSubscriptionsByTopic(topicArn, user1.getUserId(), CnsSubscriptionProtocol.email);
 			
 			CNSTestingUtils.listSubscriptions(cns, user1, out, null);
+			
 			logger.info(out.toString());
+			
 			Vector<CNSSubscriptionTest> subscriptions = CNSTestingUtils.getSubscriptionsFromString(out.toString());
-			logger.info("subscriptions size is:" + subscriptions.size());
-			assertTrue(subscriptions.size() == 1);
+			
+			logger.info("Number of subscriptions is " + subscriptions.size());
+			
+			assertTrue("Expected 1 subscription, instead found " + subscriptions.size(), subscriptions.size() == 1);
+			
 			subscriptionArn = subscriptions.get(0).getSubscriptionArn();
 			CNSSubscriptionTest sub = subscriptions.get(0);
-			assertTrue(sub.getEndpoint().equals(CMBTestingConstants.EMAIL_ENDPOINT));
-			assertTrue(sub.getProtocol().equals("email"));
-			assertTrue(sub.getTopicArn().equals(topicArn));
-			assertTrue(sub.getOwner().equals(user1.getUserId()));
+			
+			assertTrue("Invalid subscription: Wrong email address", sub.getEndpoint().equals(CMBTestingConstants.EMAIL_ENDPOINT));
+			assertTrue("Invalid subscription: Wrong protocol", sub.getProtocol().equals("email"));
+			assertTrue("Invalid subscription: Wrong topic arn", sub.getTopicArn().equals(topicArn));
+			assertTrue("Invalid subscription: Wrong owner", sub.getOwner().equals(user1.getUserId()));
+			
 			out.reset();
 
 			CNSTestingUtils.listSubscriptionsByTopic(cns, user1, out, topicArn, null);			
 			subscriptions = CNSTestingUtils.getSubscriptionsFromString(out.toString());
-			assertTrue(subscriptions.size() == 1);
+			
+			assertTrue("Expected 1 subscription, instead found " + subscriptions.size(), subscriptions.size() == 1);
+			
 			sub = subscriptions.get(0);
-			assertTrue(sub.getEndpoint().equals(CMBTestingConstants.EMAIL_ENDPOINT));
-			assertTrue(sub.getProtocol().equals("email"));
-			assertTrue(sub.getTopicArn().equals(topicArn));
-			assertTrue(sub.getOwner().equals(user1.getUserId()));
+			
+			assertTrue("Invalid subscription: Wrong email address", sub.getEndpoint().equals(CMBTestingConstants.EMAIL_ENDPOINT));
+			assertTrue("Invalid subscription: Wrong protocol", sub.getProtocol().equals("email"));
+			assertTrue("Invalid subscription: Wrong topic arn", sub.getTopicArn().equals(topicArn));
+			assertTrue("Invalid subscription: Wrong owner", sub.getOwner().equals(user1.getUserId()));
+			
 			out.reset();
 
 			CNSTestingUtils.unSubscribe(cns, user1, out, subscriptionArn);
@@ -143,17 +152,19 @@ public class SubscribeUnsubscribeCMBTest {
 
 			CNSTestingUtils.listSubscriptionsByTopic(cns, user1, out, topicArn, null);
 			subscriptions = CNSTestingUtils.getSubscriptionsFromString(out.toString());
-			assertTrue(subscriptions.size() == 0);
+			
+			assertTrue("Expected 0 subscription, instead found " + subscriptions.size(), subscriptions.size() == 0);
+			
 			out.reset();
 
 			CNSTestingUtils.listSubscriptions(cns, user1, out, null);
 			subscriptions = CNSTestingUtils.getSubscriptionsFromString(out.toString());
-			assertTrue(subscriptions.size() == 0);
+			
+			assertTrue("Expected 0 subscription, instead found " + subscriptions.size(), subscriptions.size() == 0);
 
 		} catch (Exception ex) {
 			
-			logger.error("test failed", ex);
-			fail("test failed: " + ex.toString());
+			fail(ex.toString());
 
 		} finally {
 		
@@ -187,41 +198,35 @@ public class SubscribeUnsubscribeCMBTest {
 			out.reset();
 
 			CNSTestingUtils.listSubscriptions(cns, user1, out, "Faketoken");
-			logger.debug(out.toString());
 			res = out.toString();
-			assertTrue(CNSTestingUtils.verifyErrorResponse(res, "InvalidParameterValue", "Invalid parameter nextToken"));				
+			assertTrue("Missing invalid next token error", CNSTestingUtils.verifyErrorResponse(res, "InvalidParameterValue", "Invalid parameter nextToken"));				
 			out.reset();
 
 			String fakeArn = topicArn.substring(0,topicArn.length()-1) + "b";
 			CNSTestingUtils.listSubscriptionsByTopic(cns, user1, out, fakeArn, null);			
-			logger.debug(out.toString());
 			res = out.toString();
-			assertTrue(CNSTestingUtils.verifyErrorResponse(res, "NotFound", "Resource not found."));				
+			assertTrue("Missing resource not found error", CNSTestingUtils.verifyErrorResponse(res, "NotFound", "Resource not found."));				
 			out.reset();
 
 			CNSTestingUtils.listSubscriptionsByTopic(cns, user1, out, null, null);			
-			logger.debug(out.toString());
 			res = out.toString();
-			assertTrue(CNSTestingUtils.verifyErrorResponse(res, "InvalidParameter", "request parameter does not comply with the associated constraints."));				
+			assertTrue("Missing invalid paramter error", CNSTestingUtils.verifyErrorResponse(res, "InvalidParameter", "request parameter does not comply with the associated constraints."));				
 			out.reset();
 
 			fakeArn = "monkey";
 			CNSTestingUtils.listSubscriptionsByTopic(cns, user1, out, fakeArn, null);			
-			logger.debug(out.toString());
 			res = out.toString();
-			assertTrue(CNSTestingUtils.verifyErrorResponse(res, "InvalidParameter", "request parameter does not comply with the associated constraints."));				
+			assertTrue("Missing invalid parameter error", CNSTestingUtils.verifyErrorResponse(res, "InvalidParameter", "request parameter does not comply with the associated constraints."));				
 			out.reset();
 
 			CNSTestingUtils.listSubscriptionsByTopic(cns, user1, out, topicArn, "Faketoken");			
-			logger.debug(out.toString());
 			res = out.toString();
-			assertTrue(CNSTestingUtils.verifyErrorResponse(res, "InvalidParameterValue", "Invalid parameter nextToken"));				
+			assertTrue("Missing invalid next token error", CNSTestingUtils.verifyErrorResponse(res, "InvalidParameterValue", "Invalid parameter nextToken"));				
 			out.reset();
 
 		} catch (Exception ex) {
 			
-			logger.error("test failed", ex);
-			fail("test failed: " + ex.toString());
+			fail(ex.toString());
 
 		} finally {
 		
@@ -256,21 +261,18 @@ public class SubscribeUnsubscribeCMBTest {
 
 			String fakeArn = "monkey";
 			CNSTestingUtils.unSubscribe(cns, user1, out, fakeArn);
-			logger.debug(out.toString());
 			res = out.toString();
-			assertTrue(CNSTestingUtils.verifyErrorResponse(res, "InvalidParameter", "request parameter does not comply with the associated constraints."));
+			assertTrue("Missing invalid parameter error", CNSTestingUtils.verifyErrorResponse(res, "InvalidParameter", "request parameter does not comply with the associated constraints."));
 			out.reset();
 
 			CNSTestingUtils.unSubscribe(cns, user1, out, null);
-			logger.debug(out.toString());
 			res = out.toString();
-			assertTrue(CNSTestingUtils.verifyErrorResponse(res, "InvalidParameter", "request parameter does not comply with the associated constraints."));
+			assertTrue("Missing invalid parameter error", CNSTestingUtils.verifyErrorResponse(res, "InvalidParameter", "request parameter does not comply with the associated constraints."));
 			out.reset();
 
 		} catch (Exception ex) {
 			
-			logger.error("test failed", ex);
-			fail("test failed: " + ex.toString());
+			fail(ex.toString());
 
 		} finally {
 		
@@ -280,10 +282,6 @@ public class SubscribeUnsubscribeCMBTest {
 				} catch (Exception e) { }
 			}
 		}
-	}
-
-	public static void addParam(Map<String, String[]> params, String name, String val) {        
-		CNSTestingUtils.addParam(params, name, val);
 	}
 
 	@Test
@@ -305,90 +303,84 @@ public class SubscribeUnsubscribeCMBTest {
 			String protocol = "call";
 			CNSTestingUtils.subscribe(cns, user1, out, endpoint, protocol, topicArn);
 			res = out.toString();
-			assertTrue(CNSTestingUtils.verifyErrorResponse(res, "InvalidParameter", "request parameter does not comply with the associated constraints."));
+			assertTrue("Missing invalid parameter error", CNSTestingUtils.verifyErrorResponse(res, "InvalidParameter", "request parameter does not comply with the associated constraints."));
 			out.reset();
 
 			endpoint = CMBTestingConstants.EMAIL_ENDPOINT;
 			protocol = "sms";
 			CNSTestingUtils.subscribe(cns, user1, out, endpoint, protocol, topicArn);
 			res = out.toString();
-			assertTrue(CNSTestingUtils.verifyErrorResponse(res, "InvalidParameter", "request parameter does not comply with the associated constraints."));
+			assertTrue("Missing invalid parameter error", CNSTestingUtils.verifyErrorResponse(res, "InvalidParameter", "request parameter does not comply with the associated constraints."));
 			out.reset();
 
 			endpoint = CMBTestingConstants.HTTP_ENDPOINT_BASE_URL + "recv/1234";
 			protocol = "https";
 			CNSTestingUtils.subscribe(cns, user1, out, endpoint, protocol, topicArn);
 			res = out.toString();
-			assertTrue(CNSTestingUtils.verifyErrorResponse(res, "InvalidParameter", "request parameter does not comply with the associated constraints."));
+			assertTrue("Missing invalid parameter error", CNSTestingUtils.verifyErrorResponse(res, "InvalidParameter", "request parameter does not comply with the associated constraints."));
 			out.reset();
 
 			endpoint = CMBTestingConstants.HTTPS_ENDPOINT_BASE_URL + "recv/1234";
 			protocol = "http";
 			CNSTestingUtils.subscribe(cns, user1, out, endpoint, protocol, topicArn);
 			res = out.toString();
-			assertTrue(CNSTestingUtils.verifyErrorResponse(res, "InvalidParameter", "request parameter does not comply with the associated constraints."));
+			assertTrue("Missing invalid parameter error", CNSTestingUtils.verifyErrorResponse(res, "InvalidParameter", "request parameter does not comply with the associated constraints."));
 			out.reset();
 
 			endpoint = "650-988-8888";
 			protocol = "email";
 			CNSTestingUtils.subscribe(cns, user1, out, endpoint, protocol, topicArn);
 			res = out.toString();
-			assertTrue(CNSTestingUtils.verifyErrorResponse(res, "InvalidParameter", "request parameter does not comply with the associated constraints."));
+			assertTrue("Missing invalid parameter error", CNSTestingUtils.verifyErrorResponse(res, "InvalidParameter", "request parameter does not comply with the associated constraints."));
 			out.reset();
 
 			endpoint = "western";
 			protocol = "email-json";
 			CNSTestingUtils.subscribe(cns, user1, out, endpoint, protocol, topicArn);
 			res = out.toString();
-			assertTrue(CNSTestingUtils.verifyErrorResponse(res, "InvalidParameter", "request parameter does not comply with the associated constraints."));
+			assertTrue("Missing invalid parameter error", CNSTestingUtils.verifyErrorResponse(res, "InvalidParameter", "request parameter does not comply with the associated constraints."));
 			out.reset();
 
 			String fakeTopicArn = topicArn.substring(0,topicArn.length()-1) + "b";
 			endpoint = CMBTestingConstants.EMAIL_ENDPOINT;
 			protocol = "email";
 			CNSTestingUtils.subscribe(cns, user1, out, endpoint, protocol, fakeTopicArn);
-			logger.debug(out.toString());
 			res = out.toString();
-			assertTrue(CNSTestingUtils.verifyErrorResponse(res, "NotFound", "Resource not found."));
+			assertTrue("Missing resource not found error", CNSTestingUtils.verifyErrorResponse(res, "NotFound", "Resource not found."));
 			out.reset();
 
 			fakeTopicArn = "monkey";
 			endpoint = CMBTestingConstants.EMAIL_ENDPOINT;
 			protocol = "email";
 			CNSTestingUtils.subscribe(cns, user1, out, endpoint, protocol, fakeTopicArn);
-			logger.debug(out.toString());
 			res = out.toString();
-			assertTrue(CNSTestingUtils.verifyErrorResponse(res, "InvalidParameter", "request parameter does not comply with the associated constraints."));
+			assertTrue("Missing invalid parameter error", CNSTestingUtils.verifyErrorResponse(res, "InvalidParameter", "request parameter does not comply with the associated constraints."));
 			out.reset();
 
 			endpoint = CMBTestingConstants.EMAIL_ENDPOINT;
 			protocol = "email";
 			CNSTestingUtils.subscribe(cns, user1, out, endpoint, protocol, null);
-			logger.debug(out.toString());
 			res = out.toString();
-			assertTrue(CNSTestingUtils.verifyErrorResponse(res, "InvalidParameter", "request parameter does not comply with the associated constraints."));
+			assertTrue("Missing invalid parameter error", CNSTestingUtils.verifyErrorResponse(res, "InvalidParameter", "request parameter does not comply with the associated constraints."));
 			out.reset();
 
 			endpoint = CMBTestingConstants.EMAIL_ENDPOINT;
 			protocol = "email";
 			CNSTestingUtils.subscribe(cns, user1, out, endpoint, null, topicArn);
-			logger.debug(out.toString());
 			res = out.toString();
-			assertTrue(CNSTestingUtils.verifyErrorResponse(res, "InvalidParameter", "request parameter does not comply with the associated constraints."));
+			assertTrue("Missing invalid parameter error", CNSTestingUtils.verifyErrorResponse(res, "InvalidParameter", "request parameter does not comply with the associated constraints."));
 			out.reset();
 
 			endpoint = CMBTestingConstants.EMAIL_ENDPOINT;
 			protocol = "email";
 			CNSTestingUtils.subscribe(cns, user1, out, null, protocol, topicArn);
-			logger.debug(out.toString());
 			res = out.toString();
-			assertTrue(CNSTestingUtils.verifyErrorResponse(res, "InvalidParameter", "request parameter does not comply with the associated constraints."));
+			assertTrue("Missing invalid parameter error", CNSTestingUtils.verifyErrorResponse(res, "InvalidParameter", "request parameter does not comply with the associated constraints."));
 			out.reset();
 
 		} catch (Exception ex) {
 			
-			logger.error("test failed", ex);
-			fail("test failed: " + ex.toString());
+			fail(ex.toString());
 
 		} finally {
 		
@@ -427,14 +419,13 @@ public class SubscribeUnsubscribeCMBTest {
 			CNSTestingUtils.confirmPendingSubscriptionsByTopic(topicArn, user2.getUserId(), CnsSubscriptionProtocol.http);
 			
 			CNSTestingUtils.listSubscriptions(cns, user1, out, null);
-			logger.info(out.toString());
 			Vector<CNSSubscriptionTest> subscriptions = CNSTestingUtils.getSubscriptionsFromString(out.toString());
-			assertTrue(subscriptions.size() == 0);
+			assertTrue("Expected 0 subscriptions, instead found " + subscriptions.size(), subscriptions.size() == 0);
 			out.reset();
 
 			CNSTestingUtils.listSubscriptionsByTopic(cns, user1, out, topicArn, null);
 			subscriptions = CNSTestingUtils.getSubscriptionsFromString(out.toString());
-			assertTrue(subscriptions.size() == 1);
+			assertTrue("Expected 1 subscriptions, instead found " + subscriptions.size(), subscriptions.size() == 1);
 			out.reset();
 
 			subscriptions.get(0).getSubscriptionArn();
@@ -449,18 +440,17 @@ public class SubscribeUnsubscribeCMBTest {
 
 			CNSTestingUtils.listSubscriptions(cns, user1, out, null);
 			subscriptions = CNSTestingUtils.getSubscriptionsFromString(out.toString());
-			assertTrue(subscriptions.size() == 1);
+			assertTrue("Expected 1 subscriptions, instead found " + subscriptions.size(), subscriptions.size() == 1);
 			CNSSubscriptionTest sub = subscriptions.get(0);
 			subscriptions.get(0).getSubscriptionArn();
 
-			assertTrue(sub.getEndpoint().equals(CMBTestingConstants.HTTP_ENDPOINT_BASE_URL + "recv/2527"));
-			assertTrue(sub.getProtocol().equals("http"));
-			assertTrue(sub.getTopicArn().equals(topicArn));
-			assertTrue(sub.getOwner().equals(user1.getUserId()));
+			assertTrue("Subscription validation error: Wrong url", sub.getEndpoint().equals(CMBTestingConstants.HTTP_ENDPOINT_BASE_URL + "recv/2527"));
+			assertTrue("Subscription validation error: Wrong protocol", sub.getProtocol().equals("http"));
+			assertTrue("Subscription validation error: Wrong topic arn", sub.getTopicArn().equals(topicArn));
+			assertTrue("Subscription validation error: Wrong owner", sub.getOwner().equals(user1.getUserId()));
 			out.reset();
 
 			CNSTestingUtils.listSubscriptionsByTopic(cns, user1, out, topicArn, null);
-			logger.info(out.toString());
 			subscriptions = CNSTestingUtils.getSubscriptionsFromString(out.toString());
 			assertTrue(subscriptions.size() == 2);
 
@@ -470,10 +460,10 @@ public class SubscribeUnsubscribeCMBTest {
 				sub = subscriptions.get(1); 
 			}
 
-			assertTrue(sub.getEndpoint().equals(CMBTestingConstants.HTTP_ENDPOINT_BASE_URL + "recv/2527"));
-			assertTrue(sub.getProtocol().equals("http"));
-			assertTrue(sub.getTopicArn().equals(topicArn));
-			assertTrue(sub.getOwner().equals(user1.getUserId()));
+			assertTrue("Subscription validation error: Wrong url", sub.getEndpoint().equals(CMBTestingConstants.HTTP_ENDPOINT_BASE_URL + "recv/2527"));
+			assertTrue("Subscription validation error: Wrong protocol", sub.getProtocol().equals("http"));
+			assertTrue("Subscription validation error: Wrong topic arn", sub.getTopicArn().equals(topicArn));
+			assertTrue("Subscription validation error: Wrong owner", sub.getOwner().equals(user1.getUserId()));
 			out.reset();
 
 			// add 100 other subscriptions
@@ -493,17 +483,16 @@ public class SubscribeUnsubscribeCMBTest {
 			CNSTestingUtils.listSubscriptions(cns, user1, out, null);
 			pl = CNSTestingUtils.getSubscriptionDataFromString(out.toString());
 			subscriptions = pl.getSubscriptions();
-			assertTrue(subscriptions.size() == 100);
-			assertTrue(pl.getNextToken() != null);
+			assertTrue("Expected 100 subscriptions, instead found " + subscriptions.size(), subscriptions.size() == 100);
+			assertTrue("Missing next token", pl.getNextToken() != null);
 			out.reset();
 
 			CNSTestingUtils.listSubscriptionsByTopic(cns, user1, out, topicArn, null);
 			logger.info(out.toString());
 			pl = CNSTestingUtils.getSubscriptionDataFromString(out.toString());
 			subscriptions = pl.getSubscriptions();
-			logger.info("subscriptions size is:" + subscriptions.size());
-			assertTrue(subscriptions.size() == 100); 
-			assertTrue(pl.getNextToken() != null);
+			assertTrue("Expected 100 subscriptions, instead found " + subscriptions.size(), subscriptions.size() == 100); 
+			assertTrue("Missing next token", pl.getNextToken() != null);
 			out.reset();
 
 			CNSTestingUtils.deleteTopic(cns, user1, out, topicArn);
@@ -512,19 +501,17 @@ public class SubscribeUnsubscribeCMBTest {
 
 			CNSTestingUtils.listSubscriptions(cns, user1, out, null);
 			subscriptions = CNSTestingUtils.getSubscriptionsFromString(out.toString());
-			assertTrue(subscriptions.size() == 0); 
+			assertTrue("Expected 0 subscriptions, instead found " + subscriptions.size(), subscriptions.size() == 0); 
 			out.reset();
 
 			CNSTestingUtils.listSubscriptionsByTopic(cns, user1, out, topicArn, null);
 			res = out.toString();
-			logger.debug("response: " + res);
-			assertTrue(CNSTestingUtils.verifyErrorResponse(res, "NotFound", "Resource not found."));
+			assertTrue("Missing resouce not found error", CNSTestingUtils.verifyErrorResponse(res, "NotFound", "Resource not found."));
 			out.reset();
 
 		} catch (Exception ex) {
 			
-			logger.error("test failed", ex);
-			fail("test failed: " + ex.toString());
+			fail(ex.toString());
 
 		} finally {
 		
@@ -559,7 +546,6 @@ public class SubscribeUnsubscribeCMBTest {
 			
 			String cqsResponse = CNSTestingUtils.addQueue(cqs, user2, "Q" + rand.nextLong());
 			ICQSQueuePersistence queueHandler = PersistenceFactory.getQueuePersistence();	
-			logger.info("cqsQueue: " + cqsResponse);
 			queueURL = CNSTestingUtils.getQueueUrl(cqsResponse);					
 			CQSQueue queue = queueHandler.getQueue(com.comcast.cqs.util.Util.getRelativeForAbsoluteQueueUrl(queueURL));
 			queueArn = queue.getArn();
@@ -573,12 +559,10 @@ public class SubscribeUnsubscribeCMBTest {
 			
 			CNSTestingUtils.subscribe(cns, user1, out, queueArn, protocol, topicArn);
 			String subscriptionArn = CNSTestingUtils.getSubscriptionArnFromString(out.toString());
-			logger.debug("subscriptionArn: " + subscriptionArn);
 			out.reset();
 			Thread.sleep(500);
 
 			String msg = CNSTestingUtils.receiveMessage(cqs, user2, queueURL, "1");
-			logger.debug("msg: " + msg);
 			String receiptHandle = CNSTestingUtils.getReceiptHandle(msg);
 			String message = CNSTestingUtils.getMessage(msg);
 
@@ -586,20 +570,16 @@ public class SubscribeUnsubscribeCMBTest {
 				fail("blank message response=" + msg);
 			}
 			
-			logger.debug("message: " + message);
 			JSONObject js = new JSONObject(message);
 
 			String token = js.getString("Token");
-			assertTrue(token != null);
-			assertTrue(receiptHandle != null);
-			logger.debug("receiptHandle: " + receiptHandle);
-			logger.debug("token: " + token);
+			assertTrue("Missing token", token != null);
+			assertTrue("Missing receipt handle", receiptHandle != null);
 			out.reset();
 
 			CNSTestingUtils.confirmSubscription(cns, user1, out, topicArn, token, null);
-			logger.debug("confirmSubscription response: " + out.toString());
 			subscriptionArn = CNSTestingUtils.getSubscriptionArnFromString(out.toString());
-			assertTrue(subscriptionArn != null);
+			assertTrue("Missing subscription arn", subscriptionArn != null);
 			out.reset();
 
 			CNSTestingUtils.deleteMessage(cqs, user2, queueURL, receiptHandle);
@@ -616,10 +596,9 @@ public class SubscribeUnsubscribeCMBTest {
 			CNSTestingUtils.subscribe(cns, user2, out, queueArn, protocol, topicArn);
 			Thread.sleep(500);
 			subscriptionArn = CNSTestingUtils.getSubscriptionArnFromString(out.toString());
-			logger.debug("subscriptionArn: " + subscriptionArn);
 			out.reset();
 			
-			assertTrue(subscriptionArn != null && !subscriptionArn.toLowerCase().contains("pending"));
+			assertTrue("Subscription arn is not in state pending", subscriptionArn != null && !subscriptionArn.toLowerCase().contains("pending"));
 
 			CNSTestingUtils.deleteMessage(cqs, user2, queueURL, receiptHandle);
 			out.reset();
@@ -628,8 +607,7 @@ public class SubscribeUnsubscribeCMBTest {
 
 		} catch (Exception ex) {
 			
-			logger.error("test failed", ex);
-			fail("test failed: " + ex.toString());
+			fail(ex.toString());
 
 		} finally {
 		
@@ -673,8 +651,7 @@ public class SubscribeUnsubscribeCMBTest {
 			
 		} catch (Exception ex) {
 			
-			logger.error("test failed", ex);
-			fail("test failed: " + ex.toString());
+			fail(ex.toString());
 
 		} finally {
 		
@@ -718,7 +695,6 @@ public class SubscribeUnsubscribeCMBTest {
 			
 			String cqsResponse = CNSTestingUtils.addQueue(cqs, user2, "Q" + rand.nextLong());
 			ICQSQueuePersistence queueHandler = PersistenceFactory.getQueuePersistence();	
-			logger.info("cqsQueue: " + cqsResponse);
 			queueURL = CNSTestingUtils.getQueueUrl(cqsResponse);					
 			queueHandler.getQueue(queueURL);
 
@@ -727,13 +703,11 @@ public class SubscribeUnsubscribeCMBTest {
 			CNSTestingUtils.setPermissionForUser(cqs, user2, user1, queueURL);
 
 			CNSTestingUtils.subscribe(cns, user2, out, endpoint, protocol, topicArn);
-			String subscriptionArn = CNSTestingUtils.getSubscriptionArnFromString(out.toString());
-			logger.debug("subscriptionArn: " + subscriptionArn);
+			CNSTestingUtils.getSubscriptionArnFromString(out.toString());
 			out.reset();
 			Thread.sleep(1000);
 
 			String msg = CNSTestingUtils.receiveMessage(cqs, user2, queueURL, "1");
-			logger.debug("msg: " + msg);
 			String receiptHandle = CNSTestingUtils.getReceiptHandle(msg);
 			String message = CNSTestingUtils.getMessage(msg);
 			assertTrue("Failed to receive message", message != null);
@@ -742,22 +716,19 @@ public class SubscribeUnsubscribeCMBTest {
 			token = js.getString("Token");
 			assertTrue(token != null);
 			assertTrue(receiptHandle != null);
-			logger.debug("receiptHandle: " + receiptHandle);
-			logger.debug("token: " + token);
 			out.reset();
 
 			CNSTestingUtils.confirmSubscription(cns, user1, out, "fakeARN", token, null);
-			assertTrue(CNSTestingUtils.verifyErrorResponse(out.toString(), "InvalidParameter", "request parameter does not comply with the associated constraints."));				
+			assertTrue("Missing invalid parameter error", CNSTestingUtils.verifyErrorResponse(out.toString(), "InvalidParameter", "request parameter does not comply with the associated constraints."));				
 			out.reset();
 
 			CNSTestingUtils.confirmSubscription(cns, user1, out, topicArn, token, "blech");
-			assertTrue(CNSTestingUtils.verifyErrorResponse(out.toString(), "InvalidParameter", "request parameter does not comply with the associated constraints."));				
+			assertTrue("Missing invalid parameter error", CNSTestingUtils.verifyErrorResponse(out.toString(), "InvalidParameter", "request parameter does not comply with the associated constraints."));				
 			out.reset();
 
 		} catch (Exception ex) {
 			
-			logger.error("test failed", ex);
-			fail("test failed: " + ex.toString());
+			fail(ex.toString());
 
 		} finally {
 		

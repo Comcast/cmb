@@ -102,8 +102,7 @@ public class SubscribeListUnsubscribeCassandraTest {
             
         } catch (Exception ex) {
             
-            logger.error("test failed", ex);
-            fail("test failed: " + ex.toString());
+            fail(ex.toString());
 
         } finally {
         
@@ -132,6 +131,7 @@ public class SubscribeListUnsubscribeCassandraTest {
 
 			CNSTopic t = topicHandler.createTopic(topicName, topicName, userId2);
 			topicArn = t.getArn();
+			
 			try {
                 topicHandler.deleteTopic(topicArn); //delete any pre-existing state
             } catch (Exception e) { }
@@ -150,31 +150,31 @@ public class SubscribeListUnsubscribeCassandraTest {
 			
 			CNSSubscriptionAttributes attributes = attributeHandler.getSubscriptionAttributes(s.getArn());
 			
-			assertTrue(attributes.getEffectiveDeliveryPolicy().getHealthyRetryPolicy().getNumRetries() == 3);
+			assertTrue("Expected 3 retries in healthy policy, instead found " + attributes.getEffectiveDeliveryPolicy().getHealthyRetryPolicy().getNumRetries(), attributes.getEffectiveDeliveryPolicy().getHealthyRetryPolicy().getNumRetries() == 3);
 			
 			List<CNSSubscription> l = subscriptionHandler.listSubscriptions(null, null, userId1);
 
-			assertTrue(l.size() == 1 && l.get(0).getArn().equals("PendingConfirmation"));
+			assertTrue("Could not verify PendingConfirmation state", l.size() == 1 && l.get(0).getArn().equals("PendingConfirmation"));
 
 			s = subscriptionHandler.confirmSubscription(false, s.getToken(), t.getArn());
 
 			l = subscriptionHandler.listSubscriptions(null, null, userId1);
 
-			assertTrue(l.size() == 1);
+			assertTrue("Expected 1 subscription, instead found " + l.size(), l.size() == 1);
 
 			l = subscriptionHandler.listSubscriptionsByTopic(null, t.getArn(), null);
 
-			assertTrue(l.size() == 1);
+			assertTrue("Expected 1 subscription, instead found " + l.size(), l.size() == 1);
 
 			l = subscriptionHandler.listSubscriptionsByTopic(null, t.getArn(), CnsSubscriptionProtocol.http);
 
-			assertTrue(l.size() == 1);
+			assertTrue("Expected 1 subscription, instead found " + l.size(), l.size() == 1);
 			
 			l = subscriptionHandler.listSubscriptionsByTopic(null, t.getArn(), CnsSubscriptionProtocol.email);
 
-			assertTrue(l.size() == 0);
+			assertTrue("Expected 0 subscription, instead found " + l.size(), l.size() == 0);
 			
-			assertTrue(afterSubscribeCount == beforeSubscribeCount+1);
+			assertTrue("Wrong number of subscribers", afterSubscribeCount == beforeSubscribeCount+1);
 
 			try {
 				l = subscriptionHandler.listSubscriptionsByTopic(null, com.comcast.cns.util.Util.generateCnsTopicArn("xyz", "east", userId1), null);
@@ -184,7 +184,7 @@ public class SubscribeListUnsubscribeCassandraTest {
 			
 			CNSSubscription sdup = subscriptionHandler.getSubscription(s.getArn());
 			
-			assertTrue(s.equals(sdup));
+			assertTrue("Subscriptions are not identical: " + s + "; " + sdup, s.equals(sdup));
 			
 			long beforeUnsubscribeCount = subscriptionHandler.getCountSubscription(t.getArn(), "subscriptionDeleted");
 
@@ -194,14 +194,13 @@ public class SubscribeListUnsubscribeCassandraTest {
 
 			l = subscriptionHandler.listSubscriptions(null, null, userId1);
 
-			assertTrue(l.size() == 0);
+			assertTrue("Expected 0 subscription, instead found " + l.size(), l.size() == 0);
 			
-			assertTrue(afterUnsubscribeCount == beforeUnsubscribeCount + 1);
+			assertTrue("Wrong number of subscribers", afterUnsubscribeCount == beforeUnsubscribeCount + 1);
 
 		} catch (Exception ex) {
 			
-			logger.error("test failed", ex);
-			fail("test failed: " + ex.toString());
+			fail(ex.toString());
 
 		} finally {
 		
@@ -252,7 +251,7 @@ public class SubscribeListUnsubscribeCassandraTest {
 					for (CNSSubscription scr : l) {
 						
 						if (keys.contains(scr.getArn())) {
-							fail("Duplicate subscription arn: " + scr);
+							fail("Duplicate subscription arn " + scr);
 						} else {
 							keys.add(scr.getArn());
 						}
@@ -261,15 +260,14 @@ public class SubscribeListUnsubscribeCassandraTest {
 					l = subscriptionHandler.listSubscriptions(l.get(l.size()-1).getArn(), null, userId1);
 				}
 				
-				assertTrue(a.size() == i);
+				assertTrue("Wrong number of subscriptions: " + a.size() + " versus " + i, a.size() == i);
 				
-				logger.info(i + "...ok");
+				logger.info(i + " subscriptions ok");
 			}
 			
 		} catch (Exception ex) {
 			
-			logger.error("test failed", ex);
-			fail("test failed: " + ex.toString());
+			fail(ex.toString());
 
 		} finally {
 		
@@ -287,10 +285,12 @@ public class SubscribeListUnsubscribeCassandraTest {
 	 */	
 	@Test
 	public void testlistSubscriptionsByTopicPerf() throws Exception {
-        ICNSTopicPersistence topicHandler = new CNSTopicCassandraPersistence();
+        
+		ICNSTopicPersistence topicHandler = new CNSTopicCassandraPersistence();
         
         String topicArn = null;
         long ts1=0L, ts2=0L;
+        
         try {
 
             String userId1 = user1.getUserId();
@@ -309,20 +309,22 @@ public class SubscribeListUnsubscribeCassandraTest {
             ts1 = System.currentTimeMillis();
             List<CNSSubscription> l = subscriptionHandler.listSubscriptionsByTopic(null, t.getArn(), null, 1000);
             int totalSize = 0;
+        
             while (totalSize != 200 && l.size() > 0) {
                 totalSize += l.size();
-                logger.info("totalSize=" + totalSize);
+                logger.info("Number of subscriptions is " + totalSize);
                 l = subscriptionHandler.listSubscriptionsByTopic(l.get(l.size() - 1).getArn(), t.getArn(), null, 1000);
             }
+            
             if (totalSize != 200) {
-                fail("Expected 200. Got:" + totalSize);
+                fail("Expected 200 subscriptions, instead found " + totalSize);
             }
+            
             ts2 = System.currentTimeMillis();
             
         } catch (Exception ex) {
             
-            logger.error("test failed", ex);
-            fail("test failed: " + ex.toString());
+            fail(ex.toString());
 
         } finally {
         
@@ -331,25 +333,13 @@ public class SubscribeListUnsubscribeCassandraTest {
                     topicHandler.deleteTopic(topicArn);
                 } catch (Exception e) { }
             }
-            logger.info("listSub listSub responseTIme=" + (ts2 - ts1));
+            
+            logger.info("List subscriptions response time is " + (ts2 - ts1) + " ms");
         }
 	}
 	
 	@After    
     public void tearDown() throws PersistenceException {
-	    IUserPersistence userHandler = PersistenceFactory.getUserPersistence();
-
-	    String userName1 = "cns_unit_test_1";
-	    String userName2 = "cns_unit_test_2";
-
-	    if (user1 != null) {
-	        userHandler.deleteUser(userName1);
-	    }
-
-	    if (user2 != null) {
-	        userHandler.deleteUser(userName2);
-	    }
-
 	    CMBControllerServlet.valueAccumulator.deleteAllCounters();
     }
 }
