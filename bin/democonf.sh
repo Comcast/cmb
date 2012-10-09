@@ -61,6 +61,8 @@ done
 
 curl http://redis.googlecode.com/files/$REDIS.tar.gz | tar zxf -
 (cd $REDIS && make)
+# Don't use Redis persistence.
+(cd $REDIS && sed -i 's/^save/# save/g' redis.conf)
 
 
 ## Configure CQS and CNS.
