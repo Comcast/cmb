@@ -293,7 +293,7 @@ Example response:
    Consumer,Producer or Consumer or Producer
    
    > cd /usr/local/
-   > wget -O - https://github.com/downloads/Comcast/cmb/cmb-distribution-2.2.10.tar.gz | tar zxf -
+   > wget -O - https://github.com/downloads/Comcast/cmb/cns-worker-distribution-2.2.10.tar.gz | tar zxf -
    > cd cmb
    > vi ./startWorkerNode.sh
    > chmod 755 startWorkerNode.sh
@@ -327,7 +327,7 @@ Example response:
 
    > mvn --settings ./settings.xml -f pom-cmb.xml -Dmaven.test.skip=true assembly:assembly
    
-   After a successful build binary cmb-distribution-<version>.tar.gz will be available in 
+   After a successful build binary cns-worker-distribution-<version>.tar.gz will be available in 
    ./target 
 
 3. Build CMB Service Endpoints (CNS and CQS) with maven (skipping tests): 

@@ -3,7 +3,7 @@
 
 	<properties>
 	    <buildnum>2.2.10</buildnum>
-	    <projectname>cmb</projectname>
+	    <projectname>cns-worker</projectname>
 	</properties>
 
 	<modelVersion>4.0.0</modelVersion>

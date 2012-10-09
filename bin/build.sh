@@ -4,9 +4,9 @@
 
 mvn --settings ./settings.xml -f pom-cmb.xml clean
 
-# build cmb-distribution-<version>.tar.gz for worker node, skipping tests
+# build cns-worker-distribution-<version>.tar.gz for worker node, skipping tests
 
-mvn --settings ./settings.xml -f pom-cmb.xml -Dmaven.test.skip=true assembly:assembly
+mvn --settings ./settings.xml -f pom-cns-worker.xml -Dmaven.test.skip=true assembly:assembly
 
 # build cns-distribution-<version>.tar.gz containing cns.war and 
 # cqs-distribution-<version>.tar.gz containing cqs.war for CMB service endpoints, 
