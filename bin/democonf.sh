@@ -1,11 +1,18 @@
 #!/bin/bash
 
-# Attempt to download, configure, and start Cassandra, Redis, and
-# Tomcat instances.  Also attempt to start CQS and CNS.
-
-# Should be run from the CMB root directory: 'bin/democonf.sh'.
-
+#
+# Experimental script to install all required components locally (localhost). The script downloads,
+# configures and starts Cassandra, Redis, and Tomcat instances. It also build, installs and starts
+# the CQS and CNS web service endpoints as well as a single CNS Worker Node in Consumer/Producer
+# mode. This script is intended for educational purpose only or to quickly setup a local CMB instance 
+# for testing.
+#
+# The script should be run from the CMB root directory: 'bin/democonf.sh'. 
+#
+# Make sure user has write access to /var.
+#
 # Look in var/log when things go wrong at runtime.
+#
 
 CASS=apache-cassandra-1.0.10
 REDIS=redis-2.4.17
@@ -136,7 +143,7 @@ echo "Services started."
 
 ## Create initial objects
 echo "Creating 'cns_internal'."
-curl 'http://mysqltest.plaxo.com:3080/ADMIN?user=cns_internal&password=cns_internal&Create=Create' | grep cns_internal
+curl 'http://localhost:3080/ADMIN?user=cns_internal&password=cns_internal&Create=Create' | grep cns_internal
 
 
 ## Maybe run the tests.
@@ -148,21 +155,21 @@ curl 'http://mysqltest.plaxo.com:3080/ADMIN?user=cns_internal&password=cns_inter
 
 echo "Running some quick tests."
 # Create a user.
-curl 'http://mysqltest.plaxo.com:3080/ADMIN?user=homer&password=homer&Create=Create' | grep homer
-HOMER=`curl -s 'http://mysqltest.plaxo.com:3080/ADMIN' | grep -A 1 homer | tail -1 | sed 's/[^0-9]//g'`
+curl 'http://localhost:3080/ADMIN?user=homer&password=homer&Create=Create' | grep homer
+HOMER=`curl -s 'http://localhost:3080/ADMIN' | grep -A 1 homer | tail -1 | sed 's/[^0-9]//g'`
 if [ -z "$HOMER" ]; then
    echo "Error creating homer or finding homer's ID."
    exit 1
 fi
 # Create a queue.
-curl -s "http://mysqltest.plaxo.com:3080/CQSUser?userId=$HOMER&queueName=jokes&Create=Create"
+curl -s "http://localhost:3080/CQSUser?userId=$HOMER&queueName=jokes&Create=Create"
 # Send a message.
-curl -s "http://mysqltest.plaxo.com:3080/CQSUser/MESSAGE?userId=$HOMER&queueName=jokes&message=hello&Send=Send"
-curl -s "http://mysqltest.plaxo.com:3080/CQSUser/MESSAGE?userId=$HOMER&queueName=jokes" | grep hello
+curl -s "http://localhost:3080/CQSUser/MESSAGE?userId=$HOMER&queueName=jokes&message=hello&Send=Send"
+curl -s "http://localhost:3080/CQSUser/MESSAGE?userId=$HOMER&queueName=jokes" | grep hello
 # Delete ALL of the user's queues!
-curl -s "http://mysqltest.plaxo.com:3080/CQSUser?userId=$HOMER&DeleteAll=DeleteAll"
+curl -s "http://localhost:3080/CQSUser?userId=$HOMER&DeleteAll=DeleteAll"
 # Delete the user.
-curl 'http://mysqltest.plaxo.com:3080/ADMIN?user=homer&Delete=Delete'
+curl 'http://localhost:3080/ADMIN?user=homer&Delete=Delete'
 
 
 ## Goodbye
