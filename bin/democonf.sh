@@ -16,7 +16,8 @@
 
 CASS=apache-cassandra-1.0.10
 REDIS=redis-2.4.17
-TOMCAT=apache-tomcat-7.0.30
+TOMCAT_VERSION="7.0.32"
+TOMCAT="apache-tomcat-$TOMCAT_VERSION"
 
 echo "Warning: Starting download and configuration of several things."
 sleep 10
@@ -36,10 +37,10 @@ fi
 # The CNS Tomcat instance will listen on 4xxx.
 
 # Surely there is a better way to get an Apache mirror.
-MIRROR=`curl -s http://www.apache.org/dyn/mirrors/mirrors.cgi | grep strong | head -1 | sed 's;.*<strong>\(.*\)</strong>.*$;\1;'`
+MIRROR=`curl -s http://www.apache.org/dyn/mirrors/mirrors.cgi | grep strong | head -1 | sed 's;.*<strong>\(.*\)</strong>.*$;\1;' | sed 's;/$;;'`
 
 echo "Using Apache mirror $MIRROR."
-curl $MIRROR/tomcat/tomcat-7/v7.0.30/bin/$TOMCAT.tar.gz | tar zxf -
+curl $MIRROR/tomcat/tomcat-7/v$TOMCAT_VERSION/bin/$TOMCAT.tar.gz | tar zxf -
 
 # Quickly make Tomcat instances for CQS and CNS.
 # Should use CATALINA_BASE as we did before.
