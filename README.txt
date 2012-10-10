@@ -18,9 +18,9 @@ AWS SQS and SNS. This document covers these topics:
 CMB consists of two separate services, CQS and CNS. CQS offers queuing services while CNS 
 offers publish / subscribe notification services. Both services are API-compatible with 
 Amazon Web Services SNS (Simple Notification Service) and SQS (Simple Queuing Service). CNS
-currently supports these protocols for subscribers: HTTP, CQS and email. CMB services are 
-implemented with a Cassandra / Redis backend and are designed with high availability and 
-horizontal scalability in mind.
+currently supports these protocols for subscribers: HTTP, CQS, SQS and email. CMB services 
+are implemented with a Cassandra / Redis backend and are designed with high availability 
+and horizontal scalability in mind.
 
 The most basic CMB system consists of one of each 
 
