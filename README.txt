@@ -5,11 +5,19 @@
 A highly available, horizontally scalable queuing and notification service compatible with 
 AWS SQS and SNS. This document covers these topics:
 
+- User Forum
 - Quick Tutorial
 - Installation Guide
 - Build CMB from Source
 - Monitoring, Logging
 - Known Limitations
+
+--------------------------------------------------------------------------------------------
+- User Forum
+--------------------------------------------------------------------------------------------
+
+If you have any questions or comments please go to our user forum at
+https://groups.google.com/forum/#!forum/cmb-user-forum
 
 --------------------------------------------------------------------------------------------
 - Quick Tutorial
