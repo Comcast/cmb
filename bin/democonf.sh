@@ -101,9 +101,9 @@ chmod 755 service
 
 ## Build CQS and CNS.
 
-mvn --settings ./settings.xml -f pom-cmb.xml -Dmaven.test.skip=true assembly:assembly
 mvn --settings ./settings.xml -f pom-cns.xml -Dmaven.test.skip=true assembly:assembly
 mvn --settings ./settings.xml -f pom-cqs.xml -Dmaven.test.skip=true assembly:assembly
+mvn --settings ./settings.xml -f pom-cns-worker.xml -Dmaven.test.skip=true assembly:assembly
 
 
 ## Install the CQS and CNS WARs.
