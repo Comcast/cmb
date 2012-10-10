@@ -107,10 +107,10 @@ Example response:
 1. Install Tomcat 7 or similar application server as needed. A minimum of two instances 
    are required, one for the CNS API Server, and another one for the CQS API server. 
    
-   > wget -O - http://www.alliedquotes.com/mirrors/apache/tomcat/tomcat-7/v7.0.30/bin/apache-tomcat-7.0.30.tar.gz | tar zxf -
+   > wget -O - http://www.alliedquotes.com/mirrors/apache/tomcat/tomcat-7/v7.0.32/bin/apache-tomcat-7.0.32.tar.gz | tar zxf -
 
-   > cp -R apache-tomcat-7.0.30 tomcat-cqs
-   > cp -R apache-tomcat-7.0.30 tomcat-cns
+   > cp -R apache-tomcat-7.0.32 tomcat-cqs
+   > cp -R apache-tomcat-7.0.32 tomcat-cns
    
    If you are installing both Tomcat instances on a single server make sure to configure
    them to listen on different ports by changing the default HTTP port number (8080) in 
@@ -347,7 +347,15 @@ Example response:
 
    > mvn --settings ./settings.xml -f pom-cns.xml  test
    
-   > mvn --settings ./settings.xml -f pom-cns.xml -Dtest=CQSIntegrationTest test   
+   > mvn --settings ./settings.xml -f pom-cns.xml -Dtest=CQSIntegrationTest test
+   
+   NOTE: Many unit tests require an HTTP endpoint to function or else they will fail.
+   The CMB distribution comes with a basic HTTP endpoint which is enabled by default on
+   both the CNS and the CQS instances at http://<service_host>:<service_port>/Endpoint/
+   If you wish to disable the endpoint servlet you can do so by modifying the CNS and
+   CQS web.xml files. If you would like to use your own HTTP endpoint at a different
+   location for running unit tests you can configure your endpoint URL in 
+   CMBTestingConstants.java.     
    
 --------------------------------------------------------------------------------------------
 - Monitoring, Logging
