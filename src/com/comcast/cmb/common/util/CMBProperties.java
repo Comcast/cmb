@@ -145,6 +145,9 @@ public class CMBProperties {
 	private final String cnsUserName;
 	private final String cnsUserPassword;
 	
+	private final String awsAccessKey;
+	private final String awsAccessSecret;
+	
 	private final String cnsPublishQueueNamePrefix;
 	private final String cnsEndpointPublishQueueNamePrefix;
 
@@ -270,6 +273,9 @@ public class CMBProperties {
 			cnsUserName = props.getProperty("cmb.cns.user.name", "cns_internal");
 			cnsUserPassword = props.getProperty("cmb.cns.user.password", "cns_internal");
 			
+			awsAccessKey = props.getProperty("aws.access.key");
+			awsAccessSecret = props.getProperty("aws.access.secret");
+
 			cnsPublishQueueNamePrefix = props.getProperty("cmb.cns.publish.queueNamePrefix", "PublishJobQ_");
 			cnsEndpointPublishQueueNamePrefix = props.getProperty("cmb.cns.publish.endpointQueueNamePrefix", "EndpointPublishQ_");
 
@@ -591,4 +597,12 @@ public class CMBProperties {
     public String getCnsEndpointPublishQueueNamePrefix() {
     	return cnsEndpointPublishQueueNamePrefix;
     }
+    
+	public String getAwsAccessSecret() {
+		return awsAccessSecret;
+	}
+
+	public String getAwsAccessKey() {
+		return awsAccessKey;
+	}
 }

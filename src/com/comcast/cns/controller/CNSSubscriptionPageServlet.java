@@ -137,9 +137,7 @@ public class CNSSubscriptionPageServlet extends AdminServletBase {
 		out.println(" document.getElementById('endPoint').placeholder = 'e.g. http://company.com'; }");
 		out.println(" else if (protocol == 'EMAIL' || protocol == 'EMAIL_JSON') { ");
 		out.println(" document.getElementById('endPoint').placeholder = 'e.g. user@domain.com'; }");
-		out.println(" else if (protocol == 'SMS') { ");
-		out.println(" document.getElementById('endPoint').placeholder = 'e.g. 1-206-555-6423'; }");
-		out.println(" else if (protocol == 'CQS') { ");
+		out.println(" else if (protocol == 'CQS' || protocol == 'SQS') { ");
 		out.println(" document.getElementById('endPoint').placeholder = 'e.g. arn:aws:cqs:ccp:555555555555:my-queue'; } ");
 		out.println("}");
 		out.println("</script>");
@@ -164,7 +162,7 @@ public class CNSSubscriptionPageServlet extends AdminServletBase {
         out.print(response.encodeURL("SUBSCRIPTION") + "?userId="+userId+"&topicArn="+topicArn);
         out.print("\" ");
         out.println("method=POST>");
-        out.print("<tr><td><select name='protocol' onchange='changeEndpointHint(this.value)'><option value='HTTP'>HTTP</option><option value='HTTPS'>HTTPS</option><option value='EMAIL'>EMAIL</option><option value='EMAIL_JSON'>EMAIL_JSON</option><option value='SMS'>SMS</option><option value='CQS'>CQS</option></select></td>");
+        out.print("<tr><td><select name='protocol' onchange='changeEndpointHint(this.value)'><option value='HTTP'>HTTP</option><option value='HTTPS'>HTTPS</option><option value='EMAIL'>EMAIL</option><option value='EMAIL_JSON'>EMAIL_JSON</option><option value='CQS'>CQS</option><option value='SQS'>SQS</option></select></td>");
         out.print("<td><input type='text' name='endPoint' id = 'endPoint' size='65' placeholder='e.g. http://company.com'><input type='hidden' name='userId' value='"+ userId + "'></td><td><input type='submit' value='Subscribe' name='Subscribe' /></td></tr></form></table>");
        
         for (int i = 0; subscriptions != null && i < subscriptions.size(); i++) {

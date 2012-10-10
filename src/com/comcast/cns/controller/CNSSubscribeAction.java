@@ -70,7 +70,7 @@ public class CNSSubscribeAction extends CNSAction {
     	
     	if (protocol.equals("email-json")) {
     		subProtocol = CNSSubscription.CnsSubscriptionProtocol.email_json;
-    	} else if(protocol.equals("email") || protocol.equals("sms") || protocol.equals("cqs") || protocol.equals("http") || protocol.equals("https")) {
+    	} else if(protocol.equals("email") || protocol.equals("sqs") || protocol.equals("cqs") || protocol.equals("http") || protocol.equals("https")) {
     		subProtocol = CNSSubscription.CnsSubscriptionProtocol.valueOf(protocol);
     	} else {
     		logger.error("event=cns_subscribe status=failure errorType=InvalidParametersBadProtocol userId="+userId+ " topicArn=" + topicArn +" endpoint=" + endPoint + " protocol=" + protocol);

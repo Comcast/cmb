@@ -25,11 +25,10 @@ import com.comcast.cns.model.CNSSubscription;
  *
  */
 public class EndpointPublisherFactory {
+
 	protected static Logger logger = Logger.getLogger(EndpointPublisherFactory.class);
 	
 	static public IEndpointPublisher getPublisherInstance(CNSSubscription.CnsSubscriptionProtocol protocol) {
-		
-		logger.debug("event=create_endpoint_publisher protocol=" + protocol);
 		
 		switch (protocol) { 
 		case https:		
@@ -39,15 +38,12 @@ public class EndpointPublisherFactory {
 			return new EmailEndpointPublisher();
 		case email_json:
 			return new EmailJsonEndpointPublisher();
-    		
-		case sms:
-    		return null;
+		case sqs:
+    		return new SQSEndpointPublisher();
 		case cqs:		
 			return new CQSEndpointPublisher();
-    		
     	} 
 				
 		return null;
-		
 	}
 }

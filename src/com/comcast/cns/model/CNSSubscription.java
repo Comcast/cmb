@@ -24,13 +24,13 @@ import com.comcast.cmb.common.util.Util;
 
 /**
  * Represents a Subscription
- * @author bwolf, jorge, 
+ * @author bwolf, jorge
  *
  * Class is not thread-safe. Caller must ensure thread safety
  */
 public class CNSSubscription {
 
-    public enum CnsSubscriptionProtocol { http, https, email, email_json, sms, cqs;
+    public enum CnsSubscriptionProtocol { http, https, email, email_json, cqs, sqs;
 
     /**
      * 
@@ -42,28 +42,28 @@ public class CNSSubscription {
         switch (this) { 
 
         case https:
-            if(!endpoint.substring(0, 8).equals("https://")) {
+            if (!endpoint.substring(0, 8).equals("https://")) {
                 return false;
             } 
             break;
         case http: 
-            if(!endpoint.substring(0, 7).equals("http://")) {
+            if (!endpoint.substring(0, 7).equals("http://")) {
                 return false;
             }
             break;
         case email:
         case email_json:
-            if(!endpoint.contains("@")) {
+            if (!endpoint.contains("@")) {
                 return false;
             }
             break;
-        case sms:
-            if(!com.comcast.cns.util.Util.isPhoneNumber(endpoint)) {
+        case sqs:
+            if (!com.comcast.cqs.util.Util.isValidQueueArn(endpoint) && !com.comcast.cqs.util.Util.isValidQueueUrl(endpoint)) {
                 return false;
             }
             break;
         case cqs:
-            if(!com.comcast.cqs.util.Util.isValidQueueArn(endpoint) && !com.comcast.cqs.util.Util.isValidQueueUrl(endpoint)) {
+            if (!com.comcast.cqs.util.Util.isValidQueueArn(endpoint) && !com.comcast.cqs.util.Util.isValidQueueUrl(endpoint)) {
                 return false;
             }
             break;
@@ -95,9 +95,6 @@ public class CNSSubscription {
 		this.requestDate = new Date();
 		this.confirmed = false;
 		this.authenticateOnUnsubscribe = false;
-
-		//if(protocol == CnsSubscriptionProtocol.http) this.deliveryPolicy = new CNSSubscriptionDeliveryPolicy();
-		//System.out.println("deliveryPolicy: " + deliveryPolicy.toString());
 	}
 
 	public CNSSubscription(String arn) {

@@ -57,11 +57,10 @@ public class Util {
 	}
 	
 	public static boolean isValidQueueArn(String arn) {
-		//System.out.println("arn is: " + arn);
-		Pattern pattern = Pattern.compile("arn:cmb:cqs:[A-Za-z0-9-_]+:[A-Za-z0-9-_]+:[A-Za-z0-9-_]+");
-		Matcher matcher = pattern.matcher(arn);
-		//System.out.println("matches: " + matcher.matches());
 		
+		Pattern pattern = Pattern.compile("arn:[A-Za-z0-9-_]+:[A-Za-z0-9-_]+:[A-Za-z0-9-_]+:[A-Za-z0-9-_]+:[A-Za-z0-9-_]+");
+		Matcher matcher = pattern.matcher(arn);
+
 		return matcher.matches();
 	}
 	
@@ -189,11 +188,14 @@ public class Util {
 	 * user supplied message id in CQS batch actions can only contain alphanumeric, hyphen, and underscore
 	 */
     public static boolean isValidId(String str) {
-        if (str.length() > CMBProperties.getInstance().getMaxMessageSuppliedIdLength()) {
+        
+    	if (str.length() > CMBProperties.getInstance().getMaxMessageSuppliedIdLength()) {
             return false;
         }
-        Pattern pattern = Pattern.compile("^[a-zA-Z0-9_-]+$");
+        
+    	Pattern pattern = Pattern.compile("^[a-zA-Z0-9_-]+$");
         Matcher matcher = pattern.matcher(str);
+        
         return matcher.find();
     }
 
@@ -201,38 +203,45 @@ public class Util {
         try {
             Integer.parseInt(str);
             return true;
-        } catch(NumberFormatException e) {
+        } catch (NumberFormatException e) {
             return false;
         }
     }
     
 	public static Map<String, String> buildMessageMap(CQSMessage message) {
+		
 		Map<String, String> messageMap = new HashMap<String, String>();
+		
 		if (message == null) {
 			return messageMap;
 		}
+		
 		messageMap.put("MessageId", message.getMessageId());
 		messageMap.put("MD5OfBody", message.getMD5OfBody());
 		messageMap.put("Body", message.getBody());
+		
 		if (message.getAttributes() == null) {
 			message.setAttributes(new HashMap<String, String>());
 		}
-		if (message.getAttributes() == null
-				|| !message.getAttributes().containsKey(CQSConstants.SENT_TIMESTAMP)) {
-			message.getAttributes().put(CQSConstants.SENT_TIMESTAMP,
-					"" + Calendar.getInstance().getTimeInMillis());
+		
+		if (message.getAttributes() == null	|| !message.getAttributes().containsKey(CQSConstants.SENT_TIMESTAMP)) {
+			message.getAttributes().put(CQSConstants.SENT_TIMESTAMP, "" + Calendar.getInstance().getTimeInMillis());
 		}
-		if (message.getAttributes() == null
-				|| !message.getAttributes().containsKey(
-						CQSConstants.APPROXIMATE_RECEIVE_COUNT)) {
+		
+		if (message.getAttributes() == null	|| !message.getAttributes().containsKey(CQSConstants.APPROXIMATE_RECEIVE_COUNT)) {
 			message.getAttributes().put(CQSConstants.APPROXIMATE_RECEIVE_COUNT, "0");
 		}
+		
 		if (message.getAttributes() != null) {
+			
 			for (String key : message.getAttributes().keySet()) {
+				
 				String value = message.getAttributes().get(key);
+				
 				if (value == null || value.isEmpty()) {
 					value = "";
 				}
+				
 				messageMap.put(key, value);
 			}
 		}
@@ -243,13 +252,17 @@ public class Util {
      * process get requests Attribute.n regardless of ordinal
      */
     public static List<String> fillAllGetAttributesRequests(HttpServletRequest request) {
-        List<String> filterRequests = new ArrayList<String>();
+        
+    	List<String> filterRequests = new ArrayList<String>();
         Map<String, String[]> requestParams = request.getParameterMap();
+        
         for (String k: requestParams.keySet()) {
-            if (k.contains(CQSConstants.ATTRIBUTE_NAME)) {
+            
+        	if (k.contains(CQSConstants.ATTRIBUTE_NAME)) {
                 filterRequests.add(requestParams.get(k)[0]);
             }
         }
+        
         return filterRequests;
     }
 
@@ -289,62 +302,72 @@ public class Util {
     }
 
 	public static String hashQueueUrl(String queueUrl) throws NoSuchAlgorithmException, UnsupportedEncodingException {
-	        MessageDigest digest = MessageDigest.getInstance("MD5");
-	
+	    
+		MessageDigest digest = MessageDigest.getInstance("MD5");
 	    String toBeHashed = queueUrl;
-	    
 	    byte [] hashed = digest.digest(toBeHashed.getBytes("UTF-8"));
-	    
 	    StringBuilder sb = new StringBuilder(hashed.length * 2 + 8);
 	
-	    for(int i = 0; i < hashed.length; i++) {
-	        String hex = Integer.toHexString(0xFF & hashed[i]);
-	        if (hex.length() == 1) {
+	    for (int i = 0; i < hashed.length; i++) {
+	        
+	    	String hex = Integer.toHexString(0xFF & hashed[i]);
+	        
+	    	if (hex.length() == 1) {
 	            // could use a for loop, but we're only dealing with a single byte
 	            sb.append('0');
 	        }
-	        sb.append(hex);
+	        
+	    	sb.append(hex);
 	    }
 	
 	    return sb.toString();
 	}
 	
-	public static List<CQSMessage> readMessageFromSuperCfResult(
-			SuperCfResult<String, Composite, String> result)
-			throws NoSuchAlgorithmException, UnsupportedEncodingException {
+	public static List<CQSMessage> readMessageFromSuperCfResult(SuperCfResult<String, Composite, String> result) throws NoSuchAlgorithmException, UnsupportedEncodingException {
+		
 		List<CQSMessage> messageList = new ArrayList<CQSMessage>();
+		
 		if (result == null) {
 			return messageList;
 		}
+		
 		SuperCfResult<String, Composite, String> curResult = result;
+		
 		while (curResult != null) {
+			
 			Composite superColumnName = curResult.getActiveSuperColumn();
 			Map<String, String> messageMap = new HashMap<String, String>();
+			
 			for (String columnName : curResult.getColumnNames()) {
-				messageMap.put(columnName,
-						curResult.getString(superColumnName, columnName));
+				messageMap.put(columnName, curResult.getString(superColumnName, columnName));
 			}
+			
 			CQSMessage message = buildMessageFromMap(messageMap);
 			message.setTimebasedId(superColumnName);
 			messageList.add(message);
+			
 			if (curResult.hasNext()) {
 				curResult = curResult.next();
 			} else {
 				break;
 			}
 		}
+		
 		return messageList;
 	}
 	
-	public static CQSMessage buildMessageFromMap(Map<String, String> messageMap)
-			throws NoSuchAlgorithmException, UnsupportedEncodingException {
+	public static CQSMessage buildMessageFromMap(Map<String, String> messageMap) throws NoSuchAlgorithmException, UnsupportedEncodingException {
+		
 		if (messageMap == null || messageMap.size() == 0) {
 			return null;
 		}
-		String body = "test";
+		
+		String body = "";
 		Map<String, String> attributes = new HashMap<String, String>();
 		CQSMessage message = new CQSMessage(body, attributes);
+		
 		for (String key : messageMap.keySet()) {
+			
 			if (key.equals("MessageId")) {
 				message.setMessageId(messageMap.get(key));
 				message.setReceiptHandle(messageMap.get(key));
@@ -356,38 +379,38 @@ public class Util {
 				message.getAttributes().put(key, messageMap.get(key));
 			}
 		}
+		
 		return message;
 	}
 	
-	public static List<CQSMessage> readMessagesFromSuperColumns(int length,
-			Composite previousHandle, Composite nextHandle,
-			SuperSlice<Composite, String, String> superSlice,
-			boolean ignoreFirstLastColumn) throws NoSuchAlgorithmException,
-			UnsupportedEncodingException {
+	public static List<CQSMessage> readMessagesFromSuperColumns(int length,	Composite previousHandle, Composite nextHandle,	SuperSlice<Composite, String, String> superSlice, boolean ignoreFirstLastColumn) throws NoSuchAlgorithmException, UnsupportedEncodingException {
+		
 		List<CQSMessage> messageList = new ArrayList<CQSMessage>();
+		
 		if (superSlice != null && superSlice.getSuperColumns() != null) {
+			
 			boolean noMatch = true;
-			for (HSuperColumn<Composite, String, String> superColumn : superSlice
-					.getSuperColumns()) {
+			
+			for (HSuperColumn<Composite, String, String> superColumn : superSlice.getSuperColumns()) {
+				
 				Composite columnName = superColumn.getName();
-				if (ignoreFirstLastColumn
-						&& (previousHandle != null && columnName
-								.compareTo(previousHandle) == 0)
-						|| (nextHandle != null && columnName
-								.compareTo(nextHandle) == 0)) {
+				
+				if (ignoreFirstLastColumn && (previousHandle != null && columnName.compareTo(previousHandle) == 0) || (nextHandle != null && columnName.compareTo(nextHandle) == 0)) {
 					noMatch = false;
 					continue;
-				} else if (superColumn.getColumns() == null
-						|| superColumn.getColumns().size() == 0) {
+				} else if (superColumn.getColumns() == null	|| superColumn.getColumns().size() == 0) {
 					continue;
 				}
+				
 				CQSMessage message = extractMessageFromSuperColumn(superColumn);
 				messageList.add(message);
 			}
+			
 			if (noMatch && messageList.size() > length) {
 				messageList.remove(messageList.size() - 1);
 			}
 		}
+		
 		return messageList;
 	}
 	
@@ -395,24 +418,28 @@ public class Util {
      * process Attribute.n requests start from 1 ordinal, ignore rest if there is a break
      */
     public static List<String> fillGetAttributesRequests(HttpServletRequest request) {
-        List<String> filterRequests = new ArrayList<String>();
+        
+    	List<String> filterRequests = new ArrayList<String>();
         int index = 1;
         String attr = request.getParameter(CQSConstants.ATTRIBUTE_NAME + "." + index);
+        
         while (attr != null) {
             filterRequests.add(attr);
             index++;
             attr = request.getParameter(CQSConstants.ATTRIBUTE_NAME + "." + index);
         }
+        
         return filterRequests;
     }
     
-	public static CQSMessage extractMessageFromSuperColumn(
-			HSuperColumn<Composite, String, String> superColumn)
-			throws NoSuchAlgorithmException, UnsupportedEncodingException {
+	public static CQSMessage extractMessageFromSuperColumn(HSuperColumn<Composite, String, String> superColumn)	throws NoSuchAlgorithmException, UnsupportedEncodingException {
+		
 		Map<String, String> messageMap = new HashMap<String, String>();
+		
 		for (HColumn<String, String> column : superColumn.getColumns()) {
 			messageMap.put(column.getName(), column.getValue());
 		}
+		
 		Composite columnName = superColumn.getName();
 		CQSMessage message = buildMessageFromMap(messageMap);
 		message.setTimebasedId(columnName);
@@ -420,10 +447,12 @@ public class Util {
 	}
 	
 	public static long getQueueCount(String queueUrl) throws NoSuchAlgorithmException, UnsupportedEncodingException {
+		
 		int numberOfPartitions = CMBProperties.getInstance().getCqsNumberOfQueuePartitions();
 		CassandraPersistence persistence = new CassandraPersistence(CMBProperties.getInstance().getCMBCQSKeyspace());
 		String queueHash = Util.hashQueueUrl(queueUrl);
 		long messageCount = 0;
+		
 		for (int i=0; i<numberOfPartitions; i++) {
 			String queueKey = queueHash + "_" + i;
 			long partitionCount = persistence.getCount("CQSPartitionedQueueMessages", queueKey, StringSerializer.get(), new CompositeSerializer(), HConsistencyLevel.QUORUM);

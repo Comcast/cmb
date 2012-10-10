@@ -33,7 +33,7 @@ public interface ICNSSubscriptionPersistence {
 	 * to parse out the token and call confirmSubscritpion. If topic owner and subscription owner are the same no confirmation 
 	 * is necessary and no request will be sent.
 	 * @param endpoint end point
-	 * @param protocol HTTP, HTTPS, EMAIL, EMAIL-JASON, CQS, SMS
+	 * @param protocol HTTP, HTTPS, EMAIL, EMAIL-JASON, CQS
 	 * @param topicArn topic arn
 	 * @param userId user id
 	 * @return
