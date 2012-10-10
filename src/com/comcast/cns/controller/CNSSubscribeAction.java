@@ -101,6 +101,7 @@ public class CNSSubscribeAction extends CNSAction {
     		try {
     			CommunicationUtils.sendMessage(topicOwner, subProtocol, endPoint, json);
     		} catch (Exception ex) {
+    			PersistenceFactory.getSubscriptionPersistence().unsubscribe(sub.getArn());
     			throw new CMBException(CNSErrorCodes.CNS_InvalidParameter, "Invalid parameter: Unreachable endpoint");
     		}
     		
