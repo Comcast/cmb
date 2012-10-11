@@ -104,6 +104,10 @@ public class CNSAddPermissionAction extends CNSAction {
 
         while (action != null) {
         	
+        	if (action.equals("")) {
+    			throw new CMBException(CMBErrorCodes.ValidationError, "Blank action parameter is invalid");
+        	}
+        	
         	if (!CMBPolicy.CNS_ACTIONS.contains(action)) {
     			throw new CMBException(CNSErrorCodes.CNS_InvalidParameter, "Invalid action parameter " + action);
         	}
