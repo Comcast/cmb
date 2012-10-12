@@ -164,7 +164,7 @@ abstract public class CMBControllerServlet extends HttpServlet {
 	                    (request.getParameter("QueueName") != null ? " queue_name=" + request.getParameter("QueueName") : "") +
 	                    (request.getParameter("QueueNamePrefix") != null ? " queue_name_prefix=" + request.getParameter("QueueNamePrefix") : "") +
 	                    (request.getParameter("DelaySeconds") != null ? " delay_seconds=" + request.getParameter("DelaySeconds") : "") +
-	                    ((this instanceof CQSControllerServlet) ? (" queue_url=" + request.getRequestURL().toString()) : "") +
+	                    ((this instanceof CQSControllerServlet) ? (" queue_url=" + request.getRequestURL()) : "") +
 	                    
 	            		" CassandraTimeMS=" + valueAccumulator.getCounter(AccumulatorName.CassandraTime) + 
 	                    " CassandraReadNum=" + valueAccumulator.getCounter(AccumulatorName.CassandraRead) + 
@@ -199,7 +199,7 @@ abstract public class CMBControllerServlet extends HttpServlet {
                     (request.getParameter("QueueName") != null ? " queue_name=" + request.getParameter("QueueName") : "") +
                     (request.getParameter("QueueNamePrefix") != null ? " queue_name_prefix=" + request.getParameter("QueueNamePrefix") : "") +
                     (request.getParameter("DelaySeconds") != null ? " delay_seconds=" + request.getParameter("DelaySeconds") : "") +
-                    ((this instanceof CQSControllerServlet) ? (" queue_url=" + request.getRequestURL().toString()) : "") +
+                    ((this instanceof CQSControllerServlet) ? (" queue_url=" + request.getRequestURL()) : "") +
                     
             		" CassandraTimeMS=" + valueAccumulator.getCounter(AccumulatorName.CassandraTime) + 
                     " CassandraReadNum=" + valueAccumulator.getCounter(AccumulatorName.CassandraRead) + 
