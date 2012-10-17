@@ -84,6 +84,15 @@ public class CQSAddPermissionAction extends CQSAction {
         String action = request.getParameter(CQSConstants.ACTION_NAME + "." + index);
 
         while (action != null) {
+
+        	if (action.equals("")) {
+    			throw new CMBException(CMBErrorCodes.ValidationError, "Blank action parameter is invalid");
+        	}
+        	
+        	if (!CMBPolicy.CQS_ACTIONS.contains(action) && !action.equals("*")) {
+    			throw new CMBException(CQSErrorCodes.InvalidAction, "Invalid action parameter " + action);
+        	}
+        	
         	actionList.add(action);
             index++;
             action = request.getParameter(CQSConstants.ACTION_NAME + "." + index);

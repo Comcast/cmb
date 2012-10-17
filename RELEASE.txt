@@ -1,9 +1,19 @@
+CMB VERSION 2.2.11
+--------------------------------------------------------------------
+
+- bug fix: added invalid parameter validation to cns/cqs addpermission api
+- bug fix: throw blank action error for cns/cqs addpermission
+- bug fix: allow * for cns permissions
+- bug fix: delete subscription if sending of confirmation message fails
+- allow sqs endpoints
+
+
 CMB VERSION 2.2.10
 --------------------------------------------------------------------
 
-- bug fix: cqs endpoint publisher to not remember identity of last 
+- bug fix: cqs endpoint publisher to not remember identity of last user
 - bug fix: drop cns messages if delivery fails for cqs or email endpoints 
-- fix: added more detail to redis configuration in readme
+- added more detail to redis configuration in readme
 - adjusted folder structure to simplify build process
 
 
