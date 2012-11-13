@@ -179,14 +179,14 @@ Example response:
 4. Build cns.war and cqs.war (see build instructions below) or download binaries from 
    github and deploy into Tomcat server instances installed in step 1. 
    
-   > wget -O - https://github.com/downloads/Comcast/cmb/cqs-distribution-2.2.10.tar.gz | tar zxf -
-   > wget -O - https://github.com/downloads/Comcast/cmb/cns-distribution-2.2.10.tar.gz | tar zxf -
+   > wget -O - https://github.com/downloads/Comcast/cmb/cqs-distribution-2.2.11.tar.gz | tar zxf -
+   > wget -O - https://github.com/downloads/Comcast/cmb/cns-distribution-2.2.11.tar.gz | tar zxf -
 
    > rm -rf tomcat-cqs/webapps/ROOT
    > rm -rf tomcat-cns/webapps/ROOT
 
-   > cp -f ./cqs/cqs-2.2.10.war tomcat-cqs/webapps/ROOT.war
-   > cp -f ./cns/cns-2.2.10.war tomcat-cns/webapps/ROOT.war
+   > cp -f ./cqs/cqs-2.2.11.war tomcat-cqs/webapps/ROOT.war
+   > cp -f ./cns/cns-2.2.11.war tomcat-cns/webapps/ROOT.war
 
 5. Create Cassandra key spaces and column families by running schema.txt using 
    cassandra-cli. After executing the script three key spaces (CMB, CNS, CQS) should be 
@@ -301,7 +301,7 @@ Example response:
    Consumer,Producer or Consumer or Producer
    
    > cd /usr/local/
-   > wget -O - https://github.com/downloads/Comcast/cmb/cns-worker-distribution-2.2.10.tar.gz | tar zxf -
+   > wget -O - https://github.com/downloads/Comcast/cmb/cns-worker-distribution-2.2.11.tar.gz | tar zxf -
    > cd cmb
    > vi ./startWorkerNode.sh
    > chmod 755 startWorkerNode.sh
