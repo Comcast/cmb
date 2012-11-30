@@ -302,9 +302,8 @@ Example response:
    
    > cd /usr/local/
    > wget -O - https://github.com/downloads/Comcast/cmb/cns-worker-distribution-2.2.11.tar.gz | tar zxf -
-   > cd cmb
-   > vi ./startWorkerNode.sh
-   > chmod 755 startWorkerNode.sh
+   > cd cns-worker
+   > vi ./bin/startWorkerNode.sh
    
    NOTE: At least one consumer and one producer is required, so if you only install a 
    single CNS Worker Node you must set ROLE to Consumer,Producer. By default, log4j will 
