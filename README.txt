@@ -91,7 +91,7 @@ third party SDKs available for languages not supported by Amazon.
 All CNS / CQS features can also be accessed by sending REST requests as HTTP GET or POST 
 directly to the service endpoints. Note that you need to timestamp and digitally sign 
 every request if signature verification is enabled (signature verification is disabled 
-by default, you can enable this feature by changing cmb.proerties).
+by default, you can enable this feature by changing cmb.properties).
 
 Example REST request to create a CQS queue using curl:
 
@@ -137,12 +137,12 @@ Example response:
 2. Install and stand up Cassandra cluster based on Cassandra version 1.0.10 or higher 
    with as many nodes as needed (minimum one node, recommended at least 4 nodes).
    
-   > wget -O - http://archive.apache.org/dist/cassandra/1.0.10/apache-cassandra-1.0.10-bin.tar.gz | tar zxf -
+   > wget -O - http://archive.apache.org/dist/cassandra/1.0.12/apache-cassandra-1.0.12-bin.tar.gz | tar zxf -
 
    Configure a Cassandra cluster named "cmb" by editing conf/cassandra.yaml and
    start Cassandra. 
    
-   > cd apache-cassandra-1.0.10
+   > cd apache-cassandra-1.0.12
    > vi conf/cassandra.yaml
    
    > sudo mkdir -p /var/log/cassandra 
@@ -152,8 +152,11 @@ Example response:
    
    > nohup bin/cassandra -f > /tmp/cassandra.log &
    
-   NOTE: Currently CMB works with Cassandra version 1.0.X (in particular 1.0.10 or 
-   higher) but is incompatible with Cassandra version 1.1.X.
+   NOTE: Currently CMB works with Cassandra version 1.0.10 or higher and also with Cassandra 
+   version 1.1.X. When using Cassandra 1.1.X ensure to run in the (default) CQL2 compatibility 
+   mode and also edit cassandra.yaml to activate the global row cache:
+   
+   > row_cache_size_in_mb: 100
    
 3. Install and start Redis nodes as needed using Redis version 2.4.9 or higher (minimum 
    one node).
@@ -192,7 +195,13 @@ Example response:
    cassandra-cli. After executing the script three key spaces (CMB, CNS, CQS) should be 
    created and contain a number of empty column families.
    
-   > cat ./cqs/schema.txt | /<path_to_cassandra>/bin/cassandra-cli -h localhost 
+   When using Cassandra 1.0.X:
+   
+   > cat ./cqs/cassandra_1.0.schema | /<path_to_cassandra>/bin/cassandra-cli -h localhost 
+   
+   When using Cassandra 1.1.X:
+   
+   > cat ./cqs/cassandra_1.1.schema | /<path_to_cassandra>/bin/cassandra-cli -h localhost 
    
 6. The binaries come with two configuration files, cmb.properties and log4j.properties, 
    both of which need to be available to all CMB processes (CNS API Server(s), CQS API 
@@ -424,6 +433,5 @@ There is a CNSMonitor MBean exposing a number of CNS attributes including
    Instead the message must be received first and only then the visibility timeout can be 
    set.
    
-3. Currently CMB works with Cassandra version 1.0.X (in particular 1.0.10 or higher) but 
-   is incompatible with Cassandra version 1.1.X.
+3. CMB requires Cassandra version 1.0.10 or higher or Cassandra version 1.1.X.
 

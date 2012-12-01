@@ -25,6 +25,7 @@
 			<directory>${basedir}</directory>
 			<includes>
 				<include>*.txt</include>
+				<include>*.schema</include>
 			</includes>
 		</fileSet>
 	</fileSets>
