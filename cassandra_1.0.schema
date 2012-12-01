@@ -253,7 +253,7 @@ create column family CNSSubscriptionAttributes
     validation_class : UTF8Type}];
     
 --
--- CNSSubscriptionAttributes Column Family
+-- CNSTopicStats Column Family
 -- 
 -- 
 --

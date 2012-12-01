@@ -126,7 +126,7 @@ echo $! > var/log/cassandra.pid
 
 # Create Cassandra structures.
 sleep 10
-cat schema.txt | $CASS/bin/cassandra-cli -h localhost 
+cat cassandra_1.0.schema | $CASS/bin/cassandra-cli -h localhost 
 
 # Start Redis
 (cd $REDIS && nohup src/redis-server > ../var/log/redis.log) &
