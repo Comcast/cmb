@@ -17,8 +17,12 @@ package com.comcast.cns.tools;
 
 import java.net.InetAddress;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
+
+import me.prettyprint.hector.api.HConsistencyLevel;
 
 import org.apache.log4j.Logger;
 
@@ -192,7 +196,17 @@ public class CNSEndpointPublisherJobProducer implements CNSPublisherPartitionRun
 	    try {
 
 	        if (CNSPublisher.lastProducerMinute.compareAndSet(ts1/(1000*60)-1, ts1/(1000*60))) {
-                logger.info("event=ping version=" + CMBControllerServlet.VERSION + " ip=" + InetAddress.getLocalHost().getHostAddress());
+                
+	        	String hostAddress = InetAddress.getLocalHost().getHostAddress();
+                logger.info("event=ping version=" + CMBControllerServlet.VERSION + " ip=" + hostAddress);
+
+	        	try {
+		        	Map<String, String> values = new HashMap<String, String>();
+		        	values.put("timestamp", System.currentTimeMillis() + "");
+	                CNSPublisher.cassandraHandler.insertOrUpdateRow(hostAddress, "CNSWorkers", values, HConsistencyLevel.QUORUM);
+	        	} catch (Exception ex) {
+	        		logger.warn("event=ping_glitch", ex);
+	        	}
             }
 	        
 	        String publishJobQName = CNS_PRODUCER_QUEUE_NAME_PREFIX + partition;

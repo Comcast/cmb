@@ -216,6 +216,24 @@ and gc_grace=5
 and comparator=UTF8Type; 
 
 --
+-- CNSWorkers Column Family
+-- 
+-- index topics by user id
+--
+
+create column family CNSWorkers
+  with column_type = 'Standard'
+  and comparator = 'UTF8Type'
+  and default_validation_class = 'UTF8Type'
+  and key_validation_class = 'UTF8Type'
+  and read_repair_chance = 0.1
+  and gc_grace = 5
+  and min_compaction_threshold = 4
+  and max_compaction_threshold = 32
+  and replicate_on_write = true
+  and compaction_strategy = 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy';
+
+--
 -- CQS Column Families
 --
 

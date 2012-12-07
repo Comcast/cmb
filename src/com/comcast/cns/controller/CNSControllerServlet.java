@@ -109,6 +109,7 @@ public class CNSControllerServlet extends CMBControllerServlet {
     	final CNSAddPermissionAction addPerm = new CNSAddPermissionAction();
     	final CNSRemovePermissionAction remPerm = new CNSRemovePermissionAction();
     	final HealthCheckShallow healthC = new HealthCheckShallow();
+    	final CNSGetWorkerStatsAction getWS = new CNSGetWorkerStatsAction();
     	
     	actionMap = new HashMap<String, Action>(){{
     	    put(confSub.getName(), confSub);    	    
@@ -127,6 +128,7 @@ public class CNSControllerServlet extends CMBControllerServlet {
     	    put(addPerm.getName(), addPerm);
     	    put(remPerm.getName(), remPerm);
     	    put(healthC.getName(), healthC);
+    	    put(getWS.getName(), getWS);
     	}};
     }
     
