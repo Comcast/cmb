@@ -39,7 +39,6 @@ import com.comcast.cmb.common.controller.CMBControllerServlet;
 import com.comcast.cmb.common.model.User;
 import com.comcast.cmb.common.persistence.IUserPersistence;
 import com.comcast.cmb.common.persistence.PersistenceFactory;
-import com.comcast.cmb.common.persistence.UserCassandraPersistence;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.PersistenceException;
 import com.comcast.cmb.common.util.ValueAccumulator.AccumulatorName;
@@ -63,12 +62,14 @@ public class CNSEndpointPublisherJobConsumer implements CNSPublisherPartitionRun
 	
     private static Logger logger = Logger.getLogger(CNSEndpointPublisherJobConsumer.class);
     
-    private static final String CNS_ENDPOINT_PUBLISH_QUEUE_NAME_PREFIX = CMBProperties.getInstance().getCnsEndpointPublishQueueNamePrefix();
+    private static final String CNS_CONSUMER_QUEUE_NAME_PREFIX = CMBProperties.getInstance().getCnsEndpointPublishQueueNamePrefix();
 
     private static volatile ScheduledThreadPoolExecutor deliveryHandlers = null;
     private static volatile ScheduledThreadPoolExecutor reDeliveryHandlers = null;
     private static volatile boolean initialized = false; 
     private static volatile AmazonSQS sqs;
+    private static volatile User cnsInternalUser = null;
+    private static volatile BasicAWSCredentials awsCredentials = null;
     
     private static volatile Integer testQueueLimit = null;
             
@@ -116,6 +117,36 @@ public class CNSEndpointPublisherJobConsumer implements CNSPublisherPartitionRun
         }
     }
     
+    private static synchronized void ensureConsumerQueuesExist() {
+
+    	for (int i = 0; i < CMBProperties.getInstance().getNumEPPublishJobQs(); i++) {
+        	
+            GetQueueUrlRequest getQueueUrlRequest = new GetQueueUrlRequest(CNS_CONSUMER_QUEUE_NAME_PREFIX + i);
+            
+            try {
+                sqs.getQueueUrl(getQueueUrlRequest);
+            } catch (AmazonServiceException ex) {
+            	
+                if (ex.getStatusCode() == 400) {
+                	
+                    logger.info("event=creating_missing_queue name=" + CNS_CONSUMER_QUEUE_NAME_PREFIX + i);
+
+                    CreateQueueRequest createQueueRequest = new CreateQueueRequest(CNS_CONSUMER_QUEUE_NAME_PREFIX + i);
+                    CreateQueueResult createQueueResponse = sqs.createQueue(createQueueRequest);
+                    
+                    if (createQueueResponse.getQueueUrl() == null) {
+                        throw new IllegalStateException("Could not create queue with name " + CNS_CONSUMER_QUEUE_NAME_PREFIX + i);
+                    }
+                    
+                    logger.info("event=created_missing_queue name=" + CNS_CONSUMER_QUEUE_NAME_PREFIX + i + " url=" + createQueueResponse.getQueueUrl());
+
+                } else {
+                    throw ex;
+                }
+            }
+        }
+    }
+    
     /**
      * Make the appr executors
      * Read the deliveryNumHandlers and the retryDeliveryNumHandlers properties at startup
@@ -124,49 +155,36 @@ public class CNSEndpointPublisherJobConsumer implements CNSPublisherPartitionRun
      */
     public static void initialize() throws PersistenceException {
     	
-        deliveryHandlers = new ScheduledThreadPoolExecutor(CMBProperties.getInstance().getNumDeliveryHandlers());
-        reDeliveryHandlers = new ScheduledThreadPoolExecutor(CMBProperties.getInstance().getNumReDeliveryHandlers());
+    	if (initialized) {
+    		return;
+    	}
 
-        IUserPersistence userPersistence = new UserCassandraPersistence();        
-        User user = userPersistence.getUserByName(CMBProperties.getInstance().getCnsUserName());
+    	deliveryHandlers = new ScheduledThreadPoolExecutor(CMBProperties.getInstance().getNumDeliveryHandlers());
+    	reDeliveryHandlers = new ScheduledThreadPoolExecutor(CMBProperties.getInstance().getNumReDeliveryHandlers());
 
-        if (user == null) {
-            user = userPersistence.createUser(CMBProperties.getInstance().getCnsUserName(), CMBProperties.getInstance().getCnsUserPassword());
-        }
+    	if (cnsInternalUser == null) {
 
-        BasicAWSCredentials credentialsUser = new BasicAWSCredentials(user.getAccessKey(), user.getAccessSecret());
-        sqs = new AmazonSQSClient(credentialsUser);
-        sqs.setEndpoint(CMBProperties.getInstance().getCQSServerUrl());
-        
-        for (int i = 0; i < CMBProperties.getInstance().getNumEPPublishJobQs(); i++) {
-        	
-            GetQueueUrlRequest getQueueUrlRequest = new GetQueueUrlRequest(CNS_ENDPOINT_PUBLISH_QUEUE_NAME_PREFIX + i);
-            
-            try {
-                sqs.getQueueUrl(getQueueUrlRequest);
-            } catch (AmazonServiceException e) {
-            	
-                if (e.getStatusCode() == 400) {
-                	
-                    logger.info("event=creating_missing_queue name=" + CNS_ENDPOINT_PUBLISH_QUEUE_NAME_PREFIX + i);
+    		IUserPersistence userHandler = PersistenceFactory.getUserPersistence();
+    		cnsInternalUser = userHandler.getUserByName(CMBProperties.getInstance().getCnsUserName());
 
-                    CreateQueueRequest createQueueRequest = new CreateQueueRequest(CNS_ENDPOINT_PUBLISH_QUEUE_NAME_PREFIX + i);
-                    CreateQueueResult createQueueResponse = sqs.createQueue(createQueueRequest);
-                    
-                    if (createQueueResponse.getQueueUrl() == null) {
-                        throw new IllegalStateException("Could not create queue with name " + CNS_ENDPOINT_PUBLISH_QUEUE_NAME_PREFIX + i);
-                    }
-                    
-                    logger.info("event=created_missing_queue name=" + CNS_ENDPOINT_PUBLISH_QUEUE_NAME_PREFIX + i + " url=" + createQueueResponse.getQueueUrl());
+    		if (cnsInternalUser == null) {	          
+    			cnsInternalUser =  userHandler.createUser(CMBProperties.getInstance().getCnsUserName(), CMBProperties.getInstance().getCnsUserPassword());
+    		}
+    	}
 
-                } else {
-                    throw e;
-                }
-            }
-        }
-        
-        logger.info("event=initialize status=success");
-        initialized = true;
+    	if (awsCredentials == null) {
+    		awsCredentials = new BasicAWSCredentials(cnsInternalUser.getAccessKey(), cnsInternalUser.getAccessSecret());
+    	}
+
+    	if (sqs == null) {
+    		sqs = new AmazonSQSClient(awsCredentials);
+    		sqs.setEndpoint(CMBProperties.getInstance().getCQSServerUrl());
+    	}
+
+    	ensureConsumerQueuesExist();
+
+    	logger.info("event=initialize status=success");
+    	initialized = true;
     }
     
     /**
@@ -179,13 +197,12 @@ public class CNSEndpointPublisherJobConsumer implements CNSPublisherPartitionRun
         logger.info("event=shutdown status=success");
     }
     
-    static void deleteMessage(String queueUrl, String receiptHandle) {
+    public static void deleteMessage(String queueUrl, String receiptHandle) {
         long ts3 = System.currentTimeMillis();
         DeleteMessageRequest delMsgReq = new DeleteMessageRequest(queueUrl, receiptHandle);
         sqs.deleteMessage(delMsgReq);
         long ts4 = System.currentTimeMillis();
         CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CNSCQSTime, ts4 - ts3);
-
     }
     
     /**
@@ -259,7 +276,7 @@ public class CNSEndpointPublisherJobConsumer implements CNSPublisherPartitionRun
                 return messageFound;
             }
             
-            GetQueueUrlRequest getQueueUrlRequest = new GetQueueUrlRequest(CNS_ENDPOINT_PUBLISH_QUEUE_NAME_PREFIX + partition);
+            GetQueueUrlRequest getQueueUrlRequest = new GetQueueUrlRequest(CNS_CONSUMER_QUEUE_NAME_PREFIX + partition);
             GetQueueUrlResult getQRes = sqs.getQueueUrl(getQueueUrlRequest);
             String qUrl = getQRes.getQueueUrl();
             long ts2 = System.currentTimeMillis();
@@ -309,9 +326,11 @@ public class CNSEndpointPublisherJobConsumer implements CNSPublisherPartitionRun
             } else {
                 logger.debug("event=run_pass_done");
             }
-            
-        } catch(Exception e) {
-            logger.error("event=run status=exception", e);
+
+        } catch (AmazonServiceException ex) {
+        	ensureConsumerQueuesExist();
+        } catch (Exception ex) {
+            logger.error("event=run status=exception", ex);
         }
         
         CMBControllerServlet.valueAccumulator.deleteAllCounters();

@@ -60,13 +60,16 @@ import com.comcast.cns.persistence.TopicNotFoundException;
  */
 
 public class CNSEndpointPublisherJobProducer implements CNSPublisherPartitionRunnable {
+	
     private static Logger logger = Logger.getLogger(CNSEndpointPublisherJobProducer.class);
     
+    private static final String CNS_PRODUCER_QUEUE_NAME_PREFIX = CMBProperties.getInstance().getCnsPublishQueueNamePrefix();
+    
     static volatile boolean initialized = false; 
+    
     private static volatile User cnsInternalUser = null;
     private static volatile BasicAWSCredentials awsCredentials = null;
-    private static final String epPublishQNamePrefix = CMBProperties.getInstance().getCnsEndpointPublishQueueNamePrefix();
-    private static final String publishQNamePrefix = CMBProperties.getInstance().getCnsPublishQueueNamePrefix();;
+
     static volatile AmazonSQS sqs;
     static volatile ICNSSubscriptionPersistence subscriptionPersistence = null; 
 
@@ -91,12 +94,46 @@ public class CNSEndpointPublisherJobProducer implements CNSPublisherPartitionRun
         }
     }
     
+    private static synchronized void ensureProducerQueuesExist() {
+
+    	for (int i = 0; i < CMBProperties.getInstance().getNumPublishJobQs(); i++) {
+        	
+            GetQueueUrlRequest getQueueUrlRequest = new GetQueueUrlRequest(CNS_PRODUCER_QUEUE_NAME_PREFIX + i);
+            
+            try {
+                sqs.getQueueUrl(getQueueUrlRequest);
+            } catch (AmazonServiceException ex) {
+            	
+                if (ex.getStatusCode() == 400) {
+                	
+                    logger.info("event=creating_missing_queue name=" + CNS_PRODUCER_QUEUE_NAME_PREFIX + i);
+
+                    CreateQueueRequest createQueueRequest = new CreateQueueRequest(CNS_PRODUCER_QUEUE_NAME_PREFIX + i);
+                    CreateQueueResult createQueueResponse = sqs.createQueue(createQueueRequest);
+                    
+                    if (createQueueResponse.getQueueUrl() == null) {
+                        throw new IllegalStateException("Could not create queue with name " + CNS_PRODUCER_QUEUE_NAME_PREFIX + i);
+                    }
+                    
+                    logger.info("event=created_missing_queue name=" + CNS_PRODUCER_QUEUE_NAME_PREFIX + i + " url=" + createQueueResponse.getQueueUrl());
+
+                } else {
+                    throw ex;
+                }
+            }
+        }
+    }
+    
    /* 
     * Read the EndpointPublishQ_<m> property and ensuring they exist (create if not) 
     * @throws PersistenceException 
     */
    public static void initialize() throws PersistenceException {
-	   if (initialized) return;
+	   
+	   if (initialized) {
+		   return;
+	   }
+	   
 	   if (cnsInternalUser == null) {
 
 			IUserPersistence userHandler = PersistenceFactory.getUserPersistence();
@@ -120,44 +157,8 @@ public class CNSEndpointPublisherJobProducer implements CNSPublisherPartitionRun
 			subscriptionPersistence = PersistenceFactory.getSubscriptionPersistence();
 		}
 
-		for (int i = 0; i < CMBProperties.getInstance().getNumPublishJobQs(); i++) {
-			GetQueueUrlRequest getQUrlReq = new GetQueueUrlRequest(publishQNamePrefix + i);
-			try {
-				sqs.getQueueUrl(getQUrlReq);
-			} catch (AmazonServiceException e) {
-				if (e.getStatusCode() == 400) {
-					logger.info("event=initialize info=creating_missing_queue name=" + publishQNamePrefix + i);
-					CreateQueueRequest createQReq = new CreateQueueRequest(publishQNamePrefix + i);
-					CreateQueueResult createQRes = sqs.createQueue(createQReq);
-					if (createQRes.getQueueUrl() == null) {
-						throw new IllegalStateException("Could not create queue with name " + publishQNamePrefix + i);
-					}
-					logger.info("event=initialize info=created_queue name=" + publishQNamePrefix + i);
-				} else {
-					throw e;
-				}
-			}
-		}
-
-		for (int i = 0; i < CMBProperties.getInstance().getNumEPPublishJobQs(); i++) {
-			GetQueueUrlRequest getQUrlReq = new GetQueueUrlRequest(epPublishQNamePrefix + i);
-			try {
-				sqs.getQueueUrl(getQUrlReq);
-			} catch (AmazonServiceException e) {
-				if (e.getStatusCode() == 400) {
-					logger.info("event=initialize info=creating_missing_queue name=" + epPublishQNamePrefix + i);
-					CreateQueueRequest createQReq = new CreateQueueRequest(epPublishQNamePrefix + i);
-					CreateQueueResult createQRes = sqs.createQueue(createQReq);
-					if (createQRes.getQueueUrl() == null) {
-						throw new IllegalStateException("Could not create queue with name " + epPublishQNamePrefix + i);
-					}
-					logger.info("event=initialize info=created_queue name=" + epPublishQNamePrefix + i);
-				} else {
-					throw e;
-				}
-			}
-		}
-
+		ensureProducerQueuesExist();
+		
 		logger.info("event=initialize status=success");
 		initialized = true;
    }
@@ -194,12 +195,12 @@ public class CNSEndpointPublisherJobProducer implements CNSPublisherPartitionRun
                 logger.info("event=ping version=" + CMBControllerServlet.VERSION + " ip=" + InetAddress.getLocalHost().getHostAddress());
             }
 	        
-	        String publishJobQName = publishQNamePrefix + partition;
+	        String publishJobQName = CNS_PRODUCER_QUEUE_NAME_PREFIX + partition;
 	        Message message = receiveMessage(publishJobQName); 
 
 	        if (message != null) {
+	        	
 	            CNSMessage publishJob = CNSMessage.parseInstance(message.getBody());
-
 	            List<CNSEndpointPublishJob.CNSEndpointSubscriptionInfo> subscriptions = null;
 
 	            try {
@@ -210,24 +211,30 @@ public class CNSEndpointPublisherJobProducer implements CNSPublisherPartitionRun
 	                deleteMessage(publishJobQName, message);
 	                CMBControllerServlet.valueAccumulator.deleteAllCounters();
 	                return false;
-	            } catch(Exception e) {
+	            } catch (Exception e) {
 	                logger.error("event=run status=error_fetching_subscriptions", e);
 	                CMBControllerServlet.valueAccumulator.deleteAllCounters();
 	                return false;
 	            }
 
 	            if (subscriptions != null && subscriptions.size() > 0) {
+	            	
 	                messageFound = true;
 	                List<CNSEndpointPublishJob> epPublishJobs = createEndpointPublishJobs(publishJob, subscriptions);
+	                
 	                for(CNSEndpointPublishJob epPublishJob: epPublishJobs) {
 	                    sendEPPublishJob(epPublishJob);
 	                }
 	            }
+	            
 	            deleteMessage(publishJobQName, message);
 	            long ts2 = System.currentTimeMillis();
 	            logger.info("event=processed_publish_job CassandraTime=" + CMBControllerServlet.valueAccumulator.getCounter(AccumulatorName.CassandraTime)  + " CNSCQSTimeMS=" + CMBControllerServlet.valueAccumulator.getCounter(AccumulatorName.CNSCQSTime) + " responseTimeMS=" + (ts2 - ts1));
 	        }
-	    } catch(Exception e) {
+	        
+        } catch (AmazonServiceException ex) {
+        	ensureProducerQueuesExist();
+	    } catch (Exception e) {
 	        logger.error("event=run status=exception", e);
 	    }
 
