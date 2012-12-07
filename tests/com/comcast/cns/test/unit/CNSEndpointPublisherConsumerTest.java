@@ -69,12 +69,12 @@ import com.comcast.cns.model.CNSRetryPolicy;
 import com.comcast.cns.model.CNSSubscriptionAttributes;
 import com.comcast.cns.model.CNSSubscriptionDeliveryPolicy;
 import com.comcast.cns.model.CNSTopicAttributes;
-import com.comcast.cns.model.CNSEndpointPublishJob.SubInfo;
+import com.comcast.cns.model.CNSEndpointPublishJob.CNSEndpointSubscriptionInfo;
 import com.comcast.cns.model.CNSRetryPolicy.CnsBackoffFunction;
 import com.comcast.cns.model.CNSSubscription.CnsSubscriptionProtocol;
 import com.comcast.cns.persistence.ICNSAttributesPersistence;
 import com.comcast.cns.tools.CNSEndpointPublisherJobConsumer;
-import com.comcast.cns.tools.CNSEndpointPublisherJobConsumer.PublishJob;
+import com.comcast.cns.tools.CNSPublishJob;
 import com.amazonaws.services.sqs.model.Message;
 
 public class CNSEndpointPublisherConsumerTest {
@@ -103,7 +103,7 @@ public class CNSEndpointPublisherConsumerTest {
         CNSEndpointPublisherJobConsumer.shutdown();
         CNSEndpointPublisherJobConsumer.TestInterface.setAmazonSQS(origInst);
         CNSEndpointPublisherJobConsumer.TestInterface.setTestQueueLimit(null);
-        CNSEndpointPublisherJobConsumer.PublishJob.testPublisher = null;         
+        CNSPublishJob.testPublisher = null;         
         CMBProperties.getInstance().setUseSubInfoCache(useSubInfoCacheSetting);
     }
 
@@ -411,7 +411,7 @@ public class CNSEndpointPublisherConsumerTest {
         msg.setSubject("test subject"); //will only be applicable for email
         msg.setTopicArn("testTopicArm");
 
-        SubInfo subInfo = new SubInfo(CnsSubscriptionProtocol.http, "test-endpointOnePass", "test-sub-arn");
+        CNSEndpointSubscriptionInfo subInfo = new CNSEndpointSubscriptionInfo(CnsSubscriptionProtocol.http, "test-endpointOnePass", "test-sub-arn");
         CNSEndpointPublishJob epPubJob = new CNSEndpointPublishJob(msg, Arrays.asList(subInfo));
         
         HashMap<String, String> endpointtToMsg = new HashMap<String, String>();
@@ -424,7 +424,7 @@ public class CNSEndpointPublisherConsumerTest {
         
         TestEndpointPublisher testPublisher = new TestEndpointPublisher(endpointtToMsg); //will accumulate all notifications
         testPublisher.dontCareEndPointToMessage = true;
-        CNSEndpointPublisherJobConsumer.PublishJob.testPublisher = testPublisher;         
+        CNSPublishJob.testPublisher = testPublisher;         
         
         testSqs.messageBody = epPubJob.serialize();
         testSqs.messageId = "test-message-id1";
@@ -461,7 +461,7 @@ public class CNSEndpointPublisherConsumerTest {
         
         TestEndpointPublisher testPublisher = new TestEndpointPublisher(endpointtToMsg); //will accumulate all notifications
         testPublisher.dontCareEndPointToMessage = true;
-        CNSEndpointPublisherJobConsumer.PublishJob.testPublisher = testPublisher;         
+        CNSPublishJob.testPublisher = testPublisher;         
         
         testSqs.numRecvMsgCallsBeforeMessage = 1;
         
@@ -494,7 +494,7 @@ public class CNSEndpointPublisherConsumerTest {
         msg.setSubject("test subject"); //will only be applicable for email
         msg.setTopicArn("testTopicArm");
 
-        SubInfo subInfo = new SubInfo(CnsSubscriptionProtocol.http, "test-endpointOnePassOverloaded", "test-sub-arn");
+        CNSEndpointSubscriptionInfo subInfo = new CNSEndpointSubscriptionInfo(CnsSubscriptionProtocol.http, "test-endpointOnePassOverloaded", "test-sub-arn");
         CNSEndpointPublishJob epPubJob = new CNSEndpointPublishJob(msg, Arrays.asList(subInfo));
         
         HashMap<String, String> endpointtToMsg = new HashMap<String, String>();
@@ -508,7 +508,7 @@ public class CNSEndpointPublisherConsumerTest {
         TestEndpointPublisher testPublisher = new TestEndpointPublisher(endpointtToMsg); //will accumulate all notifications
         testPublisher.dontCareEndPointToMessage = true;
         testPublisher.sleepBeforeSending = 20000;
-        CNSEndpointPublisherJobConsumer.PublishJob.testPublisher = testPublisher;         
+        CNSPublishJob.testPublisher = testPublisher;         
         
         testSqs.messageBody = epPubJob.serialize();
         testSqs.messageId = "test-message-id1";
@@ -543,7 +543,7 @@ public class CNSEndpointPublisherConsumerTest {
         TestEndpointPublisher testPub = new TestEndpointPublisher(endpointtToMsg); //will accumulate all notifications
         testPub.dontCareEndPointToMessage = true;
 
-        CNSEndpointPublisherJobConsumer.PublishJob.testPublisher = testPub;
+        CNSPublishJob.testPublisher = testPub;
 
         PersistenceFactory.cnsAttributePersistence = new TestAttributePersustence();
         CNSSubscriptionAttributes subAttr = new CNSSubscriptionAttributes();
@@ -570,7 +570,7 @@ public class CNSEndpointPublisherConsumerTest {
         testPub.numFailuresBeforeSuccess = 2;
 
         AtomicInteger endpointPublishJobCount = new AtomicInteger(100);
-        PublishJob job = new PublishJob(msg, user, CnsSubscriptionProtocol.http, "http://bogus", "test-sub-arn", "test-queue-url", "test-receipt-handle", endpointPublishJobCount);
+        CNSPublishJob job = new CNSPublishJob(msg, user, CnsSubscriptionProtocol.http, "http://bogus", "test-sub-arn", "test-queue-url", "test-receipt-handle", endpointPublishJobCount);
         job.doRetry(testPub, CnsSubscriptionProtocol.http, "http://bogus", "test-sub-arn");
 
         if (testPub.totalSent != 1) {
@@ -603,7 +603,7 @@ public class CNSEndpointPublisherConsumerTest {
         testPub.dontCareEndPointToMessage = true;
         testPub.numFailuresBeforeSuccess = 2; //set num-failures past the numRetries and see publisher declare failure and give up
 
-        CNSEndpointPublisherJobConsumer.PublishJob.testPublisher = testPub;
+        CNSPublishJob.testPublisher = testPub;
         
         PersistenceFactory.cnsAttributePersistence = new TestAttributePersustence();
         CNSSubscriptionAttributes subAttr = new CNSSubscriptionAttributes();
@@ -629,7 +629,7 @@ public class CNSEndpointPublisherConsumerTest {
         User user = new User("test-user-id", "test-user-name", "test-hashed-password", "test-access-key", "test-access-secret");
 
         AtomicInteger endpointPublishJobCount = new AtomicInteger(100); //never delete
-        PublishJob job = new PublishJob(msg, user, CnsSubscriptionProtocol.http, "http://bogus", "test-sub-arn", "test-queue-url", "test-receipt-handle", endpointPublishJobCount);
+        CNSPublishJob job = new CNSPublishJob(msg, user, CnsSubscriptionProtocol.http, "http://bogus", "test-sub-arn", "test-queue-url", "test-receipt-handle", endpointPublishJobCount);
         job.doRetry(testPub, CnsSubscriptionProtocol.http, "http://bogus", "test-sub-arn");
         
         Thread.sleep(5000);
@@ -812,16 +812,16 @@ public class CNSEndpointPublisherConsumerTest {
         TestEndpointPublisher testPub = new TestEndpointPublisher(endpointtToMsg); //will accumulate all notifications
         testPub.dontCareEndPointToMessage = true;
         testPub.numFailuresBeforeSuccess = 4; //set num-failures past the numRetries and see publisher declare failure and give up
-        PublishJob.testPublisher = testPub;
+        CNSPublishJob.testPublisher = testPub;
         
         retryPolicy.setBackOffFunction(CnsBackoffFunction.exponential);
 
         long totalDelay = (retryPolicy.getMaxDelayTarget() * retryPolicy.getNumRetries() * 1000) / 2;
         
-        CNSEndpointPublisherJobConsumer.PublishJob.testPublisher = testPub;
+        CNSPublishJob.testPublisher = testPub;
 
         AtomicInteger endpointPublishJobCount = new AtomicInteger(100); //never delete
-        PublishJob job = new PublishJob(msg, user, CnsSubscriptionProtocol.http, "http://bogusBackoff", "test-sub-arn", "test-queue-url", "test-receipt-handle", endpointPublishJobCount);
+        CNSPublishJob job = new CNSPublishJob(msg, user, CnsSubscriptionProtocol.http, "http://bogusBackoff", "test-sub-arn", "test-queue-url", "test-receipt-handle", endpointPublishJobCount);
 
         job.doRetry(testPub, CnsSubscriptionProtocol.http, "http://bogusBackoff", "test-sub-arn");
         

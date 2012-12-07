@@ -20,7 +20,7 @@ package com.comcast.cns.tools;
  * @author aseem
  *
  */
-public interface RunnableForPartition {
+public interface CNSPublisherPartitionRunnable {
 
     /**
      * Run for a specific partition

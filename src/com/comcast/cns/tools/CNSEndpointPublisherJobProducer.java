@@ -46,8 +46,8 @@ import com.comcast.cmb.common.util.ValueAccumulator.AccumulatorName;
 import com.comcast.cns.model.CNSEndpointPublishJob;
 import com.comcast.cns.model.CNSMessage;
 import com.comcast.cns.model.CNSSubscription;
-import com.comcast.cns.model.CNSEndpointPublishJob.SubInfo;
-import com.comcast.cns.persistence.CachedCNSEndpointPublishJob;
+import com.comcast.cns.model.CNSEndpointPublishJob.CNSEndpointSubscriptionInfo;
+import com.comcast.cns.persistence.CNSCachedEndpointPublishJob;
 import com.comcast.cns.persistence.ICNSSubscriptionPersistence;
 import com.comcast.cns.persistence.TopicNotFoundException;
 
@@ -59,7 +59,7 @@ import com.comcast.cns.persistence.TopicNotFoundException;
  * Class is thread-safe
  */
 
-public class CNSEndpointPublisherJobProducer implements RunnableForPartition {
+public class CNSEndpointPublisherJobProducer implements CNSPublisherPartitionRunnable {
     private static Logger logger = Logger.getLogger(CNSEndpointPublisherJobProducer.class);
     
     static volatile boolean initialized = false; 
@@ -69,7 +69,6 @@ public class CNSEndpointPublisherJobProducer implements RunnableForPartition {
     private static final String publishQNamePrefix = CMBProperties.getInstance().getCnsPublishQueueNamePrefix();;
     static volatile AmazonSQS sqs;
     static volatile ICNSSubscriptionPersistence subscriptionPersistence = null; 
-    private long lastMinute = System.currentTimeMillis()/(1000*60); 
 
     public static class TestInterface {
         public static boolean isInitialized() {
@@ -179,17 +178,19 @@ public class CNSEndpointPublisherJobProducer implements RunnableForPartition {
      *  3.4 go back to 1
      */    
     public boolean run(int partition) {
+    	
         boolean messageFound = false;
+        
         if (!initialized) {
             throw new IllegalStateException("Not initialized");
         }
         
         long ts1 = System.currentTimeMillis();
 	    CMBControllerServlet.valueAccumulator.initializeAllCounters();
+	    
 	    try {
 
-	        if (ts1/(1000*60) > lastMinute) {
-                lastMinute = ts1/(1000*60);
+	        if (CNSPublisher.lastProducerMinute.compareAndSet(ts1/(1000*60)-1, ts1/(1000*60))) {
                 logger.info("event=ping version=" + CMBControllerServlet.VERSION + " ip=" + InetAddress.getLocalHost().getHostAddress());
             }
 	        
@@ -199,7 +200,7 @@ public class CNSEndpointPublisherJobProducer implements RunnableForPartition {
 	        if (message != null) {
 	            CNSMessage publishJob = CNSMessage.parseInstance(message.getBody());
 
-	            List<CNSEndpointPublishJob.SubInfo> subscriptions = null;
+	            List<CNSEndpointPublishJob.CNSEndpointSubscriptionInfo> subscriptions = null;
 
 	            try {
 	                subscriptions = getSubscriptionsForTopic(publishJob.getTopicArn());
@@ -283,10 +284,10 @@ public class CNSEndpointPublisherJobProducer implements RunnableForPartition {
         return message; 
     }
     
-    List<CNSEndpointPublishJob.SubInfo> getSubscriptionsForTopic(String topicArn) throws Exception {        
-    	List<CNSEndpointPublishJob.SubInfo> subInfoList = new ArrayList<CNSEndpointPublishJob.SubInfo>();
+    List<CNSEndpointPublishJob.CNSEndpointSubscriptionInfo> getSubscriptionsForTopic(String topicArn) throws Exception {        
+    	List<CNSEndpointPublishJob.CNSEndpointSubscriptionInfo> subInfoList = new ArrayList<CNSEndpointPublishJob.CNSEndpointSubscriptionInfo>();
     	if (CMBProperties.getInstance().isUseSubInfoCache()) {
-    	    subInfoList.addAll(CachedCNSEndpointPublishJob.getSubInfos(topicArn));
+    	    subInfoList.addAll(CNSCachedEndpointPublishJob.getSubInfos(topicArn));
     	} else {
     	    String nextToken = null;
     	    while (true) {
@@ -298,7 +299,7 @@ public class CNSEndpointPublisherJobProducer implements RunnableForPartition {
     	        for(CNSSubscription subscription: subscriptions) {
     	            if (!subscription.getArn().equals("PendingConfirmation")) {
     	                allPendingConfirmation = false;
-    	                subInfoList.add(new CNSEndpointPublishJob.SubInfo(subscription.getProtocol(), subscription.getEndpoint(), subscription.getArn()));
+    	                subInfoList.add(new CNSEndpointPublishJob.CNSEndpointSubscriptionInfo(subscription.getProtocol(), subscription.getEndpoint(), subscription.getArn()));
     	                nextToken = subscription.getArn();
     	            }
     	        }
@@ -312,20 +313,20 @@ public class CNSEndpointPublisherJobProducer implements RunnableForPartition {
     }
    
     
-    List<CNSEndpointPublishJob> createEndpointPublishJobs(CNSMessage message, List<CNSEndpointPublishJob.SubInfo> subscriptions) {
+    List<CNSEndpointPublishJob> createEndpointPublishJobs(CNSMessage message, List<CNSEndpointPublishJob.CNSEndpointSubscriptionInfo> subscriptions) {
     	List<CNSEndpointPublishJob> epPublishJobs = new ArrayList<CNSEndpointPublishJob>();
     	if (subscriptions != null) {
 	    	int maxSubsPerEPPublishJob = CMBProperties.getInstance().getMaxSubscriptionsPerEPPublishJob();
 	    	int numEPPublishJobs = (int)Math.ceil(subscriptions.size()/(float)maxSubsPerEPPublishJob);
 	    	int subIndex = 0;
 	    	for(int i=0; i<numEPPublishJobs; i++) {
-	    		List<CNSEndpointPublishJob.SubInfo> epPublishJobSubscriptions = new ArrayList<CNSEndpointPublishJob.SubInfo>();
+	    		List<CNSEndpointPublishJob.CNSEndpointSubscriptionInfo> epPublishJobSubscriptions = new ArrayList<CNSEndpointPublishJob.CNSEndpointSubscriptionInfo>();
 	    		for(int j=0; j<maxSubsPerEPPublishJob; j++) {
-	    		    SubInfo subInfo;
+	    		    CNSEndpointSubscriptionInfo subInfo;
 	    		    if (CMBProperties.getInstance().isUseSubInfoCache()) {
-	    		        subInfo = new CachedCNSEndpointPublishJob.CachedSubInfo(subscriptions.get(subIndex).protocol, subscriptions.get(subIndex).endpoint, subscriptions.get(subIndex).subArn);
+	    		        subInfo = new CNSCachedEndpointPublishJob.CNSCachedEndpointSubscriptionInfo(subscriptions.get(subIndex).protocol, subscriptions.get(subIndex).endpoint, subscriptions.get(subIndex).subArn);
 	    		    } else {
-	    		        subInfo = new SubInfo(subscriptions.get(subIndex).protocol, subscriptions.get(subIndex).endpoint, subscriptions.get(subIndex).subArn);
+	    		        subInfo = new CNSEndpointSubscriptionInfo(subscriptions.get(subIndex).protocol, subscriptions.get(subIndex).endpoint, subscriptions.get(subIndex).subArn);
 	    		    }
 	    		     
 	    			epPublishJobSubscriptions.add(subInfo);
@@ -336,7 +337,7 @@ public class CNSEndpointPublisherJobProducer implements RunnableForPartition {
 	    		}
 	    		CNSEndpointPublishJob job;
 	    		if (CMBProperties.getInstance().isUseSubInfoCache()) {
-	    		    job = new CachedCNSEndpointPublishJob(message, epPublishJobSubscriptions);
+	    		    job = new CNSCachedEndpointPublishJob(message, epPublishJobSubscriptions);
 	    		} else {
 	    		    job = new CNSEndpointPublishJob(message, epPublishJobSubscriptions);
 	    		}

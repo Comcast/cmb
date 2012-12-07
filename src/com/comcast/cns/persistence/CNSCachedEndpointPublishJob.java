@@ -44,10 +44,10 @@ import com.comcast.cns.util.Util;
  * 
  * Class is thread-safe
  */
-public class CachedCNSEndpointPublishJob extends CNSEndpointPublishJob {
-    private static Logger logger = Logger.getLogger(CachedCNSEndpointPublishJob.class);
+public class CNSCachedEndpointPublishJob extends CNSEndpointPublishJob {
+    private static Logger logger = Logger.getLogger(CNSCachedEndpointPublishJob.class);
 
-    private static final ExpiringCache<String, LinkedHashMap<String, CachedSubInfo>> cache = new ExpiringCache<String, LinkedHashMap<String,CachedSubInfo>>(1000);
+    private static final ExpiringCache<String, LinkedHashMap<String, CNSCachedEndpointSubscriptionInfo>> cache = new ExpiringCache<String, LinkedHashMap<String,CNSCachedEndpointSubscriptionInfo>>(1000);
     
     /**
      * 
@@ -55,8 +55,8 @@ public class CachedCNSEndpointPublishJob extends CNSEndpointPublishJob {
      * @return THh list of sub-infos
      * @throws Exception 
      */
-    public static List<CachedSubInfo> getSubInfos(String topicArn) throws Exception {
-        LinkedHashMap<String, CachedSubInfo> arnToSubInfo;
+    public static List<CNSCachedEndpointSubscriptionInfo> getSubInfos(String topicArn) throws Exception {
+        LinkedHashMap<String, CNSCachedEndpointSubscriptionInfo> arnToSubInfo;
         try {
             arnToSubInfo = cache.getAndSetIfNotPresent(topicArn, new CachePopulator(topicArn), 60000);
         } catch (CacheFullException e) {
@@ -69,15 +69,15 @@ public class CachedCNSEndpointPublishJob extends CNSEndpointPublishJob {
                 throw e;
             }
         }
-        return new LinkedList<CachedSubInfo>(arnToSubInfo.values());
+        return new LinkedList<CNSCachedEndpointSubscriptionInfo>(arnToSubInfo.values());
     }
     
-    public static class CachedSubInfo extends SubInfo {
+    public static class CNSCachedEndpointSubscriptionInfo extends CNSEndpointSubscriptionInfo {
 
-        public CachedSubInfo(CnsSubscriptionProtocol protocol, String endpoint, String subArn) {
+        public CNSCachedEndpointSubscriptionInfo(CnsSubscriptionProtocol protocol, String endpoint, String subArn) {
             super(protocol, endpoint, subArn);
         }
-        public CachedSubInfo(SubInfo info) {
+        public CNSCachedEndpointSubscriptionInfo(CNSEndpointSubscriptionInfo info) {
             super(info.protocol, info.endpoint, info.subArn);
         }
         
@@ -86,8 +86,8 @@ public class CachedCNSEndpointPublishJob extends CNSEndpointPublishJob {
             return subArn;
         }
 
-        public static CachedSubInfo parseInstance(String str) {
-            return new CachedSubInfo(SubInfo.parseInstance(str));
+        public static CNSCachedEndpointSubscriptionInfo parseInstance(String str) {
+            return new CNSCachedEndpointSubscriptionInfo(CNSEndpointSubscriptionInfo.parseInstance(str));
         }                
         /**
          * 
@@ -97,13 +97,13 @@ public class CachedCNSEndpointPublishJob extends CNSEndpointPublishJob {
          * @return list of fully populated SubInfos in random order
          * @throws Exception 
          */
-        public static List<CachedSubInfo> parseInstances(String topicArn, String []arr, int idx, int count, boolean useCache) throws Exception {
+        public static List<CNSCachedEndpointSubscriptionInfo> parseInstances(String topicArn, String []arr, int idx, int count, boolean useCache) throws Exception {
             if (count == 0) return Collections.emptyList();
             
-            List<CachedSubInfo> infos = new LinkedList<CachedCNSEndpointPublishJob.CachedSubInfo>();
+            List<CNSCachedEndpointSubscriptionInfo> infos = new LinkedList<CNSCachedEndpointPublishJob.CNSCachedEndpointSubscriptionInfo>();
             if (useCache) {
                 
-                HashMap<String, CachedSubInfo> arnToSubInfo;
+                HashMap<String, CNSCachedEndpointSubscriptionInfo> arnToSubInfo;
                 try {
                     arnToSubInfo = cache.getAndSetIfNotPresent(topicArn, new CachePopulator(topicArn), 60000);
                 } catch (CacheFullException e) {
@@ -119,7 +119,7 @@ public class CachedCNSEndpointPublishJob extends CNSEndpointPublishJob {
                 
                 for (int i = idx; i < idx + count ; i++) {
                     String subArn = arr[i];
-                    CachedSubInfo subInfo = arnToSubInfo.get(subArn);
+                    CNSCachedEndpointSubscriptionInfo subInfo = arnToSubInfo.get(subArn);
                     if (subInfo == null) {
                         logger.info("event=parseInstances info=subinfo_not_found arn=" + subArn);
                     } else {
@@ -135,7 +135,7 @@ public class CachedCNSEndpointPublishJob extends CNSEndpointPublishJob {
                     if (sub == null) {
                         logger.info("event=parseInstances info=subinfo_not_found arn=" + subArn);
                     } else {
-                        infos.add(new CachedSubInfo(sub.getProtocol(), sub.getEndpoint(), sub.getArn()));
+                        infos.add(new CNSCachedEndpointSubscriptionInfo(sub.getProtocol(), sub.getEndpoint(), sub.getArn()));
                     }
                 }                
             }
@@ -143,7 +143,7 @@ public class CachedCNSEndpointPublishJob extends CNSEndpointPublishJob {
         }
     }
     
-    public CachedCNSEndpointPublishJob(CNSMessage message, List<? extends SubInfo> subInfos) {
+    public CNSCachedEndpointPublishJob(CNSMessage message, List<? extends CNSEndpointSubscriptionInfo> subInfos) {
         super(message, subInfos);
     }
     
@@ -151,20 +151,20 @@ public class CachedCNSEndpointPublishJob extends CNSEndpointPublishJob {
     /**
      * Class responsible for returning the contents of the cache if cache miss occurs
      */
-    static class CachePopulator implements Callable<LinkedHashMap<String,CachedSubInfo>> {
+    static class CachePopulator implements Callable<LinkedHashMap<String,CNSCachedEndpointSubscriptionInfo>> {
         final String topicArn;
         public CachePopulator(String topicArn) {
             this.topicArn = topicArn;
         }
         @Override
-        public LinkedHashMap<String, CachedSubInfo> call() throws Exception {
+        public LinkedHashMap<String, CNSCachedEndpointSubscriptionInfo> call() throws Exception {
             long ts1 = System.currentTimeMillis();
             ICNSSubscriptionPersistence pers = PersistenceFactory.getSubscriptionPersistence();
             List<CNSSubscription> subs = pers.listSubscriptionsByTopic(null, topicArn, null, Integer.MAX_VALUE); //get all in one call
-            LinkedHashMap<String, CachedSubInfo> val = new LinkedHashMap<String, CachedCNSEndpointPublishJob.CachedSubInfo>();
+            LinkedHashMap<String, CNSCachedEndpointSubscriptionInfo> val = new LinkedHashMap<String, CNSCachedEndpointPublishJob.CNSCachedEndpointSubscriptionInfo>();
             for (CNSSubscription sub : subs) {
                 if (!sub.getArn().equals("PendingConfirmation")) {
-                    val.put(sub.getArn(), new CachedSubInfo(sub.getProtocol(), sub.getEndpoint(), sub.getArn()));
+                    val.put(sub.getArn(), new CNSCachedEndpointSubscriptionInfo(sub.getProtocol(), sub.getEndpoint(), sub.getArn()));
                 }
             }
             long ts2 = System.currentTimeMillis();
@@ -195,9 +195,9 @@ public class CachedCNSEndpointPublishJob extends CNSEndpointPublishJob {
             topicArn = Util.getCnsTopicArn(arr[idx]);
         }
 
-        List<CachedSubInfo> subInfos;
+        List<CNSCachedEndpointSubscriptionInfo> subInfos;
         try {
-            subInfos = CachedSubInfo.parseInstances(topicArn, arr, idx, numSubInfos, useCache);
+            subInfos = CNSCachedEndpointSubscriptionInfo.parseInstances(topicArn, arr, idx, numSubInfos, useCache);
         } catch(TopicNotFoundException e) {
             logger.error("event=parseInstance status=TopicNotFound topicArn=" + topicArn);
             throw e;
@@ -225,7 +225,7 @@ public class CachedCNSEndpointPublishJob extends CNSEndpointPublishJob {
         }
         message.processMessageToProtocols();
         
-        return new CachedCNSEndpointPublishJob(message, subInfos);
+        return new CNSCachedEndpointPublishJob(message, subInfos);
     }
 
 }

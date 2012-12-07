@@ -34,7 +34,7 @@ import com.comcast.cmb.test.tools.CMBTestingConstants;
 import com.comcast.cns.model.CNSEndpointPublishJob;
 import com.comcast.cns.model.CNSMessage;
 import com.comcast.cns.model.CNSSubscription.CnsSubscriptionProtocol;
-import com.comcast.cns.persistence.CachedCNSEndpointPublishJob;
+import com.comcast.cns.persistence.CNSCachedEndpointPublishJob;
 
 public class CNSPublishJobTest {
     static Logger logger = Logger.getLogger(CNSPublishJobTest.class);
@@ -50,7 +50,7 @@ public class CNSPublishJobTest {
     @Test
     public void testEqualsEPJob() {
         CNSMessage p1 = CNSMessageTest.getMessage("test", null, "test", "test-arn", "test-pub-userId");
-        CNSEndpointPublishJob.SubInfo subInfo = new CNSEndpointPublishJob.SubInfo(CnsSubscriptionProtocol.cqs, "test-endpoint1", "test-sub-arn");
+        CNSEndpointPublishJob.CNSEndpointSubscriptionInfo subInfo = new CNSEndpointPublishJob.CNSEndpointSubscriptionInfo(CnsSubscriptionProtocol.cqs, "test-endpoint1", "test-sub-arn");
         CNSEndpointPublishJob j1 = new CNSEndpointPublishJob(p1, Arrays.asList(subInfo));
         if (!j1.equals(j1)) {
             fail("CNSEndpointPublishJob not equal to itself");
@@ -62,7 +62,7 @@ public class CNSPublishJobTest {
         
     	try {
 	    	CNSMessage p1 = CNSMessageTest.getMessage("test", null, "test", "test-arn", "test-pub-userId");
-	        CNSEndpointPublishJob.SubInfo subInfo = new CNSEndpointPublishJob.SubInfo(CnsSubscriptionProtocol.cqs, "test-endpoint1", "test-sub-arn");
+	        CNSEndpointPublishJob.CNSEndpointSubscriptionInfo subInfo = new CNSEndpointPublishJob.CNSEndpointSubscriptionInfo(CnsSubscriptionProtocol.cqs, "test-endpoint1", "test-sub-arn");
 	        CNSEndpointPublishJob j1 = new CNSEndpointPublishJob(p1, Arrays.asList(subInfo));
 	
 	        String str = j1.serialize();
@@ -72,7 +72,7 @@ public class CNSPublishJobTest {
 	        }
 	        
 	        //test with no subs
-	        j1 = new CNSEndpointPublishJob(p1, new LinkedList<CNSEndpointPublishJob.SubInfo>());
+	        j1 = new CNSEndpointPublishJob(p1, new LinkedList<CNSEndpointPublishJob.CNSEndpointSubscriptionInfo>());
 	        str = j1.serialize();
 	        rec = CNSEndpointPublishJob.parseInstance(str);
 	        if (!j1.equals(rec)) {
@@ -96,9 +96,9 @@ public class CNSPublishJobTest {
     @Test
     public void serializeSize() {
         CNSMessage p1 = CNSMessageTest.getMessage("test", null, "test", "test-arn", "test-pub-userId");
-        LinkedList<CNSEndpointPublishJob.SubInfo> subInfos = new LinkedList<CNSEndpointPublishJob.SubInfo>();
+        LinkedList<CNSEndpointPublishJob.CNSEndpointSubscriptionInfo> subInfos = new LinkedList<CNSEndpointPublishJob.CNSEndpointSubscriptionInfo>();
         for (int i = 0; i < 500; i++) {
-            subInfos.add(new CNSEndpointPublishJob.SubInfo(CnsSubscriptionProtocol.cqs, CMBTestingConstants.HTTP_ENDPOINT_BASE_URL + "info/1234" + i, "27daac76-34dd-47df-bd01-1f6e873584a0" + i));    
+            subInfos.add(new CNSEndpointPublishJob.CNSEndpointSubscriptionInfo(CnsSubscriptionProtocol.cqs, CMBTestingConstants.HTTP_ENDPOINT_BASE_URL + "info/1234" + i, "27daac76-34dd-47df-bd01-1f6e873584a0" + i));    
         }
         
         CNSEndpointPublishJob j1 = new CNSEndpointPublishJob(p1, subInfos);
@@ -109,12 +109,12 @@ public class CNSPublishJobTest {
     @Test
     public void serializeDeserializeNoSubUsingCache() throws CMBException {
         CNSMessage p1 = CNSMessageTest.getMessage("test", null, "test", "test-arn", "test-pub-userId");
-        CachedCNSEndpointPublishJob job = new CachedCNSEndpointPublishJob(p1, Collections.EMPTY_LIST);
+        CNSCachedEndpointPublishJob job = new CNSCachedEndpointPublishJob(p1, Collections.EMPTY_LIST);
         
         String str = job.serialize();
         logger.debug("serializedFOrm=" + str);
         
-        CNSEndpointPublishJob rec = CachedCNSEndpointPublishJob.parseInstance(str);
+        CNSEndpointPublishJob rec = CNSCachedEndpointPublishJob.parseInstance(str);
         if (!job.equals(rec)) {
             fail("orig!=rec. orig=" + job + " rec=" + rec);
         }

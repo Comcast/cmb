@@ -36,24 +36,27 @@ public class CNSEndpointPublishJob {
         return message;
     }
 
-    public List<? extends SubInfo> getSubInfos() {
+    public List<? extends CNSEndpointSubscriptionInfo> getSubInfos() {
         return subInfos;
     }
 
     /**
-     * SubInfo represents the minimum info on a subscriber used for (de)serialization
+     * CNSEndpointSubscriptionInfo represents the minimum info on a subscriber used for (de)serialization
      * That is essential for CNSEndpointPublishJob serialization
      * Class is immutable
      */
-    public static class SubInfo {
+    public static class CNSEndpointSubscriptionInfo {
+    	
         public final CnsSubscriptionProtocol protocol;
         public final String endpoint;
         public final String subArn;
-        public SubInfo(CnsSubscriptionProtocol protocol, String endpoint, String subArn) {
+        
+        public CNSEndpointSubscriptionInfo(CnsSubscriptionProtocol protocol, String endpoint, String subArn) {
             this.protocol = protocol;
             this.endpoint = endpoint;
             this.subArn = subArn;
         }
+        
         /**
          * serialized form is <protocol-ord>|<endpoint>|<subArn>
          * @return serialized form
@@ -63,25 +66,26 @@ public class CNSEndpointPublishJob {
             sb.append(protocol.ordinal()).append("|").append(endpoint).append("|").append(subArn);
             return sb.toString();
         }
+        
         /**
          * Parse the string and create new SubInfo
          * @param str serialized form
          * @return SubInfo object from the serializedform
          */
-        public static SubInfo parseInstance(String str) {
+        public static CNSEndpointSubscriptionInfo parseInstance(String str) {
             String arr[] = str.split("\\|");
             if (arr.length != 3) {
                 throw new IllegalArgumentException("Expected format for SubInfo is <protocol-ord>|<endpoint>|<subArn> got:" + str);
             }
-            return new SubInfo(CnsSubscriptionProtocol.values()[Integer.parseInt(arr[0])], arr[1], arr[2]);
+            return new CNSEndpointSubscriptionInfo(CnsSubscriptionProtocol.values()[Integer.parseInt(arr[0])], arr[1], arr[2]);
         }
         
         @Override
         public boolean equals(Object obj) {
-            if (!(obj instanceof SubInfo)) {
+            if (!(obj instanceof CNSEndpointSubscriptionInfo)) {
                 return false;
             }
-            SubInfo o = (SubInfo) obj;
+            CNSEndpointSubscriptionInfo o = (CNSEndpointSubscriptionInfo) obj;
             if (Util.isEqual(protocol, o.protocol) &&
                     Util.isEqual(endpoint, o.endpoint) &&
                     Util.isEqual(subArn, o.subArn)) {
@@ -94,9 +98,9 @@ public class CNSEndpointPublishJob {
     }
     
     private final CNSMessage message;
-    private final List<? extends SubInfo> subInfos;
+    private final List<? extends CNSEndpointSubscriptionInfo> subInfos;
     
-    public CNSEndpointPublishJob(CNSMessage message, List<? extends SubInfo> subInfos) {
+    public CNSEndpointPublishJob(CNSMessage message, List<? extends CNSEndpointSubscriptionInfo> subInfos) {
         this.message = message;
         this.subInfos = subInfos;
     }
@@ -109,7 +113,7 @@ public class CNSEndpointPublishJob {
     public String serialize() {
         StringBuffer sb = new StringBuffer();
         sb.append(subInfos.size()).append("\n");
-        for (SubInfo subInfo : subInfos) {
+        for (CNSEndpointSubscriptionInfo subInfo : subInfos) {
             sb.append(subInfo.serialize()).append("\n");
         }
         sb.append(message.serialize());
@@ -129,9 +133,9 @@ public class CNSEndpointPublishJob {
         }
         int numSubInfos = Integer.parseInt(arr[0]);   
         int idx = 1;
-        List<SubInfo> subInfos = new LinkedList<CNSEndpointPublishJob.SubInfo>();
+        List<CNSEndpointSubscriptionInfo> subInfos = new LinkedList<CNSEndpointPublishJob.CNSEndpointSubscriptionInfo>();
         for (int i = 0; i < numSubInfos; i++) {
-            subInfos.add(SubInfo.parseInstance(arr[idx++]));
+            subInfos.add(CNSEndpointSubscriptionInfo.parseInstance(arr[idx++]));
         }
         
         StringBuffer sb = new StringBuffer();
@@ -167,7 +171,7 @@ public class CNSEndpointPublishJob {
     public String toString() {
         StringBuffer sb = new StringBuffer();
         sb.append("message=").append(message.toString()).append(" subInfos=");
-        for (SubInfo subInfo : subInfos) {
+        for (CNSEndpointSubscriptionInfo subInfo : subInfos) {
             sb.append("subInfo=").append(subInfo.toString());
         }
         return sb.toString();

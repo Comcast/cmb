@@ -18,6 +18,8 @@ package com.comcast.cns.tools;
 import java.lang.management.ManagementFactory;
 import java.net.InetAddress;
 import java.util.EnumSet;
+import java.util.concurrent.atomic.AtomicLong;
+
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
@@ -41,9 +43,15 @@ public class CNSPublisher {
         Producer,
         Consumer
     }
+    
     static volatile EnumSet<Mode> modes;
-    static volatile JobThread[] jobProducers = null;
-    static volatile JobThread[] consumers = null;
+    static volatile CNSPublisherJobThread[] jobProducers = null;
+    static volatile CNSPublisherJobThread[] consumers = null;
+    
+    // used for ping
+    
+    public static volatile AtomicLong lastProducerMinute = new AtomicLong(System.currentTimeMillis()/(1000*60)); 
+    public static volatile AtomicLong lastConsumerMinute = new AtomicLong(System.currentTimeMillis()/(1000*60)); 
     
     private static void printUsage() {
         System.out.println("java <opts> com.comcast.cns.tools.CNSPublisher -role=<comma separated list of roles>");
@@ -88,9 +96,9 @@ public class CNSPublisher {
         
         if (modes.contains(Mode.Producer)) {
         	CNSEndpointPublisherJobProducer.initialize();           
-        	jobProducers = new JobThread[CMBProperties.getInstance().getNumEPPubJobProducers()];        	
+        	jobProducers = new CNSPublisherJobThread[CMBProperties.getInstance().getNumEPPubJobProducers()];        	
             for (int i = 0; i < jobProducers.length; i++) {
-                jobProducers[i] = new JobThread("CNSEPJobProducer-" + i, new CNSEndpointPublisherJobProducer(), 
+                jobProducers[i] = new CNSPublisherJobThread("CNSEPJobProducer-" + i, new CNSEndpointPublisherJobProducer(), 
                         CMBProperties.getInstance().getNumPublishJobQs(), 
                         CMBProperties.getInstance().getProducerProcessingMaxDelay());
                 jobProducers[i].start();
@@ -99,9 +107,9 @@ public class CNSPublisher {
         
         if (modes.contains(Mode.Consumer)) {
             CNSEndpointPublisherJobConsumer.initialize();
-            consumers = new JobThread[CMBProperties.getInstance().getNumEPPubJobConsumers()];
+            consumers = new CNSPublisherJobThread[CMBProperties.getInstance().getNumEPPubJobConsumers()];
             for (int i = 0; i < consumers.length; i++) {
-                consumers[i] = new JobThread("CNSEPJobConsumer-" + i, new CNSEndpointPublisherJobConsumer(), 
+                consumers[i] = new CNSPublisherJobThread("CNSEPJobConsumer-" + i, new CNSEndpointPublisherJobConsumer(), 
                         CMBProperties.getInstance().getNumEPPublishJobQs(), 
                         CMBProperties.getInstance().getConsumerProcessingMaxDelay());
                 consumers[i].start();

@@ -21,14 +21,14 @@ import org.apache.log4j.Logger;
  * This class represents Thread that backoff when no message exists in all the partitions
  * @author aseem 
  */
-public class JobThread extends Thread {
-    private static Logger logger = Logger.getLogger(JobThread.class);
+public class CNSPublisherJobThread extends Thread {
+    private static Logger logger = Logger.getLogger(CNSPublisherJobThread.class);
     
-    private final RunnableForPartition runnable;
+    private final CNSPublisherPartitionRunnable runnable;
     private final int numPartitions;
     private final long maxDelayMS;
     
-    public JobThread(String threadName, RunnableForPartition runnable, int numPartitions, long maxDelayMS) {
+    public CNSPublisherJobThread(String threadName, CNSPublisherPartitionRunnable runnable, int numPartitions, long maxDelayMS) {
         super(threadName);
         this.runnable = runnable;             
         this.numPartitions = numPartitions;
