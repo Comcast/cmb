@@ -28,6 +28,7 @@ import org.apache.log4j.Logger;
 import com.comcast.cmb.common.controller.CMBControllerServlet;
 import com.comcast.cmb.common.persistence.CassandraPersistence;
 import com.comcast.cmb.common.util.CMBProperties;
+import com.comcast.cmb.common.util.PersistenceException;
 import com.comcast.cmb.common.util.Util;
 import com.comcast.cns.controller.CNSMonitor;
 
@@ -88,6 +89,15 @@ public class CNSPublisher {
     	} else {
     		return "";
     	}
+    }
+    
+    public static void clearQueues() throws PersistenceException {
+    	
+    	CNSEndpointPublisherJobProducer.shutdown();
+    	CNSEndpointPublisherJobConsumer.shutdown();
+
+    	CNSEndpointPublisherJobConsumer.initialize();
+    	CNSEndpointPublisherJobProducer.initialize();
     }
     
     /**

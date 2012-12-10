@@ -61,4 +61,15 @@ public class CNSWorkerStatsPopulator {
 
 		return res;
 	}
+
+	public static String getGetWorkerClearQueuesResponse() {
+
+		String res = "";
+		
+		res += "<GetWorkerClearQueuesResponse>\n";
+		res += "\t" + CNSPopulator.getResponseMetadata() + "\n";
+		res += "</GetWorkerClearQueuesResponse>";
+
+		return res;
+	}
 }

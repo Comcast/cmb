@@ -24,7 +24,6 @@ import java.util.Map;
  */
 public interface CNSMonitorMBean {
 
-        
     /**
      * @return total number of publishMessage() called across all topics in a rolling window
      */
@@ -49,11 +48,6 @@ public interface CNSMonitorMBean {
     Map<String, String> getErrorRateForEndpoints();
     
     /**
-     * Clear all bad endpoint state
-     */
-    public void clearBadEndpointsState();
-    
-    /**
      * 
      * @return size of delivery handler queue
      */
@@ -71,4 +65,14 @@ public interface CNSMonitorMBean {
      * because its too busy. false otherwise
      */
     public boolean isConsumerOverloaded();
+
+    /**
+     * Clear all bad endpoint state
+     */
+    public void clearBadEndpointsState();
+    
+    /**
+     * Clear all worker queues and reinitialize (potentially useful when worker is overloaded)
+     */
+    public boolean clearWorkerQueues();
 }

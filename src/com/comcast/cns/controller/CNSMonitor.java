@@ -21,10 +21,14 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.jfree.util.Log;
+
 import com.comcast.cmb.common.util.CMBProperties;
+import com.comcast.cmb.common.util.PersistenceException;
 import com.comcast.cmb.common.util.RollingWindowCapture;
 import com.comcast.cns.io.HTTPEndpointPublisherApache;
 import com.comcast.cns.tools.CNSEndpointPublisherJobConsumer;
+import com.comcast.cns.tools.CNSPublisher;
 
 /**
  * The implementation of monitoring for CNS.
@@ -177,4 +181,18 @@ public class CNSMonitor implements CNSMonitorMBean {
     public boolean isConsumerOverloaded() {
         return CNSEndpointPublisherJobConsumer.isOverloaded();
     }
+    
+	@Override
+	public boolean clearWorkerQueues() {
+		
+		try {
+			CNSPublisher.clearQueues();
+			clearBadEndpointsState();
+			return true;
+		} catch (PersistenceException ex) {
+			Log.error("event=clear_queue_failure", ex);
+		}
+		
+		return false;
+	}
 }

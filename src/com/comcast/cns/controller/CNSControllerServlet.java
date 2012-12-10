@@ -35,8 +35,6 @@ import com.comcast.cns.model.CNSTopicAttributes;
 import com.comcast.cns.persistence.ICNSSubscriptionPersistence;
 import com.comcast.cns.persistence.ICNSTopicPersistence;
 
-
-
 /**
  * Servlet for handling all CNS actions
  * @author vvenkatraman, jorge, michael, bwolf, aseem, baosen
@@ -93,42 +91,44 @@ public class CNSControllerServlet extends CMBControllerServlet {
     	topicHandler = PersistenceFactory.getTopicPersistence();
     	subscriptionHandler = PersistenceFactory.getSubscriptionPersistence();
     	
-    	final CNSConfirmSubscriptionAction confSub = new CNSConfirmSubscriptionAction();
-    	final CNSPublishAction pub = new CNSPublishAction();
-    	final CNSCreateTopicAction createT = new CNSCreateTopicAction();
-    	final CNSDeleteTopicAction delT = new CNSDeleteTopicAction();
-    	final CNSListTopicsAction listT = new CNSListTopicsAction();
-    	final CNSSubscribeAction sub = new CNSSubscribeAction();
-    	final CNSUnsubscribeAction unSub = new CNSUnsubscribeAction();
-    	final CNSListSubscriptionsAction listSub = new CNSListSubscriptionsAction();
-    	final CNSListSubscriptionsByTopicAction listSybTnyT = new CNSListSubscriptionsByTopicAction();
-    	final CNSSetSubscriptionAttributesAction setSubA = new CNSSetSubscriptionAttributesAction();
-    	final CNSGetSubscriptionAttributesAction getSubA = new CNSGetSubscriptionAttributesAction();
-    	final CNSSetTopicAttributesAction setTA = new CNSSetTopicAttributesAction();
-    	final CNSGetTopicAttributesAction getTA = new CNSGetTopicAttributesAction();
-    	final CNSAddPermissionAction addPerm = new CNSAddPermissionAction();
-    	final CNSRemovePermissionAction remPerm = new CNSRemovePermissionAction();
-    	final HealthCheckShallow healthC = new HealthCheckShallow();
-    	final CNSGetWorkerStatsAction getWS = new CNSGetWorkerStatsAction();
+    	final CNSConfirmSubscriptionAction confirmSubscription = new CNSConfirmSubscriptionAction();
+    	final CNSPublishAction publish = new CNSPublishAction();
+    	final CNSCreateTopicAction createTopic = new CNSCreateTopicAction();
+    	final CNSDeleteTopicAction deleteTopic = new CNSDeleteTopicAction();
+    	final CNSListTopicsAction listTopics = new CNSListTopicsAction();
+    	final CNSSubscribeAction subscribe = new CNSSubscribeAction();
+    	final CNSUnsubscribeAction unsubscribe = new CNSUnsubscribeAction();
+    	final CNSListSubscriptionsAction listSubscriptions = new CNSListSubscriptionsAction();
+    	final CNSListSubscriptionsByTopicAction listSubscriptionsByTopic = new CNSListSubscriptionsByTopicAction();
+    	final CNSSetSubscriptionAttributesAction setSubscriptionAttributes = new CNSSetSubscriptionAttributesAction();
+    	final CNSGetSubscriptionAttributesAction getSubscriptionAttributes = new CNSGetSubscriptionAttributesAction();
+    	final CNSSetTopicAttributesAction setTopicAttributes = new CNSSetTopicAttributesAction();
+    	final CNSGetTopicAttributesAction getTopicAttributes = new CNSGetTopicAttributesAction();
+    	final CNSAddPermissionAction addPermission = new CNSAddPermissionAction();
+    	final CNSRemovePermissionAction removePermission = new CNSRemovePermissionAction();
+    	final HealthCheckShallow healthCheckShallow = new HealthCheckShallow();
+    	final CNSGetWorkerStatsAction getWorkerStats = new CNSGetWorkerStatsAction();
+    	final CNSClearWorkerQueuesAction clearWorkerQueues = new CNSClearWorkerQueuesAction();
     	
     	actionMap = new HashMap<String, Action>(){{
-    	    put(confSub.getName(), confSub);    	    
-    	    put(pub.getName(), pub);
-    	    put(createT.getName(), createT);
-    	    put(delT.getName(), delT);
-    	    put(listT.getName(), listT);
-    	    put(sub.getName(), sub);
-    	    put(unSub.getName(), unSub);
-    	    put(listSub.getName(), listSub);
-    	    put(listSybTnyT.getName(), listSybTnyT);
-    	    put(setSubA.getName(), setSubA);
-    	    put(getSubA.getName(), getSubA);
-    	    put(setTA.getName(), setTA);
-    	    put(getTA.getName(), getTA);
-    	    put(addPerm.getName(), addPerm);
-    	    put(remPerm.getName(), remPerm);
-    	    put(healthC.getName(), healthC);
-    	    put(getWS.getName(), getWS);
+    	    put(confirmSubscription.getName(), confirmSubscription);    	    
+    	    put(publish.getName(), publish);
+    	    put(createTopic.getName(), createTopic);
+    	    put(deleteTopic.getName(), deleteTopic);
+    	    put(listTopics.getName(), listTopics);
+    	    put(subscribe.getName(), subscribe);
+    	    put(unsubscribe.getName(), unsubscribe);
+    	    put(listSubscriptions.getName(), listSubscriptions);
+    	    put(listSubscriptionsByTopic.getName(), listSubscriptionsByTopic);
+    	    put(setSubscriptionAttributes.getName(), setSubscriptionAttributes);
+    	    put(getSubscriptionAttributes.getName(), getSubscriptionAttributes);
+    	    put(setTopicAttributes.getName(), setTopicAttributes);
+    	    put(getTopicAttributes.getName(), getTopicAttributes);
+    	    put(addPermission.getName(), addPermission);
+    	    put(removePermission.getName(), removePermission);
+    	    put(healthCheckShallow.getName(), healthCheckShallow);
+    	    put(getWorkerStats.getName(), getWorkerStats);
+    	    put(clearWorkerQueues.getName(), clearWorkerQueues);
     	}};
     }
     
