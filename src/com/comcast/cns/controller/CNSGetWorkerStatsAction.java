@@ -76,46 +76,53 @@ public class CNSGetWorkerStatsAction extends CNSAction {
 					stats.setTimestamp(Long.parseLong(row.getColumnSlice().getColumnByName("timestamp").getValue()));
 				}
 				
+				if (row.getColumnSlice().getColumnByName("jmxport") != null) {
+					stats.setJmxPort(Long.parseLong(row.getColumnSlice().getColumnByName("jmxport").getValue()));
+				}
+
 				statsList.add(stats);
 			}
 		}
 		
 		for (CNSWorkerStats stats : statsList) {
 			
-			JMXConnector jmxConnector = null;
-			String url = null;
+			if (stats.getJmxPort() > 0) {
 			
-			try {
+				JMXConnector jmxConnector = null;
+				String url = null;
 
-				String host = stats.getIpAddress();  
-				int port = 12345;
-				url = "service:jmx:rmi:///jndi/rmi://" + host + ":" + port + "/jmxrmi";
+				try {
 
-				JMXServiceURL serviceUrl = new JMXServiceURL(url);
-				jmxConnector = JMXConnectorFactory.connect(serviceUrl, null);
+					String host = stats.getIpAddress();  
+					long port = stats.getJmxPort();
+					url = "service:jmx:rmi:///jndi/rmi://" + host + ":" + port + "/jmxrmi";
 
-				MBeanServerConnection mbeanConn = jmxConnector.getMBeanServerConnection();
+					JMXServiceURL serviceUrl = new JMXServiceURL(url);
+					jmxConnector = JMXConnectorFactory.connect(serviceUrl, null);
 
-				//Set<ObjectName> beanSet = mbeanConn.queryNames(null, null);
-				
-				ObjectName cnsWorkerMonitor = new ObjectName("com.comcast.cns.controller:type=CNSMonitorMBean");
-				
-				Integer deliveryQueueSize = (Integer)mbeanConn.getAttribute(cnsWorkerMonitor, "DeliveryQueueSize");
-				Integer redeliveryQueueSize = (Integer)mbeanConn.getAttribute(cnsWorkerMonitor, "RedeliveryQueueSize");
-				Boolean consumerOverloaded = (Boolean)mbeanConn.getAttribute(cnsWorkerMonitor, "ConsumerOverloaded");
-				
-				stats.setDeliveryQueueSize(deliveryQueueSize);
-				stats.setRedeliveryQueueSize(redeliveryQueueSize);
-				stats.setConsumerOverloaded(consumerOverloaded);
-				
-			} catch (Exception ex) {
-				
-				logger.warn("event=failed_to_connect_to_jmx_server url=" + url);
-				
-			} finally {
-				
-				if (jmxConnector != null) {
-					jmxConnector.close();
+					MBeanServerConnection mbeanConn = jmxConnector.getMBeanServerConnection();
+
+					//Set<ObjectName> beanSet = mbeanConn.queryNames(null, null);
+
+					ObjectName cnsWorkerMonitor = new ObjectName("com.comcast.cns.controller:type=CNSMonitorMBean");
+
+					Integer deliveryQueueSize = (Integer)mbeanConn.getAttribute(cnsWorkerMonitor, "DeliveryQueueSize");
+					Integer redeliveryQueueSize = (Integer)mbeanConn.getAttribute(cnsWorkerMonitor, "RedeliveryQueueSize");
+					Boolean consumerOverloaded = (Boolean)mbeanConn.getAttribute(cnsWorkerMonitor, "ConsumerOverloaded");
+
+					stats.setDeliveryQueueSize(deliveryQueueSize);
+					stats.setRedeliveryQueueSize(redeliveryQueueSize);
+					stats.setConsumerOverloaded(consumerOverloaded);
+
+				} catch (Exception ex) {
+
+					logger.warn("event=failed_to_connect_to_jmx_server url=" + url);
+
+				} finally {
+
+					if (jmxConnector != null) {
+						jmxConnector.close();
+					}
 				}
 			}
 		}

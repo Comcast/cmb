@@ -21,11 +21,21 @@ public class CNSWorkerStats {
 	
 	private long timestamp;
 	
+	private long jmxPort;
+	
 	private boolean consumerOverloaded;
 	
 	private int deliveryQueueSize;
 	
 	private int redeliveryQueueSize;
+
+	public long getJmxPort() {
+		return jmxPort;
+	}
+
+	public void setJmxPort(long jmxPort) {
+		this.jmxPort = jmxPort;
+	}
 
 	public boolean isConsumerOverloaded() {
 		return consumerOverloaded;
