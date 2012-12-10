@@ -52,6 +52,7 @@ public class CNSMonitor implements CNSMonitorMBean {
         final AtomicInteger num = new AtomicInteger(1);
         final long timeStamp = System.currentTimeMillis();
     }
+
     private class CountMessagesVisitor implements RollingWindowCapture.Visitor<GenericEvent> {
         int num = 0;
         public void processNode(GenericEvent n){
@@ -60,7 +61,6 @@ public class CNSMonitor implements CNSMonitorMBean {
     }
     
     private RollingWindowCapture<GenericEvent> publishMsgRW = new RollingWindowCapture<GenericEvent>(CMBProperties.getInstance().getRollingWindowTimeSec(), 10000);
-
 
     @Override
     public int getNumPublishedMessages() {
@@ -74,7 +74,6 @@ public class CNSMonitor implements CNSMonitorMBean {
         return HTTPEndpointPublisherApache.cm.getConnectionsInPool();
     }
     
-    
     public void registerPublishMessage() {
         GenericEvent currentHead = publishMsgRW.getLatestPayload();
         if (currentHead == null || System.currentTimeMillis() - currentHead.timeStamp > 60000L) {
@@ -83,7 +82,6 @@ public class CNSMonitor implements CNSMonitorMBean {
             currentHead.num.incrementAndGet();
         }
     }
-
 
     public void registerSendsRemaining(String messageId, int remaining) {
         AtomicInteger newVal = new AtomicInteger();
@@ -108,6 +106,7 @@ public class CNSMonitor implements CNSMonitorMBean {
     public void clearBadEndpointsState() {
         badEndpoints.clear();
     }
+    
     /**
      * Only capture stats for endpoints that have previous errors.
      * @param endpoint
@@ -116,14 +115,18 @@ public class CNSMonitor implements CNSMonitorMBean {
      * @param topic
      */
     public void registerBadEndpoint(String endpoint, int errors, int numTries, String topic) {
-        if (!badEndpoints.containsKey(endpoint) && errors == 0) {
-            return; //no errirs for this endpoint. Its good. return
+        
+    	if (!badEndpoints.containsKey(endpoint) && errors == 0) {
+            return; //no errors for this endpoint. Its good. return
         }
-        BadEndpointInfo newVal = new BadEndpointInfo();
+        
+    	BadEndpointInfo newVal = new BadEndpointInfo();
         BadEndpointInfo oldVal = badEndpoints.putIfAbsent(endpoint, newVal);
+        
         if (oldVal != null) {
             newVal = oldVal;
         }
+        
         newVal.errors.addAndGet(errors);
         newVal.tries.addAndGet(numTries);
         newVal.topics.putIfAbsent(topic, Boolean.TRUE);
@@ -134,19 +137,29 @@ public class CNSMonitor implements CNSMonitorMBean {
      * @return map of endpointURL -> failure-rate, numTries, List<Topics>
      */
     public Map<String, String> getErrorRateForEndpoints() {
-        HashMap<String, String> ret = new HashMap<String, String>();
-        for (Map.Entry<String, BadEndpointInfo> entry : badEndpoints.entrySet()) {
-            String endpoint = entry.getKey();
+
+    	HashMap<String, String> ret = new HashMap<String, String>();
+        
+    	for (Map.Entry<String, BadEndpointInfo> entry : badEndpoints.entrySet()) {
+        
+    		String endpoint = entry.getKey();
             BadEndpointInfo val = entry.getValue();
             StringBuffer sb = new StringBuffer();
             int failureRate = (val.tries.get() > 0) ? (int) (((float) val.errors.get() / (float) val.tries.get()) * 100) : 0;
             sb.append("failureRate=").append(failureRate).append(",numTries=").append(val.tries.get()).append(",topics=");
             Enumeration<String> topics = val.topics.keys();
+            
+            if (topics.hasMoreElements()) {
+                sb.append(topics.nextElement());
+            }
+
             while (topics.hasMoreElements()) {
                 sb.append(",").append(topics.nextElement());
             }
+            
             ret.put(endpoint, sb.toString());
         }
+    	
         return ret;
     }
 
@@ -164,5 +177,4 @@ public class CNSMonitor implements CNSMonitorMBean {
     public boolean isConsumerOverloaded() {
         return CNSEndpointPublisherJobConsumer.isOverloaded();
     }
-
 }

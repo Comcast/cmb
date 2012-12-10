@@ -202,8 +202,9 @@ public class CNSEndpointPublisherJobProducer implements CNSPublisherPartitionRun
 
 	        	try {
 		        	Map<String, String> values = new HashMap<String, String>();
-		        	values.put("timestamp", System.currentTimeMillis() + "");
+		        	values.put("producerTimestamp", System.currentTimeMillis() + "");
 		        	values.put("jmxport", System.getProperty("com.sun.management.jmxremote.port", "0"));
+		        	values.put("mode", CNSPublisher.getModeString());
 	                CNSPublisher.cassandraHandler.insertOrUpdateRow(hostAddress, "CNSWorkers", values, HConsistencyLevel.QUORUM);
 	        	} catch (Exception ex) {
 	        		logger.warn("event=ping_glitch", ex);

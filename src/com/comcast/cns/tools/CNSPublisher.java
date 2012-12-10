@@ -78,6 +78,18 @@ public class CNSPublisher {
         return ms;
     }
     
+    public static String getModeString() {
+    	if (modes.contains(Mode.Producer) && modes.contains(Mode.Consumer)) {
+    		return "Producer,Consumer";
+    	} else if (modes.contains(Mode.Producer)) {
+    		return "Producer";
+    	} else if (modes.contains(Mode.Consumer)) {
+    		return "Consumer";
+    	} else {
+    		return "";
+    	}
+    }
+    
     /**
      * Usage is java <opts> com.comcast.cns.tools.CNSPublisher -role=<comma seperated list of roles>
      * @param argv

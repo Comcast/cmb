@@ -15,12 +15,18 @@
  */
 package com.comcast.cns.model;
 
+import java.util.Map;
+
 public class CNSWorkerStats {
 	
 	private String ipAddress;
 	
-	private long timestamp;
+	private long producerTimestamp;
 	
+	private long consumerTimestamp;
+	
+	private String mode;
+
 	private long jmxPort;
 	
 	private boolean consumerOverloaded;
@@ -28,6 +34,34 @@ public class CNSWorkerStats {
 	private int deliveryQueueSize;
 	
 	private int redeliveryQueueSize;
+	
+	private long numPublishedMessages;
+	
+	private Map<String, String> errorRateForEndpoints;
+
+	public Map<String, String> getErrorRateForEndpoints() {
+		return errorRateForEndpoints;
+	}
+
+	public void setErrorRateForEndpoints(Map<String, String> errorRateForEndpoints) {
+		this.errorRateForEndpoints = errorRateForEndpoints;
+	}
+
+	public long getNumPublishedMessages() {
+		return numPublishedMessages;
+	}
+
+	public void setNumPublishedMessages(long numPublishedMessages) {
+		this.numPublishedMessages = numPublishedMessages;
+	}
+
+	public String getMode() {
+		return mode;
+	}
+
+	public void setMode(String mode) {
+		this.mode = mode;
+	}
 
 	public long getJmxPort() {
 		return jmxPort;
@@ -69,17 +103,34 @@ public class CNSWorkerStats {
 		this.ipAddress = ipAddress;
 	}
 
-	public long getTimestamp() {
-		return timestamp;
+	public long getProducerTimestamp() {
+		return producerTimestamp;
 	}
 
-	public void setTimestamp(long timestamp) {
-		this.timestamp = timestamp;
+	public void setProducerTimestamp(long timestamp) {
+		this.producerTimestamp = timestamp;
 	}
 	
-	public boolean isActive() {
+	public boolean isProducerActive() {
 		
-		if (System.currentTimeMillis() - this.timestamp > 120*1000) {
+		if (System.currentTimeMillis() - this.producerTimestamp > 120*1000) {
+			return false;
+		} else {
+			return true;
+		}
+	}
+
+	public long getConsumerTimestamp() {
+		return consumerTimestamp;
+	}
+
+	public void setConsumerTimestamp(long timestamp) {
+		this.consumerTimestamp = timestamp;
+	}
+	
+	public boolean isConsumerActive() {
+		
+		if (System.currentTimeMillis() - this.consumerTimestamp > 120*1000) {
 			return false;
 		} else {
 			return true;

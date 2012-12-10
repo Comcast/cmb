@@ -200,6 +200,7 @@ public class CNSPublishJob implements Runnable {
 
         CNSMonitor.getInstance().registerSendsRemaining(message.getMessageId(), -1);
         CNSMonitor.getInstance().registerBadEndpoint(endpoint, 0, 1, message.getTopicArn());
+        CNSMonitor.getInstance().registerPublishMessage();
     }
     
     private void runCommonAndRetry(IEndpointPublisher pub, CnsSubscriptionProtocol protocol, String endpoint, String subArn) {

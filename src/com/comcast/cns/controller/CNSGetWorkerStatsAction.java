@@ -17,7 +17,7 @@ package com.comcast.cns.controller;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 
 import javax.management.MBeanServerConnection;
 import javax.management.ObjectName;
@@ -72,12 +72,20 @@ public class CNSGetWorkerStatsAction extends CNSAction {
 				CNSWorkerStats stats = new CNSWorkerStats();
 				stats.setIpAddress(row.getKey());
 				
-				if (row.getColumnSlice().getColumnByName("timestamp") != null) {
-					stats.setTimestamp(Long.parseLong(row.getColumnSlice().getColumnByName("timestamp").getValue()));
+				if (row.getColumnSlice().getColumnByName("producerTimestamp") != null) {
+					stats.setProducerTimestamp(Long.parseLong(row.getColumnSlice().getColumnByName("producerTimestamp").getValue()));
 				}
 				
+				if (row.getColumnSlice().getColumnByName("consumerTimestamp") != null) {
+					stats.setConsumerTimestamp(Long.parseLong(row.getColumnSlice().getColumnByName("consumerTimestamp").getValue()));
+				}
+
 				if (row.getColumnSlice().getColumnByName("jmxport") != null) {
 					stats.setJmxPort(Long.parseLong(row.getColumnSlice().getColumnByName("jmxport").getValue()));
+				}
+
+				if (row.getColumnSlice().getColumnByName("mode") != null) {
+					stats.setMode(row.getColumnSlice().getColumnByName("mode").getValue());
 				}
 
 				statsList.add(stats);
@@ -107,12 +115,19 @@ public class CNSGetWorkerStatsAction extends CNSAction {
 					ObjectName cnsWorkerMonitor = new ObjectName("com.comcast.cns.controller:type=CNSMonitorMBean");
 
 					Integer deliveryQueueSize = (Integer)mbeanConn.getAttribute(cnsWorkerMonitor, "DeliveryQueueSize");
-					Integer redeliveryQueueSize = (Integer)mbeanConn.getAttribute(cnsWorkerMonitor, "RedeliveryQueueSize");
-					Boolean consumerOverloaded = (Boolean)mbeanConn.getAttribute(cnsWorkerMonitor, "ConsumerOverloaded");
-
 					stats.setDeliveryQueueSize(deliveryQueueSize);
+					
+					Integer redeliveryQueueSize = (Integer)mbeanConn.getAttribute(cnsWorkerMonitor, "RedeliveryQueueSize");
 					stats.setRedeliveryQueueSize(redeliveryQueueSize);
+					
+					Boolean consumerOverloaded = (Boolean)mbeanConn.getAttribute(cnsWorkerMonitor, "ConsumerOverloaded");
 					stats.setConsumerOverloaded(consumerOverloaded);
+					
+					Integer numPublishedMessages = (Integer)mbeanConn.getAttribute(cnsWorkerMonitor, "NumPublishedMessages");
+					stats.setNumPublishedMessages(numPublishedMessages);
+					
+					Map<String, String> errorRateForEndpoints = (Map<String, String>)mbeanConn.getAttribute(cnsWorkerMonitor, "ErrorRateForEndpoints");
+					stats.setErrorRateForEndpoints(errorRateForEndpoints);
 
 				} catch (Exception ex) {
 
