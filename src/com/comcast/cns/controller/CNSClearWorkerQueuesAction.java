@@ -35,6 +35,7 @@ import org.apache.log4j.Logger;
 
 import com.comcast.cmb.common.model.User;
 import com.comcast.cmb.common.persistence.CassandraPersistence;
+import com.comcast.cmb.common.util.CMBErrorCodes;
 import com.comcast.cmb.common.util.CMBException;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cns.io.CNSWorkerStatsPopulator;
@@ -66,7 +67,7 @@ public class CNSClearWorkerQueuesAction extends CNSAction {
 
 		if (host == null || host.equals("")) {
     		logger.error("event=cns_clear_worker_queues status=failure errorType=InvalidParameters details=missing_parameter_host");
-			throw new CMBException(CNSErrorCodes.CNS_InvalidParameter,"request parameter Host missing.");
+			throw new CMBException(CNSErrorCodes.CNS_InvalidParameter,"Request parameter Host missing.");
 		}
 		
 		CassandraPersistence cassandraHandler = new CassandraPersistence(CMBProperties.getInstance().getCMBCNSKeyspace());
@@ -122,9 +123,10 @@ public class CNSClearWorkerQueuesAction extends CNSAction {
 					
 					mbeanProxy.clearWorkerQueues();
 					
-				} catch (Exception ex) {
+			    	String res = CNSWorkerStatsPopulator.getGetWorkerClearQueuesResponse();	
+					response.getWriter().println(res);
 
-					logger.warn("event=failed_to_connect_to_jmx_server url=" + url);
+			    	return true;
 
 				} finally {
 
@@ -134,10 +136,7 @@ public class CNSClearWorkerQueuesAction extends CNSAction {
 				}
 			}
 		}
-
-    	String res = CNSWorkerStatsPopulator.getGetWorkerClearQueuesResponse();	
-		response.getWriter().println(res);
-
-    	return true;
+		
+		throw new CMBException(CMBErrorCodes.NotFound, "Cannot clear worker queues: Host " + host + " not found.");
 	}
 }
