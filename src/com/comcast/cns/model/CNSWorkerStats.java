@@ -38,6 +38,16 @@ public class CNSWorkerStats {
 	private long numPublishedMessages;
 	
 	private Map<String, String> errorRateForEndpoints;
+	
+	private boolean cqsServiceAvailable;
+
+	public boolean isCqsServiceAvailable() {
+		return cqsServiceAvailable;
+	}
+
+	public void setCqsServiceAvailable(boolean cqsServiceAvailable) {
+		this.cqsServiceAvailable = cqsServiceAvailable;
+	}
 
 	public Map<String, String> getErrorRateForEndpoints() {
 		return errorRateForEndpoints;

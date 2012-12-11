@@ -25,8 +25,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import me.prettyprint.hector.api.HConsistencyLevel;
 
+import org.apache.http.conn.HttpHostConnectException;
 import org.apache.log4j.Logger;
 
+import com.amazonaws.AmazonClientException;
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.sqs.AmazonSQS;
@@ -307,6 +309,7 @@ public class CNSEndpointPublisherJobConsumer implements CNSPublisherPartitionRun
             logger.debug("event=run num_msg_received=" + msgs.size());
             long ts4 = System.currentTimeMillis();
             CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CNSCQSTime, ts4 - ts3);
+    		CNSMonitor.getInstance().registerCQSServiceAvailable(true);
 
             if (msgs.size() > 0) {   
             	
@@ -343,8 +346,15 @@ public class CNSEndpointPublisherJobConsumer implements CNSPublisherPartitionRun
                 logger.debug("event=run_pass_done");
             }
 
-        } catch (AmazonServiceException ex) {
-        	ensureConsumerQueuesExist();
+        } catch (AmazonClientException ex) {
+
+	    	if (ex.getCause() instanceof HttpHostConnectException) {
+	    		logger.error("event=cqs_service_unavailable", ex);
+	    		CNSMonitor.getInstance().registerCQSServiceAvailable(false);
+	    	} else {
+	    		ensureConsumerQueuesExist();
+	    	}
+
         } catch (Exception ex) {
             logger.error("event=run status=exception", ex);
         }

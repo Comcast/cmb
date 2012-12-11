@@ -24,8 +24,10 @@ import java.util.Random;
 
 import me.prettyprint.hector.api.HConsistencyLevel;
 
+import org.apache.http.conn.HttpHostConnectException;
 import org.apache.log4j.Logger;
 
+import com.amazonaws.AmazonClientException;
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.sqs.AmazonSQS;
@@ -47,6 +49,7 @@ import com.comcast.cmb.common.persistence.PersistenceFactory;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.PersistenceException;
 import com.comcast.cmb.common.util.ValueAccumulator.AccumulatorName;
+import com.comcast.cns.controller.CNSMonitor;
 import com.comcast.cns.model.CNSEndpointPublishJob;
 import com.comcast.cns.model.CNSMessage;
 import com.comcast.cns.model.CNSSubscription;
@@ -213,6 +216,7 @@ public class CNSEndpointPublisherJobProducer implements CNSPublisherPartitionRun
 	        
 	        String publishJobQName = CNS_PRODUCER_QUEUE_NAME_PREFIX + partition;
 	        Message message = receiveMessage(publishJobQName); 
+    		CNSMonitor.getInstance().registerCQSServiceAvailable(true);
 
 	        if (message != null) {
 	        	
@@ -247,9 +251,16 @@ public class CNSEndpointPublisherJobProducer implements CNSPublisherPartitionRun
 	            long ts2 = System.currentTimeMillis();
 	            logger.info("event=processed_publish_job CassandraTime=" + CMBControllerServlet.valueAccumulator.getCounter(AccumulatorName.CassandraTime)  + " CNSCQSTimeMS=" + CMBControllerServlet.valueAccumulator.getCounter(AccumulatorName.CNSCQSTime) + " responseTimeMS=" + (ts2 - ts1));
 	        }
-	        
-        } catch (AmazonServiceException ex) {
-        	ensureProducerQueuesExist();
+	    
+	    } catch (AmazonClientException ex) {
+	    	
+	    	if (ex.getCause() instanceof HttpHostConnectException) {
+	    		logger.error("event=cqs_service_unavailable", ex);
+	    		CNSMonitor.getInstance().registerCQSServiceAvailable(false);
+	    	} else {
+	    		ensureProducerQueuesExist();
+	    	}
+	    
 	    } catch (Exception e) {
 	        logger.error("event=run status=exception", e);
 	    }

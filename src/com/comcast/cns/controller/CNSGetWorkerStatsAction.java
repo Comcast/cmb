@@ -129,6 +129,9 @@ public class CNSGetWorkerStatsAction extends CNSAction {
 					Map<String, String> errorRateForEndpoints = (Map<String, String>)mbeanConn.getAttribute(cnsWorkerMonitor, "ErrorRateForEndpoints");
 					stats.setErrorRateForEndpoints(errorRateForEndpoints);
 
+					Boolean cqsServiceAvailable = (Boolean)mbeanConn.getAttribute(cnsWorkerMonitor, "CQSServiceAvailable");
+					stats.setCqsServiceAvailable(cqsServiceAvailable);
+
 				} catch (Exception ex) {
 
 					logger.warn("event=failed_to_connect_to_jmx_server url=" + url);

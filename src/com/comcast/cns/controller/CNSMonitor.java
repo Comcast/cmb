@@ -51,6 +51,7 @@ public class CNSMonitor implements CNSMonitorMBean {
     }
     
     private ConcurrentHashMap<String, BadEndpointInfo> badEndpoints = new ConcurrentHashMap<String, CNSMonitor.BadEndpointInfo>();
+    private boolean cqsServiceAvailable = true;
 
     private class GenericEvent extends RollingWindowCapture.PayLoad{
         final AtomicInteger num = new AtomicInteger(1);
@@ -194,5 +195,14 @@ public class CNSMonitor implements CNSMonitorMBean {
 		}
 		
 		return false;
+	}
+	
+	@Override
+	public boolean isCQSServiceAvailable() {
+		return cqsServiceAvailable;
+	}
+	
+	public void registerCQSServiceAvailable(boolean available) {
+		cqsServiceAvailable = available;
 	}
 }

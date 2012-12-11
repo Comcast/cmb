@@ -61,6 +61,11 @@ public interface CNSMonitorMBean {
     
     /**
      * 
+     */
+    public boolean isCQSServiceAvailable();
+    
+    /**
+     * 
      * @return true if consumer is no longer taking new ep-publish-jobs off the queue
      * because its too busy. false otherwise
      */
