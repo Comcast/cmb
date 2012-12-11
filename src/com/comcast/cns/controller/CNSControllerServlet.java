@@ -108,7 +108,7 @@ public class CNSControllerServlet extends CMBControllerServlet {
     	final CNSRemovePermissionAction removePermission = new CNSRemovePermissionAction();
     	final HealthCheckShallow healthCheckShallow = new HealthCheckShallow();
     	final CNSGetWorkerStatsAction getWorkerStats = new CNSGetWorkerStatsAction();
-    	final CNSClearWorkerQueuesAction clearWorkerQueues = new CNSClearWorkerQueuesAction();
+    	final CNSManageWorkerAction manageWorker = new CNSManageWorkerAction();
     	
     	actionMap = new HashMap<String, Action>(){{
     	    put(confirmSubscription.getName(), confirmSubscription);    	    
@@ -128,7 +128,7 @@ public class CNSControllerServlet extends CMBControllerServlet {
     	    put(removePermission.getName(), removePermission);
     	    put(healthCheckShallow.getName(), healthCheckShallow);
     	    put(getWorkerStats.getName(), getWorkerStats);
-    	    put(clearWorkerQueues.getName(), clearWorkerQueues);
+    	    put(manageWorker.getName(), manageWorker);
     	}};
     }
     

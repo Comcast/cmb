@@ -33,6 +33,7 @@ import com.comcast.cmb.common.model.User;
 import com.comcast.cmb.common.persistence.IUserPersistence;
 import com.comcast.cmb.common.persistence.PersistenceFactory;
 import com.comcast.cmb.common.util.CMBProperties;
+import com.comcast.cmb.common.util.PersistenceException;
 import com.comcast.cmb.common.util.XmlUtil;
 
 /**
@@ -57,19 +58,31 @@ public class CNSWorkerStatePageServlet extends AdminServletBase {
 		//String userId = request.getParameter("userId");
 		//connect(userId);
 		
-		if (parameters.containsKey("Foo")) {
+		IUserPersistence userHandler = PersistenceFactory.getUserPersistence();
+		User cnsAdminUser;
+		try {
+			cnsAdminUser = userHandler.getUserByName(CMBProperties.getInstance().getCnsUserName());
+		} catch (PersistenceException ex) {
+			throw new ServletException(ex);
+		}
+
+		if (parameters.containsKey("ClearQueues")) {
 			
 			try {
+				String host = request.getParameter("Host");
+				String clearQueuesXml = httpGet(cnsServiceBaseUrl + "?Action=ManageWorker&Host="+host+"&Task=ClearQueues&AWSAccessKeyId=" + cnsAdminUser.getAccessKey());
 			} catch (Exception ex) {
-				logger.error("", ex);
+				logger.error("event=failed_to_clear_queues", ex);
 				throw new ServletException(ex);
 			}
-
-		} else if (parameters.containsKey("Bar")) {
+	
+		} else if (parameters.containsKey("RemoveRecord")) {
 			
 			try {
+				String host = request.getParameter("Host");
+				String removeRecordXml = httpGet(cnsServiceBaseUrl + "?Action=ManageWorker&Host="+host+"&Task=RemoveRecord&AWSAccessKeyId=" + cnsAdminUser.getAccessKey());
 			} catch (Exception ex) {
-				logger.error("", ex);
+				logger.error("event=failed_to_clear_queues", ex);
 				throw new ServletException(ex);
 			}
 		}
@@ -79,21 +92,18 @@ public class CNSWorkerStatePageServlet extends AdminServletBase {
 
 		try {
 
-			IUserPersistence userHandler = PersistenceFactory.getUserPersistence();
-			User user = userHandler.getUserByName(CMBProperties.getInstance().getCnsUserName());
-
-			String workerStateXml = httpGet(cnsServiceBaseUrl + "?Action=GetWorkerStats&AWSAccessKeyId=" + user.getAccessKey());
+			String workerStateXml = httpGet(cnsServiceBaseUrl + "?Action=GetWorkerStats&AWSAccessKeyId=" + cnsAdminUser.getAccessKey());
 			
 			Element root = XmlUtil.buildDoc(workerStateXml);
 			
 			List<Element> statsList = XmlUtil.getCurrentLevelChildNodes(XmlUtil.getCurrentLevelChildNodes(root, "GetWorkerStatsResult").get(0), "Stats");
 			
 			out.println("<h1>CNS Worker Stats</h1>");
-
+			
 			out.println("<table border='1'>");
 			out.println("<tr><th>Host</th><th>Jmx Port</th><th>Mode</th><th>Msg Published</th>");
 			out.println("<th>Producer Heartbeat</th><th>Active</th><th>Consumer Heartbeat</th><th>Active</th>");
-			out.println("<th>Delivery Queue Size</th><th>Redelivery Queue Size</th><th>Consumer Overloaded</th></tr>");
+			out.println("<th>Delivery Queue Size</th><th>Redelivery Queue Size</th><th>Consumer Overloaded</th><th></th><th></th></tr>");
 
 			String alarmColor = " bgcolor='#C00000'";
 			String okColor = " bgcolor='#00C000'";
@@ -103,7 +113,9 @@ public class CNSWorkerStatePageServlet extends AdminServletBase {
 
 			for (Element stats : statsList) {
 				
-				out.println("<tr><td>"+XmlUtil.getCurrentLevelTextValue(stats, "IpAddress")+"</td>");
+				out.println("<tr>");
+				String host = XmlUtil.getCurrentLevelTextValue(stats, "IpAddress");
+				out.println("<td>"+host+"</td>");
 				out.println("<td>"+XmlUtil.getCurrentLevelTextValue(stats, "JmxPort")+"</td>");
 				String mode = XmlUtil.getCurrentLevelTextValue(stats, "Mode");
 				out.println("<td>"+mode+"</td>");
@@ -119,7 +131,10 @@ public class CNSWorkerStatePageServlet extends AdminServletBase {
 				int redeliveryQueueSize = Integer.parseInt(XmlUtil.getCurrentLevelTextValue(stats, "RedeliveryQueueSize"));
 				out.println("<td"+(1.0*redeliveryQueueSize/redeliveryQueueMaxSize >= 0.75 ? alarmColor : okColor)+">"+redeliveryQueueSize+"</td>");
 				boolean consumerOverloaded = Boolean.parseBoolean(XmlUtil.getCurrentLevelTextValue(stats, "ConsumerOverloaded"));
-				out.println("<td"+(consumerOverloaded ? alarmColor : okColor)+">"+consumerOverloaded+"</td></tr>");
+				out.println("<td"+(consumerOverloaded ? alarmColor : okColor)+">"+consumerOverloaded+"</td>");
+				out.println("<td><form action=\"\" method=\"POST\"><input type='hidden' name='Host' value='"+host+"'><input type='submit' value='Clear Queues' name='ClearQueues'/></form></td>");
+				out.println("<td><form action=\"\" method=\"POST\"><input type='hidden' name='Host' value='"+host+"'><input type='submit' value='Remove Record' name='RemoveRecord'/></form></td>");
+				out.println("</tr>");
 			}
 			
 			out.println("<table>");

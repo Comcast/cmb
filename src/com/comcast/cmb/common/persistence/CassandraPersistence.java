@@ -162,6 +162,10 @@ public class CassandraPersistence {
 		long ts2 = System.currentTimeMillis();
 		CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CassandraTime, (ts2 - ts1));
 	}
+	
+	public Keyspace getKeySpace(HConsistencyLevel consistencyLevel) {
+		return keyspaces.get(consistencyLevel);
+	}
 
 	/**
 	 * Update single key value pair in column family.
