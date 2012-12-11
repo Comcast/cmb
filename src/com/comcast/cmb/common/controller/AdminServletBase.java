@@ -15,10 +15,16 @@
  */
 package com.comcast.cmb.common.controller;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.net.HttpURLConnection;
+import java.net.URL;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
+
+import org.apache.log4j.Logger;
 
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.sns.AmazonSNS;
@@ -39,17 +45,23 @@ import com.comcast.cmb.common.util.PersistenceException;
 public abstract class AdminServletBase extends HttpServlet {
 
     private static final long serialVersionUID = 1L;
+    
     public static final String cnsAdminBaseUrl = CMBProperties.getInstance().getCNSAdminUrl().endsWith("/") ? CMBProperties.getInstance().getCNSAdminUrl() : CMBProperties.getInstance().getCNSAdminUrl() + "/";
 	public static final String cqsAdminBaseUrl = CMBProperties.getInstance().getCQSAdminUrl().endsWith("/") ? CMBProperties.getInstance().getCQSAdminUrl() : CMBProperties.getInstance().getCQSAdminUrl() + "/";
 	
 	public static final String cnsAdminUrl = cnsAdminBaseUrl + "ADMIN";
 	public static final String cqsAdminUrl = cqsAdminBaseUrl + "ADMIN";
 	
+	public static final String cnsServiceBaseUrl = CMBProperties.getInstance().getCNSServerUrl();
+	
     protected volatile User user = null;
+    
     protected volatile AmazonSQS sqs = null;
     protected volatile AmazonSNS sns = null;
 
     private volatile BasicAWSCredentials awsCredentials = null;
+    
+	private static Logger logger = Logger.getLogger(AdminServletBase.class);
 
     /**
      * Method to set the awsCredentials and the appt instances of sqs and sns interfaces
@@ -77,6 +89,7 @@ public abstract class AdminServletBase extends HttpServlet {
         sns = new AmazonSNSClient(awsCredentials);
         sns.setEndpoint(CMBProperties.getInstance().getCNSServerUrl());
     }
+    
     /**
      * Generate standard heading in the response. 
      * @param out
@@ -85,4 +98,32 @@ public abstract class AdminServletBase extends HttpServlet {
     protected void header(PrintWriter out) throws ServletException {
     	out.println("<h1>CMB - Comcast Message Bus - V " + CMBControllerServlet.VERSION +"</h1>");
     }
+    
+    protected String httpGet(String urlString) {
+        
+    	URL url;
+        HttpURLConnection conn;
+        BufferedReader br;
+        String line;
+        String doc = "";
+        
+        try {
+        	
+           url = new URL(urlString);
+           conn = (HttpURLConnection)url.openConnection();
+           conn.setRequestMethod("GET");
+           br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+           
+           while ((line = br.readLine()) != null) {
+              doc += line;
+           }
+           
+           br.close();
+        
+        } catch (Exception ex) {
+           logger.error("event=failed_http_get", ex);
+        }
+        
+        return doc;
+     }
 }

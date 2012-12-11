@@ -112,6 +112,15 @@
     <servlet-name>CNSTopicAddPermissionPage</servlet-name>
     <url-pattern>/CNSUser/AddPermission/*</url-pattern>
   </servlet-mapping>
+  <servlet-mapping>
+    <servlet-name>CNSWorkerStatePageServlet</servlet-name>
+    <url-pattern>/CNSWorkerState/*</url-pattern>
+  </servlet-mapping>
+  
+  <servlet>
+    <servlet-name>CNSWorkerStatePageServlet</servlet-name>
+    <servlet-class>com.comcast.cns.controller.CNSWorkerStatePageServlet</servlet-class>
+  </servlet>
   <servlet>
     <servlet-name>CQSQueueMessagesPageServlet</servlet-name>
     <servlet-class>com.comcast.cqs.controller.CQSQueueMessagesPageServlet</servlet-class>
