@@ -20,7 +20,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.log4j.Logger;
 
-import com.amazonaws.services.sqs.model.ChangeMessageVisibilityRequest;
 import com.comcast.cmb.common.controller.CMBControllerServlet;
 import com.comcast.cmb.common.model.User;
 import com.comcast.cmb.common.persistence.PersistenceFactory;
@@ -68,18 +67,6 @@ public class CNSPublishJob implements Runnable {
     private volatile int maxDelayRetries = 0;
     
     /**
-     * Change message visibility for the ep-job whose receipt handle we have by delay amount 
-     */
-    private void changeMessageVisibilityEpJob(int delaySec) {
-        long ts3 = System.currentTimeMillis();
-        ChangeMessageVisibilityRequest req = new ChangeMessageVisibilityRequest(queueUrl, receiptHandle, delaySec);
-        CNSEndpointPublisherJobConsumer.getCQSHandler().changeMessageVisibility(req);
-        long ts4 = System.currentTimeMillis();
-        CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CNSCQSTime, ts4 - ts3);
-        logger.debug("event=send_notification status=change_message_visibility message_id=" + message.getMessageId() + " delay=" + delaySec);
-    }
-    
-    /**
      * Call this method only in retry mode for a single sub
      */
     public void doRetry(IEndpointPublisher pub, CnsSubscriptionProtocol protocol, String endpoint, String subArn) {
@@ -121,7 +108,7 @@ public class CNSPublishJob implements Runnable {
                 
                 CNSEndpointPublisherJobConsumer.submitForReDeliver(this, retryPolicy.getMinDelayTarget(), TimeUnit.SECONDS);
 
-                changeMessageVisibilityEpJob(retryPolicy.getMinDelayTarget() + 1); //add 1 second buffer to avoid race condition                    
+                CQSHandler.changeMessageVisibility(queueUrl, receiptHandle, retryPolicy.getMinDelayTarget() + 1); //add 1 second buffer to avoid race condition                    
                 return;
             }
             
@@ -139,7 +126,7 @@ public class CNSPublishJob implements Runnable {
                 
                 CNSEndpointPublisherJobConsumer.submitForReDeliver(this, delay, TimeUnit.SECONDS);
                 
-                changeMessageVisibilityEpJob(delay + 1);//add 1 second buffer to avoid race condition
+                CQSHandler.changeMessageVisibility(queueUrl, receiptHandle, delay + 1);//add 1 second buffer to avoid race condition
                 return;
             }                    
             
@@ -150,7 +137,7 @@ public class CNSPublishJob implements Runnable {
                 
                 CNSEndpointPublisherJobConsumer.submitForReDeliver(this, retryPolicy.getMaxDelayTarget(), TimeUnit.SECONDS);
                 
-                changeMessageVisibilityEpJob(retryPolicy.getMaxDelayTarget() + 1); //add 1 second buffer to avoid race condition
+                CQSHandler.changeMessageVisibility(queueUrl, receiptHandle, retryPolicy.getMaxDelayTarget() + 1); //add 1 second buffer to avoid race condition
                 return;
             } 
             
@@ -159,7 +146,7 @@ public class CNSPublishJob implements Runnable {
             //let message die 
 
             if (endpointPublishJobCount.decrementAndGet() == 0) {
-                CNSEndpointPublisherJobConsumer.deleteMessage(queueUrl, receiptHandle);
+                CQSHandler.deleteMessage(queueUrl, receiptHandle);
                 logger.debug("event=send_notification status=deleting_publish_message message_id=" + message.getMessageId());
             }
             
@@ -194,7 +181,7 @@ public class CNSPublishJob implements Runnable {
         // decrement the total number of sub-tasks and if counter is 0 delete publish job
         
         if (endpointPublishJobCount.decrementAndGet() == 0) {
-            CNSEndpointPublisherJobConsumer.deleteMessage(queueUrl, receiptHandle);
+            CQSHandler.deleteMessage(queueUrl, receiptHandle);
             logger.debug("event=send_notification status=deleting_publish_message message_id=" + message.getMessageId());
         }
 
@@ -224,7 +211,7 @@ public class CNSPublishJob implements Runnable {
                 // let message die 
 
                 if (endpointPublishJobCount.decrementAndGet() == 0) {
-                    CNSEndpointPublisherJobConsumer.deleteMessage(queueUrl, receiptHandle);
+                    CQSHandler.deleteMessage(queueUrl, receiptHandle);
                     logger.debug("event=send_notification status=deleting_publish_message message_id=" + message.getMessageId());
                 }
             }
