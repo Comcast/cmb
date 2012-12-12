@@ -41,6 +41,7 @@ public class CNSWorkerStatsPopulator {
 			res += "\t\t\t<RedeliveryQueueSize>"+s.getRedeliveryQueueSize()+"</RedeliveryQueueSize>\n";
 			res += "\t\t\t<ConsumerOverloaded>"+s.isConsumerOverloaded()+"</ConsumerOverloaded>\n";
 			res += "\t\t\t<CqsServiceAvailable>"+s.isCqsServiceAvailable()+"</CqsServiceAvailable>\n";
+			res += "\t\t\t<NumPooledHttpConnections>"+s.getNumPooledHttpConnections()+"</NumPooledHttpConnections>\n";
 
 			if (s.getErrorRateForEndpoints() != null && s.getErrorRateForEndpoints().size() > 0) {
 				

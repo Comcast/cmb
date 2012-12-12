@@ -40,6 +40,16 @@ public class CNSWorkerStats {
 	private Map<String, String> errorRateForEndpoints;
 	
 	private boolean cqsServiceAvailable;
+	
+	private int numPooledHttpConnections;
+
+	public int getNumPooledHttpConnections() {
+		return numPooledHttpConnections;
+	}
+
+	public void setNumPooledHttpConnections(int numPooledHttpConnections) {
+		this.numPooledHttpConnections = numPooledHttpConnections;
+	}
 
 	public boolean isCqsServiceAvailable() {
 		return cqsServiceAvailable;

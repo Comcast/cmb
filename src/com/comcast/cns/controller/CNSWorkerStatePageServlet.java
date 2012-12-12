@@ -89,6 +89,8 @@ public class CNSWorkerStatePageServlet extends AdminServletBase {
 		
 		out.println("<html>");
 		out.println("<head><title>CNS Worker State</title></head><body>");
+		
+		this.header(out);
 
 		try {
 
@@ -98,12 +100,12 @@ public class CNSWorkerStatePageServlet extends AdminServletBase {
 			
 			List<Element> statsList = XmlUtil.getCurrentLevelChildNodes(XmlUtil.getCurrentLevelChildNodes(root, "GetWorkerStatsResult").get(0), "Stats");
 			
-			out.println("<h1>CNS Worker Stats</h1>");
+			out.println("<h2>CNS Worker Stats</h2>");
 			
 			out.println("<table border='1'>");
 			out.println("<tr><th>Host</th><th>Jmx Port</th><th>Mode</th><th>Msg Published</th>");
 			out.println("<th>Producer Heartbeat</th><th>Active</th><th>Consumer Heartbeat</th><th>Active</th>");
-			out.println("<th>Delivery Queue Size</th><th>Redelivery Queue Size</th><th>Consumer Overloaded</th><th>Cqs Service Available</th><th></th><th></th></tr>");
+			out.println("<th>Delivery Queue Size</th><th>Redelivery Queue Size</th><th>Consumer Overloaded</th><th>Cqs Service Available</th><th>Http Pool Size</th><th></th><th></th></tr>");
 
 			String alarmColor = " bgcolor='#C00000'";
 			String okColor = " bgcolor='#00C000'";
@@ -134,6 +136,7 @@ public class CNSWorkerStatePageServlet extends AdminServletBase {
 				out.println("<td"+(consumerOverloaded ? alarmColor : okColor)+">"+consumerOverloaded+"</td>");
 				boolean cqsServiceAvailable = Boolean.parseBoolean(XmlUtil.getCurrentLevelTextValue(stats, "CqsServiceAvailable"));
 				out.println("<td"+(!cqsServiceAvailable ? alarmColor : okColor)+">"+cqsServiceAvailable+"</td>");
+				out.println("<td>"+XmlUtil.getCurrentLevelTextValue(stats, "NumPooledHttpConnections")+"</td>");
 				out.println("<td><form action=\"\" method=\"POST\"><input type='hidden' name='Host' value='"+host+"'><input type='submit' value='Clear Queues' name='ClearQueues'/></form></td>");
 				out.println("<td><form action=\"\" method=\"POST\"><input type='hidden' name='Host' value='"+host+"'><input type='submit' value='Remove Record' name='RemoveRecord'/></form></td>");
 				out.println("</tr>");

@@ -131,6 +131,9 @@ public class CNSGetWorkerStatsAction extends CNSAction {
 
 					Boolean cqsServiceAvailable = (Boolean)mbeanConn.getAttribute(cnsWorkerMonitor, "CQSServiceAvailable");
 					stats.setCqsServiceAvailable(cqsServiceAvailable);
+					
+					Integer numPooledHttpConnections = (Integer)mbeanConn.getAttribute(cnsWorkerMonitor, "NumPooledHttpConnections");
+					stats.setNumPooledHttpConnections(numPooledHttpConnections);
 
 				} catch (Exception ex) {
 
