@@ -498,7 +498,39 @@ public class EndpointServlet extends HttpServlet {
 
     protected void doReceiveMessage(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
     	
-    	if (request.getParameter("errorCode") != null) {
+    	globalMessageCounter.incrementAndGet();
+
+    	EndpointMessage msg = new EndpointMessage();
+
+        String pathInfo = request.getPathInfo();
+        msg.id = pathInfo.substring(pathInfo.lastIndexOf("/")+1);
+
+        SimpleDateFormat fmt = new SimpleDateFormat("yy-MM-dd HH:mm:ss");
+
+        if (msg.id.toLowerCase().startsWith("recv")) {
+            doOutput(404, response, "Missing ID", "Missing ID");
+            return;
+        }
+
+        msg.host = request.getRemoteAddr() + "/" + request.getRemoteHost();
+        msg.recvOn = fmt.format(new Date());
+        msg.url = request.getRequestURL().toString();
+        msg.method = request.getMethod();
+        msg.msg = "";
+
+        if (msg.method.equals("POST")) {
+        	
+            BufferedReader reader = request.getReader();
+            String line;
+            
+            while ((line = reader.readLine()) != null) {
+                msg.msg += line;
+            }
+        }
+        
+    	// obey error code only after first message (typically subscription confirmation request) was received successfully
+        
+        if (request.getParameter("errorCode") != null && messageMap.containsKey(msg.id)) {
     		
     		int errorCode = Integer.parseInt(request.getParameter("errorCode"));
     		
@@ -514,7 +546,11 @@ public class EndpointServlet extends HttpServlet {
     		}
     	}
         
-    	if (request.getParameter("delayMS") != null) {
+        addMessage(msg);
+        
+        logger.info("event=add_message id=" + msg.id);
+
+        if (request.getParameter("delayMS") != null) {
     		
     		long delayMS = Integer.parseInt(request.getParameter("delayMS"));
     		
@@ -551,40 +587,6 @@ public class EndpointServlet extends HttpServlet {
     		}
     	}
 
-    	globalMessageCounter.incrementAndGet();
-
-    	EndpointMessage msg = new EndpointMessage();
-
-        String pathInfo = request.getPathInfo();
-        msg.id = pathInfo.substring(pathInfo.lastIndexOf("/")+1);
-
-        SimpleDateFormat fmt = new SimpleDateFormat("yy-MM-dd HH:mm:ss");
-
-        if (msg.id.toLowerCase().startsWith("recv")) {
-            doOutput(404, response, "Missing ID", "Missing ID");
-            return;
-        }
-
-        msg.host = request.getRemoteAddr() + "/" + request.getRemoteHost();
-        msg.recvOn = fmt.format(new Date());
-        msg.url = request.getRequestURL().toString();
-        msg.method = request.getMethod();
-        msg.msg = "";
-
-        if (msg.method.equals("POST")) {
-        	
-            BufferedReader reader = request.getReader();
-            String line;
-            
-            while ((line = reader.readLine()) != null) {
-                msg.msg += line;
-            }
-        }
-        
-        addMessage(msg);
-        
-        logger.info("[doReceiveMessage] event=addMessage");
-
         if (failureConfigMap.containsKey(msg.id)) {
         	
         	EndpointFailureConfiguration failureConfig = failureConfigMap.get(msg.id);
@@ -603,7 +605,7 @@ public class EndpointServlet extends HttpServlet {
         	}
         }
         
-        logger.info("[doReceiveMessage] event=successResponse");
+        logger.info("event=success_response");
         
         doOutput(200, response, "Ok", "Ok");
     }
