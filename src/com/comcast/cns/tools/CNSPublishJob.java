@@ -66,6 +66,10 @@ public class CNSPublishJob implements Runnable {
     public volatile int numRetries = 0;
     private volatile int maxDelayRetries = 0;
     
+    public String getSubscriptionArn() {
+    	return subArn;
+    }
+    
     /**
      * Call this method only in retry mode for a single sub
      */
@@ -88,7 +92,7 @@ public class CNSPublishJob implements Runnable {
                 
                 logger.info("event=immediate_retry num_retries=" + numRetries);
                 
-                //handle immediate retry phase
+                // handle immediate retry phase
                 
                 try {
                     numRetries++;
@@ -99,20 +103,23 @@ public class CNSPublishJob implements Runnable {
                 }
             }                    
             
-            //handle pre-backoff phase
+            // handle pre-backoff phase
             
             if (numRetries < retryPolicy.getNumMinDelayRetries() + retryPolicy.getNumNoDelayRetries()) {
                 
                 logger.info("event=pre_backoff num_retries=" + numRetries + " mind_delay_target_secs=" + retryPolicy.getMinDelayTarget());
                 numRetries++;
                 
-                CNSEndpointPublisherJobConsumer.submitForReDeliver(this, retryPolicy.getMinDelayTarget(), TimeUnit.SECONDS);
-
-                CQSHandler.changeMessageVisibility(queueUrl, receiptHandle, retryPolicy.getMinDelayTarget() + 1); //add 1 second buffer to avoid race condition                    
+                CNSEndpointPublisherJobConsumer.submitForReDelivery(this, retryPolicy.getMinDelayTarget(), TimeUnit.SECONDS);
+                
+                // add 5 second buffer to avoid race condition (assuming we are enforcing a 5 sec http timeout)
+                
+                CQSHandler.changeMessageVisibility(queueUrl, receiptHandle, retryPolicy.getMinDelayTarget() + 5);                    
+                
                 return;
             }
             
-            //if reached here, in the backoff phase
+            // if reached here, in the backoff phase
             
             if (numRetries < retryPolicy.getNumRetries() - (retryPolicy.getNumMinDelayRetries() + retryPolicy.getNumNoDelayRetries() + retryPolicy.getNumMaxDelayRetries())) {
                 
@@ -124,9 +131,12 @@ public class CNSPublishJob implements Runnable {
                 
                 logger.info("event=retry_notification phase=" + RetryPhase.Backoff.name() + " delay=" + delay + " attempt=" + numRetries + " backoff_function=" + retryPolicy.getBackOffFunction().name());
                 
-                CNSEndpointPublisherJobConsumer.submitForReDeliver(this, delay, TimeUnit.SECONDS);
+                CNSEndpointPublisherJobConsumer.submitForReDelivery(this, delay, TimeUnit.SECONDS);
                 
-                CQSHandler.changeMessageVisibility(queueUrl, receiptHandle, delay + 1);//add 1 second buffer to avoid race condition
+                // add 5 second buffer to avoid race condition (assuming we are enforcing a 5 sec http timeout)
+
+                CQSHandler.changeMessageVisibility(queueUrl, receiptHandle, delay + 5);
+                
                 return;
             }                    
             
@@ -135,15 +145,18 @@ public class CNSPublishJob implements Runnable {
                 logger.info("event=post_backoff max_delay_retries=" + maxDelayRetries + " max_delay_target=" + retryPolicy.getMaxDelayTarget());
                 maxDelayRetries++;
                 
-                CNSEndpointPublisherJobConsumer.submitForReDeliver(this, retryPolicy.getMaxDelayTarget(), TimeUnit.SECONDS);
+                CNSEndpointPublisherJobConsumer.submitForReDelivery(this, retryPolicy.getMaxDelayTarget(), TimeUnit.SECONDS);
                 
-                CQSHandler.changeMessageVisibility(queueUrl, receiptHandle, retryPolicy.getMaxDelayTarget() + 1); //add 1 second buffer to avoid race condition
+                // add 5 second buffer to avoid race condition (assuming we are enforcing a 5 sec http timeout)
+
+                CQSHandler.changeMessageVisibility(queueUrl, receiptHandle, retryPolicy.getMaxDelayTarget() + 5); 
+                
                 return;
             } 
             
             logger.info("event=retries_exhausted action=skip_message endpoint=" + endpoint + " message=" + message);
             
-            //let message die 
+            // let message die 
 
             if (endpointPublishJobCount.decrementAndGet() == 0) {
                 CQSHandler.deleteMessage(queueUrl, receiptHandle);

@@ -76,7 +76,7 @@ public class CNSMonitor implements CNSMonitorMBean {
 
     @Override
     public int getNumPooledHttpConnections() {
-        return HTTPEndpointPublisherApache.cm.getConnectionsInPool();
+        return HTTPEndpointPublisherApache.getNumConnectionsInPool();
     }
     
     public void registerPublishMessage() {

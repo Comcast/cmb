@@ -19,6 +19,7 @@ import java.net.InetAddress;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -61,6 +62,7 @@ public class CNSEndpointPublisherJobConsumer implements CNSPublisherPartitionRun
 
     private static volatile ScheduledThreadPoolExecutor deliveryHandlers = null;
     private static volatile ScheduledThreadPoolExecutor reDeliveryHandlers = null;
+    
     private static volatile boolean initialized = false; 
     
     private static volatile Integer testQueueLimit = null;
@@ -76,7 +78,7 @@ public class CNSEndpointPublisherJobConsumer implements CNSPublisherPartitionRun
         }
     }
     
-    public static void submitForReDeliver(CNSPublishJob job, long delay, TimeUnit unit) {
+    public static void submitForReDelivery(CNSPublishJob job, long delay, TimeUnit unit) {
     	reDeliveryHandlers.schedule(job, delay, unit);
     }
     

@@ -61,7 +61,7 @@ public class EndpointServlet extends HttpServlet {
     private static AtomicInteger globalMessageCounter = new AtomicInteger(0);
     
     private final static int MAX_MSG_PER_USER = 100;
-    private final static String VERSION = "1.9";
+    private final static String VERSION = CMBControllerServlet.VERSION;
     
     private static Logger logger = Logger.getLogger(EndpointServlet.class);
     private static final Random rand = new Random();
@@ -528,7 +528,7 @@ public class EndpointServlet extends HttpServlet {
             }
         }
         
-    	// obey error code only after first message (typically subscription confirmation request) was received successfully
+    	// obey error behavior only after first message (typically subscription confirmation request) was received successfully
         
         if (request.getParameter("errorCode") != null && messageMap.containsKey(msg.id)) {
     		
@@ -546,11 +546,7 @@ public class EndpointServlet extends HttpServlet {
     		}
     	}
         
-        addMessage(msg);
-        
-        logger.info("event=add_message id=" + msg.id);
-
-        if (request.getParameter("delayMS") != null) {
+        if (request.getParameter("delayMS") != null && messageMap.containsKey(msg.id)) {
     		
     		long delayMS = Integer.parseInt(request.getParameter("delayMS"));
     		
@@ -569,7 +565,7 @@ public class EndpointServlet extends HttpServlet {
     		}
     	}
 
-    	if (request.getParameter("numResponseBytes") != null) {
+    	if (request.getParameter("numResponseBytes") != null && messageMap.containsKey(msg.id)) {
     		
     		int numResponseBytes = Integer.parseInt(request.getParameter("numResponseBytes"));
     		
@@ -586,6 +582,10 @@ public class EndpointServlet extends HttpServlet {
     			return;
     		}
     	}
+
+        addMessage(msg);
+        
+        logger.info("event=add_message id=" + msg.id);
 
         if (failureConfigMap.containsKey(msg.id)) {
         	

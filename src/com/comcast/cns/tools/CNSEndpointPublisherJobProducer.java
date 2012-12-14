@@ -121,7 +121,7 @@ public class CNSEndpointPublisherJobProducer implements CNSPublisherPartitionRun
      *  3.3 Enqueue into EndpointPublishJobQ.<m> where m is randomly selected between [0..numEPPublishJobQs]
      *  3.4 go back to 1
      */    
-    public boolean run(int partition) {
+    public boolean run (int partition) {
     	
         boolean messageFound = false;
         
@@ -179,7 +179,7 @@ public class CNSEndpointPublisherJobProducer implements CNSPublisherPartitionRun
 	                messageFound = true;
 	                List<CNSEndpointPublishJob> epPublishJobs = createEndpointPublishJobs(publishJob, subscriptions);
 	                
-	                for(CNSEndpointPublishJob epPublishJob: epPublishJobs) {
+	                for (CNSEndpointPublishJob epPublishJob: epPublishJobs) {
 	                    sendEPPublishJob(epPublishJob);
 	                }
 	            }
