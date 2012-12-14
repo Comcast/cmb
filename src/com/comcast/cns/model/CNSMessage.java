@@ -327,10 +327,16 @@ public final class CNSMessage {
         msg.setUserId(arr[i++]);
         msg.setMessageId(arr[i++]);
         
-        StringBuffer sb = new StringBuffer(arr[i++]);
+        StringBuffer sb = new StringBuffer("");
         
-        for (; i < arr.length; i++) {
-            sb.append("\n").append(arr[i]);
+        if (i < arr.length) {
+        	
+        	sb = new StringBuffer(arr[i++]);
+
+        	for (; i < arr.length; i++) {
+                sb.append("\n").append(arr[i]);
+            }
+            
         }
         
         msg.setMessage(sb.toString());
