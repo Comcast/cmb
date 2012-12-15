@@ -98,7 +98,7 @@ public class CNSPublishJob implements Runnable {
                     numRetries++;
                     runCommon(pub, protocol, endpoint, subArn);
                     return; //suceeded.
-                } catch(Exception e) {
+                } catch (Exception e) {
                     logger.info("event=retry_failed phase=" + RetryPhase.ImmediateRetry.name() + " attempt=" + numRetries);
                 }
             }                    
@@ -114,7 +114,8 @@ public class CNSPublishJob implements Runnable {
                 
                 // add 5 second buffer to avoid race condition (assuming we are enforcing a 5 sec http timeout)
                 
-                CQSHandler.changeMessageVisibility(queueUrl, receiptHandle, retryPolicy.getMinDelayTarget() + 5);                    
+                //CQSHandler.changeMessageVisibility(queueUrl, receiptHandle, retryPolicy.getMinDelayTarget() + 5);                    
+                CQSHandler.changeMessageVisibility(queueUrl, receiptHandle, 300);                    
                 
                 return;
             }
@@ -135,7 +136,8 @@ public class CNSPublishJob implements Runnable {
                 
                 // add 5 second buffer to avoid race condition (assuming we are enforcing a 5 sec http timeout)
 
-                CQSHandler.changeMessageVisibility(queueUrl, receiptHandle, delay + 5);
+                //CQSHandler.changeMessageVisibility(queueUrl, receiptHandle, delay + 5);
+                CQSHandler.changeMessageVisibility(queueUrl, receiptHandle, 300);                    
                 
                 return;
             }                    
@@ -149,8 +151,9 @@ public class CNSPublishJob implements Runnable {
                 
                 // add 5 second buffer to avoid race condition (assuming we are enforcing a 5 sec http timeout)
 
-                CQSHandler.changeMessageVisibility(queueUrl, receiptHandle, retryPolicy.getMaxDelayTarget() + 5); 
-                
+                //CQSHandler.changeMessageVisibility(queueUrl, receiptHandle, retryPolicy.getMaxDelayTarget() + 5); 
+                CQSHandler.changeMessageVisibility(queueUrl, receiptHandle, 300);                    
+
                 return;
             } 
             
@@ -207,12 +210,26 @@ public class CNSPublishJob implements Runnable {
         
         try {
         
-            logger.debug("event=run_common_and_retry protocol=" + protocol + " endpoint=" + endpoint + " sub_arn=" + subArn);
-            runCommon(pub, protocol, endpoint, subArn);
+            int slowResponseCounter = CNSEndpointPublisherJobConsumer.getNumSlowResponses(endpoint);
+
+            logger.info("event=run_common_and_retry protocol=" + protocol + " endpoint=" + endpoint + " sub_arn=" + subArn + " slow_response_counter=" + slowResponseCounter + " attempt=" + numRetries);
+
+            // only throw away new messages for bad endpoints (not those that are already in redlivery) - in effect we are temporarily suspending 
+            // endpoints with more than three failures in the last minute
+            
+            if (slowResponseCounter > 3 && numRetries == 0) {
+            	logger.warn("event=throwing_message_away reason=endpoint_has_too_many_slow_responses_in_last_minute endpoint=" + endpoint + " slow_response_counter=" + slowResponseCounter + " attempt=" + numRetries);
+            	CQSHandler.deleteMessage(queueUrl, receiptHandle);
+            } else {
+            	runCommon(pub, protocol, endpoint, subArn);
+            }
         
-        } catch (Exception e) {
+        } catch (Exception ex) {
+        	
+    		CNSEndpointPublisherJobConsumer.addSlowResponseEvent(endpoint);
         
-            logger.error("event=error_notifying_subscriber endpoint=" + endpoint + " protocol=" + protocol + " message_length=" + message.getMessage().length() + (user == null ?"":" " + user), e);
+            logger.error("event=error_notifying_subscriber endpoint=" + endpoint + " protocol=" + protocol + " message_length=" + message.getMessage().length() + (user == null ?"":" " + user), ex);
+            
             CNSMonitor.getInstance().registerBadEndpoint(endpoint, 1, 1, message.getTopicArn());
             
             if (protocol == CnsSubscriptionProtocol.http || protocol == CnsSubscriptionProtocol.https) {

@@ -19,7 +19,6 @@ import java.net.InetAddress;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -37,6 +36,7 @@ import com.comcast.cmb.common.model.User;
 import com.comcast.cmb.common.persistence.PersistenceFactory;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.PersistenceException;
+import com.comcast.cmb.common.util.RollingWindowCapture;
 import com.comcast.cmb.common.util.ValueAccumulator.AccumulatorName;
 import com.comcast.cns.controller.CNSMonitor;
 import com.comcast.cns.model.CNSEndpointPublishJob;
@@ -62,6 +62,39 @@ public class CNSEndpointPublisherJobConsumer implements CNSPublisherPartitionRun
 
     private static volatile ScheduledThreadPoolExecutor deliveryHandlers = null;
     private static volatile ScheduledThreadPoolExecutor reDeliveryHandlers = null;
+    
+    private static final RollingWindowCapture<BadEndpointEvent> badEndpointCounterWindow = new RollingWindowCapture<BadEndpointEvent>(60, 10000);
+    
+    public static class BadEndpointEvent extends RollingWindowCapture.PayLoad {
+    	public final String endpointUrl;
+    	public BadEndpointEvent (String endpointUrl) {
+    		this.endpointUrl = endpointUrl;
+    	}
+    }
+
+    private static class CountBadEndpointVisitor implements RollingWindowCapture.Visitor<BadEndpointEvent> {
+        public final Map<String, Integer> badEndpointCounts = new HashMap<String, Integer>();
+        public void processNode(BadEndpointEvent e) {
+            if (!badEndpointCounts.containsKey(e.endpointUrl)) {
+            	badEndpointCounts.put(e.endpointUrl, 1);
+            } else {
+            	badEndpointCounts.put(e.endpointUrl, badEndpointCounts.get(e.endpointUrl) + 1);
+            }
+        }
+    }
+    
+    public static void addSlowResponseEvent(String endpointUrl) {
+    	badEndpointCounterWindow.addNow(new BadEndpointEvent(endpointUrl));
+    }
+
+    public static int getNumSlowResponses(String endpointUrl) {
+    	CountBadEndpointVisitor srv = new CountBadEndpointVisitor();
+    	badEndpointCounterWindow.visitAllNodes(srv);
+    	if (!srv.badEndpointCounts.containsKey(endpointUrl)) {
+    		return 0;
+    	}
+    	return srv.badEndpointCounts.get(endpointUrl);
+    }
     
     private static volatile boolean initialized = false; 
     

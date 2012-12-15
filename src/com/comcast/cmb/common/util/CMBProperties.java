@@ -56,7 +56,6 @@ public class CMBProperties {
 		return maxSubscriptionsPerEPPublishJob;
 	}
 
-
 	public int getReDeliveryHandlerJobQueueLimit() {
         return reDeliveryHandlerJobQueueLimit;
     }

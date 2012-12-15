@@ -31,8 +31,8 @@ import org.apache.log4j.Logger;
  * Class is thread-safe
  */
 public final class RollingWindowCapture<T extends RollingWindowCapture.PayLoad> {
-    static Logger logger = Logger.getLogger(RollingWindowCapture.class);
 
+	private static Logger logger = Logger.getLogger(RollingWindowCapture.class);
     
     private final long _windowSizeSec;
     private final int _tolerance;
@@ -52,6 +52,7 @@ public final class RollingWindowCapture<T extends RollingWindowCapture.PayLoad> 
     //We use CopyOnWriteArrayList since its the only standard data-structure provided that offers concurrent
     //access to its elements and provides the List interface, specifically get(index) method. We need this
     //method to return the tail of the rollingwindow.
+    
     private CopyOnWriteArrayList<PayLoadNode> _queue = new CopyOnWriteArrayList<PayLoadNode>();
     
     public static interface Visitor<T> {
@@ -116,8 +117,9 @@ public final class RollingWindowCapture<T extends RollingWindowCapture.PayLoad> 
         }
         return null;
     }
+    
     /**
-     * Go through the begenning of the queue and remove all expired nodes
+     * Go through the beginning of the queue and remove all expired nodes
      */
     private void cleanupWindow() {
         long now = System.currentTimeMillis();

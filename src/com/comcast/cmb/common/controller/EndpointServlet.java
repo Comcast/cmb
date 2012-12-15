@@ -532,7 +532,7 @@ public class EndpointServlet extends HttpServlet {
         
         if (request.getParameter("errorCode") != null && messageMap.containsKey(msg.id)) {
     		
-    		int errorCode = Integer.parseInt(request.getParameter("errorCode"));
+            int errorCode = Integer.parseInt(request.getParameter("errorCode"));
     		
     		double chance = 1.0;
     		
@@ -542,13 +542,15 @@ public class EndpointServlet extends HttpServlet {
     		
     		if (rand.nextDouble() <= chance) {
                 doOutput(errorCode, response, "Failed", "Failed");
+                addMessage(msg);
+                logger.info("event=add_message id=" + msg.id);
                 return;
     		}
     	}
         
         if (request.getParameter("delayMS") != null && messageMap.containsKey(msg.id)) {
     		
-    		long delayMS = Integer.parseInt(request.getParameter("delayMS"));
+            long delayMS = Integer.parseInt(request.getParameter("delayMS"));
     		
     		double chance = 1.0;
     		
@@ -567,7 +569,7 @@ public class EndpointServlet extends HttpServlet {
 
     	if (request.getParameter("numResponseBytes") != null && messageMap.containsKey(msg.id)) {
     		
-    		int numResponseBytes = Integer.parseInt(request.getParameter("numResponseBytes"));
+            int numResponseBytes = Integer.parseInt(request.getParameter("numResponseBytes"));
     		
     		double chance = 1.0;
     		
@@ -579,12 +581,13 @@ public class EndpointServlet extends HttpServlet {
     			char[] bytes = new char[numResponseBytes];
     			Arrays.fill(bytes, 'A');
     			doRawOutput(200, response, bytes);
+                addMessage(msg);
+                logger.info("event=add_message id=" + msg.id);
     			return;
     		}
     	}
 
         addMessage(msg);
-        
         logger.info("event=add_message id=" + msg.id);
 
         if (failureConfigMap.containsKey(msg.id)) {
