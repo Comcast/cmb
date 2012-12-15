@@ -53,6 +53,8 @@ public class HTTPEndpointPublisherApache implements IEndpointPublisher {
 	private final static HttpClient httpClient;
 
 	static {
+		
+		int timeoutMillis = CMBProperties.getInstance().getHttpTimeoutSeconds() * 1000;
 
 		HttpParams params = new BasicHttpParams();
 		HttpProtocolParams.setVersion(params, HttpVersion.HTTP_1_1); 
@@ -60,8 +62,8 @@ public class HTTPEndpointPublisherApache implements IEndpointPublisher {
 		schemeRegistry.register(new Scheme("http", 80, PlainSocketFactory.getSocketFactory()));
 		schemeRegistry.register(new Scheme("https", 443, SSLSocketFactory.getSocketFactory()));
 
-		HttpConnectionParams.setConnectionTimeout(params, 5000);
-		HttpConnectionParams.setSoTimeout(params, 5000);
+		HttpConnectionParams.setConnectionTimeout(params, timeoutMillis);
+		HttpConnectionParams.setSoTimeout(params, timeoutMillis);
 
 		cm = new ThreadSafeClientConnManager(schemeRegistry);
 		// increase max total connection to 250

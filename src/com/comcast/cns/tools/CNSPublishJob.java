@@ -25,6 +25,7 @@ import com.comcast.cmb.common.model.User;
 import com.comcast.cmb.common.persistence.PersistenceFactory;
 import com.comcast.cmb.common.util.CMBErrorCodes;
 import com.comcast.cmb.common.util.CMBException;
+import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.ValueAccumulator.AccumulatorName;
 import com.comcast.cns.controller.CNSMonitor;
 import com.comcast.cns.io.EndpointPublisherFactory;
@@ -112,10 +113,9 @@ public class CNSPublishJob implements Runnable {
                 
                 CNSEndpointPublisherJobConsumer.submitForReDelivery(this, retryPolicy.getMinDelayTarget(), TimeUnit.SECONDS);
                 
-                // add 5 second buffer to avoid race condition (assuming we are enforcing a 5 sec http timeout)
+                // add 6 second buffer to avoid race condition (assuming we are enforcing a 5 sec http timeout)
                 
-                //CQSHandler.changeMessageVisibility(queueUrl, receiptHandle, retryPolicy.getMinDelayTarget() + 5);                    
-                CQSHandler.changeMessageVisibility(queueUrl, receiptHandle, 300);                    
+                CQSHandler.changeMessageVisibility(queueUrl, receiptHandle, retryPolicy.getMinDelayTarget() + 6);                    
                 
                 return;
             }
@@ -134,10 +134,9 @@ public class CNSPublishJob implements Runnable {
                 
                 CNSEndpointPublisherJobConsumer.submitForReDelivery(this, delay, TimeUnit.SECONDS);
                 
-                // add 5 second buffer to avoid race condition (assuming we are enforcing a 5 sec http timeout)
+                // add 6 second buffer to avoid race condition (assuming we are enforcing a 6 sec http timeout)
 
-                //CQSHandler.changeMessageVisibility(queueUrl, receiptHandle, delay + 5);
-                CQSHandler.changeMessageVisibility(queueUrl, receiptHandle, 300);                    
+                CQSHandler.changeMessageVisibility(queueUrl, receiptHandle, delay + 6);
                 
                 return;
             }                    
@@ -149,10 +148,9 @@ public class CNSPublishJob implements Runnable {
                 
                 CNSEndpointPublisherJobConsumer.submitForReDelivery(this, retryPolicy.getMaxDelayTarget(), TimeUnit.SECONDS);
                 
-                // add 5 second buffer to avoid race condition (assuming we are enforcing a 5 sec http timeout)
+                // add 6 second buffer to avoid race condition (assuming we are enforcing a 5 sec http timeout)
 
-                //CQSHandler.changeMessageVisibility(queueUrl, receiptHandle, retryPolicy.getMaxDelayTarget() + 5); 
-                CQSHandler.changeMessageVisibility(queueUrl, receiptHandle, 300);                    
+                CQSHandler.changeMessageVisibility(queueUrl, receiptHandle, retryPolicy.getMaxDelayTarget() + 6); 
 
                 return;
             } 
@@ -214,10 +212,12 @@ public class CNSPublishJob implements Runnable {
 
             logger.info("event=run_common_and_retry protocol=" + protocol + " endpoint=" + endpoint + " sub_arn=" + subArn + " slow_response_counter=" + slowResponseCounter + " attempt=" + numRetries);
 
+            int failureSuspensionThreshold = CMBProperties.getInstance().getEndpointFailureCountToSuspensionThreshold(); 
+            
             // only throw away new messages for bad endpoints (not those that are already in redlivery) - in effect we are temporarily suspending 
             // endpoints with more than three failures in the last minute
-            
-            if (slowResponseCounter > 3 && numRetries == 0) {
+
+            if (failureSuspensionThreshold!=0 && slowResponseCounter>failureSuspensionThreshold && numRetries==0) {
             	logger.warn("event=throwing_message_away reason=endpoint_has_too_many_slow_responses_in_last_minute endpoint=" + endpoint + " slow_response_counter=" + slowResponseCounter + " attempt=" + numRetries);
             	CQSHandler.deleteMessage(queueUrl, receiptHandle);
             } else {

@@ -28,113 +28,9 @@ import java.util.Properties;
  */
 public class CMBProperties {
 	
-    public void setUseSubInfoCache(boolean useSubInfoCache) {
-        this.useSubInfoCache = useSubInfoCache;
-    }
+	private final int httpTimeoutSeconds;
 
-    public boolean isUseSubInfoCache() {
-        return useSubInfoCache;
-    }
-
-    public int getConsumerProcessingMaxDelay() {
-        return consumerProcessingMaxDelay;
-    }
-
-    public int getProducerProcessingMaxDelay() {
-        return producerProcessingMaxDelay;
-    }
-
-    public int getPublishJobVTO() {
-		return publishJobVTO;
-	}
-
-	public int getEPPublishJobVTO() {
-        return EPPublishJobVTO;
-    }
-
-	public int getMaxSubscriptionsPerEPPublishJob() {
-		return maxSubscriptionsPerEPPublishJob;
-	}
-
-	public int getReDeliveryHandlerJobQueueLimit() {
-        return reDeliveryHandlerJobQueueLimit;
-    }
-
-    public void setPublishJobQueueSizeLimit(int publishJobQueueSizeLimit) {
-        this.publishJobQueueSizeLimit = publishJobQueueSizeLimit;
-    }
-
-    public int getNumDeliveryHandlers() {
-        return numDeliveryHandlers;
-    }
-
-    public int getNumReDeliveryHandlers() {
-        return numReDeliveryHandlers;
-    }
-
-    public int getNumEPPubJobProducers() {
-        return numEPPubJobProducers;
-    }
-
-    public int getNumEPPubJobConsumers() {
-        return numEPPubJobConsumers;
-    }
-
-    public void setRedisRevisibleFrequencySec(int redisRevisibleFrequencySec) {
-        this.redisRevisibleFrequencySec = redisRevisibleFrequencySec;
-    }
-
-    public int getRedisRevisibleSetFrequencySec() {
-        return redisRevisibleSetFrequencySec;
-    }
-
-    public int getRedisRevisibleFrequencySec() {
-        return redisRevisibleFrequencySec;
-    }
-
-    public boolean isRedisPayloadCacheEnabled() {
-        return redisPayloadCacheEnabled;
-    }
-
-    public void setRedisPayloadCacheEnabled(boolean redisPayloadCacheEnabled) {
-        this.redisPayloadCacheEnabled = redisPayloadCacheEnabled;
-    }
-
-    public int getRedisPayloadCacheTTLSec() {
-        return redisPayloadCacheTTLSec;
-    }
-
-    public int getRedisPayloadCacheSizePerQueue() {
-        return redisPayloadCacheSizePerQueue;
-    }
-
-    public int getRedisExpireTTLSec() {
-        return redisExpireTTLSec;
-    }
-
-    public int getRedisRevisibleThreads() {
-        return redisRevisibleThreads;
-    }
-
-    public String getRedisServerList() {
-        return redisServerList;
-    }
-
-    public int getRedisConnectionsMaxActive() {
-        return redisConnectionsMaxActive;
-    }
-
-    public int getRollingWindowTimeSec() {
-        return rollingWindowTimeSec;
-    }
-
-    public int getHttpPublisherEndpointConnectionPoolSize() {
-        return httpPublisherEndpointConnectionPoolSize;
-    }
-
-    public int getHttpPublisherEndpointConnectionsPerRouteSize() {
-        return httpPublisherEndpointConnectionsPerRouteSize;
-    }
+	private final int endpointFailureCountToSuspensionThreshold;
 	
     private final String cnsServerUrl;
 	private final String cqsServerUrl;
@@ -326,6 +222,7 @@ public class CMBProperties {
             
             httpPublisherEndpointConnectionPoolSize = Integer.parseInt(props.getProperty("cmb.cns.publisher.http.connectionPoolSize", "200"));
             httpPublisherEndpointConnectionsPerRouteSize = Integer.parseInt(props.getProperty("cmb.cns.publisher.http.connectionsPerRouteSize", "50"));
+            httpTimeoutSeconds = Integer.parseInt(props.getProperty("cmb.cns.publisher.http.httpTimeoutSeconds", "5"));
 			
             cnsCacheExpiring = Integer.parseInt(props.getProperty("cmb.cns.cacheExpiringInSeconds", "60"));
             cnsCacheSizeLimit = Integer.parseInt(props.getProperty("cmb.cns.cacheSizeLimit", "1000"));
@@ -364,6 +261,8 @@ public class CMBProperties {
             producerProcessingMaxDelay = Integer.parseInt(props.getProperty("cmb.cns.publisher.producerProcessingMaxDelay", "1000"));
             consumerProcessingMaxDelay = Integer.parseInt(props.getProperty("cmb.cns.publisher.consumerProcessingMaxDelay", "1000"));
             
+            endpointFailureCountToSuspensionThreshold = Integer.parseInt(props.getProperty("cmb.cns.publisher.endpointFailureCountToSuspensionThreshold", "10"));
+            
             useSubInfoCache = Boolean.parseBoolean(props.getProperty("cmb.cns.useSubInfoCache", "true"));
             fileStream.close();
 
@@ -373,6 +272,10 @@ public class CMBProperties {
 		}
 	}
 	
+	public int getEndpointFailureCountToSuspensionThreshold() {
+		return endpointFailureCountToSuspensionThreshold;
+	}
+
 	public static CMBProperties getInstance() {			
 		return instance;
 	}
@@ -603,5 +506,117 @@ public class CMBProperties {
 
 	public String getAwsAccessKey() {
 		return awsAccessKey;
+	}
+	
+    public void setUseSubInfoCache(boolean useSubInfoCache) {
+        this.useSubInfoCache = useSubInfoCache;
+    }
+
+    public boolean isUseSubInfoCache() {
+        return useSubInfoCache;
+    }
+
+    public int getConsumerProcessingMaxDelay() {
+        return consumerProcessingMaxDelay;
+    }
+
+    public int getProducerProcessingMaxDelay() {
+        return producerProcessingMaxDelay;
+    }
+
+    public int getPublishJobVTO() {
+		return publishJobVTO;
+	}
+
+	public int getEPPublishJobVTO() {
+        return EPPublishJobVTO;
+    }
+
+	public int getMaxSubscriptionsPerEPPublishJob() {
+		return maxSubscriptionsPerEPPublishJob;
+	}
+
+	public int getReDeliveryHandlerJobQueueLimit() {
+        return reDeliveryHandlerJobQueueLimit;
+    }
+
+    public void setPublishJobQueueSizeLimit(int publishJobQueueSizeLimit) {
+        this.publishJobQueueSizeLimit = publishJobQueueSizeLimit;
+    }
+
+    public int getNumDeliveryHandlers() {
+        return numDeliveryHandlers;
+    }
+
+    public int getNumReDeliveryHandlers() {
+        return numReDeliveryHandlers;
+    }
+
+    public int getNumEPPubJobProducers() {
+        return numEPPubJobProducers;
+    }
+
+    public int getNumEPPubJobConsumers() {
+        return numEPPubJobConsumers;
+    }
+
+    public void setRedisRevisibleFrequencySec(int redisRevisibleFrequencySec) {
+        this.redisRevisibleFrequencySec = redisRevisibleFrequencySec;
+    }
+
+    public int getRedisRevisibleSetFrequencySec() {
+        return redisRevisibleSetFrequencySec;
+    }
+
+    public int getRedisRevisibleFrequencySec() {
+        return redisRevisibleFrequencySec;
+    }
+
+    public boolean isRedisPayloadCacheEnabled() {
+        return redisPayloadCacheEnabled;
+    }
+
+    public void setRedisPayloadCacheEnabled(boolean redisPayloadCacheEnabled) {
+        this.redisPayloadCacheEnabled = redisPayloadCacheEnabled;
+    }
+
+    public int getRedisPayloadCacheTTLSec() {
+        return redisPayloadCacheTTLSec;
+    }
+
+    public int getRedisPayloadCacheSizePerQueue() {
+        return redisPayloadCacheSizePerQueue;
+    }
+
+    public int getRedisExpireTTLSec() {
+        return redisExpireTTLSec;
+    }
+
+    public int getRedisRevisibleThreads() {
+        return redisRevisibleThreads;
+    }
+
+    public String getRedisServerList() {
+        return redisServerList;
+    }
+
+    public int getRedisConnectionsMaxActive() {
+        return redisConnectionsMaxActive;
+    }
+
+    public int getRollingWindowTimeSec() {
+        return rollingWindowTimeSec;
+    }
+
+    public int getHttpPublisherEndpointConnectionPoolSize() {
+        return httpPublisherEndpointConnectionPoolSize;
+    }
+
+    public int getHttpPublisherEndpointConnectionsPerRouteSize() {
+        return httpPublisherEndpointConnectionsPerRouteSize;
+    }
+    
+	public int getHttpTimeoutSeconds() {
+		return httpTimeoutSeconds;
 	}
 }
