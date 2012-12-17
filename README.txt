@@ -20,6 +20,15 @@ If you have any questions or comments please go to our user forum at
 https://groups.google.com/forum/#!forum/cmb-user-forum
 
 --------------------------------------------------------------------------------------------
+- Binaries for Download
+--------------------------------------------------------------------------------------------
+
+If you do not want to build from source you can download the latest build. Note that 
+our download page has moved. You can now find the latest build (currently 2.2.11) here:
+
+http://cmbdownloads.s3-website-us-west-1.amazonaws.com/
+
+--------------------------------------------------------------------------------------------
 - Quick Tutorial
 --------------------------------------------------------------------------------------------
 
