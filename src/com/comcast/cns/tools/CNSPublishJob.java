@@ -238,7 +238,7 @@ public class CNSPublishJob implements Runnable {
             		errorCode = ((CMBException)ex).getHttpCode();
             	}
             
-                if (CNSEndpointPublisherJobConsumer.acceptableHttpResponseCodes.contains(errorCode)) {
+                if (CNSEndpointPublisherJobConsumer.acceptableHttpResponseCodes.contains(errorCode+"")) {
                     
                 	// if posting fails with an acceptable http error code let it die
                 	

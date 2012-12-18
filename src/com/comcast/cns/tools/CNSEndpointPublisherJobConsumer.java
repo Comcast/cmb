@@ -66,7 +66,7 @@ public class CNSEndpointPublisherJobConsumer implements CNSPublisherPartitionRun
     
     private static final RollingWindowCapture<BadEndpointEvent> badEndpointCounterWindow = new RollingWindowCapture<BadEndpointEvent>(60, 10000);
     
-    public static final List<Integer> acceptableHttpResponseCodes = Arrays.asList(new Integer [] {200});
+    public static final List<String> acceptableHttpResponseCodes = CMBProperties.getInstance().getAcceptableHttpStatusCodes();
     
     public static class BadEndpointEvent extends RollingWindowCapture.PayLoad {
     	public final String endpointUrl;

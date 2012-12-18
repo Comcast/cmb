@@ -19,6 +19,8 @@ import org.apache.log4j.Logger;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Properties;
 
 /**
@@ -29,6 +31,7 @@ import java.util.Properties;
 public class CMBProperties {
 	
 	private final int httpTimeoutSeconds;
+	private final List<String> acceptableHttpStatusCodes;
 
 	private final int endpointFailureCountToSuspensionThreshold;
 	
@@ -223,6 +226,7 @@ public class CMBProperties {
             httpPublisherEndpointConnectionPoolSize = Integer.parseInt(props.getProperty("cmb.cns.publisher.http.connectionPoolSize", "200"));
             httpPublisherEndpointConnectionsPerRouteSize = Integer.parseInt(props.getProperty("cmb.cns.publisher.http.connectionsPerRouteSize", "50"));
             httpTimeoutSeconds = Integer.parseInt(props.getProperty("cmb.cns.publisher.http.httpTimeoutSeconds", "5"));
+            acceptableHttpStatusCodes = Arrays.asList(props.getProperty("cmb.cns.publisher.http.acceptableStatusCodes", "200").split(","));
 			
             cnsCacheExpiring = Integer.parseInt(props.getProperty("cmb.cns.cacheExpiringInSeconds", "60"));
             cnsCacheSizeLimit = Integer.parseInt(props.getProperty("cmb.cns.cacheSizeLimit", "1000"));
@@ -618,5 +622,9 @@ public class CMBProperties {
     
 	public int getHttpTimeoutSeconds() {
 		return httpTimeoutSeconds;
+	}
+	
+	public List<String> getAcceptableHttpStatusCodes() {
+		return acceptableHttpStatusCodes;
 	}
 }
