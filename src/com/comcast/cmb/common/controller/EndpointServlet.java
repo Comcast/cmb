@@ -22,6 +22,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.codec.binary.Base64;
 import org.apache.log4j.Logger;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
@@ -35,6 +36,7 @@ import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.security.MessageDigest;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -54,9 +56,26 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class EndpointServlet extends HttpServlet {
 
     private static final long serialVersionUID = 1L;
+    
+    // keeps last n messages per endpoint
+    
     private static Map<String, List<EndpointMessage>> messageMap = new ConcurrentHashMap<String, List<EndpointMessage>>();
-	private static Map<String, EndpointMetrics> metricsMap = new ConcurrentHashMap<String, EndpointMetrics>();
-	private static Map<String, EndpointFailureConfiguration> failureConfigMap = new ConcurrentHashMap<String, EndpointFailureConfiguration>();
+	
+    // keeps endpoint stats
+    
+    private static Map<String, EndpointMetrics> metricsMap = new ConcurrentHashMap<String, EndpointMetrics>();
+	
+	// keeps config information to model certain error behavior 
+	
+	//private static Map<String, EndpointFailureConfiguration> failureConfigMap = new ConcurrentHashMap<String, EndpointFailureConfiguration>();
+	
+	// for each endpoint message a set of message hashes to help identify duplicates  
+	
+	private static ConcurrentHashMap<String, Map<String, Boolean>> messageHashes = new ConcurrentHashMap<String, Map<String, Boolean>>();
+	
+	// for each endpoint keeps number of duplciates received (no record = no dups, 1 = 1 dup, ...)
+	
+    private static ConcurrentHashMap<String, AtomicInteger> messageDuplicates = new ConcurrentHashMap<String, AtomicInteger>();
     
     private static AtomicInteger globalMessageCounter = new AtomicInteger(0);
     
@@ -66,11 +85,11 @@ public class EndpointServlet extends HttpServlet {
     private static Logger logger = Logger.getLogger(EndpointServlet.class);
     private static final Random rand = new Random();
     
-    private class EndpointFailureConfiguration {
+    /*private class EndpointFailureConfiguration {
     	public int numFailuresBeforeSuccess = 10;
     	public int currentFailureCounter = 0;
     	public int httpErrorCode = 404;
-    }
+    }*/
     
     private class EndpointMessage {
     	public String host;
@@ -79,7 +98,7 @@ public class EndpointServlet extends HttpServlet {
         public String url;
         public String method;
         public String msg;
-        public boolean failure = false;
+        //public boolean failure = false;
     }
     
     private class EndpointMetrics {
@@ -112,6 +131,20 @@ public class EndpointServlet extends HttpServlet {
     	public EndpointMessage lastMessage;
     	public List<Integer> timeSeries = new ArrayList<Integer>();
     }
+    
+    private String hashMessage(String message) {
+    	
+		try {
+			MessageDigest digest = MessageDigest.getInstance("MD5");
+	    	digest.update(message.getBytes("UTF-8"));
+	    	byte[] hash = digest.digest();
+	    	return Base64.encodeBase64URLSafeString(hash);
+		} catch (Exception e) {
+			logger.error("event=hashing_failed", e);
+		}
+    	
+		return null;
+    }
 
     @Override
 	public void init() throws ServletException {
@@ -140,8 +173,8 @@ public class EndpointServlet extends HttpServlet {
             doReceiveMessage(request, response);
         } else if (pathInfo.toLowerCase().startsWith("/help")) {
             doHelp(request, response);
-        } else if (pathInfo.toLowerCase().startsWith("/config")) {
-            doConfig(request, response);
+        //} else if (pathInfo.toLowerCase().startsWith("/config")) {
+            //doConfig(request, response);
         } else if (pathInfo.toLowerCase().startsWith("/clear")) {
             doClear(request, response);
         } else if (pathInfo.toLowerCase().startsWith("/nop")) {
@@ -178,8 +211,8 @@ public class EndpointServlet extends HttpServlet {
             doReceiveMessage(request, response);
         } else if (pathInfo.toLowerCase().startsWith("/help")) {
             doHelp(request, response);
-        } else if (pathInfo.toLowerCase().startsWith("/config")) {
-            doConfig(request, response);
+        //} else if (pathInfo.toLowerCase().startsWith("/config")) {
+            //doConfig(request, response);
         } else if (pathInfo.toLowerCase().startsWith("/clear")) {
             doClear(request, response);
         } else if (pathInfo.toLowerCase().startsWith("/nop")) {
@@ -223,7 +256,7 @@ public class EndpointServlet extends HttpServlet {
     	doOutput(200, response, "Help", sb.toString());
     }
 
-    protected void doConfig(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    /*protected void doConfig(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
     	
         String pathInfo = request.getPathInfo();
         String id = pathInfo.substring(pathInfo.lastIndexOf("/")+1);
@@ -240,14 +273,16 @@ public class EndpointServlet extends HttpServlet {
     	}
 
         doRawOutput(200, response, "OK");
-    }
+    }*/
 
     protected void doClear(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
     	
     	messageMap = new ConcurrentHashMap<String, List<EndpointMessage>>();
         metricsMap = new ConcurrentHashMap<String, EndpointMetrics>();
-        failureConfigMap = new ConcurrentHashMap<String, EndpointFailureConfiguration>();
+        //failureConfigMap = new ConcurrentHashMap<String, EndpointFailureConfiguration>();
         globalMessageCounter = new AtomicInteger(0);
+    	messageHashes = new ConcurrentHashMap<String, Map<String, Boolean>>();
+        messageDuplicates = new ConcurrentHashMap<String, AtomicInteger>();
     	
         doRawOutput(200, response, "OK");
     }
@@ -304,13 +339,13 @@ public class EndpointServlet extends HttpServlet {
     
     private synchronized void addMessage(EndpointMessage msg) {
     	
-        List<EndpointMessage> messages = messageMap.get(msg.id);
+        // add message
+    	
+    	List<EndpointMessage> messages = messageMap.get(msg.id);
         
         if (messages == null) {
             messages = new ArrayList<EndpointMessage>(MAX_MSG_PER_USER);
             messageMap.put(msg.id, messages);
-        } else {
-        	//messages = (List<EndpointMessage>)Collections.synchronizedList(messages);
         }
 
         if (messages.size() == MAX_MSG_PER_USER) {
@@ -319,6 +354,8 @@ public class EndpointServlet extends HttpServlet {
         
         messages.add(0, msg);
 
+        // add metrics
+        
         EndpointMetrics metrics = metricsMap.get(msg.id);
         
         if (metrics == null) {
@@ -326,63 +363,80 @@ public class EndpointServlet extends HttpServlet {
         	metricsMap.put(msg.id, metrics);
         }
 
-        //synchronized (metrics) {
-        
-        	metrics.endTime = new Date();
-	    	metrics.messageCount++;
-	    	metrics.lastWaveLength = metrics.endTime.getTime() - metrics.lastMessageTime.getTime();
-	    	metrics.lastMessageTime = metrics.endTime;
-	    	metrics.lastMessage = msg;
-	    	metrics.totalWaveLength += metrics.lastWaveLength;
-	    	
-	    	if (metrics.lastWaveLength < metrics.minWaveLength) {
-	    		metrics.minWaveLength = metrics.lastWaveLength;
-	    	}
-	    	
-	    	if (metrics.lastWaveLength > metrics.maxWaveLength) {
-	    		metrics.maxWaveLength = metrics.lastWaveLength;
-	    	}
-	    	
-	    	if (metrics.messageCount > 1) {
-	    		metrics.averageWaveLength = metrics.totalWaveLength / (metrics.messageCount - 1);
-	    	}
-	    	
-	    	if (metrics.endTime.getTime() > metrics.startTime.getTime()) {
-	    		metrics.messagesPerSecond = 1000 * metrics.messageCount / (metrics.endTime.getTime() - metrics.startTime.getTime());
-	    	}
+    	metrics.endTime = new Date();
+    	metrics.messageCount++;
+    	metrics.lastWaveLength = metrics.endTime.getTime() - metrics.lastMessageTime.getTime();
+    	metrics.lastMessageTime = metrics.endTime;
+    	metrics.lastMessage = msg;
+    	metrics.totalWaveLength += metrics.lastWaveLength;
+    	
+    	if (metrics.lastWaveLength < metrics.minWaveLength) {
+    		metrics.minWaveLength = metrics.lastWaveLength;
+    	}
+    	
+    	if (metrics.lastWaveLength > metrics.maxWaveLength) {
+    		metrics.maxWaveLength = metrics.lastWaveLength;
+    	}
+    	
+    	if (metrics.messageCount > 1) {
+    		metrics.averageWaveLength = metrics.totalWaveLength / (metrics.messageCount - 1);
+    	}
+    	
+    	if (metrics.endTime.getTime() > metrics.startTime.getTime()) {
+    		metrics.messagesPerSecond = 1000 * metrics.messageCount / (metrics.endTime.getTime() - metrics.startTime.getTime());
+    	}
 
-            String tokens[] = msg.msg.split(";");
-	    	
-            if (tokens.length >= 2) {
-                try {
-                    Date sentTime = new Date(Long.parseLong(tokens[1]));
-                    metrics.lastLatency = (new Date()).getTime() - sentTime.getTime();
-                    metrics.totalLatency += metrics.lastLatency;
-                } catch (Exception ex) {
-                    logger.error("exception", ex);
-                }
+        String tokens[] = msg.msg.split(";");
+    	
+        if (tokens.length >= 2) {
+            try {
+                Date sentTime = new Date(Long.parseLong(tokens[1]));
+                metrics.lastLatency = (new Date()).getTime() - sentTime.getTime();
+                metrics.totalLatency += metrics.lastLatency;
+            } catch (Exception ex) {
+                logger.error("exception", ex);
             }
-	        
-	        if (metrics.messageCount > 0) {
-	        	metrics.averageLatency = metrics.totalLatency / metrics.messageCount;
-	        }
-	        
-	    	if (metrics.lastLatency < metrics.minLatency) {
-	    		metrics.minLatency = metrics.lastLatency;
-	    	}
-	    	
-	    	if (metrics.lastLatency > metrics.maxLatency) {
-	    		metrics.maxLatency = metrics.lastLatency;
-	    	}
-	
-	    	int idx = (int)(metrics.endTime.getTime() - metrics.startTime.getTime())/1000;
-	        
-	        while (metrics.timeSeries.size()-1 < idx) {
-	        	metrics.timeSeries.add(new Integer(0));
-	        }
-	        
-	        metrics.timeSeries.set(idx, metrics.timeSeries.get(idx) + 1);
-        //}
+        }
+        
+        if (metrics.messageCount > 0) {
+        	metrics.averageLatency = metrics.totalLatency / metrics.messageCount;
+        }
+        
+    	if (metrics.lastLatency < metrics.minLatency) {
+    		metrics.minLatency = metrics.lastLatency;
+    	}
+    	
+    	if (metrics.lastLatency > metrics.maxLatency) {
+    		metrics.maxLatency = metrics.lastLatency;
+    	}
+
+    	int idx = (int)(metrics.endTime.getTime() - metrics.startTime.getTime())/1000;
+        
+        while (metrics.timeSeries.size()-1 < idx) {
+        	metrics.timeSeries.add(new Integer(0));
+        }
+        
+        metrics.timeSeries.set(idx, metrics.timeSeries.get(idx) + 1);
+        
+        // check for dups
+        
+        String message = null;
+        
+        if (msg.msg.contains("\"MessageId\":")) {
+        	message = msg.msg.substring(0, msg.msg.indexOf("\"MessageId\":"));
+        } else {
+        	message = msg.msg;
+        }
+        
+        String messageHash = hashMessage(message);
+        messageHashes.putIfAbsent(msg.id, new ConcurrentHashMap<String, Boolean>());
+        ConcurrentHashMap<String, Boolean> hashSet = (ConcurrentHashMap<String, Boolean>)messageHashes.get(msg.id);
+        
+        if (hashSet.putIfAbsent(messageHash, true) != null) {
+        	if (messageDuplicates.putIfAbsent(msg.id, new AtomicInteger(1)) != null) {
+        		messageDuplicates.get(msg.id).incrementAndGet();
+        	}
+        }
     }
     
     protected void doChart(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -401,11 +455,6 @@ public class EndpointServlet extends HttpServlet {
         	response.getOutputStream().write(b);
         	response.flushBuffer();
         	
-        	//StringBuilder sb = new StringBuilder();
-        	//sb.append("<p><img src=\"" + fileName + "\"/></p>");
-
-        	//doOutput(200, response, "EndPoint - Chart " + fileName, sb.toString());
-
         } else {
             doOutput(404, response, "EndPoint - Chart", "Page not found");
         }
@@ -464,7 +513,7 @@ public class EndpointServlet extends HttpServlet {
     	} else {
     	
 	    	sb.append("<table>");
-	    	sb.append("<tr><th>Row</th><th>ID</th><th>Metrics</th><th>Messages</th><th>Chart</th><th>Message Count</th><th>Last Message Received</th></tr>");
+	    	sb.append("<tr><th>Row</th><th>ID</th><th>Metrics</th><th>Messages</th><th>Chart</th><th>Message Count</th><th>Last Message Received</th><th>Duplicates</th></tr>");
 	    	
 	    	int rowNum = 1;
 	
@@ -479,7 +528,8 @@ public class EndpointServlet extends HttpServlet {
 	        	sb.append("<td><a href=\"info/" + id + "\">messages</a></td>");
 	        	sb.append("<td><a href=\"chart/" + id + "\">chart</a></td>");
 	        	sb.append("<td>"+(metrics.messageCount-1)+"</td>");
-	        	sb.append("<td>"+metrics.lastMessageTime+"</td></tr>");
+	        	sb.append("<td>"+metrics.lastMessageTime+"</td>");
+	        	sb.append("<td>"+(messageDuplicates.containsKey(id)?messageDuplicates.get(id):"")+"</td></tr>");
 	        	rowNum++;
 	    	}
 	    	
@@ -495,10 +545,8 @@ public class EndpointServlet extends HttpServlet {
         
     	return messages;
     }
-
-    protected void doReceiveMessage(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-    	
-    	globalMessageCounter.incrementAndGet();
+    
+    private EndpointMessage parseMessage(HttpServletRequest request) throws IOException {
 
     	EndpointMessage msg = new EndpointMessage();
 
@@ -506,11 +554,6 @@ public class EndpointServlet extends HttpServlet {
         msg.id = pathInfo.substring(pathInfo.lastIndexOf("/")+1);
 
         SimpleDateFormat fmt = new SimpleDateFormat("yy-MM-dd HH:mm:ss");
-
-        if (msg.id.toLowerCase().startsWith("recv")) {
-            doOutput(404, response, "Missing ID", "Missing ID");
-            return;
-        }
 
         msg.host = request.getRemoteAddr() + "/" + request.getRemoteHost();
         msg.recvOn = fmt.format(new Date());
@@ -527,7 +570,16 @@ public class EndpointServlet extends HttpServlet {
                 msg.msg += line;
             }
         }
-        
+
+        return msg;
+    }
+
+    protected void doReceiveMessage(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    	
+    	globalMessageCounter.incrementAndGet();
+
+    	EndpointMessage msg = parseMessage(request);
+    	
     	// obey error behavior only after first message (typically subscription confirmation request) was received successfully
         
         if (request.getParameter("errorCode") != null && messageMap.containsKey(msg.id)) {
@@ -542,8 +594,6 @@ public class EndpointServlet extends HttpServlet {
     		
     		if (rand.nextDouble() <= chance) {
                 doOutput(errorCode, response, "Failed", "Failed");
-                addMessage(msg);
-                logger.info("event=add_message id=" + msg.id);
                 return;
     		}
     	}
@@ -581,16 +631,11 @@ public class EndpointServlet extends HttpServlet {
     			char[] bytes = new char[numResponseBytes];
     			Arrays.fill(bytes, 'A');
     			doRawOutput(200, response, bytes);
-                addMessage(msg);
-                logger.info("event=add_message id=" + msg.id);
     			return;
     		}
     	}
 
-        addMessage(msg);
-        logger.info("event=add_message id=" + msg.id);
-
-        if (failureConfigMap.containsKey(msg.id)) {
+        /*if (failureConfigMap.containsKey(msg.id)) {
         	
         	EndpointFailureConfiguration failureConfig = failureConfigMap.get(msg.id);
 
@@ -606,10 +651,10 @@ public class EndpointServlet extends HttpServlet {
         		
         		return;
         	}
-        }
-        
-        logger.info("event=success_response");
-        
+        }*/
+
+    	addMessage(msg);
+        logger.info("event=received_message status_code=200 msg_id=" + msg.id);
         doOutput(200, response, "Ok", "Ok");
     }
     
@@ -662,9 +707,9 @@ public class EndpointServlet extends HttpServlet {
                 output += "Method: "+msg.method+"<br/>";
                 output += "Host: "+msg.host+"<br/>";
                 
-                if (msg.failure) {
+                /*if (msg.failure) {
                 	output += "FAILED (HTTP " + failureConfigMap.get(msg.id).httpErrorCode + ")<br/>";
-                }
+                }*/
                 
                 if (msg.msg != null && msg.msg.length() > 0) {
                     output += "<pre>"+formatMessage(msg.msg)+"</pre><br/>";

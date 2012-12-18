@@ -71,7 +71,7 @@ public class CNSWorkerStatePageServlet extends AdminServletBase {
 			
 			try {
 				String host = request.getParameter("Host");
-				String clearQueuesXml = httpGet(cnsServiceBaseUrl + "?Action=ManageWorker&Host="+host+"&Task=ClearQueues&AWSAccessKeyId=" + cnsAdminUser.getAccessKey());
+				httpGet(cnsServiceBaseUrl + "?Action=ManageWorker&Host="+host+"&Task=ClearQueues&AWSAccessKeyId=" + cnsAdminUser.getAccessKey());
 			} catch (Exception ex) {
 				logger.error("event=failed_to_clear_queues", ex);
 				throw new ServletException(ex);
@@ -81,7 +81,7 @@ public class CNSWorkerStatePageServlet extends AdminServletBase {
 			
 			try {
 				String host = request.getParameter("Host");
-				String removeRecordXml = httpGet(cnsServiceBaseUrl + "?Action=ManageWorker&Host="+host+"&Task=RemoveRecord&AWSAccessKeyId=" + cnsAdminUser.getAccessKey());
+				httpGet(cnsServiceBaseUrl + "?Action=ManageWorker&Host="+host+"&Task=RemoveRecord&AWSAccessKeyId=" + cnsAdminUser.getAccessKey());
 			} catch (Exception ex) {
 				logger.error("event=failed_to_clear_queues", ex);
 				throw new ServletException(ex);
