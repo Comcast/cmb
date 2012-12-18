@@ -79,24 +79,36 @@ public class CNSTopicDeliveryPolicy {
 	private JSONObject httpJSONObject() {
 		try {
 	    	JSONObject json = new JSONObject();
-	    	if(defaultHealthyRetryPolicy != null) json.put("defaultHealthyRetryPolicy", defaultHealthyRetryPolicy.toJSON());
-	    	else json.put("defaultHealthyRetryPolicy", JSONObject.NULL);
+	    	if (defaultHealthyRetryPolicy != null) {
+	    		json.put("defaultHealthyRetryPolicy", defaultHealthyRetryPolicy.toJSON());
+	    	} else {
+	    		json.put("defaultHealthyRetryPolicy", JSONObject.NULL);
+	    	}
 	    	
-	    	if(defaultSicklyRetryPolicy != null) json.put("defaultSicklyRetryPolicy", defaultSicklyRetryPolicy.toJSON());
-	    	else json.put("defaultSicklyRetryPolicy", JSONObject.NULL);
+	    	if (defaultSicklyRetryPolicy != null) {
+	    		json.put("defaultSicklyRetryPolicy", defaultSicklyRetryPolicy.toJSON());
+	    	} else {
+	    		json.put("defaultSicklyRetryPolicy", JSONObject.NULL);
+	    	}
 	    	
-	    	if(disableSubscriptionOverrides) json.put("disableSubscriptionOverrides", true);
-	    	else json.put("disableSubscriptionOverrides", false);
+	    	if (disableSubscriptionOverrides) {
+	    		json.put("disableSubscriptionOverrides", true);
+	    	} else {
+	    		json.put("disableSubscriptionOverrides", false);
+	    	}
 
-	    	if(defaultThrottlePolicy != null)  json.put("defaultThrottlePolicy", defaultThrottlePolicy.toJSON());
-	    	else json.put("defaultThrottlePolicy", JSONObject.NULL);
+	    	if (defaultThrottlePolicy != null)  {
+	    		json.put("defaultThrottlePolicy", defaultThrottlePolicy.toJSON());
+	    	} else {
+	    		json.put("defaultThrottlePolicy", JSONObject.NULL);
+	    	}
 	    	
-	    	logger.debug("httpJSONObject: " + json.toString());
 	    	return json;
+		
 		} catch (Exception e) {
 			logger.error("event=cns_topic_delivery_policy_to_json status=failed reason=exception: \"" + e + "\"");
-			e.printStackTrace();
 		}
+
 		return null;
 	}
 	
@@ -104,7 +116,7 @@ public class CNSTopicDeliveryPolicy {
 		
 		String errorMessage = "";
 		boolean error = false;
-		if(!json.has("http")) {
+		if (!json.has("http")) {
 			errorMessage = "Topic Delivery Policy missing policy for http";
 			logger.error("event=construct_cns_topic_delivery_policy status=failed reason=error: \"" + errorMessage + "\"");
 			throw new CMBException(CNSErrorCodes.CNS_InvalidParameter, errorMessage);
@@ -115,9 +127,9 @@ public class CNSTopicDeliveryPolicy {
 			    throw new Exception("Empty http protocol");
 			}
 			
-			for(Iterator<String> keys = json2.keys(); keys.hasNext();) {
+			for (Iterator<String> keys = json2.keys(); keys.hasNext();) {
 			    String key = keys.next();
-				if(!(key.equals("defaultHealthyRetryPolicy") || key.equals("defaultSicklyRetryPolicy")  || key.equals("disableSubscriptionOverrides") ||
+				if (!(key.equals("defaultHealthyRetryPolicy") || key.equals("defaultSicklyRetryPolicy")  || key.equals("disableSubscriptionOverrides") ||
 						key.equals("defaultThrottlePolicy"))) {
 					throw new Exception("Empty http delivery policy does not have key:" + key);
 				}
@@ -126,7 +138,7 @@ public class CNSTopicDeliveryPolicy {
 				try {
 					defaultHealthyRetryPolicy = new CNSRetryPolicy(json2.getJSONObject("defaultHealthyRetryPolicy"));
 				} catch (Exception e) {
-					if(e instanceof CNSModelConstructionException) {
+					if (e instanceof CNSModelConstructionException) {
 						String message = ((CNSModelConstructionException) e).getErrormessage();
 						errorMessage = "DeliveryPolicy: defaultHealthyRetryPolicy." + message;
 						error = true;
@@ -135,13 +147,13 @@ public class CNSTopicDeliveryPolicy {
 			} else {
 				defaultHealthyRetryPolicy = new CNSRetryPolicy();
 			}
-			if((json2.has("defaultSicklyRetryPolicy"))) {
-				if(json2.get("defaultSicklyRetryPolicy") == JSONObject.NULL) defaultSicklyRetryPolicy = null;
+			if ((json2.has("defaultSicklyRetryPolicy"))) {
+				if (json2.get("defaultSicklyRetryPolicy") == JSONObject.NULL) defaultSicklyRetryPolicy = null;
 				else {
 					try {
-						 defaultSicklyRetryPolicy = new CNSRetryPolicy(json2.getJSONObject("defaultSicklyRetryPolicy"));
+						defaultSicklyRetryPolicy = new CNSRetryPolicy(json2.getJSONObject("defaultSicklyRetryPolicy"));
 					} catch (Exception e) {
-						if(e instanceof CNSModelConstructionException) {
+						if (e instanceof CNSModelConstructionException) {
 							String message = ((CNSModelConstructionException) e).getErrormessage();
 							errorMessage = "DeliveryPolicy: defaultSicklyRetryPolicy." + message;
 							error = true;
@@ -150,18 +162,17 @@ public class CNSTopicDeliveryPolicy {
 				}
 			}
 			
-			if((json2.has("disableSubscriptionOverrides"))) {
+			if ((json2.has("disableSubscriptionOverrides"))) {
 				disableSubscriptionOverrides = json2.getBoolean("disableSubscriptionOverrides");
-			}
-			else {
+			} else {
 				disableSubscriptionOverrides = false;
 			}
 			
-			if((json2.has("defaultThrottlePolicy")) && (json2.get("defaultThrottlePolicy") != JSONObject.NULL)) {
+			if ((json2.has("defaultThrottlePolicy")) && (json2.get("defaultThrottlePolicy") != JSONObject.NULL)) {
 				try {
 					defaultThrottlePolicy = new CNSThrottlePolicy(json2.getJSONObject("defaultThrottlePolicy"));
 				} catch (Exception e) {
-					if(e instanceof CNSModelConstructionException) {
+					if (e instanceof CNSModelConstructionException) {
 						String message = ((CNSModelConstructionException) e).getErrormessage();
 						errorMessage = "DeliveryPolicy: defaultThrottlePolicy." + message;
 						error = true;
@@ -174,10 +185,9 @@ public class CNSTopicDeliveryPolicy {
 			
 		} catch (Exception e) {
 			logger.error("event=construct_cns_topic_delivery_policy status=failed reason=exception: \"" + e + "\"");
-			e.printStackTrace();
 			throw new CMBException(CNSErrorCodes.CNS_InvalidParameter,e.getMessage());
 		}
-		if(error) {
+		if (error) {
 			logger.error("event=update_cns_topic_delivery_policy status=failed reason=error: \"" + errorMessage + "\"");
 			throw new CMBException(CNSErrorCodes.CNS_InvalidParameter, errorMessage);
 		}
@@ -190,14 +200,14 @@ public class CNSTopicDeliveryPolicy {
      * @throws Exception
      */
 	public void update(JSONObject json) throws CNSModelConstructionException, CMBException {
-		if(!json.has("http")) {
+		if (!json.has("http")) {
 			String errorMessage = "Topic Delivery Policy missing policy for http";
 			logger.error("event=update_cns_topic_delivery_policy status=failed reason=error: \"" + errorMessage + "\"");
 			throw new CMBException(CNSErrorCodes.CNS_InvalidParameter, errorMessage);
 		}
 		String errorMessage = "";
 		boolean error = false;
-		try{	
+		try {	
 			CNSRetryPolicy ldefaultHealthyRetryPolicy = null;
 			CNSRetryPolicy ldefaultSicklyRetryPolicy = null;
 			CNSThrottlePolicy ldefaultThrottlePolicy = null;
@@ -219,11 +229,11 @@ public class CNSTopicDeliveryPolicy {
 			} else {
 				ldefaultHealthyRetryPolicy = new CNSRetryPolicy();
 			}
-			if((json2.has("defaultSicklyRetryPolicy")) &&(json2.get("defaultSicklyRetryPolicy") != JSONObject.NULL)) {
+			if ((json2.has("defaultSicklyRetryPolicy")) &&(json2.get("defaultSicklyRetryPolicy") != JSONObject.NULL)) {
 				try {
 					ldefaultSicklyRetryPolicy = new CNSRetryPolicy(json2.getJSONObject("defaultSicklyRetryPolicy"));
 				} catch (Exception e) {
-					if(e instanceof CNSModelConstructionException) {
+					if (e instanceof CNSModelConstructionException) {
 						String message = ((CNSModelConstructionException) e).getErrormessage();
 						errorMessage = "DeliveryPolicy: defaultSicklyRetryPolicy." + message;
 						error = true;
@@ -233,23 +243,22 @@ public class CNSTopicDeliveryPolicy {
 				ldefaultSicklyRetryPolicy = null;
 			}
 			
-			if((json2.has("disableSubscriptionOverrides"))) {
+			if ((json2.has("disableSubscriptionOverrides"))) {
 				try {
 					ldisableSubscriptionOverrides = json2.getBoolean("disableSubscriptionOverrides");
 				} catch (Exception e) {
 					errorMessage = "DeliveryPolicy: disableSubscriptionOverrides must be a boolean";
 					error = true;
 				}	
-			}
-			else {
+			} else {
 				ldisableSubscriptionOverrides = false;
 			}
 			
-			if((json2.has("defaultThrottlePolicy")) && (json2.get("defaultThrottlePolicy") != JSONObject.NULL)) {
+			if ((json2.has("defaultThrottlePolicy")) && (json2.get("defaultThrottlePolicy") != JSONObject.NULL)) {
 				try {
 					ldefaultThrottlePolicy = new CNSThrottlePolicy(json2.getJSONObject("defaultThrottlePolicy"));
 				} catch (Exception e) {
-					if(e instanceof CNSModelConstructionException) {
+					if (e instanceof CNSModelConstructionException) {
 						String message = ((CNSModelConstructionException) e).getErrormessage();
 						errorMessage = "DeliveryPolicy: defaultThrottlePolicy." + message;
 						error = true;
@@ -258,7 +267,7 @@ public class CNSTopicDeliveryPolicy {
 			} else {
 				ldefaultThrottlePolicy = new CNSThrottlePolicy();
 			}
-			if(!error) {
+			if (!error) {
 				defaultHealthyRetryPolicy = ldefaultHealthyRetryPolicy;
 				defaultSicklyRetryPolicy = ldefaultSicklyRetryPolicy;
 				disableSubscriptionOverrides = ldisableSubscriptionOverrides;
@@ -267,10 +276,9 @@ public class CNSTopicDeliveryPolicy {
 			
 		} catch (Exception e) {
 			logger.error("event=update_cns_topic_delivery_policy status=failed", e);
-			e.printStackTrace();
 			throw new CMBException(CNSErrorCodes.CNS_InvalidParameter,"DeliveryPolicy: JSON exception");
 		}
-		if(error) {
+		if (error) {
 			logger.error("event=update_cns_topic_delivery_policy status=failed reason=error: \"" + errorMessage + "\"");
 			throw new CMBException(CNSErrorCodes.CNS_InvalidParameter, errorMessage);
 		}
@@ -284,7 +292,6 @@ public class CNSTopicDeliveryPolicy {
 	    	return json;
 		} catch (Exception e) {
 			logger.error("event=cns_topic_delivery_policy_to_json status=failed", e);
-			e.printStackTrace();
 		}
 		return null;
 	}
@@ -292,11 +299,12 @@ public class CNSTopicDeliveryPolicy {
 	public String toString() {
 		try {
 			JSONObject json = this.toJSON();
-	    	if(json != null) return json.toString();
+	    	if (json != null) {
+	    		return json.toString();
+	    	}
 	    	return null;
 		} catch (Exception e) {
 			logger.error("event=cns_topic_delivery_policy_to_string status=failed", e);
-			e.printStackTrace();
 			return null;
 		}
 	}

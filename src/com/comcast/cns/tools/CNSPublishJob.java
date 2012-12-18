@@ -71,6 +71,16 @@ public class CNSPublishJob implements Runnable {
     	return subArn;
     }
     
+    private void letMessageDieForEndpoint() {
+    	
+        // decrement the total number of sub-tasks and if counter is 0 delete publish job
+        
+    	if (endpointPublishJobCount.decrementAndGet() == 0) {
+            CQSHandler.deleteMessage(queueUrl, receiptHandle);
+            logger.info("event=deleting_publish_job_from_cqs message_id=" + message.getMessageId() + " queue_url=" + queueUrl + " receipt_handle=" + receiptHandle);
+        }
+    }
+    
     /**
      * Call this method only in retry mode for a single sub
      */
@@ -87,7 +97,8 @@ public class CNSPublishJob implements Runnable {
             
             CNSSubscriptionDeliveryPolicy deliveryPolicy = subAttr.getEffectiveDeliveryPolicy();
             CNSRetryPolicy retryPolicy = deliveryPolicy.getHealthyRetryPolicy();
-            logger.debug("retry_policy=" + retryPolicy);
+
+            logger.debug("retry_policy=" + retryPolicy + "sub_arn=" + subArn);
             
             while (numRetries < retryPolicy.getNumNoDelayRetries()) {
                 
@@ -157,15 +168,10 @@ public class CNSPublishJob implements Runnable {
             
             logger.info("event=retries_exhausted action=skip_message endpoint=" + endpoint + " message=" + message);
             
-            // let message die 
-
-            if (endpointPublishJobCount.decrementAndGet() == 0) {
-                CQSHandler.deleteMessage(queueUrl, receiptHandle);
-                logger.debug("event=send_notification status=deleting_publish_message message_id=" + message.getMessageId());
-            }
+            letMessageDieForEndpoint();
             
         } catch (SubscriberNotFoundException e) {
-            logger.error("event=retry_error status=subscriber_not_found subArn=" + subArn);                
+            logger.error("event=retry_error status=subscriber_not_found sub_arn=" + subArn);                
         } catch (Exception e) {
             logger.error("event=retry_error endpoint=" + endpoint + " protocol=" + protocol + " message_length=" + message.getMessage().length() + (user == null ?"":" " + user), e);
         }            
@@ -182,22 +188,20 @@ public class CNSPublishJob implements Runnable {
     private void runCommon(IEndpointPublisher publisher, CnsSubscriptionProtocol protocol, String endpoint, String subArn) throws Exception {
     	
         long ts1 = System.currentTimeMillis();
-        logger.debug("event=run_common protocol=" + protocol + " endpoint=" + endpoint + " sub_arn=" + subArn + " pub=" + publisher);
+        
         publisher.setEndpoint(endpoint);
         publisher.setMessage(message.getProtocolSpecificProcessedMessage(protocol));
         publisher.setSubject(message.getSubject());            
         publisher.setUser(user);
         publisher.send();
+        
+        logger.info("event=successful_delivery protocol=" + protocol + " endpoint=" + endpoint + " sub_arn=" + subArn + " attempt=" + numRetries);
+
         long ts2 = System.currentTimeMillis();
+        
         CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CNSPublishSendTime, ts2 - ts1);
-        logger.debug("event=send_notification status=success endpoint=" + endpoint + " protocol=" + protocol.name() + " message_length=" + message.getMessage().length() + (user == null ?"":" " + user));
         
-        // decrement the total number of sub-tasks and if counter is 0 delete publish job
-        
-        if (endpointPublishJobCount.decrementAndGet() == 0) {
-            CQSHandler.deleteMessage(queueUrl, receiptHandle);
-            logger.debug("event=send_notification status=deleting_publish_message message_id=" + message.getMessageId());
-        }
+        letMessageDieForEndpoint();
 
         CNSMonitor.getInstance().registerSendsRemaining(message.getMessageId(), -1);
         CNSMonitor.getInstance().registerBadEndpoint(endpoint, 0, 1, message.getTopicArn());
@@ -210,16 +214,17 @@ public class CNSPublishJob implements Runnable {
         
             int slowResponseCounter = CNSEndpointPublisherJobConsumer.getNumSlowResponses(endpoint);
 
-            logger.info("event=run_common_and_retry protocol=" + protocol + " endpoint=" + endpoint + " sub_arn=" + subArn + " slow_response_counter=" + slowResponseCounter + " attempt=" + numRetries);
-
             int failureSuspensionThreshold = CMBProperties.getInstance().getEndpointFailureCountToSuspensionThreshold(); 
             
             // only throw away new messages for bad endpoints (not those that are already in redlivery) - in effect we are temporarily suspending 
             // endpoints with more than three failures in the last minute
 
             if (failureSuspensionThreshold!=0 && slowResponseCounter>failureSuspensionThreshold && numRetries==0) {
+            	
             	logger.warn("event=throwing_message_away reason=endpoint_has_too_many_slow_responses_in_last_minute endpoint=" + endpoint + " slow_response_counter=" + slowResponseCounter + " attempt=" + numRetries);
-            	CQSHandler.deleteMessage(queueUrl, receiptHandle);
+
+            	letMessageDieForEndpoint();
+            	
             } else {
             	runCommon(pub, protocol, endpoint, subArn);
             }
@@ -228,8 +233,6 @@ public class CNSPublishJob implements Runnable {
         	
     		CNSEndpointPublisherJobConsumer.addSlowResponseEvent(endpoint);
         
-            logger.error("event=error_notifying_subscriber endpoint=" + endpoint + " protocol=" + protocol + " message_length=" + message.getMessage().length() + (user == null ? "" : " " + user), ex);
-	            
             if (protocol == CnsSubscriptionProtocol.http || protocol == CnsSubscriptionProtocol.https) {
             	
             	int errorCode = 0;
@@ -242,18 +245,15 @@ public class CNSPublishJob implements Runnable {
                     
                 	// if posting fails with an acceptable http error code let it die
                 	
-                	logger.info("event=failed_to_deliver_message action=skip_message status_code=" + errorCode + " endpoint=" + endpoint);
+                	logger.warn("event=failed_to_deliver_message action=skip_message status_code=" + errorCode + " endpoint=" + endpoint);
 
-                	if (endpointPublishJobCount.decrementAndGet() == 0) {
-                        CQSHandler.deleteMessage(queueUrl, receiptHandle);
-                        logger.debug("event=send_notification status=deleting_publish_message message_id=" + message.getMessageId());
-                    }
+                	letMessageDieForEndpoint();
 
                 } else {  
                 	
                 	// if posting fails with an unacceptable http error code register bad endpoint in rolling window of 60 sec and start retry process
 
-                	logger.info("event=failed_to_deliver_message action=retry status_code=" + errorCode + " endpoint=" + endpoint);
+                	logger.warn("event=failed_to_deliver_message action=retry status_code=" + errorCode + " endpoint=" + endpoint);
 
                 	CNSMonitor.getInstance().registerBadEndpoint(endpoint, 1, 1, message.getTopicArn());
 	            	doRetry(pub, protocol, endpoint, subArn);
@@ -263,12 +263,9 @@ public class CNSPublishJob implements Runnable {
 
             	// if sending fails for a non-http endpoint let it die immediately without retry
             	
-            	logger.info("event=failed_to_deliver_message action=skip_message endpoint=" + endpoint);
+            	logger.warn("event=failed_to_deliver_message action=skip_message endpoint=" + endpoint);
                 
-                if (endpointPublishJobCount.decrementAndGet() == 0) {
-                    CQSHandler.deleteMessage(queueUrl, receiptHandle);
-                    logger.debug("event=send_notification status=deleting_publish_message message_id=" + message.getMessageId());
-                }
+            	letMessageDieForEndpoint();
             }
         }            
     }        
@@ -301,7 +298,7 @@ public class CNSPublishJob implements Runnable {
         runCommonAndRetry(pub, protocol, endpoint, subArn);
         
         long ts2 = System.currentTimeMillis();            
-        logger.info("event=notifying_subscriber endpoint=" + endpoint + " protocol=" + protocol.name() + " message_length=" + message.getMessage().length() + (user == null ?"":" " + user.getUserName()) + " responseTimeMS=" + (ts2 - ts1) + " CassandraTimeMS=" + CMBControllerServlet.valueAccumulator.getCounter(AccumulatorName.CassandraTime) + " publishTimeMS=" + CMBControllerServlet.valueAccumulator.getCounter(AccumulatorName.CNSPublishSendTime) + " CNSCQSTimeMS=" + CMBControllerServlet.valueAccumulator.getCounter(AccumulatorName.CNSCQSTime));
+        logger.debug("event=metrics endpoint=" + endpoint + " protocol=" + protocol.name() + " message_length=" + message.getMessage().length() + (user == null ?"":" " + user.getUserName()) + " responseTimeMS=" + (ts2 - ts1) + " CassandraTimeMS=" + CMBControllerServlet.valueAccumulator.getCounter(AccumulatorName.CassandraTime) + " publishTimeMS=" + CMBControllerServlet.valueAccumulator.getCounter(AccumulatorName.CNSPublishSendTime) + " CNSCQSTimeMS=" + CMBControllerServlet.valueAccumulator.getCounter(AccumulatorName.CNSCQSTime));
         CMBControllerServlet.valueAccumulator.deleteAllCounters();
     }        
 }

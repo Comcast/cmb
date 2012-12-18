@@ -206,7 +206,6 @@ public class CNSSubscriptionDeliveryPolicy {
 		
 		} catch (Exception e) {
 			logger.error("event=cns_subscription_delivery_policy_to_string status=failed", e);
-			e.printStackTrace();
 			return null;
 		}
 	}

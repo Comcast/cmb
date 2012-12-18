@@ -15,12 +15,9 @@
  */
 package com.comcast.cns.model;
 
-
-
 import org.apache.log4j.Logger;
 import org.json.JSONException;
 import org.json.JSONObject;
-
 
 /**
  * Represents a throttling policy
@@ -28,6 +25,7 @@ import org.json.JSONObject;
  * Class is not thread-safe. Caller must ensure thread-safety
  */
 public class CNSThrottlePolicy {
+
 	private Integer maxReceivesPerSecond;
 	private static Logger logger = Logger.getLogger(CNSThrottlePolicy.class);
 
@@ -44,27 +42,33 @@ public class CNSThrottlePolicy {
 	}
 	
 	public CNSThrottlePolicy(JSONObject json) throws CNSModelConstructionException {
+	
 		boolean error = false;
 		String errorMessage = "";
+		
 		try {
-			if(json.has("maxReceivesPerSecond") && (json.get("maxReceivesPerSecond") != JSONObject.NULL)) {
+		
+			if (json.has("maxReceivesPerSecond") && (json.get("maxReceivesPerSecond") != JSONObject.NULL)) {
 				maxReceivesPerSecond = json.getInt("maxReceivesPerSecond");			
-			} else if(json.keys().hasNext() && !json.has("maxReceivesPerSecond")) {
+			} else if (json.keys().hasNext() && !json.has("maxReceivesPerSecond")) {
 				error = true;
 				errorMessage = "Unexpected JSON member";
 				logger.error("event=construct_cns_throttle_policy status=failed message=" + errorMessage);
 			}
+			
 		} catch (Exception e) {
 			logger.error("event=construct_cns_throttle_policy status=failed", e);
-			e.printStackTrace();
 			throw new CNSModelConstructionException("unable to create Throttle Policy");
 		}
+
 		if (error) {
 			logger.error("event=construct_cns_throttle_policy status=failed message=" + errorMessage);
 			throw new CNSModelConstructionException("throttlePolicy." + errorMessage);
 		}
-		logger.info("event=construct_cns_throttle_policy status=success");
+		
+		logger.debug("event=construct_cns_throttle_policy status=success");
 	}
+	
 	/**
      * Update this object by taking values from parameter (if present) or the default values
      *  Also do validation checks
@@ -72,57 +76,72 @@ public class CNSThrottlePolicy {
      * @throws Exception
      */
 	public void update(JSONObject json) throws CNSModelConstructionException {
+		
 		boolean error = false;
 		String errorMessage = "";
+		
 		try {
-			if(json.has("maxReceivesPerSecond")  && (json.get("maxReceivesPerSecond") != JSONObject.NULL)) {
+			
+			if (json.has("maxReceivesPerSecond")  && (json.get("maxReceivesPerSecond") != JSONObject.NULL)) {
 				maxReceivesPerSecond = json.getInt("maxReceivesPerSecond");
-			} else if(json.keys().hasNext() && !json.has("maxReceivesPerSecond")) {
+			} else if (json.keys().hasNext() && !json.has("maxReceivesPerSecond")) {
 				error = true;
 				errorMessage = "Unexpected JSON member";
 				logger.error("event=update_cns_throttle_policy status=failed reason=error: \"" + errorMessage + "\"");
 			} else {
 				maxReceivesPerSecond = null;
 			}
+			
 		} catch (JSONException e) {
 			logger.error("event=update_cns_throttle_policy status=failed reason=exception: \"" + e + "\"");
-			e.printStackTrace();
 			throw new CNSModelConstructionException("unable to create Throttle Policy");
 		}		
-		if(error) {
+
+		if (error) {
 			logger.error("event=update_cns_throttle_policy status=failed reason=error: \"" + errorMessage + "\"");
 			throw new CNSModelConstructionException("throttlePolicy." + errorMessage);
 		}
+		
 		logger.info("event=update_cns_throttle_policy status=success");
 	} 
 	
 	
 	public JSONObject toJSON() {
+
 		try {
-	    	JSONObject json = new JSONObject();
-	    	if(maxReceivesPerSecond != null) {
+	    
+			JSONObject json = new JSONObject();
+	    	
+			if (maxReceivesPerSecond != null) {
 	    		json.put("maxReceivesPerSecond", maxReceivesPerSecond);	    	
 	    	} else {
 	    		json.put("maxReceivesPerSecond", JSONObject.NULL);	    	
 	    	}
 	    		
 	    	return json;
+		
 		} catch (Exception e) {
 			logger.error("event=cns_throttle_policy_to_json status=failed reason=exception: \"" + e + "\"");
-			e.printStackTrace();
 		}
+
 		return null;
 	}
 	
 	@Override
 	public String toString() {
+
 		try {
+		
 			JSONObject json = this.toJSON();
-	    	if(json != null) return json.toString();
-	    	return null;
+	    	
+			if (json != null) {
+	    		return json.toString();
+	    	}
+	    	
+			return null;
+		
 		} catch (Exception e) {
 			logger.error("event=cns_throttle_policy_to_string status=failed reason=exception: \"" + e + "\"");
-			e.printStackTrace();
 			return null;
 		}
 	}

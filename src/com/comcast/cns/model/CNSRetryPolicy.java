@@ -163,7 +163,6 @@ public class CNSRetryPolicy {
 			
 		} catch (JSONException e) {
 			logger.error("event=construct_cns_retry_policy status=failed", e);
-			e.printStackTrace();
 			throw new CNSModelConstructionException("JSON parameter format error");
 		}
 		
@@ -287,7 +286,6 @@ public class CNSRetryPolicy {
 		} catch (Exception e) {
 
 			logger.error("event=update_cns_retry_policy status=failed", e);
-			e.printStackTrace();
 			throw new CNSModelConstructionException("JSON parameter format error");
 		}
 		
@@ -354,7 +352,6 @@ public class CNSRetryPolicy {
 		
 		} catch (Exception e) {
 			logger.error("event=cns_retry_policy_to_json status=failed", e);
-			e.printStackTrace();
 		}
 		
 		return null;
