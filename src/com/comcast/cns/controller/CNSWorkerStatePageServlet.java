@@ -18,6 +18,7 @@ package com.comcast.cns.controller;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -112,6 +113,8 @@ public class CNSWorkerStatePageServlet extends AdminServletBase {
 					
 			int deliveryQueueMaxSize = CMBProperties.getInstance().getDeliveryHandlerJobQueueLimit();
 			int redeliveryQueueMaxSize = CMBProperties.getInstance().getReDeliveryHandlerJobQueueLimit();
+			
+			Map<String, Integer> endpointErrorCounts = new HashMap<String, Integer>();
 
 			for (Element stats : statsList) {
 				
@@ -140,9 +143,52 @@ public class CNSWorkerStatePageServlet extends AdminServletBase {
 				out.println("<td><form action=\"\" method=\"POST\"><input type='hidden' name='Host' value='"+host+"'><input type='submit' value='Clear Queues' name='ClearQueues'/></form></td>");
 				out.println("<td><form action=\"\" method=\"POST\"><input type='hidden' name='Host' value='"+host+"'><input type='submit' value='Remove Record' name='RemoveRecord'/></form></td>");
 				out.println("</tr>");
+				
+				List<Element> errorCounts = XmlUtil.getChildNodes(stats, "ErrorCountForEndpoints");
+				
+				if (errorCounts.size() == 1) {
+					
+					for (Element errorCount : XmlUtil.getChildNodes(errorCounts.get(0), "Error")) {
+						
+						String endpoint = XmlUtil.getCurrentLevelAttributeTextValue(errorCount, "endpoint");
+						Integer count = XmlUtil.getCurrentLevelAttributeIntValue(errorCount, "count");
+						
+						if (!endpointErrorCounts.containsKey(endpoint)) {
+							endpointErrorCounts.put(endpoint, count);
+						} else {
+							endpointErrorCounts.put(endpoint, endpointErrorCounts.get(endpoint) + count);
+						}
+					}
+				}
 			}
 			
-			out.println("<table>");
+			out.println("</table>");
+			
+			if (endpointErrorCounts.size() > 0) {
+			
+				out.println("<h3>Failed or timed out Responses during past 60 Seconds by Endpoint</h3>");
+				
+				out.println("<table border='1'>");
+				out.println("<tr><th>Endpoint</th><th>Error Count</th><th><th>");
+				
+				for (String endpoint : endpointErrorCounts.keySet()) {
+
+					out.println("<tr>");
+					out.println("<td>"+endpoint+"</td>");
+					out.println("<td>"+endpointErrorCounts.get(endpoint)+"</td>");
+					
+					if (endpointErrorCounts.get(endpoint) > CMBProperties.getInstance().getEndpointFailureCountToSuspensionThreshold()) {
+						out.println("<td bgcolor='#C00000'><i>suspended</i></td>");
+					} else {
+						out.println("<td>&nbsp;</td>");
+					}
+					
+					out.println("</tr>");
+				}
+	
+				out.println("</table>");
+			
+			}
 
 		} catch (Exception ex) {
 			logger.error("", ex);

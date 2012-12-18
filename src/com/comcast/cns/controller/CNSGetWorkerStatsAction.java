@@ -126,8 +126,8 @@ public class CNSGetWorkerStatsAction extends CNSAction {
 					Integer numPublishedMessages = (Integer)mbeanConn.getAttribute(cnsWorkerMonitor, "NumPublishedMessages");
 					stats.setNumPublishedMessages(numPublishedMessages);
 					
-					Map<String, String> errorRateForEndpoints = (Map<String, String>)mbeanConn.getAttribute(cnsWorkerMonitor, "ErrorRateForEndpoints");
-					stats.setErrorRateForEndpoints(errorRateForEndpoints);
+					Map<String, Integer> errorCountForEndpoints = (Map<String, Integer>)mbeanConn.getAttribute(cnsWorkerMonitor, "RecentErrorCountForEndpoints");
+					stats.setErrorCountForEndpoints(errorCountForEndpoints);
 
 					Boolean cqsServiceAvailable = (Boolean)mbeanConn.getAttribute(cnsWorkerMonitor, "CQSServiceAvailable");
 					stats.setCqsServiceAvailable(cqsServiceAvailable);

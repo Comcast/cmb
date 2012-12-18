@@ -37,7 +37,7 @@ public class CNSWorkerStats {
 	
 	private long numPublishedMessages;
 	
-	private Map<String, String> errorRateForEndpoints;
+	private Map<String, Integer> errorCountForEndpoints;
 	
 	private boolean cqsServiceAvailable;
 	
@@ -59,12 +59,12 @@ public class CNSWorkerStats {
 		this.cqsServiceAvailable = cqsServiceAvailable;
 	}
 
-	public Map<String, String> getErrorRateForEndpoints() {
-		return errorRateForEndpoints;
+	public Map<String, Integer> getErrorCountForEndpoints() {
+		return errorCountForEndpoints;
 	}
 
-	public void setErrorRateForEndpoints(Map<String, String> errorRateForEndpoints) {
-		this.errorRateForEndpoints = errorRateForEndpoints;
+	public void setErrorCountForEndpoints(Map<String, Integer> errorCountForEndpoints) {
+		this.errorCountForEndpoints = errorCountForEndpoints;
 	}
 
 	public long getNumPublishedMessages() {

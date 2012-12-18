@@ -43,16 +43,15 @@ public class CNSWorkerStatsPopulator {
 			res += "\t\t\t<CqsServiceAvailable>"+s.isCqsServiceAvailable()+"</CqsServiceAvailable>\n";
 			res += "\t\t\t<NumPooledHttpConnections>"+s.getNumPooledHttpConnections()+"</NumPooledHttpConnections>\n";
 
-			if (s.getErrorRateForEndpoints() != null && s.getErrorRateForEndpoints().size() > 0) {
+			if (s.getErrorCountForEndpoints() != null && s.getErrorCountForEndpoints().size() > 0) {
 				
-				res += "\t\t\t<ErrorRateForEndpoints>";
+				res += "\t\t\t<ErrorCountForEndpoints>";
 				
-				for (String endpoint : s.getErrorRateForEndpoints().keySet()) {
-					res += "\t\t\t\t<Endpoint>"+endpoint+"</Endpoint>";
-					res += "\t\t\t\t<Errors>"+s.getErrorRateForEndpoints().get(endpoint)+"</Errors>";
+				for (String endpoint : s.getErrorCountForEndpoints().keySet()) {
+					res += "\t\t\t\t<Error endpoint=\""+endpoint+"\" count=\""+s.getErrorCountForEndpoints().get(endpoint)+"\"/>";
 				}
 
-				res += "\t\t\t</ErrorRateForEndpoints>";
+				res += "\t\t\t</ErrorCountForEndpoints>";
 			}
 			
 			res += "\t\t</Stats>\n";

@@ -85,17 +85,23 @@ public class CNSEndpointPublisherJobConsumer implements CNSPublisherPartitionRun
         }
     }
     
-    public static void addSlowResponseEvent(String endpointUrl) {
+    public static void addBadResponseEvent(String endpointUrl) {
     	badEndpointCounterWindow.addNow(new BadEndpointEvent(endpointUrl));
     }
 
-    public static int getNumSlowResponses(String endpointUrl) {
+    public static int getNumBadResponses(String endpointUrl) {
     	CountBadEndpointVisitor srv = new CountBadEndpointVisitor();
     	badEndpointCounterWindow.visitAllNodes(srv);
     	if (!srv.badEndpointCounts.containsKey(endpointUrl)) {
     		return 0;
     	}
     	return srv.badEndpointCounts.get(endpointUrl);
+    }
+    
+    public static Map<String, Integer> getBadResponseCounts() {
+    	CountBadEndpointVisitor srv = new CountBadEndpointVisitor();
+    	badEndpointCounterWindow.visitAllNodes(srv);
+    	return srv.badEndpointCounts;
     }
     
     private static volatile boolean initialized = false; 

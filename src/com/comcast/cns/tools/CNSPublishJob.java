@@ -212,7 +212,7 @@ public class CNSPublishJob implements Runnable {
         
         try {
         
-            int slowResponseCounter = CNSEndpointPublisherJobConsumer.getNumSlowResponses(endpoint);
+            int slowResponseCounter = CNSEndpointPublisherJobConsumer.getNumBadResponses(endpoint);
 
             int failureSuspensionThreshold = CMBProperties.getInstance().getEndpointFailureCountToSuspensionThreshold(); 
             
@@ -231,7 +231,7 @@ public class CNSPublishJob implements Runnable {
         
         } catch (Exception ex) {
         	
-    		CNSEndpointPublisherJobConsumer.addSlowResponseEvent(endpoint);
+    		CNSEndpointPublisherJobConsumer.addBadResponseEvent(endpoint);
         
             if (protocol == CnsSubscriptionProtocol.http || protocol == CnsSubscriptionProtocol.https) {
             	

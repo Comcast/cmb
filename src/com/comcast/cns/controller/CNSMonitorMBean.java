@@ -45,7 +45,13 @@ public interface CNSMonitorMBean {
      * 
      * @return map of endpointURL -> failure-rate-percentage, numTries, Topic1, Topic2,..
      */
-    Map<String, String> getErrorRateForEndpoints();
+    public Map<String, String> getErrorRateForEndpoints();
+    
+    /**
+     * 
+     * @return map of endpointURL -> number of failures over last 60 seconds
+     */
+    public Map<String, Integer> getRecentErrorCountForEndpoints();
     
     /**
      * 

@@ -137,10 +137,10 @@ public class CNSMonitor implements CNSMonitorMBean {
         newVal.topics.putIfAbsent(topic, Boolean.TRUE);
     }
 
-    @Override
     /**
      * @return map of endpointURL -> failure-rate, numTries, List<Topics>
      */
+    @Override
     public Map<String, String> getErrorRateForEndpoints() {
 
     	HashMap<String, String> ret = new HashMap<String, String>();
@@ -166,6 +166,11 @@ public class CNSMonitor implements CNSMonitorMBean {
         }
     	
         return ret;
+    }
+
+    @Override
+    public Map<String, Integer> getRecentErrorCountForEndpoints() {
+    	return CNSEndpointPublisherJobConsumer.getBadResponseCounts();
     }
 
     @Override
