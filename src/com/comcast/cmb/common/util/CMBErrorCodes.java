@@ -96,7 +96,7 @@ public class CMBErrorCodes {
     private final int httpCode;
     private final String cmbCode;
 
-    protected CMBErrorCodes(int httpCode, String cmbCode) {
+    public CMBErrorCodes(int httpCode, String cmbCode) {
         this.httpCode = httpCode;
         this.cmbCode = cmbCode;
     }

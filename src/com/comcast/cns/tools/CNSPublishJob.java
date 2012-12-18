@@ -228,18 +228,43 @@ public class CNSPublishJob implements Runnable {
         	
     		CNSEndpointPublisherJobConsumer.addSlowResponseEvent(endpoint);
         
-            logger.error("event=error_notifying_subscriber endpoint=" + endpoint + " protocol=" + protocol + " message_length=" + message.getMessage().length() + (user == null ?"":" " + user), ex);
-            
-            CNSMonitor.getInstance().registerBadEndpoint(endpoint, 1, 1, message.getTopicArn());
-            
+            logger.error("event=error_notifying_subscriber endpoint=" + endpoint + " protocol=" + protocol + " message_length=" + message.getMessage().length() + (user == null ? "" : " " + user), ex);
+	            
             if (protocol == CnsSubscriptionProtocol.http || protocol == CnsSubscriptionProtocol.https) {
-                doRetry(pub, protocol, endpoint, subArn);
+            	
+            	int errorCode = 0;
+            	
+            	if (ex instanceof CMBException) {
+            		errorCode = ((CMBException)ex).getHttpCode();
+            	}
+            
+                if (CNSEndpointPublisherJobConsumer.acceptableHttpResponseCodes.contains(errorCode)) {
+                    
+                	// if posting fails with an acceptable http error code let it die
+                	
+                	logger.info("event=failed_to_deliver_message action=skip_message status_code=" + errorCode + " endpoint=" + endpoint);
+
+                	if (endpointPublishJobCount.decrementAndGet() == 0) {
+                        CQSHandler.deleteMessage(queueUrl, receiptHandle);
+                        logger.debug("event=send_notification status=deleting_publish_message message_id=" + message.getMessageId());
+                    }
+
+                } else {  
+                	
+                	// if posting fails with an unacceptable http error code register bad endpoint in rolling window of 60 sec and start retry process
+
+                	logger.info("event=failed_to_deliver_message action=retry status_code=" + errorCode + " endpoint=" + endpoint);
+
+                	CNSMonitor.getInstance().registerBadEndpoint(endpoint, 1, 1, message.getTopicArn());
+	            	doRetry(pub, protocol, endpoint, subArn);
+                }
+            
             } else {
 
-            	logger.info("event=failed_to_deliver_message action=skip_message endpoint=" + endpoint + " message=" + message);
+            	// if sending fails for a non-http endpoint let it die immediately without retry
+            	
+            	logger.info("event=failed_to_deliver_message action=skip_message endpoint=" + endpoint);
                 
-                // let message die 
-
                 if (endpointPublishJobCount.decrementAndGet() == 0) {
                     CQSHandler.deleteMessage(queueUrl, receiptHandle);
                     logger.debug("event=send_notification status=deleting_publish_message message_id=" + message.getMessageId());

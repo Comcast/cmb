@@ -16,6 +16,7 @@
 package com.comcast.cns.tools;
 
 import java.net.InetAddress;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -64,6 +65,8 @@ public class CNSEndpointPublisherJobConsumer implements CNSPublisherPartitionRun
     private static volatile ScheduledThreadPoolExecutor reDeliveryHandlers = null;
     
     private static final RollingWindowCapture<BadEndpointEvent> badEndpointCounterWindow = new RollingWindowCapture<BadEndpointEvent>(60, 10000);
+    
+    public static final List<Integer> acceptableHttpResponseCodes = Arrays.asList(new Integer [] {200});
     
     public static class BadEndpointEvent extends RollingWindowCapture.PayLoad {
     	public final String endpointUrl;

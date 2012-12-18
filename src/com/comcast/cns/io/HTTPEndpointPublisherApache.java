@@ -157,13 +157,10 @@ public class HTTPEndpointPublisherApache implements IEndpointPublisher {
 				}      
 
 				instream.close();
-				logger.debug("event=post_error endpoint=" + endpoint + " body=" + response.toString());
-
-				throw new CMBException(CMBErrorCodes.InternalError, "Could not post message. code=" + statusCode + " body=" + responseB.toString());
-
-			} else {
-				throw new CMBException(CMBErrorCodes.InternalError, "Could not post message. code=" + statusCode);
 			}
+
+			logger.debug("event=http_post_error endpoint=" + endpoint + " error_code=" + statusCode);
+			throw new CMBException(new CMBErrorCodes(statusCode, "HttpError"), "Failed to deliver to " + endpoint + " with error code " + statusCode);
 
 		} else {
 
