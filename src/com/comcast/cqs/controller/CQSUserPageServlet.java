@@ -128,7 +128,7 @@ public class CQSUserPageServlet extends AdminServletBase {
 		out.println("<html>");
 		out.println("<head><title>Queues</title></head><body>");
 		
-		header(out);
+		header(request, out);
 		
 		out.println("<h2>Queues</h2>");
 

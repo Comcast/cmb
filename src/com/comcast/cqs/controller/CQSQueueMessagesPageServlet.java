@@ -93,7 +93,7 @@ public class CQSQueueMessagesPageServlet extends AdminServletBase {
 		out.println("<html>");
 		out.println("<head><title>Messages for Queue " + queueName + "</title></head><body>");
 		
-		header(out);
+		header(request, out);
 		
 		out.println("<h2>Messages for Queue " + queueName + "</h2>");
 		

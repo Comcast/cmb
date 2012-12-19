@@ -48,6 +48,8 @@ public class CNSTopicPermissionPage extends AdminServletBase {
 	
 	public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		
+		redirectUnauthenticatedUser(request, response);
+
 		CMBControllerServlet.valueAccumulator.initializeAllCounters();
 		response.setContentType("text/html");
 		PrintWriter out = response.getWriter();
@@ -93,7 +95,7 @@ public class CNSTopicPermissionPage extends AdminServletBase {
 		out.println("<html>");
 		out.println("<head><title>Permissions for Topic "+ Util.getNameFromTopicArn(topicArn) + "</title></head><body>");
 		
-		header(out);
+		header(request, out);
 		
 		out.println("<h2>Permissions for Topic "+ Util.getNameFromTopicArn(topicArn) + "</h2>");
 		

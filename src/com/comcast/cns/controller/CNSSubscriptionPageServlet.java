@@ -57,7 +57,9 @@ public class CNSSubscriptionPageServlet extends AdminServletBase {
 			throw new ServletException("CNS service disabled");
 		}
 		
-	    CMBControllerServlet.valueAccumulator.initializeAllCounters();
+		redirectUnauthenticatedUser(request, response);
+
+		CMBControllerServlet.valueAccumulator.initializeAllCounters();
 		response.setContentType("text/html");
 		PrintWriter out = response.getWriter();
 		
@@ -142,7 +144,7 @@ public class CNSSubscriptionPageServlet extends AdminServletBase {
 		out.println("}");
 		out.println("</script>");
 		
-		header(out);
+		header(request, out);
 		
 		out.println("<h2>Subscriptions for Topic "+ ((topic != null) ? topic.getName():"") + "</h2>");
 		

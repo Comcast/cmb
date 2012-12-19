@@ -16,6 +16,7 @@
 package com.comcast.cmb.common.controller;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.HttpURLConnection;
@@ -23,6 +24,9 @@ import java.net.URL;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 import org.apache.log4j.Logger;
 
@@ -62,8 +66,72 @@ public abstract class AdminServletBase extends HttpServlet {
     private volatile BasicAWSCredentials awsCredentials = null;
     
 	private static Logger logger = Logger.getLogger(AdminServletBase.class);
+	
+	protected boolean isAuthenticated(HttpServletRequest request) {
+		
+		HttpSession session = request.getSession(true);
+		
+		if (session.getAttribute("USER") != null) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+	
+	protected User getAuthenticatedUser(HttpServletRequest request) {
+		
+		if (isAuthenticated(request)) {
+			return (User)request.getSession(true).getAttribute("USER");
+		} else {
+			return null;
+		}
+	}
 
-    /**
+	protected boolean isAdmin(HttpServletRequest request) {
+		
+		if (!isAuthenticated(request)) {
+			return false;
+		}
+		
+		User user = (User)request.getSession(true).getAttribute("USER");
+		
+		if (!CMBProperties.getInstance().getCnsUserName().equals(user.getUserName())) {
+			return false;
+		}
+		
+		return true;
+	}
+	
+	protected void redirectUnauthenticatedUser(HttpServletRequest request, HttpServletResponse response) throws IOException {
+
+		if (!isAuthenticated(request)) {
+			response.sendRedirect(response.encodeURL("/UserLogin"));
+		}
+	}
+	
+	protected void redirectNonAdminUser(HttpServletRequest request, HttpServletResponse response) throws IOException {
+
+		if (!isAuthenticated(request)) {
+			response.sendRedirect(response.encodeURL("/UserLogin"));
+		}
+		
+		if (!isAdmin(request)) {
+			response.sendRedirect(response.encodeURL("/User?userId=" + getAuthenticatedUser(request).getUserId()));
+		}
+	}
+
+	protected void logout(HttpServletRequest request, HttpServletResponse response) throws IOException {
+
+		HttpSession session = request.getSession(true);
+		
+		if (session.getAttribute("USER") != null) {
+			session.removeAttribute("USER");
+		}
+
+		response.sendRedirect(response.encodeURL("/UserLogin"));
+	}
+
+	/**
      * Method to set the awsCredentials and the appt instances of sqs and sns interfaces
      * @param userId
      * @throws ServletException
@@ -95,7 +163,13 @@ public abstract class AdminServletBase extends HttpServlet {
      * @param out
      * @throws ServletException
      */
-    protected void header(PrintWriter out) throws ServletException {
+    protected void header(HttpServletRequest request, PrintWriter out) throws ServletException {
+    	
+    	if (isAuthenticated(request)) {
+    		out.println("<table width='100%' border='0'><tr><td width='50%' align='left'>Welcome "+getAuthenticatedUser(request).getUserName()+" | <a href='/UserLogin?Logout=Logout'>logout</a></td>");
+    		out.println("<td width='50%' align='left'></td></tr></table>");
+    	}
+    	
     	out.println("<h1>CMB - Comcast Message Bus - V " + CMBControllerServlet.VERSION +"</h1>");
     }
     

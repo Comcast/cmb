@@ -75,7 +75,7 @@ public class CQSQueuePermissionsPage extends AdminServletBase {
 		out.println("<html>");
 		out.println("<head><title>Permissions for Queue "+ Util.getNameForAbsoluteQueueUrl(queueUrl) + "</title></head><body>");
 		
-		header(out);
+		header(request, out);
 		
 		out.println("<h2>Permissions for Queue "+ Util.getNameForAbsoluteQueueUrl(queueUrl) + "</h2>");
 		

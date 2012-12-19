@@ -42,6 +42,8 @@ public class UserPageServlet extends AdminServletBase {
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
 		
+		redirectUnauthenticatedUser(request, response);
+		
         CMBControllerServlet.valueAccumulator.initializeAllCounters();
 		response.setContentType("text/html");
 		PrintWriter out = response.getWriter();
@@ -59,7 +61,7 @@ public class UserPageServlet extends AdminServletBase {
 		out.println("<html>");
 		out.println("<head><title>User "+user.getUserName()+"</title></head><body>");
 		
-		header(out);
+		header(request, out);
 		
 		out.println("<h2>User "+user.getUserName()+"</h2>");
 		

@@ -50,7 +50,9 @@ public class CNSWorkerStatePageServlet extends AdminServletBase {
 	@Override
 	public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		
-	    CMBControllerServlet.valueAccumulator.initializeAllCounters();
+		redirectNonAdminUser(request, response);
+
+		CMBControllerServlet.valueAccumulator.initializeAllCounters();
 		response.setContentType("text/html");
 		PrintWriter out = response.getWriter();
 		
@@ -91,7 +93,9 @@ public class CNSWorkerStatePageServlet extends AdminServletBase {
 		out.println("<html>");
 		out.println("<head><title>CNS Worker State</title></head><body>");
 		
-		this.header(out);
+		this.header(request, out);
+		
+		out.println("<h2><a href='/ADMIN'>All Users</a></h2>");
 
 		try {
 

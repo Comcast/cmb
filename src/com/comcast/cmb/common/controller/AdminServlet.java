@@ -49,6 +49,8 @@ public class AdminServlet extends AdminServletBase {
 	@Override
 	public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		
+		redirectNonAdminUser(request, response);
+		
 		CMBControllerServlet.valueAccumulator.initializeAllCounters();
 		response.setContentType("text/html");
 		PrintWriter out = response.getWriter();
@@ -60,8 +62,13 @@ public class AdminServlet extends AdminServletBase {
 		if (parameters.containsKey("Create")) {
 			
 			try {
-				userHandler.createUser(userName, passwd);
-				logger.debug("event=create_user status=success user_name=" + userName);
+				if (userHandler.getUserByName(userName) != null) {
+					out.println("<p><i>User already exists!</i></p>");
+					logger.debug("event=user_already_exists user_name=" + userName);
+				} else {
+					userHandler.createUser(userName, passwd);
+					logger.debug("event=create_user status=success user_name=" + userName);
+				}
 			} catch (PersistenceException ex) {
 				logger.error("event=create_user status=failed user_name=" + userName, ex);
 				throw new ServletException(ex);
@@ -81,7 +88,9 @@ public class AdminServlet extends AdminServletBase {
 		out.println("<html>");
 		out.println("<head><title>All Users</title></head><body>");
 
-		header(out);
+		header(request, out);
+		
+		out.println("<h2><a href='/CNSWorkerState'>CNS Worker Dashboard</a></h2>");
 
 		out.println("<h2>All Users</h2>");
         out.print("<table><tr><td>UserName</td><td>Password</td><td></td></tr>");

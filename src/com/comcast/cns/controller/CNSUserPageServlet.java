@@ -60,6 +60,8 @@ public class CNSUserPageServlet extends AdminServletBase {
 			throw new ServletException("CNS service disabled");
 		}
 		
+		redirectUnauthenticatedUser(request, response);
+
 		CMBControllerServlet.valueAccumulator.initializeAllCounters();
 		response.setContentType("text/html");
 		PrintWriter out = response.getWriter();
@@ -137,7 +139,7 @@ public class CNSUserPageServlet extends AdminServletBase {
 		out.println("<html>");
 		out.println("<head><title>Topics</title></head><body>");
 		
-		header(out);
+		header(request, out);
 		
 		out.println("<h2>Topics</h2>");
 		

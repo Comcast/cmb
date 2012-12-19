@@ -44,6 +44,8 @@ public class CNSEditTopicDisplayNamePage extends AdminServletBase {
     @Override
 	public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 
+		redirectUnauthenticatedUser(request, response);
+
 		CMBControllerServlet.valueAccumulator.initializeAllCounters();
 		response.setContentType("text/html");
 		PrintWriter out = response.getWriter();

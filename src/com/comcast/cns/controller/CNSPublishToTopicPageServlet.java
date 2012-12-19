@@ -43,6 +43,8 @@ public class CNSPublishToTopicPageServlet extends AdminServletBase {
     @Override
 	public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 	
+		redirectUnauthenticatedUser(request, response);
+
 		CMBControllerServlet.valueAccumulator.initializeAllCounters();
 		response.setContentType("text/html");
 		PrintWriter out = response.getWriter();
@@ -72,7 +74,7 @@ public class CNSPublishToTopicPageServlet extends AdminServletBase {
 		out.println("}");
 		out.println("</script>");
 		
-		header(out);
+		header(request, out);
 		
 		out.println("<h2>Publish to Topic</h2>");
 		

@@ -22,6 +22,7 @@ import java.util.Map;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 import org.apache.log4j.Logger;
 
@@ -59,28 +60,40 @@ public class UserLoginPageServlet extends AdminServletBase {
 			try {
 				
 				user = userHandler.getUserByName(userName);
-				
-				if (user!=null && !AuthUtil.verifyPassword(passwd, user.getHashPassword())) {
+				HttpSession session = request.getSession(true);
+
+				if (user!=null && AuthUtil.verifyPassword(passwd, user.getHashPassword())) {
+					session.setAttribute("USER", user);
+				} else {
 					user = null;
+					session.removeAttribute("USER");
 				}
 				
 			} catch (Exception ex) {
-				logger.error("event=get_user status=failed user_name=" + userName, ex);
+				logger.error("event=login status=failed user_name=" + userName, ex);
 				throw new ServletException(ex);
 			}
+			
+		} else if (parameters.containsKey("Logout")) {
+			logout(request, response);
 		}
 		
 		if (user != null) {
 			
-			logger.debug("event=get_user status=success user_name=" + userName + " user_id=" + user.getUserId());
-			response.sendRedirect(response.encodeURL("/User?userId="+ user.getUserId()));
+			logger.debug("event=login status=success user_name=" + userName + " user_id=" + user.getUserId());
+			
+			if (isAdmin(request)) {
+				response.sendRedirect(response.encodeURL("/ADMIN?userId="+ user.getUserId()));
+			} else {
+				response.sendRedirect(response.encodeURL("/User?userId="+ user.getUserId()));
+			}
 			
 		} else {
 			
 			out.println("<html>");
 			out.println("<head><title>User Login</title></head><body>");
 			
-			header(out);
+			header(request, out);
 			
 			out.println("<h2>User Login</h2>");
 			
