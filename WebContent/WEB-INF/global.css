@@ -3,9 +3,14 @@ background:#FFFFFF;
 margin:0;
 text-align:center;
 line-height: 1.5em;
-font: x-small Verdana, Arial, Sans-serif;
+font: small Verdana, Arial, Sans-serif;
 color:#333333;
-font-size: small;
+}
+
+p {
+line-height: 1.5em;
+font: small Verdana, Arial, Sans-serif;
+color:#333333;
 }
 
 a:link {
@@ -21,41 +26,81 @@ a img {
 border-width:0;
 }
 
-#header {
-padding:0 15px 8px;
-}
-#header h1 {
+h1 {
 margin:0;
 padding:10px 30px 5px;
 line-height:1.2em;
-font: normal bold 200% Verdana,Arial,Sans-serif;
+font: normal bold 150% Verdana,Arial,Sans-serif;
 }
-#header a,
-#header a:visited {
-text-decoration:none;
-color: #333333;
+h2 {
+margin:0;
+padding:10px 30px 5px;
+line-height:1.2em;
+font: normal bold 125% Verdana,Arial,Sans-serif;
+}
+h3 {
+margin:0;
+padding:10px 30px 5px;
+line-height:1.2em;
+font: normal bold 100% Verdana,Arial,Sans-serif;
 }
 
 .content table
 {
 border-collapse:collapse;
+font: small Verdana, Arial, Sans-serif;
 }
 .content table, .content td
 {
 border: 1px solid black;
 background-color:#BBBBDD;
+font: small bold Verdana, Arial, Sans-serif;
 }
 .content th
 {
 border: 1px solid black;
 background-color:#9999BB;
+font: small bold Verdana, Arial, Sans-serif;
 }
 .header table
 {
 border-collapse:collapse;
+font: small Verdana, Arial, Sans-serif;
 }
 .header table, .header th, .header td
 {
 border: 0px;
 background-color:#AAAACC;
+font: small Verdana, Arial, Sans-serif;
 }
+.simple table
+{
+border-collapse:collapse;
+font: small Verdana, Arial, Sans-serif;
+}
+.simple table, .simple td
+{
+border: 1px solid black;
+font: small Verdana, Arial, Sans-serif;
+}
+.simple th
+{
+border: 1px solid black;
+font: small bold Verdana, Arial, Sans-serif;
+}
+table
+{
+border-collapse:collapse;
+font: small Verdana, Arial, Sans-serif;
+}
+table, td
+{
+border: 0px;
+font: small Verdana, Arial, Sans-serif;
+}
+th
+{
+border: 0px;
+font: small bold Verdana, Arial, Sans-serif;
+}
+

@@ -2,7 +2,7 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
 	<properties>
-	    <buildnum>2.2.11</buildnum>
+	    <buildnum>2.2.12</buildnum>
 	    <projectname>cns</projectname>
 	</properties>
 
@@ -239,13 +239,13 @@
 					<webXml>${basedir}/config/WEB-INF-CNS/web.xml</webXml>
 					<warName>${projectname}</warName>
 					<webResources>
-						<!--<resource>
-							<directory>lib</directory>
-							<targetPath>WEB-INF/lib</targetPath>
-							<excludes>
-								<exclude>servlet-api*.jar</exclude>
-							</excludes>
-						</resource>-->
+						<resource>
+							<directory>${basedir}/WebContent/WEB-INF</directory>
+							<targetPath>WEB-INF</targetPath>
+							<includes>
+								<include>*.css</include>
+							</includes>
+						</resource>
 					</webResources>
 				</configuration>
 			</plugin>

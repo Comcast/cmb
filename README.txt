@@ -350,7 +350,7 @@ Example response:
    
 2. Build CNS Worker Node with maven (skipping tests):
 
-   > mvn --settings ./settings.xml -f pom-cmb.xml -Dmaven.test.skip=true assembly:assembly
+   > mvn --settings ./settings.xml -f pom-cns-worker.xml -Dmaven.test.skip=true assembly:assembly
    
    After a successful build binary cns-worker-distribution-<version>.tar.gz will be available in 
    ./target 

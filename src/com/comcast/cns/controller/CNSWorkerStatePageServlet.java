@@ -108,7 +108,7 @@ public class CNSWorkerStatePageServlet extends AdminServletBase {
 			
 			out.println("<h2>CNS Worker Stats</h2>");
 			
-			out.println("<table border='1'>");
+			out.println("<span class='simple'><table border='1'>");
 			out.println("<tr><th>Host</th><th>Jmx Port</th><th>Mode</th><th>Msg Published</th>");
 			out.println("<th>Producer Heartbeat</th><th>Active</th><th>Consumer Heartbeat</th><th>Active</th>");
 			out.println("<th>Delivery Queue Size</th><th>Redelivery Queue Size</th><th>Consumer Overloaded</th><th>Cqs Service Available</th><th>Http Pool Size</th><th></th><th></th></tr>");
@@ -167,13 +167,13 @@ public class CNSWorkerStatePageServlet extends AdminServletBase {
 				}
 			}
 			
-			out.println("</table>");
+			out.println("</table><span>");
 			
 			if (endpointErrorCounts.size() > 0) {
 			
 				out.println("<h3>Failed or timed out Responses during past 60 Seconds by Endpoint</h3>");
 				
-				out.println("<table border='1'>");
+				out.println("<span class='simple'><table border='1'>");
 				out.println("<tr><th>Endpoint</th><th>Error Count</th><th><th>");
 				
 				for (String endpoint : endpointErrorCounts.keySet()) {
@@ -191,7 +191,7 @@ public class CNSWorkerStatePageServlet extends AdminServletBase {
 					out.println("</tr>");
 				}
 	
-				out.println("</table>");
+				out.println("</table></span>");
 			
 			}
 
