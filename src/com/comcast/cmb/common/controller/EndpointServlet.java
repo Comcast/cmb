@@ -45,6 +45,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -59,11 +60,11 @@ public class EndpointServlet extends HttpServlet {
     
     // keeps last n messages per endpoint
     
-    private static Map<String, List<EndpointMessage>> messageMap = new ConcurrentHashMap<String, List<EndpointMessage>>();
+    private static ConcurrentHashMap<String, List<EndpointMessage>> messageMap = new ConcurrentHashMap<String, List<EndpointMessage>>();
 	
     // keeps endpoint stats
     
-    private static Map<String, EndpointMetrics> metricsMap = new ConcurrentHashMap<String, EndpointMetrics>();
+    private static ConcurrentHashMap<String, EndpointMetrics> metricsMap = new ConcurrentHashMap<String, EndpointMetrics>();
 	
 	// keeps config information to model certain error behavior 
 	
@@ -341,13 +342,9 @@ public class EndpointServlet extends HttpServlet {
     	
         // add message
     	
+    	messageMap.putIfAbsent(msg.id, new Vector<EndpointMessage>(MAX_MSG_PER_USER));
     	List<EndpointMessage> messages = messageMap.get(msg.id);
         
-        if (messages == null) {
-            messages = new ArrayList<EndpointMessage>(MAX_MSG_PER_USER);
-            messageMap.put(msg.id, messages);
-        }
-
         if (messages.size() == MAX_MSG_PER_USER) {
             messages.remove(MAX_MSG_PER_USER - 1); //remove the oldest message
         }
@@ -356,13 +353,9 @@ public class EndpointServlet extends HttpServlet {
 
         // add metrics
         
+        metricsMap.putIfAbsent(msg.id, new EndpointMetrics(msg));
         EndpointMetrics metrics = metricsMap.get(msg.id);
         
-        if (metrics == null) {
-        	metrics = new EndpointMetrics(msg);
-        	metricsMap.put(msg.id, metrics);
-        }
-
     	metrics.endTime = new Date();
     	metrics.messageCount++;
     	metrics.lastWaveLength = metrics.endTime.getTime() - metrics.lastMessageTime.getTime();
@@ -539,11 +532,8 @@ public class EndpointServlet extends HttpServlet {
     	doOutput(200, response, "EndPoint - List", sb.toString());
     }
 
-    private synchronized List<EndpointMessage> getMessages(String id) {
-
-    	List<EndpointMessage> messages = messageMap.get(id);
-        
-    	return messages;
+    private List<EndpointMessage> getMessages(String id) {
+    	return messageMap.get(id);
     }
     
     private EndpointMessage parseMessage(HttpServletRequest request) throws IOException {
