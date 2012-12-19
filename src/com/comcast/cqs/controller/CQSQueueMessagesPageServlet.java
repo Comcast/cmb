@@ -47,7 +47,9 @@ public class CQSQueueMessagesPageServlet extends AdminServletBase {
 	
 	public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		
-	    CMBControllerServlet.valueAccumulator.initializeAllCounters();
+		redirectUnauthenticatedUser(request, response);
+
+		CMBControllerServlet.valueAccumulator.initializeAllCounters();
 		response.setContentType("text/html");
 		PrintWriter out = response.getWriter();
 		String userId = request.getParameter("userId");
@@ -91,10 +93,10 @@ public class CQSQueueMessagesPageServlet extends AdminServletBase {
 		}
 		
 		out.println("<html>");
-		out.println("<head><title>Messages for Queue " + queueName + "</title></head><body>");
 		
-		header(request, out);
+		header(request, out, "Messages for Queue " + queueName);
 		
+		out.println("<body>");
 		out.println("<h2>Messages for Queue " + queueName + "</h2>");
 		
 		if (user != null) {

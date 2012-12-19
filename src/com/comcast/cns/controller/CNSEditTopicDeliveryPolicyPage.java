@@ -60,7 +60,9 @@ public class CNSEditTopicDeliveryPolicyPage extends AdminServletBase {
 		
 		connect(userId);
 		
-		out.println("<html><head><title>View/Edit Topic Delivery Policy</title></head>");
+		out.println("<html>");
+		
+		simpleHeader(request, out, "View/Edit Topic Delivery Policy");
 		
 		if (params.containsKey("Update")) {
 		
@@ -224,6 +226,7 @@ public class CNSEditTopicDeliveryPolicyPage extends AdminServletBase {
 		
 		CMBControllerServlet.valueAccumulator.deleteAllCounters();
 	}
+    
 	@Override
 	public void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		doGet(request, response);

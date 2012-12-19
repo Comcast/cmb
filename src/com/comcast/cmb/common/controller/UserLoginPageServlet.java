@@ -91,10 +91,11 @@ public class UserLoginPageServlet extends AdminServletBase {
 		} else {
 			
 			out.println("<html>");
-			out.println("<head><title>User Login</title></head><body>");
 			
-			header(request, out);
+			header(request, out, "User Login");
 			
+			out.println("<body>");
+
 			out.println("<h2>User Login</h2>");
 			
 			if (parameters.containsKey("Login")) {
@@ -105,7 +106,7 @@ public class UserLoginPageServlet extends AdminServletBase {
 	        out.print(response.encodeURL("UserLogin"));
 	        out.print("\" ");
 	        out.println("method=POST>");
-	        out.print("<table><tr><td>UserName:</td><td><input type='text' name='user' value='"+ userName + "'></td></tr>");
+	        out.print("<table><tr><td>Username:</td><td><input type='text' name='user' value='"+ userName + "'></td></tr>");
 	        out.print("<tr><td>Password:</td><td><input type='password' name='passwd'></td></tr>");
 	        out.print("<tr><td>&nbsp;</td></tr>");
 	        out.print("<tr><td><input type='submit' value='Login' name='Login' /></td></tr></table></form></body></html>");

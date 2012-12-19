@@ -59,10 +59,11 @@ public class UserPageServlet extends AdminServletBase {
 		}
 		
 		out.println("<html>");
-		out.println("<head><title>User "+user.getUserName()+"</title></head><body>");
 		
-		header(request, out);
+		header(request, out, "User "+user.getUserName());
 		
+		out.println("<body>");
+
 		out.println("<h2>User "+user.getUserName()+"</h2>");
 		
 		if (user != null) {

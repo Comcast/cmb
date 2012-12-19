@@ -58,8 +58,9 @@ public class CNSPublishToTopicPageServlet extends AdminServletBase {
 		connect(userId);
 		
 		out.println("<html>");
-		out.println("<head><title>Publish to Topic</title></head><body>");
-		
+
+		header(request, out, "Publish");
+
 		out.println("<script type='text/javascript' language='javascript'>");
 		out.println("function changeMsgStructure(type) { ");
 		out.println(" if (type == 'same')  ");
@@ -74,7 +75,7 @@ public class CNSPublishToTopicPageServlet extends AdminServletBase {
 		out.println("}");
 		out.println("</script>");
 		
-		header(request, out);
+		out.println("<body>");
 		
 		out.println("<h2>Publish to Topic</h2>");
 		

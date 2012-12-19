@@ -93,10 +93,11 @@ public class CNSTopicPermissionPage extends AdminServletBase {
 		}
 		
 		out.println("<html>");
-		out.println("<head><title>Permissions for Topic "+ Util.getNameFromTopicArn(topicArn) + "</title></head><body>");
 		
-		header(request, out);
+		header(request, out, "Permissions for Topic "+ Util.getNameFromTopicArn(topicArn));
 		
+		out.println("<body>");
+
 		out.println("<h2>Permissions for Topic "+ Util.getNameFromTopicArn(topicArn) + "</h2>");
 		
 		if (user != null) {
@@ -114,7 +115,7 @@ public class CNSTopicPermissionPage extends AdminServletBase {
 			List<CMBStatement> stmts = policy.getStatements();
 			
 			if (stmts != null && stmts.size() > 0) {
-				out.println("<table border='1' width='70%'><tr><td><b>Effect</b></td><td><b>Users</b></td><td><b>Actions</b></td><td><b>Label</b></td><td>&nbsp;</td></tr>");
+				out.println("<span class='content'><table border='1' width='70%'><tr><th>Effect</th><th>Users</th><th>Actions</th><th>Label</th><th>&nbsp;</th></tr>");
 			}
 			
 			for (int i = 0; stmts != null && i < stmts.size(); i++) {
@@ -152,7 +153,7 @@ public class CNSTopicPermissionPage extends AdminServletBase {
 				out.println("<td><input type='submit' value='Remove' name='Remove'><input type='hidden' name='sid' value='"+ sid +"'></td></tr></form>");
 			}
 			
-			out.println("</table>");
+			out.println("</table></span>");
 		}
 		
 		out.println("<p><a href='' onclick=\"window.open('" + response.encodeURL("AddPermission") + "?topicArn=" + topicArn + "&topicName=" + Util.getNameFromTopicArn(topicArn) + "&userId=" + userId + "', 'AddTopicPermission', 'location=0,menubar=0,scrollbars=0,status=0,titlebar=0,toolbar=0,height=470,width=730')\">Add permission</a></p>");

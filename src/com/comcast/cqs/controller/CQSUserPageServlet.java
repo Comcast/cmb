@@ -59,6 +59,8 @@ public class CQSUserPageServlet extends AdminServletBase {
 			throw new ServletException("CQS service disabled");
 		}
 		
+		redirectUnauthenticatedUser(request, response);
+
 		CMBControllerServlet.valueAccumulator.initializeAllCounters();
 		response.setContentType("text/html");
 		PrintWriter out = response.getWriter();
@@ -126,10 +128,11 @@ public class CQSUserPageServlet extends AdminServletBase {
 		}
 		
 		out.println("<html>");
-		out.println("<head><title>Queues</title></head><body>");
 		
-		header(request, out);
+		header(request, out, "Queues");
 		
+		out.println("<body>");
+
 		out.println("<h2>Queues</h2>");
 
 		if (user != null) {
@@ -152,34 +155,32 @@ public class CQSUserPageServlet extends AdminServletBase {
         out.println("</table></p>");
 
         try {
-        	
  			ListQueuesRequest listQueuesRequest = new ListQueuesRequest();
 			ListQueuesResult listQueuesResult = sqs.listQueues(listQueuesRequest);
 			queueUrls = listQueuesResult.getQueueUrls();
-			
 			logger.debug("event=list_queues count=" + queueUrls != null ? queueUrls.size() : 0);
 		} catch (Exception ex) {
 			logger.error("event=list_queues status=failed userId= " + userId, ex);
 			throw new ServletException(ex);
 		}
 
-		out.println("<p><hr width='100%' align='left' /></p><p><table border='1' width='100%'>");
-		out.println("<tr><td>&nbsp;</td>");
-		out.println("<td><b>Queue URL</b></td>");
-		out.println("<td><b>Queue ARN</b></td>");
-		out.println("<td><b>Queue Name</b></td>");
-		out.println("<td><b>User ID</b></td>");
-		out.println("<td><b>Region</b></td>");
-		out.println("<td><b>Visibility To</b></td>");
-		out.println("<td><b>Max Msg Size</b></td>");
-		out.println("<td><b>Msg Rention Period</b></td>");
-		out.println("<td><b>Delay Seconds</b></td>");
-		out.println("<td><b>Approx Num Msg</b></td>");
-		out.println("<td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>");
+		out.println("<p><hr width='100%' align='left' /></p>");
+		
+		out.println("<p><span class='content'><table border='1' width='100%'>");
+		out.println("<tr><th>&nbsp;</th>");
+		out.println("<th>Queue Url</th>");
+		out.println("<th>Queue Arn</th>");
+		out.println("<th>Queue Name<</th>");
+		out.println("<th>User ID</th>");
+		out.println("<th>Region</th>");
+		out.println("<th>Visibility TO<</th>");
+		out.println("<th>Max Msg Size</th>");
+		out.println("<th>Msg Rention Period</th>");
+		out.println("<th>Delay Seconds</th>");
+		out.println("<th>Approx Num Msg</th>");
+		out.println("<th>&nbsp;</th><th>&nbsp;</th><th>&nbsp;</th></tr>");
 
 		for (int i = 0; queueUrls != null && i < queueUrls.size(); i++) {
-			
-			//if (queueUrls.get(i).startsWith(CMBProperties.getInstance().getCQSServerUrl())) {
 			
 			Map<String, String> attributes = new HashMap<String, String>();
 			
@@ -213,12 +214,10 @@ public class CQSUserPageServlet extends AdminServletBase {
         	
         	out.println("<td><a href='" + response.encodeURL("CQSUser/MESSAGE")+"?userId=" + user.getUserId()+ "&queueName=" + Util.getNameForAbsoluteQueueUrl(queueUrls.get(i)) + "'>Messages</a></td>");
         	out.println("<td><a href='" + response.encodeURL("CQSUser/PERMISSIONS") + "?userId="+ user.getUserId() + "&queueName="+ Util.getNameForAbsoluteQueueUrl(queueUrls.get(i)) + "'>Permissions</a></td>");
-		    out.println("<td><input type='submit' value='Delete' name='Delete' /></td></tr></form>");
-		    
-		    //}
+		    out.println("<td><input type='submit' value='Delete' name='Delete'/></td></tr></form>");
         }
 		
-        out.println("</table></p>");
+        out.println("</table></span></p>");
         out.println("<h5 style='text-align:center;'><a href='"+ response.encodeRedirectURL(AdminServlet.cqsAdminUrl)+ "'>ADMIN HOME</a></h5>");
         out.println("</body></html>");
         

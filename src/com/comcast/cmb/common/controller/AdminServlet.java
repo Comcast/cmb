@@ -86,14 +86,15 @@ public class AdminServlet extends AdminServletBase {
 		}
 		
 		out.println("<html>");
-		out.println("<head><title>All Users</title></head><body>");
 
-		header(request, out);
+		header(request, out, "All Users");
+		
+		out.println("<body>");
 		
 		out.println("<h2><a href='/CNSWorkerState'>CNS Worker Dashboard</a></h2>");
 
 		out.println("<h2>All Users</h2>");
-        out.print("<table><tr><td>UserName</td><td>Password</td><td></td></tr>");
+        out.print("<table><tr><td>Username:</td><td>Password:</td><td></td></tr>");
         out.print("<form action=\"");
         out.print(response.encodeURL("ADMIN"));
         out.print("\" ");
@@ -121,11 +122,12 @@ public class AdminServlet extends AdminServletBase {
         for (int i = 0; users != null && i < users.size(); i++) {
         
         	if (i == 0) {
-        		out.println("<p><hr width='80%' align='left' /><p><table border='1' width='80%'>");
-        		out.println("<tr><td><b>User Name</b></td>");
-        		out.println("<td><b>User ID</b></td>");
-        		out.println("<td><b>Access Key</b></td>");
-        		out.println("<td><b>Access Secret</b></td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>");
+        		out.println("<p><hr width='80%' align='left' /><p>");
+        		out.println("<span class='content'><table border='1' width='80%'>");
+        		out.println("<tr><th>User Name</th>");
+        		out.println("<th>User ID</th>");
+        		out.println("<th>Access Key</th>");
+        		out.println("<th>Access Secret</th><th>&nbsp;</th><th>&nbsp;</th><th>&nbsp;</th></tr>");
         	}
         	
         	User user = (User)users.get(i);
@@ -144,7 +146,7 @@ public class AdminServlet extends AdminServletBase {
         	out.println("<td><input type='submit' value='Delete' name='Delete' /></td></tr></form>");
         }
         
-        out.println("</table></body></html>");
+        out.println("</table></span></body></html>");
         
         logger.info("action=adminServletProcess CassandraTimeMS=" + CMBControllerServlet.valueAccumulator.getCounter(AccumulatorName.CassandraTime));
         CMBControllerServlet.valueAccumulator.deleteAllCounters();

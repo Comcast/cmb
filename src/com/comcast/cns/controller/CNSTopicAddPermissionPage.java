@@ -91,7 +91,8 @@ public class CNSTopicAddPermissionPage extends AdminServletBase {
 		
 		Map<?, ?> params = request.getParameterMap();
 		out.println("<html>");
-		out.println("<head><title>Add Permission to Topic "+ topicName + "</title></head>");
+		
+		simpleHeader(request, out, "Add Permission to Topic "+ topicName);
 		
 		if (params.containsKey("Submit") && validInput.equals("")) {
 

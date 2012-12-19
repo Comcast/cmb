@@ -57,7 +57,8 @@ public class CNSEditTopicDisplayNamePage extends AdminServletBase {
 		connect(userId);
 		
 		out.println("<html>");
-		out.println("<head><title>Edit Topic Display Name</title></head>");
+		
+		simpleHeader(request, out, "Edit Topic Display Name");
 		
 		if (parameters.containsKey("Edit")) {
 		

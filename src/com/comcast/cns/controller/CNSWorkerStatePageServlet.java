@@ -91,10 +91,11 @@ public class CNSWorkerStatePageServlet extends AdminServletBase {
 		}
 		
 		out.println("<html>");
-		out.println("<head><title>CNS Worker State</title></head><body>");
 		
-		this.header(request, out);
+		this.header(request, out, "CNS Worker State");
 		
+		out.println("<body>");
+
 		out.println("<h2><a href='/ADMIN'>All Users</a></h2>");
 
 		try {

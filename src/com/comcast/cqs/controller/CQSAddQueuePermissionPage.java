@@ -49,6 +49,8 @@ public class CQSAddQueuePermissionPage extends AdminServletBase {
 	
 	public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 	
+		redirectUnauthenticatedUser(request, response);
+
 		CMBControllerServlet.valueAccumulator.initializeAllCounters();
 		response.setContentType("text/html");
 		PrintWriter out = response.getWriter();
@@ -94,7 +96,8 @@ public class CQSAddQueuePermissionPage extends AdminServletBase {
 		Map<?, ?> params = request.getParameterMap();
 		
 		out.println("<html>");
-		out.println("<head><title>Add Permission to Queue "+ queueName + "</title></head>");
+		
+		simpleHeader(request, out, "Add Permission to Queue "+ queueName);
 		
 		if (params.containsKey("Add") && validInput.equals("")) {
 			

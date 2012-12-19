@@ -16,6 +16,9 @@
 package com.comcast.cmb.common.controller;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
@@ -29,6 +32,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import org.apache.log4j.Logger;
+import org.jfree.util.Log;
 
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.sns.AmazonSNS;
@@ -158,16 +162,53 @@ public abstract class AdminServletBase extends HttpServlet {
         sns.setEndpoint(CMBProperties.getInstance().getCNSServerUrl());
     }
     
+    protected void simpleHeader(HttpServletRequest request, PrintWriter out, String title) throws ServletException {
+
+    	out.println("<head>");
+    	out.println("<meta content='text/html; charset=UTF-8' http-equiv='Content-Type'/>");
+    	out.println("<title>CMB Admin - " + title + "</title>");
+    	
+    	//out.println("<link rel='stylesheet' type='text/css' href='/global.css'/>");
+    	
+    	out.println("<style media='screen' type='text/css'>");
+    	
+    	try {
+    	
+	    	BufferedReader br = new BufferedReader(new FileReader(getServletContext().getRealPath("WEB-INF/global.css")));
+	    	String line;
+	    	StringBuffer sb = new StringBuffer("");
+	    	
+	    	while ((line = br.readLine()) != null) {
+	    	   sb.append(line).append("\n");
+	    	}
+
+	    	br.close();
+	    	
+	    	out.println(sb.toString());
+    	
+    	} catch (Exception ex) {
+    		Log.error("event=failed_to_read_css", ex);
+    	}
+
+    	out.println("</style>");
+    	
+    	out.println("</head>");
+    }
+
     /**
      * Generate standard heading in the response. 
      * @param out
      * @throws ServletException
+     * @throws IOException 
      */
-    protected void header(HttpServletRequest request, PrintWriter out) throws ServletException {
+    protected void header(HttpServletRequest request, PrintWriter out, String title) throws ServletException {
+    	
+    	simpleHeader(request, out, title);
     	
     	if (isAuthenticated(request)) {
-    		out.println("<table width='100%' border='0'><tr><td width='50%' align='left'>Welcome "+getAuthenticatedUser(request).getUserName()+" | <a href='/UserLogin?Logout=Logout'>logout</a></td>");
-    		out.println("<td width='50%' align='left'></td></tr></table>");
+    		out.println("<span class='header'>");
+    		out.println("<table width='100%' border='0'><tr><td width='100%' align='left'>Welcome "+getAuthenticatedUser(request).getUserName()+" | <a href='/UserLogin?Logout=Logout'>logout</a></td></tr></table>");
+    		out.println("</span>");
     	}
     	
     	out.println("<h1>CMB - Comcast Message Bus - V " + CMBControllerServlet.VERSION +"</h1>");

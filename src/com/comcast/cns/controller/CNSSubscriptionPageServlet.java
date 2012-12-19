@@ -132,7 +132,6 @@ public class CNSSubscriptionPageServlet extends AdminServletBase {
 		}
 		
 		out.println("<html>");
-		out.println("<head><title>Subscriptions for Topic "+ ((topic != null) ? topic.getName():"") + "</title></head><body>");
 		out.println("<script type='text/javascript' language='javascript'>");
 		out.println("function changeEndpointHint(protocol){ ");
 		out.println(" if (protocol == 'HTTP' || protocol == 'HTTPS') { ");
@@ -144,8 +143,10 @@ public class CNSSubscriptionPageServlet extends AdminServletBase {
 		out.println("}");
 		out.println("</script>");
 		
-		header(request, out);
+		header(request, out, "Subscriptions for Topic "+ ((topic != null) ? topic.getName():""));
 		
+		out.println("<body>");
+
 		out.println("<h2>Subscriptions for Topic "+ ((topic != null) ? topic.getName():"") + "</h2>");
 		
 		if (user != null) {
@@ -159,18 +160,20 @@ public class CNSSubscriptionPageServlet extends AdminServletBase {
 			out.println("<tr><td><b>Num Subscriptions:</b></td><td>" + subscriptions.size()+ "</td></tr></table>");
 		}
 		
-        out.print("<p><table><tr><td><b>Protocol</b></td><td><b>End Point</b></td><td>&nbsp;</td></tr>");
+        out.println("<p><table><tr><td><b>Protocol</b></td><td><b>End Point</b></td><td>&nbsp;</td></tr>");
         out.print("<form action=\"");
         out.print(response.encodeURL("SUBSCRIPTION") + "?userId="+userId+"&topicArn="+topicArn);
         out.print("\" ");
-        out.println("method=POST>");
-        out.print("<tr><td><select name='protocol' onchange='changeEndpointHint(this.value)'><option value='HTTP'>HTTP</option><option value='HTTPS'>HTTPS</option><option value='EMAIL'>EMAIL</option><option value='EMAIL_JSON'>EMAIL_JSON</option><option value='CQS'>CQS</option><option value='SQS'>SQS</option></select></td>");
-        out.print("<td><input type='text' name='endPoint' id = 'endPoint' size='65' placeholder='e.g. http://company.com'><input type='hidden' name='userId' value='"+ userId + "'></td><td><input type='submit' value='Subscribe' name='Subscribe' /></td></tr></form></table>");
+        out.print("method=POST>");
+        out.println("<tr><td><select name='protocol' onchange='changeEndpointHint(this.value)'><option value='HTTP'>HTTP</option><option value='HTTPS'>HTTPS</option><option value='EMAIL'>EMAIL</option><option value='EMAIL_JSON'>EMAIL_JSON</option><option value='CQS'>CQS</option><option value='SQS'>SQS</option></select></td>");
+        out.println("<td><input type='text' name='endPoint' id = 'endPoint' size='65' placeholder='e.g. http://company.com'><input type='hidden' name='userId' value='"+ userId + "'></td><td><input type='submit' value='Subscribe' name='Subscribe' /></td></tr>");
+        out.println("</form></table>");
        
         for (int i = 0; subscriptions != null && i < subscriptions.size(); i++) {
         
         	if (i == 0) {
-        		out.println("<p><hr width='100%' align='left' /><p><table border='1' width='100%'>");
+        		out.println("<p><hr width='100%' align='left' />");
+        		out.println("<p><span class='content'><table border='1' width='100%'>");
         		out.println("<tr><td><b>Row</b></td>");
         		out.println("<td><b>ARN</b></td>");
         		out.println("<td><b>Protocol</b></td>");
@@ -198,13 +201,13 @@ public class CNSSubscriptionPageServlet extends AdminServletBase {
         	if (s.getSubscriptionArn().equals("PendingConfirmation")) {
         		out.println("<td>&nbsp;</td>");
         	} else {
-        		out.println("<td><input type='submit' value='Unsubscribe' name='Unsubscribe' /></td>");
+        		out.println("<td><input type='submit' value='Unsubscribe' name='Unsubscribe'/></td>");
         	}
         	
         	out.println("</tr></form>");
         }
         
-        out.println("</table></p>");
+        out.println("</table></span></p>");
         out.println("<h5 style='text-align:center;'><a href='"+ response.encodeRedirectURL(AdminServlet.cnsAdminUrl)+ "'>ADMIN HOME</a>");
         out.println("<a href='"+AdminServlet.cnsAdminBaseUrl+"CNSUser?userId="+userId+"&topicArn="+topicArn+"'>BACK TO TOPIC</a></h5>");
         out.println("</body></html>");

@@ -59,7 +59,9 @@ public class CNSEditSubscriptionDeliveryPolicyPage extends AdminServletBase {
 		
 		connect(userId);
 		
-		out.println("<html><head><title>View/Edit Subscription Delivery Policy</title></head>");
+		out.println("<html>");
+		
+		simpleHeader(request, out, "View/Edit Subscription Delivery Policy");
 		
 		if (params.containsKey("Update")) {
 		

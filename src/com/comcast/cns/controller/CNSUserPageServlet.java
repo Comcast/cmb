@@ -137,10 +137,11 @@ public class CNSUserPageServlet extends AdminServletBase {
 		}
 		
 		out.println("<html>");
-		out.println("<head><title>Topics</title></head><body>");
 		
-		header(request, out);
+		header(request, out, "Topics");
 		
+		out.println("<body>");
+
 		out.println("<h2>Topics</h2>");
 		
 		if (user != null) {
@@ -173,17 +174,18 @@ public class CNSUserPageServlet extends AdminServletBase {
 			throw new ServletException(ex);
 		}
         
-		out.println("<p><hr width='100%' align='left' /></p><p><table border='1' width='100%'>");
-		out.println("<tr><td>&nbsp;</td>");
-		out.println("<td><b>Topic ARN</b></td>");
-		out.println("<td><b>Topic Name</b></td>");
-		out.println("<td><b>Topic Display Name</b></td>");
-		out.println("<td><b>User ID</b></td>");
-		out.println("<td>&nbsp;</td>");
-		out.println("<td>&nbsp;</td>");
-		out.println("<td>&nbsp;</td>");
-		out.println("<td>&nbsp;</td>");
-		out.println("<td>&nbsp;</td></tr>");
+		out.println("<p><hr width='100%' align='left' /></p>");
+		out.println("<p><span class='content'><table border='1' width='100%'>");
+		out.println("<tr><th>&nbsp;</th>");
+		out.println("<th>Topic ARN</th>");
+		out.println("<th>Topic Name</th>");
+		out.println("<th>Topic Display Name</th>");
+		out.println("<th>User ID</th>");
+		out.println("<th>&nbsp;</th>");
+		out.println("<th>&nbsp;</th>");
+		out.println("<th>&nbsp;</th>");
+		out.println("<th>&nbsp;</th>");
+		out.println("<th>&nbsp;</th></tr>");
 
 		for (int i = 0; topics != null && i < topics.size(); i++) {
         	
@@ -209,7 +211,7 @@ public class CNSUserPageServlet extends AdminServletBase {
         	out.println("<td><input type='submit' value='Delete' name='Delete' /></td></tr></form>");
         }
         
-        out.println("</table></p>");
+        out.println("</table></span></p>");
         out.println("<h5 style='text-align:center;'><a href='"+ response.encodeRedirectURL(AdminServlet.cnsAdminUrl)+ "'>ADMIN HOME</a></h5>");
         out.println("</body></html>");
         
