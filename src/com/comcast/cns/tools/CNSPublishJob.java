@@ -212,16 +212,16 @@ public class CNSPublishJob implements Runnable {
         
         try {
         
-            int slowResponseCounter = CNSEndpointPublisherJobConsumer.getNumBadResponses(endpoint);
+            int badResponseCounter = CNSEndpointPublisherJobConsumer.getNumBadResponses(endpoint);
 
             int failureSuspensionThreshold = CMBProperties.getInstance().getEndpointFailureCountToSuspensionThreshold(); 
             
             // only throw away new messages for bad endpoints (not those that are already in redlivery) - in effect we are temporarily suspending 
             // endpoints with more than three failures in the last minute
 
-            if (failureSuspensionThreshold!=0 && slowResponseCounter>failureSuspensionThreshold && numRetries==0) {
+            if (failureSuspensionThreshold!=0 && badResponseCounter>failureSuspensionThreshold && numRetries==0) {
             	
-            	logger.warn("event=throwing_message_away reason=endpoint_has_too_many_slow_responses_in_last_minute endpoint=" + endpoint + " slow_response_counter=" + slowResponseCounter + " attempt=" + numRetries);
+            	logger.warn("event=throwing_message_away reason=endpoint_has_too_many_bad_responses_in_last_minute endpoint=" + endpoint + " bad_response_counter=" + badResponseCounter + " attempt=" + numRetries);
 
             	letMessageDieForEndpoint();
             	

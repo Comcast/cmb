@@ -91,7 +91,7 @@ public class AdminServlet extends AdminServletBase {
 		
 		out.println("<body>");
 		
-		out.println("<h2><a href='/CNSWorkerState'>CNS Worker Dashboard</a></h2>");
+		out.println("<h2><a href='" + cnsAdminBaseUrl + "CNSWorkerState'>CNS Worker Dashboard</a></h2>");
 
 		out.println("<h2>All Users</h2>");
         out.print("<table><tr><td>Username:</td><td>Password:</td><td></td></tr>");

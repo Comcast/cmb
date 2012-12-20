@@ -175,7 +175,7 @@ public class CNSUserPageServlet extends AdminServletBase {
 		}
         
 		out.println("<p><hr width='100%' align='left' /></p>");
-		out.println("<p><span class='content'><table border='1' width='100%'>");
+		out.println("<p><span class='content'><table border='1'>");
 		out.println("<tr><th>&nbsp;</th>");
 		out.println("<th>Topic ARN</th>");
 		out.println("<th>Topic Name</th>");

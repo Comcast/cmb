@@ -173,7 +173,7 @@ public class CNSSubscriptionPageServlet extends AdminServletBase {
         
         	if (i == 0) {
         		out.println("<p><hr width='100%' align='left' />");
-        		out.println("<p><span class='content'><table border='1' width='100%'>");
+        		out.println("<p><span class='content'><table border='1'>");
         		out.println("<tr><td><b>Row</b></td>");
         		out.println("<td><b>ARN</b></td>");
         		out.println("<td><b>Protocol</b></td>");

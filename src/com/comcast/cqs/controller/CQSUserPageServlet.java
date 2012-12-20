@@ -166,7 +166,7 @@ public class CQSUserPageServlet extends AdminServletBase {
 
 		out.println("<p><hr width='100%' align='left' /></p>");
 		
-		out.println("<p><span class='content'><table border='1' width='100%'>");
+		out.println("<p><span class='content'><table border='1'>");
 		out.println("<tr><th>&nbsp;</th>");
 		out.println("<th>Queue Url</th>");
 		out.println("<th>Queue Arn</th>");

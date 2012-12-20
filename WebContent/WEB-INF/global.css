@@ -28,79 +28,98 @@ border-width:0;
 
 h1 {
 margin:0;
-padding:10px 30px 5px;
+padding:5px 5px 5px;
 line-height:1.2em;
 font: normal bold 150% Verdana,Arial,Sans-serif;
 }
 h2 {
 margin:0;
-padding:10px 30px 5px;
+padding:5px 5px 5px;
 line-height:1.2em;
 font: normal bold 125% Verdana,Arial,Sans-serif;
 }
 h3 {
 margin:0;
-padding:10px 30px 5px;
+padding:5px 5px 5px;
 line-height:1.2em;
 font: normal bold 100% Verdana,Arial,Sans-serif;
+}
+hr {
+padding:1px 1px 1px;
+margin: 0px;
 }
 
 .content table
 {
 border-collapse:collapse;
 font: small Verdana, Arial, Sans-serif;
+padding:1px 1px 1px;
+margin: 5px;
 }
 .content table, .content td
 {
 border: 1px solid black;
 background-color:#BBBBDD;
 font: small bold Verdana, Arial, Sans-serif;
+padding: 1px 1px 1px;
 }
 .content th
 {
 border: 1px solid black;
 background-color:#9999BB;
 font: small bold Verdana, Arial, Sans-serif;
+padding: 1px 1px 1px;
 }
 .header table
 {
 border-collapse:collapse;
 font: small Verdana, Arial, Sans-serif;
+padding: 0px 0px 0px;
+margin: 0px;
 }
 .header table, .header th, .header td
 {
 border: 0px;
 background-color:#AAAACC;
 font: small Verdana, Arial, Sans-serif;
+padding: 0px 0px 0px;
 }
 .simple table
 {
 border-collapse:collapse;
 font: small Verdana, Arial, Sans-serif;
+padding:1px 1px 1px;
+margin: 5px;
 }
 .simple table, .simple td
 {
 border: 1px solid black;
 font: small Verdana, Arial, Sans-serif;
+padding:1x 1px 1px;
 }
 .simple th
 {
 border: 1px solid black;
 font: small bold Verdana, Arial, Sans-serif;
+padding:1x 1px 1px;
 }
 table
 {
 border-collapse:collapse;
 font: small Verdana, Arial, Sans-serif;
+padding:1px 1px 1px;
+margin: 5px;
 }
 table, td
 {
 border: 0px;
 font: small Verdana, Arial, Sans-serif;
+padding:1px 1px 1px;
 }
 th
 {
 border: 0px;
 font: small bold Verdana, Arial, Sans-serif;
+padding:1px 1px 1px;
 }
 

@@ -106,7 +106,7 @@ public class CNSWorkerStatePageServlet extends AdminServletBase {
 			
 			List<Element> statsList = XmlUtil.getCurrentLevelChildNodes(XmlUtil.getCurrentLevelChildNodes(root, "GetWorkerStatsResult").get(0), "Stats");
 			
-			out.println("<h2>CNS Worker Stats</h2>");
+			out.println("<h2 align='left'>CNS Worker Stats</h2>");
 			
 			out.println("<span class='simple'><table border='1'>");
 			out.println("<tr><th>Host</th><th>Jmx Port</th><th>Mode</th><th>Msg Published</th>");
@@ -171,7 +171,7 @@ public class CNSWorkerStatePageServlet extends AdminServletBase {
 			
 			if (endpointErrorCounts.size() > 0) {
 			
-				out.println("<h3>Failed or timed out Responses during past 60 Seconds by Endpoint</h3>");
+				out.println("<h2 align='left'>Failed or timed out Responses during past 60 Seconds by Endpoint</h2>");
 				
 				out.println("<span class='simple'><table border='1'>");
 				out.println("<tr><th>Endpoint</th><th>Error Count</th><th><th>");
