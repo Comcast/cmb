@@ -433,14 +433,10 @@ There is a CNSMonitor MBean exposing a number of CNS attributes including
 - Known Limitations
 --------------------------------------------------------------------------------------------
 
-1. The Admin UI is open to anyone and allows full access to anybody's user account. It is 
-   the only place to create or delete user accounts and to manually browse and modify any 
-   user's queues and topics.
-
-2. The initial visibility timeout for messages in a queue is always 0. It is not possible
+1. The initial visibility timeout for messages in a queue is always 0. It is not possible
    to send a message and have it initially hidden for a specified number of seconds. 
    Instead the message must be received first and only then the visibility timeout can be 
    set.
    
-3. CMB requires Cassandra version 1.0.10 or higher or Cassandra version 1.1.X.
+2. CMB requires Cassandra version 1.0.10 or higher or Cassandra version 1.1.X.
 

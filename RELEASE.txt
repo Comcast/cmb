@@ -1,3 +1,64 @@
+CMB VERSION 2.2.12
+--------------------------------------------------------------------
+
+New features and bug fixes:
+
+- added support for Cassandra 1.1.X (note there are now different schema
+  files for Cassandra 1.0.X and 1.1.X)
+- cns worker to recreate cqs queues on the fly when needed
+- centralized monitoring and management of cns workers through cns
+  endpoint and admin UI  
+- cns worker to cache cqs queue urls to ease load on cns api
+- adjusted default size of key parameters for cns worker in 
+  cmb.properties
+- http default timeout of 5 sec for slow endpoints (can be adjusted
+  in cmb.properties)
+- bug fix: allow publishing of blank messages
+- cns worker to temporarily suspend slow or failing endpoints if more 
+  than n bad responses are encountered in a rolling window of 60 seconds   
+  (threshold can be adjusted in cmb.properties)
+- offer configurable white list of acceptable http return codes
+  (such as 404 if desired)
+- simple login and session management for admin ui to distinguish 
+  admin and normal users (note: currently the only admin user is 
+  the one configured as cmb.cns.user in cmb.properties, typically
+  "cns_internal")
+- various improvements for endpoint servlet (testing tool for cns)
+  such as introducing a duplicate counter 
+  
+Upgrading from version 2.2.11:
+
+1. Add the following column family to the CNS schema:
+
+create column family CNSWorkers
+  with column_type = 'Standard'
+  and comparator = 'UTF8Type'
+  and default_validation_class = 'UTF8Type'
+  and key_validation_class = 'UTF8Type'
+  and read_repair_chance = 0.1
+  and gc_grace = 5
+  and min_compaction_threshold = 4
+  and max_compaction_threshold = 32
+  and replicate_on_write = true
+  and compaction_strategy = 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy';
+  
+2. Add or adjust the following cmb.properties:
+
+adjusted properties:
+
+cmb.cns.publisher.numDeliveryHandlers=128
+cmb.cns.publisher.numReDeliveryHandlers=256
+cmb.cns.publisher.deliveryHandlerJobQueueLimit=1000
+cmb.cns.publisher.reDeliveryHandlerJobQueueLimit=5000
+cmb.cns.publisher.maxSubscriptionsPerEPPublishJob=100
+cmb.cns.publisher.http.connectionPoolSize=250
+
+new properties:
+
+cmb.cns.publisher.http.httpTimeoutSeconds=5
+cmb.cns.publisher.http.acceptableStatusCodes=200
+
+
 CMB VERSION 2.2.11
 --------------------------------------------------------------------
 
