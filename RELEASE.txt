@@ -20,9 +20,10 @@ New features and bug fixes:
 - offer configurable white list of acceptable http return codes
   (such as 404 if desired)
 - simple login and session management for admin ui to distinguish 
-  admin and normal users (note: currently the only admin user is 
+  admin and normal users. Note: Currently the only admin user is 
   the one configured as cmb.cns.user in cmb.properties, typically
-  "cns_internal")
+  "cns_internal". Access the admin UI from now on using this link:
+  http://adminhost:adminport/UserLogin
 - various improvements for endpoint servlet (testing tool for cns)
   such as introducing a duplicate counter 
   

@@ -67,8 +67,8 @@ There are three different ways to access CNS / CQS services:
 The Admin UI is a simple Web UI for testing and administration purposes. To access the 
 CMB Admin UI use any web browser and go to
 
-CNS Admin URL: http://<cns_host>:<cns_port>/ADMIN
-CQS Admin URL: http://<cqs_host>:<cqs_port>/ADMIN
+CNS Admin URL: http://<cns_host>:<cns_port>/UserLogin
+CQS Admin URL: http://<cqs_host>:<cqs_port>/UserLogin
 
 2. Using the AWS SDK for Java or similar language bindings:
 
@@ -299,13 +299,14 @@ Example response:
    
    NOTE: By default log4j will log to /tmp/cmb.log
    
-10.Use any web browser to go to the CMB Admin UI and create a user with user name 
-   "cns_internal" and password "cns_internal". Or, if you prefer to create a different 
-   user name / password ensure that in cmb.properties the fields cmb.cns.user.name and 
-   cmb.cns.user.password are set accordingly. The CMB Admin UI can be accessed through 
-   either the CNS Service Enpoint or the CQS Service Endpoint, for example:
+10.Use any web browser to go to the CMB Admin UI and login with user name 
+   "cns_internal" and password "cns_internal". Or, if you prefer to use a different 
+   admin user name / password ensure that in cmb.properties the fields 
+   cmb.cns.user.name and cmb.cns.user.password are set accordingly. The CMB Admin 
+   UI can be accessed through either the CNS Service Enpoint or the CQS Service 
+   Endpoint, for example:
    
-   http://localhost:6059/ADMIN/ 
+   http://localhost:6059/UserLogin
    
 11.The CNS Service requires one or more CNS Worker Nodes (independent Java processes) 
    to function. 
@@ -332,9 +333,9 @@ Example response:
    > nohup ./bin/startWorkerNode.sh &
 
 13.Test basic CNS and CQS service functionality, for example by accessing the CMB Admin UI
-   using any web browser at: 
+   using any web browser at logging in with the credentials used in step 10. 
    
-   http://localhost:6059/ADMIN
+   http://localhost:6059/UserLogin
    
 --------------------------------------------------------------------------------------------
 - Build CMB from Source

@@ -30,6 +30,7 @@ import com.comcast.cmb.common.model.User;
 import com.comcast.cmb.common.persistence.IUserPersistence;
 import com.comcast.cmb.common.persistence.PersistenceFactory;
 import com.comcast.cmb.common.util.AuthUtil;
+import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.ValueAccumulator.AccumulatorName;
 
 /**
@@ -51,7 +52,7 @@ public class UserLoginPageServlet extends AdminServletBase {
 		Map<?, ?> parameters = request.getParameterMap();
 		String userName = request.getParameter("user");
 		userName = userName == null ? "" : userName;
-		String passwd = request.getParameter("passwd");
+		String password = request.getParameter("passwd");
 		IUserPersistence userHandler = PersistenceFactory.getUserPersistence();
 		User user = null;
 		
@@ -62,11 +63,17 @@ public class UserLoginPageServlet extends AdminServletBase {
 				user = userHandler.getUserByName(userName);
 				HttpSession session = request.getSession(true);
 
-				if (user!=null && AuthUtil.verifyPassword(passwd, user.getHashPassword())) {
+				if (user!=null && AuthUtil.verifyPassword(password, user.getHashPassword())) {
 					session.setAttribute("USER", user);
+				} else if (user==null && CMBProperties.getInstance().getCnsUserName().equals(userName) && CMBProperties.getInstance().getCnsUserPassword().equals(password)) {
+					userHandler.createUser(userName, password);
+					user = userHandler.getUserByName(userName);
+					session.setAttribute("USER", user);
+					logger.error("event=login status=created_missing_admin_user user_name=" + userName);
 				} else {
 					user = null;
 					session.removeAttribute("USER");
+					logger.error("event=login status=failed user_name=" + userName);
 				}
 				
 			} catch (Exception ex) {
