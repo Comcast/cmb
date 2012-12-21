@@ -46,7 +46,9 @@ public class CNSTopicAddPermissionPage extends AdminServletBase {
 	@Override
 	public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		
-		redirectUnauthenticatedUser(request, response);
+		if (redirectUnauthenticatedUser(request, response)) {
+			return;
+		}
 
 		response.setContentType("text/html");
 		PrintWriter out = response.getWriter();

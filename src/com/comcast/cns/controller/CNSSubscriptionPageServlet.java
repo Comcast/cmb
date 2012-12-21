@@ -57,7 +57,9 @@ public class CNSSubscriptionPageServlet extends AdminServletBase {
 			throw new ServletException("CNS service disabled");
 		}
 		
-		redirectUnauthenticatedUser(request, response);
+		if (redirectUnauthenticatedUser(request, response)) {
+			return;
+		}
 
 		CMBControllerServlet.valueAccumulator.initializeAllCounters();
 		response.setContentType("text/html");
@@ -156,7 +158,7 @@ public class CNSSubscriptionPageServlet extends AdminServletBase {
 			out.println("<tr><td><b>Access Secret:</b></td><td>"+user.getAccessSecret()+"</td></tr>");
 			out.println("<tr><td><b>Topic Name:</b></td><td>"+ topic.getName()+"</td></tr>");
 			out.println("<tr><td><b>Topic Display Name:</b></td><td>" + topic.getDisplayName()+ "</td></tr>");
-			out.println("<tr><td><b>Topic ARN:</b></td><td>" + topic.getArn()+ "</td></tr>");
+			out.println("<tr><td><b>Topic Arn:</b></td><td>" + topic.getArn()+ "</td></tr>");
 			out.println("<tr><td><b>Num Subscriptions:</b></td><td>" + subscriptions.size()+ "</td></tr></table>");
 		}
 		
@@ -174,12 +176,12 @@ public class CNSSubscriptionPageServlet extends AdminServletBase {
         	if (i == 0) {
         		out.println("<p><hr width='100%' align='left' />");
         		out.println("<p><span class='content'><table border='1'>");
-        		out.println("<tr><td><b>Row</b></td>");
-        		out.println("<td><b>ARN</b></td>");
-        		out.println("<td><b>Protocol</b></td>");
-        		out.println("<td><b>End Point</b></td>");
-        		out.println("<td>&nbsp;</td>");
-        		out.println("<td>&nbsp;</td></tr>");
+        		out.println("<tr><th>Row</th>");
+        		out.println("<th>Arn</th>");
+        		out.println("<th>Protocol</th>");
+        		out.println("<th>End Point</th>");
+        		out.println("<th>&nbsp;</th>");
+        		out.println("<th>&nbsp;</th></tr>");
         	}
         	
         	Subscription s = subscriptions.get(i);

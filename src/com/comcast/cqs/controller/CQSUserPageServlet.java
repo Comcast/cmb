@@ -59,7 +59,9 @@ public class CQSUserPageServlet extends AdminServletBase {
 			throw new ServletException("CQS service disabled");
 		}
 		
-		redirectUnauthenticatedUser(request, response);
+		if (redirectUnauthenticatedUser(request, response)) {
+			return;
+		}
 
 		CMBControllerServlet.valueAccumulator.initializeAllCounters();
 		response.setContentType("text/html");
@@ -170,10 +172,10 @@ public class CQSUserPageServlet extends AdminServletBase {
 		out.println("<tr><th>&nbsp;</th>");
 		out.println("<th>Queue Url</th>");
 		out.println("<th>Queue Arn</th>");
-		out.println("<th>Queue Name<</th>");
+		out.println("<th>Queue Name</th>");
 		out.println("<th>User ID</th>");
 		out.println("<th>Region</th>");
-		out.println("<th>Visibility TO<</th>");
+		out.println("<th>Visibility TO</th>");
 		out.println("<th>Max Msg Size</th>");
 		out.println("<th>Msg Rention Period</th>");
 		out.println("<th>Delay Seconds</th>");

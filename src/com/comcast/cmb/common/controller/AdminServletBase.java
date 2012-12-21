@@ -104,22 +104,29 @@ public abstract class AdminServletBase extends HttpServlet {
 		return true;
 	}
 	
-	protected void redirectUnauthenticatedUser(HttpServletRequest request, HttpServletResponse response) throws IOException {
+	protected boolean redirectUnauthenticatedUser(HttpServletRequest request, HttpServletResponse response) throws IOException {
 
 		if (!isAuthenticated(request)) {
 			response.sendRedirect(response.encodeURL("/UserLogin"));
+			return true;
 		}
+		
+		return false;
 	}
 	
-	protected void redirectNonAdminUser(HttpServletRequest request, HttpServletResponse response) throws IOException {
+	protected boolean redirectNonAdminUser(HttpServletRequest request, HttpServletResponse response) throws IOException {
 
 		if (!isAuthenticated(request)) {
 			response.sendRedirect(response.encodeURL("/UserLogin"));
+			return true;
 		}
 		
 		if (!isAdmin(request)) {
 			response.sendRedirect(response.encodeURL("/User?userId=" + getAuthenticatedUser(request).getUserId()));
+			return true;
 		}
+	
+		return false;
 	}
 
 	protected void logout(HttpServletRequest request, HttpServletResponse response) throws IOException {

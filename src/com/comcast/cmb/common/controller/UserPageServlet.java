@@ -42,7 +42,9 @@ public class UserPageServlet extends AdminServletBase {
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
 		
-		redirectUnauthenticatedUser(request, response);
+		if (redirectUnauthenticatedUser(request, response)) {
+			return;
+		}
 		
         CMBControllerServlet.valueAccumulator.initializeAllCounters();
 		response.setContentType("text/html");

@@ -49,7 +49,9 @@ public class AdminServlet extends AdminServletBase {
 	@Override
 	public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		
-		redirectNonAdminUser(request, response);
+		if (redirectNonAdminUser(request, response)) {
+			return;
+		}
 		
 		CMBControllerServlet.valueAccumulator.initializeAllCounters();
 		response.setContentType("text/html");
