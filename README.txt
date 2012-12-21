@@ -24,7 +24,7 @@ https://groups.google.com/forum/#!forum/cmb-user-forum
 --------------------------------------------------------------------------------------------
 
 If you do not want to build from source you can download the latest build. Note that 
-our download page has moved. You can now find the latest build (currently 2.2.11) here:
+our download page has moved. You can now find the latest build (currently 2.2.12) here:
 
 http://cmbdownloads.s3-website-us-west-1.amazonaws.com/
 
@@ -191,14 +191,14 @@ Example response:
 4. Build cns.war and cqs.war (see build instructions below) or download binaries from 
    github and deploy into Tomcat server instances installed in step 1. 
    
-   > wget -O - https://github.com/downloads/Comcast/cmb/cqs-distribution-2.2.11.tar.gz | tar zxf -
-   > wget -O - https://github.com/downloads/Comcast/cmb/cns-distribution-2.2.11.tar.gz | tar zxf -
+   > wget -O - https://s3-us-west-1.amazonaws.com/cmbdownloads/2.2.12/cqs-distribution-2.2.12.tar.gz | tar zxf -
+   > wget -O - https://s3-us-west-1.amazonaws.com/cmbdownloads/2.2.12/cns-distribution-2.2.12.tar.gz | tar zxf -
 
    > rm -rf tomcat-cqs/webapps/ROOT
    > rm -rf tomcat-cns/webapps/ROOT
 
-   > cp -f ./cqs/cqs-2.2.11.war tomcat-cqs/webapps/ROOT.war
-   > cp -f ./cns/cns-2.2.11.war tomcat-cns/webapps/ROOT.war
+   > cp -f ./cqs/cqs-2.2.12.war tomcat-cqs/webapps/ROOT.war
+   > cp -f ./cns/cns-2.2.12.war tomcat-cns/webapps/ROOT.war
 
 5. Create Cassandra key spaces and column families by running schema.txt using 
    cassandra-cli. After executing the script three key spaces (CMB, CNS, CQS) should be 
@@ -320,7 +320,7 @@ Example response:
    Consumer,Producer or Consumer or Producer
    
    > cd /usr/local/
-   > wget -O - https://github.com/downloads/Comcast/cmb/cns-worker-distribution-2.2.11.tar.gz | tar zxf -
+   > wget -O - https://s3-us-west-1.amazonaws.com/cmbdownloads/2.2.12/cns-worker-distribution-2.2.12.tar.gz | tar zxf -
    > cd cns-worker
    > vi ./bin/startWorkerNode.sh
    
@@ -422,13 +422,17 @@ CNS Metrics:
 
 There is a CNSMonitor MBean exposing a number of CNS attributes including
       
-  - Number of messages published
+  - Number of messages published in past 5 minutes
   - Number of http connections in pool
   - Number of pending publish jobs
   - Error rate for endpoints
   - Delivery queue size
   - Redelivery queue size
   - Consumer overloaded (boolean)      
+
+Finally the admin UI provides a dashboard like view of all CNS workers at
+
+  http://localhost:6059/CNSWorkerState
 
 --------------------------------------------------------------------------------------------
 - Known Limitations
