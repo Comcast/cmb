@@ -445,3 +445,7 @@ Finally the admin UI provides a dashboard like view of all CNS workers at
    
 2. CMB requires Cassandra version 1.0.10 or higher or Cassandra version 1.1.X.
 
+3. The WaitTimeSeconds parameter in the ReceiveMessage API for long-poll-style requests
+   is currently not supported in CQS.
+   
+
