@@ -124,18 +124,18 @@ Example response:
 1. Install Tomcat 7 or similar application server as needed. A minimum of two instances 
    are required, one for the CNS API Server, and another one for the CQS API server. 
    
-   > wget -O - http://www.alliedquotes.com/mirrors/apache/tomcat/tomcat-7/v7.0.32/bin/apache-tomcat-7.0.32.tar.gz | tar zxf -
+   wget -O - http://www.alliedquotes.com/mirrors/apache/tomcat/tomcat-7/v7.0.32/bin/apache-tomcat-7.0.32.tar.gz | tar zxf -
 
-   > cp -R apache-tomcat-7.0.32 tomcat-cqs
-   > cp -R apache-tomcat-7.0.32 tomcat-cns
+   cp -R apache-tomcat-7.0.32 tomcat-cqs
+   cp -R apache-tomcat-7.0.32 tomcat-cns
    
    If you are installing both Tomcat instances on a single server make sure to configure
    them to listen on different ports by changing the default HTTP port number (8080) in 
    the <Connector> element of the conf/server.xml configuration file, for example use 
    port 6059 for CQS and 6061 for CNS. 
    
-   > vi tomcat-cqs/conf/server.xml   
-   > vi tomcat-cns/conf/server.xml
+   vi tomcat-cqs/conf/server.xml   
+   vi tomcat-cns/conf/server.xml
    
    IMPORTANT: Be sure to also change all other Tomcat ports including shutdown port 
    (default is 8005) and AJP port (default is 8009).
@@ -146,38 +146,38 @@ Example response:
 2. Install and stand up Cassandra cluster based on Cassandra version 1.0.10 or higher 
    with as many nodes as needed (minimum one node, recommended at least 4 nodes).
    
-   > wget -O - http://archive.apache.org/dist/cassandra/1.0.12/apache-cassandra-1.0.12-bin.tar.gz | tar zxf -
+   wget -O - http://archive.apache.org/dist/cassandra/1.0.12/apache-cassandra-1.0.12-bin.tar.gz | tar zxf -
 
    Configure a Cassandra cluster named "cmb" by editing conf/cassandra.yaml and
    start Cassandra. 
    
-   > cd apache-cassandra-1.0.12
-   > vi conf/cassandra.yaml
+   cd apache-cassandra-1.0.12
+   vi conf/cassandra.yaml
    
-   > sudo mkdir -p /var/log/cassandra 
-   > sudo chown -R `whoami` /var/log/cassandra
-   > sudo mkdir -p /var/lib/cassandra
-   > sudo chown -R `whoami` /var/lib/cassandra
+   sudo mkdir -p /var/log/cassandra 
+   sudo chown -R `whoami` /var/log/cassandra
+   sudo mkdir -p /var/lib/cassandra
+   sudo chown -R `whoami` /var/lib/cassandra
    
-   > nohup bin/cassandra -f > /tmp/cassandra.log &
+   nohup bin/cassandra -f > /tmp/cassandra.log &
    
    NOTE: Currently CMB works with Cassandra version 1.0.10 or higher and also with Cassandra 
    version 1.1.X. When using Cassandra 1.1.X ensure to run in the (default) CQL2 compatibility 
    mode and also edit cassandra.yaml to activate the global row cache:
    
-   > row_cache_size_in_mb: 100
+   row_cache_size_in_mb: 100
    
 3. Install and start Redis nodes as needed using Redis version 2.4.9 or higher (minimum 
    one node).
    
-   > wget -O - http://redis.googlecode.com/files/redis-2.4.17.tar.gz | tar zxf -
-   > cd redis-2.4.17
-   > make
+   wget -O - http://redis.googlecode.com/files/redis-2.4.17.tar.gz | tar zxf -
+   cd redis-2.4.17
+   make
    
    IMPORTANT: Before starting Redis edit the redis.conf file and disable all persistence
    by commenting out the three lines starting with "save".
    
-   > vi redis.conf
+   vi redis.conf
    
    # save 900 1
    # save 300 10
@@ -185,20 +185,20 @@ Example response:
     
    Finally, start the Redis process.
    
-   > cd src
-   > nohup ./redis-server > /tmp/redis.log &
+   cd src
+   nohup ./redis-server > /tmp/redis.log &
 
 4. Build cns.war and cqs.war (see build instructions below) or download binaries from 
    github and deploy into Tomcat server instances installed in step 1. 
    
-   > wget -O - https://s3-us-west-1.amazonaws.com/cmbdownloads/2.2.12/cqs-distribution-2.2.12.tar.gz | tar zxf -
-   > wget -O - https://s3-us-west-1.amazonaws.com/cmbdownloads/2.2.12/cns-distribution-2.2.12.tar.gz | tar zxf -
+   wget -O - https://s3-us-west-1.amazonaws.com/cmbdownloads/2.2.12/cqs-distribution-2.2.12.tar.gz | tar zxf -
+   wget -O - https://s3-us-west-1.amazonaws.com/cmbdownloads/2.2.12/cns-distribution-2.2.12.tar.gz | tar zxf -
 
-   > rm -rf tomcat-cqs/webapps/ROOT
-   > rm -rf tomcat-cns/webapps/ROOT
+   rm -rf tomcat-cqs/webapps/ROOT
+   rm -rf tomcat-cns/webapps/ROOT
 
-   > cp -f ./cqs/cqs-2.2.12.war tomcat-cqs/webapps/ROOT.war
-   > cp -f ./cns/cns-2.2.12.war tomcat-cns/webapps/ROOT.war
+   cp -f ./cqs/cqs-2.2.12.war tomcat-cqs/webapps/ROOT.war
+   cp -f ./cns/cns-2.2.12.war tomcat-cns/webapps/ROOT.war
 
 5. Create Cassandra key spaces and column families by running schema.txt using 
    cassandra-cli. After executing the script three key spaces (CMB, CNS, CQS) should be 
@@ -206,20 +206,20 @@ Example response:
    
    When using Cassandra 1.0.X:
    
-   > cat ./cqs/cassandra_1.0.schema | /<path_to_cassandra>/bin/cassandra-cli -h localhost 
+   /<path_to_cassandra>/bin/cassandra-cli -h localhost -f ./cqs/cassandra_1.0.schema
    
    When using Cassandra 1.1.X:
    
-   > cat ./cqs/cassandra_1.1.schema | /<path_to_cassandra>/bin/cassandra-cli -h localhost 
+   /<path_to_cassandra>/bin/cassandra-cli -h localhost -f ./cqs/cassandra_1.1.schema
    
 6. The binaries come with two configuration files, cmb.properties and log4j.properties, 
    both of which need to be available to all CMB processes (CNS API Server(s), CQS API 
    Server(s) and CNS Worker Nodes). Typically the configuration files should be placed 
    in /var/config/cmb/.
    
-   > mkdir /var/config/cmb
-   > cp ./cqs/config/cmb.properties /var/config/cmb
-   > cp ./cqs/config/log4j.properties /var/config/cmb
+   mkdir /var/config/cmb
+   cp ./cqs/config/cmb.properties /var/config/cmb
+   cp ./cqs/config/log4j.properties /var/config/cmb
    
 7. Edit /var/config/cmb/cmb.properties, in particular these settings (important settings 
    are marked with "todo" in the default cmb.properties file). 
@@ -294,8 +294,8 @@ Example response:
    
 9. Start both Tomcat instances.
 
-   > ./tomcat-cqs/bin/startup.sh
-   > ./tomcat-cns/bin/startup.sh
+   ./tomcat-cqs/bin/startup.sh
+   ./tomcat-cns/bin/startup.sh
    
    NOTE: By default log4j will log to /tmp/cmb.log
    
@@ -319,10 +319,10 @@ Example response:
    
    Consumer,Producer or Consumer or Producer
    
-   > cd /usr/local/
-   > wget -O - https://s3-us-west-1.amazonaws.com/cmbdownloads/2.2.12/cns-worker-distribution-2.2.12.tar.gz | tar zxf -
-   > cd cns-worker
-   > vi ./bin/startWorkerNode.sh
+   cd /usr/local/
+   wget -O - https://s3-us-west-1.amazonaws.com/cmbdownloads/2.2.12/cns-worker-distribution-2.2.12.tar.gz | tar zxf -
+   cd cns-worker
+   vi ./bin/startWorkerNode.sh
    
    NOTE: At least one consumer and one producer is required, so if you only install a 
    single CNS Worker Node you must set ROLE to Consumer,Producer. By default, log4j will 
@@ -330,7 +330,7 @@ Example response:
    
 12.Start each worker process with 
   
-   > nohup ./bin/startWorkerNode.sh &
+   nohup ./bin/startWorkerNode.sh &
 
 13.Test basic CNS and CQS service functionality, for example by accessing the CMB Admin UI
    using any web browser at logging in with the credentials used in step 10. 
@@ -347,20 +347,20 @@ Example response:
 
 1. Clone CMB repository from github
 
-   > git clone https://github.com/Comcast/cmb.git
+   git clone https://github.com/Comcast/cmb.git
    
 2. Build CNS Worker Node with maven (skipping tests):
 
-   > mvn --settings ./settings.xml -f pom-cns-worker.xml -Dmaven.test.skip=true assembly:assembly
+   mvn --settings ./settings.xml -f pom-cns-worker.xml -Dmaven.test.skip=true assembly:assembly
    
    After a successful build binary cns-worker-distribution-<version>.tar.gz will be available in 
    ./target 
 
 3. Build CMB Service Endpoints (CNS and CQS) with maven (skipping tests): 
 
-   > mvn --settings ./settings.xml -f pom-cns.xml -Dmaven.test.skip=true assembly:assembly
+   mvn --settings ./settings.xml -f pom-cns.xml -Dmaven.test.skip=true assembly:assembly
    
-   > mvn --settings ./settings.xml -f pom-cqs.xml -Dmaven.test.skip=true assembly:assembly
+   mvn --settings ./settings.xml -f pom-cqs.xml -Dmaven.test.skip=true assembly:assembly
 
    After a successful build binaries cns-distribution-<version>.tar.gz and 
    cqs-distribution-<version>.tar.gz will be available in ./target 
@@ -371,9 +371,9 @@ Example response:
    complete CMB ecosystem must be installed and running, including CNS and CQS Service 
    Endpoints, CNS Worker Node(s), Cassandra Ring and Redis Server.
 
-   > mvn --settings ./settings.xml -f pom-cns.xml  test
+   mvn --settings ./settings.xml -f pom-cns.xml  test
    
-   > mvn --settings ./settings.xml -f pom-cns.xml -Dtest=CQSIntegrationTest test
+   mvn --settings ./settings.xml -f pom-cns.xml -Dtest=CQSIntegrationTest test
    
    NOTE: Many unit tests require an HTTP endpoint to function or else they will fail.
    The CMB distribution comes with a basic HTTP endpoint which is enabled by default on
@@ -399,7 +399,7 @@ JMX using jconsole.
 
 CQS Metrics:
 
-  > jconsole <cqs_host>:<jms_port> 
+  jconsole <cqs_host>:<jms_port> 
 
 There is a CQSMonitor MBean exposing a number of CQS attributes including
 
@@ -418,7 +418,7 @@ and these queue specific attributes
   
 CNS Metrics:
 
-  > jconsole <cns_worker_host>:<jms_port> 
+  jconsole <cns_worker_host>:<jms_port> 
 
 There is a CNSMonitor MBean exposing a number of CNS attributes including
       
