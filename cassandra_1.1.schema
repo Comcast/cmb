@@ -1,14 +1,22 @@
--- set up keyspace
+--
+-- Set Up Keyspace
+--
 
-drop keyspace CNS;
-drop keyspace CQS;
-drop keyspace CMB;
+-- note: drop keyspaces only if they exist already
+
+-- drop keyspace CNS;
+-- drop keyspace CQS;
+-- drop keyspace CMB;
+
+create keyspace CNS;
+create keyspace CQS;
+create keyspace CMB;
+
+-- note: for a replicated environment make sure to configure the desired placment strategy and strategy options 
 
 --
 -- CNS Column Families
 --
-
-create keyspace CNS;
 
 use CNS;
 
@@ -237,8 +245,6 @@ create column family CNSWorkers
 -- CQS Column Families
 --
 
-create keyspace CQS;
-
 use CQS;
 
 --
@@ -323,8 +329,6 @@ create column family CQSQueues
 --
 -- Generic Column Families
 --
-
-create keyspace CMB;
 
 use CMB;
 
