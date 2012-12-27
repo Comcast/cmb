@@ -29,7 +29,7 @@ import org.apache.http.conn.scheme.SchemeRegistry;
 import org.apache.http.conn.ssl.SSLSocketFactory;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
+import org.apache.http.impl.conn.PoolingClientConnectionManager;
 import org.apache.http.params.BasicHttpParams;
 import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.params.HttpParams;
@@ -49,7 +49,7 @@ import com.comcast.cmb.common.util.CMBProperties;
 public class HTTPEndpointPublisherApache implements IEndpointPublisher {
 
 	private final static SchemeRegistry schemeRegistry = new SchemeRegistry();
-	private final static ThreadSafeClientConnManager cm;
+	private final static PoolingClientConnectionManager cm;
 	private final static HttpClient httpClient;
 
 	static {
@@ -65,7 +65,7 @@ public class HTTPEndpointPublisherApache implements IEndpointPublisher {
 		HttpConnectionParams.setConnectionTimeout(params, timeoutMillis);
 		HttpConnectionParams.setSoTimeout(params, timeoutMillis);
 
-		cm = new ThreadSafeClientConnManager(schemeRegistry);
+		cm = new PoolingClientConnectionManager(schemeRegistry);
 		// increase max total connection to 250
 		cm.setMaxTotal(CMBProperties.getInstance().getHttpPublisherEndpointConnectionPoolSize());
 		// increase default max connection per route to 20
@@ -80,7 +80,7 @@ public class HTTPEndpointPublisherApache implements IEndpointPublisher {
 	private static Logger logger = Logger.getLogger(HTTPEndpointPublisherApache.class);
 
 	public static int getNumConnectionsInPool() {
-		return cm.getConnectionsInPool();
+		return cm.getTotalStats().getAvailable();
 	}
 	
 	@Override
