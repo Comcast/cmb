@@ -30,6 +30,8 @@ import java.util.Properties;
  */
 public class CMBProperties {
 	
+	private final int cnsMessageExpirationSeconds;
+	
 	private final int httpTimeoutSeconds;
 	private final List<String> acceptableHttpStatusCodes;
 
@@ -266,6 +268,7 @@ public class CMBProperties {
             consumerProcessingMaxDelay = Integer.parseInt(props.getProperty("cmb.cns.publisher.consumerProcessingMaxDelay", "1000"));
             
             endpointFailureCountToSuspensionThreshold = Integer.parseInt(props.getProperty("cmb.cns.publisher.endpointFailureCountToSuspensionThreshold", "10"));
+            cnsMessageExpirationSeconds = Integer.parseInt(props.getProperty("cmb.cns.publisher.messageExpirationSeconds", "0"));
             
             useSubInfoCache = Boolean.parseBoolean(props.getProperty("cmb.cns.useSubInfoCache", "true"));
             fileStream.close();
@@ -626,5 +629,9 @@ public class CMBProperties {
 	
 	public List<String> getAcceptableHttpStatusCodes() {
 		return acceptableHttpStatusCodes;
+	}
+	
+	public int getCnsMessageExpirationSeconds() {
+		return cnsMessageExpirationSeconds;
 	}
 }
