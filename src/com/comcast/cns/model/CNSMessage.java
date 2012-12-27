@@ -15,6 +15,7 @@
  */
 package com.comcast.cns.model;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -35,6 +36,7 @@ import com.comcast.cns.model.CNSSubscription.CnsSubscriptionProtocol;
  * Class is thread-safe
  */
 public final class CNSMessage {
+	
     public enum CNSMessageStructure {
         json;
     }
@@ -44,12 +46,12 @@ public final class CNSMessage {
      * If you want to send the same message to all transport protocols, include the text of the message as a String value
      * If you want to send different messages for each transport protocol, 
      *  set the value of the MessageStructure parameter to json and use a JSON object for the Message parameter
-     *  Parameter is required
+     *  Parameter is required.
      */
     private volatile String message;
     
     /**
-     * Set MessageStructure to json if you want to send a different message for each protocol
+     * Set MessageStructure to json if you want to send a different message for each protocol.
      * Not required. 
      */
     private volatile CNSMessageStructure messageStructure;
@@ -62,24 +64,36 @@ public final class CNSMessage {
     private volatile String subject;
     
     /**
-     * The topic you want to publish to. Requried
+     * The topic you want to publish to. Required.
      */
     private volatile String topicArn;
     
     /**
-     * The user that intends to send this message
+     * The user that intends to send this message.
      */
     private volatile String userId;
     
     /**
-     * This is auto-generated and returned to publisher. SHould be set once
+     * This is auto-generated and returned to publisher. Should be set once.
      */
     private volatile String messageId;
     
-    private volatile Map<CnsSubscriptionProtocol, String> protocolToProcessedMessage = new HashMap<CnsSubscriptionProtocol, String>();
+    /**
+     * Time when the message was received.
+     */
+    private volatile Date timestamp;
     
-    
-    public String getMessage() {
+	private volatile Map<CnsSubscriptionProtocol, String> protocolToProcessedMessage = new HashMap<CnsSubscriptionProtocol, String>();
+	
+    public Date getTimestamp() {
+		return timestamp;
+	}
+
+	public void setTimestamp(Date timestamp) {
+		this.timestamp = timestamp;
+	}
+
+	public String getMessage() {
         return message;
     }
 
@@ -110,6 +124,7 @@ public final class CNSMessage {
     public void setTopicArn(String topicArn) {
         this.topicArn = topicArn;
     }
+    
     public void setUserId(String userId) {
         this.userId = userId;
     }
@@ -133,7 +148,6 @@ public final class CNSMessage {
         messageId = UUID.randomUUID().toString();
     }
         
-
     @Override
     public String toString() {
         return "topic_arn=" + topicArn + (messageStructure == null ? "" : " message_structure=" + messageStructure.name()) + (subject == null ? "" : " subject=" + subject) + " message_length=" + message.length() + " user_id=" + userId + (messageId == null ? "" : " message_id=" + messageId); 
@@ -141,6 +155,7 @@ public final class CNSMessage {
 
     @Override
     public boolean equals(Object ob) {
+    	
         if (!(ob instanceof CNSMessage)) {
             return false;
         }
@@ -168,11 +183,27 @@ public final class CNSMessage {
      * @throws CMBException if message constraints are not met.
      */
     public void checkIsValid() throws CMBException {
-        if (message == null) throw new CMBException(CMBErrorCodes.InvalidQueryParameter, "Message is null");
-        if (topicArn == null) throw new CMBException(CMBErrorCodes.InvalidQueryParameter, "TopicArn is null");
-        if (userId == null) throw new CMBException(CMBErrorCodes.InternalError, "Must set userId of CNSMessage");
-        if (messageId == null) throw new CMBException(CMBErrorCodes.InternalError, "Must set messageId of CNSMessage");
+    	
+        if (message == null) {
+        	throw new CMBException(CMBErrorCodes.InvalidQueryParameter, "Message is null");
+        }
         
+        if (topicArn == null) {
+        	throw new CMBException(CMBErrorCodes.InvalidQueryParameter, "TopicArn is null");
+        }
+        
+        if (userId == null) {
+        	throw new CMBException(CMBErrorCodes.InternalError, "Must set userId of CNSMessage");
+        }
+        
+        if (messageId == null) {
+        	throw new CMBException(CMBErrorCodes.InternalError, "Must set messageId of CNSMessage");
+        }
+        
+        if (timestamp == null) {
+        	throw new CMBException(CMBErrorCodes.InternalError, "Must set timestamp of CNSMessage");
+        }
+
         if (!Util.isValidUnicode(message)) {
             throw new CMBException(CMBErrorCodes.InvalidQueryParameter, "Message not UTF-8 characters");
         }
@@ -182,7 +213,9 @@ public final class CNSMessage {
         }
         
         if (messageStructure == CNSMessageStructure.json) {
+        	
             JSONObject json = null;
+            
             try {
                 json = new JSONObject(message);
             } catch (JSONException e) {
@@ -190,13 +223,23 @@ public final class CNSMessage {
             }
             
             //validate json-keys as either 'default' or valid protocols.
+            
             if (!json.has("default")) {
                 throw new CMBException(CMBErrorCodes.InvalidQueryParameter, "Must provide 'default' key in JSON Object");
             }
+            
             for (Iterator<?> it = json.keys(); it.hasNext(); ) {
+            	
                 String key = (String) it.next();
-                if (key.equals("default")) continue;
-                if (key.equals("email-json")) continue;
+                
+                if (key.equals("default")) {
+                	continue;
+                }
+                
+                if (key.equals("email-json")) {
+                	continue;
+                }
+                
                 try {
                     CnsSubscriptionProtocol.valueOf(key);
                 } catch (Exception e) {
@@ -206,6 +249,7 @@ public final class CNSMessage {
         }        
         
         //subject validation
+        
         if (subject != null) {
             if (subject.toCharArray().length >= 100) {
                 throw new CMBException(CMBErrorCodes.InvalidQueryParameter, "Subject cannot be longer than 100 characters");
@@ -214,29 +258,42 @@ public final class CNSMessage {
     }
     
     private static String getProtocolSpecificMessage(CnsSubscriptionProtocol protocol, CNSMessage message) throws CMBException {
+    	
         //Figure out what message to send
+    	
         String msg;
+        
         if (message.getMessageStructure() == null) {
+        	
             msg = message.getMessage();
+            
         } else {
+        	
             try {
+            	
                 JSONObject msgObj = new JSONObject(message.getMessage());
+                
                 if (protocol == null) {
                     throw new CMBException(CMBErrorCodes.InternalError, "Subscription has no protocol");
                 }
+                
                 if (protocol == CnsSubscriptionProtocol.email_json) { //special case
+                	
                     if (msgObj.has("email-json")) {
                         msg = msgObj.getString("email-json");
                     } else {
                         msg = msgObj.getString("default");
                     }
+                    
                 } else {
+                	
                     if (msgObj.has(protocol.name())) {
                         msg = msgObj.getString(protocol.name());
                     } else {
                         msg = msgObj.getString("default");
                     }
-                }                
+                }         
+                
             } catch (JSONException e) {
                 throw new CMBException(CMBErrorCodes.InternalError, "Could not parse JSON:" + e.getMessage());
             }
@@ -273,7 +330,7 @@ public final class CNSMessage {
      */
     public String serialize() {
         
-    	if (message == null || topicArn == null || userId == null || messageId == null) {
+    	if (message == null || topicArn == null || userId == null || messageId == null || timestamp == null) {
             throw new IllegalStateException("At least one of the expected fields is null");
         }
         
@@ -291,7 +348,7 @@ public final class CNSMessage {
         	sb.append("*\n");
         }
         
-        sb.append(topicArn).append("\n").append(userId).append("\n").append(messageId).append("\n").append(message);
+        sb.append(topicArn).append("\n").append(timestamp.getTime()).append("\n").append(userId).append("\n").append(messageId).append("\n").append(message);
         
         return sb.toString();
     }
@@ -311,6 +368,7 @@ public final class CNSMessage {
     	CNSMessage msg = new CNSMessage();
         int i = 0;
         String subjectNonNull = arr[i++];
+        
         if (subjectNonNull.equals("1")) {
             msg.setSubject(arr[i++]);
         }
@@ -324,6 +382,7 @@ public final class CNSMessage {
         }
         
         msg.setTopicArn(arr[i++]);
+        msg.setTimestamp(new Date(Long.parseLong(arr[i++])));
         msg.setUserId(arr[i++]);
         msg.setMessageId(arr[i++]);
         

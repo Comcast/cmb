@@ -33,7 +33,7 @@ public class EndpointPublisherFactory {
 		switch (protocol) { 
 		case https:		
 		case http: 
-				return new HTTPEndpointSyncPublisher();   		
+			return new HTTPEndpointSyncPublisher();   		
 		case email:
 			return new EmailEndpointPublisher();
 		case email_json:

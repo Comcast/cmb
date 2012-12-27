@@ -19,6 +19,7 @@ import static org.junit.Assert.*;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -406,6 +407,7 @@ public class CNSEndpointPublisherConsumerTest {
         CNSMessage msg = new CNSMessage();
         msg.generateMessageId();
         msg.setUserId("testUserId");
+        msg.setTimestamp(new Date());
         msg.setMessage("test message");
         msg.setMessageStructure(null);
         msg.setSubject("test subject"); //will only be applicable for email
@@ -488,6 +490,7 @@ public class CNSEndpointPublisherConsumerTest {
 
         CNSMessage msg = new CNSMessage();
         msg.generateMessageId();
+        msg.setTimestamp(new Date());
         msg.setUserId("testUserId");
         msg.setMessage("test message");
         msg.setMessageStructure(null);
@@ -561,6 +564,7 @@ public class CNSEndpointPublisherConsumerTest {
         //-----above is all setup
         CNSMessage msg = new CNSMessage();
         msg.generateMessageId();
+        msg.setTimestamp(new Date());
         msg.setUserId("test");
         msg.setMessage("test message" );
         msg.setSubject("test subject"); //will only be applicable for email
@@ -622,6 +626,7 @@ public class CNSEndpointPublisherConsumerTest {
         
         CNSMessage msg = new CNSMessage();
         msg.generateMessageId();
+        msg.setTimestamp(new Date());
         msg.setUserId("test");
         msg.setMessage("test message" );
         msg.setSubject("test subject"); //will only be applicable for email
@@ -798,6 +803,7 @@ public class CNSEndpointPublisherConsumerTest {
         
         CNSMessage msg = new CNSMessage();
         msg.generateMessageId();
+        msg.setTimestamp(new Date());
         msg.setUserId("test");
         msg.setMessage("test message" );
         msg.setSubject("test subject"); //will only be applicable for email

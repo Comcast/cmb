@@ -17,6 +17,8 @@ package com.comcast.cns.test.unit;
 
 import static org.junit.Assert.*;
 
+import java.util.Date;
+
 import com.comcast.cmb.common.controller.CMBControllerServlet;
 import com.comcast.cmb.common.persistence.PersistenceFactory;
 import com.comcast.cmb.common.util.Util;
@@ -44,6 +46,7 @@ public class CNSMessageTest {
 
 		CNSMessage msg = new CNSMessage();
 		msg.generateMessageId();
+        msg.setTimestamp(new Date());
 		msg.setUserId("test");
 
 		try {
@@ -127,6 +130,7 @@ public class CNSMessageTest {
 	public static CNSMessage getMessage(String msg, CNSMessageStructure structure, String subject, String topicArn, String userId) {
 		
 		CNSMessage message = new CNSMessage();
+        message.setTimestamp(new Date());
 		message.setMessage(msg);
 		message.setMessageStructure(structure);
 		message.setSubject(subject);

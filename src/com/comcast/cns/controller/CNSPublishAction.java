@@ -15,6 +15,7 @@
  */
 package com.comcast.cns.controller;
 
+import java.util.Date;
 import java.util.Random;
 import java.util.concurrent.Callable;
 
@@ -125,6 +126,7 @@ public class CNSPublishAction extends CNSAction {
     	
     	CNSMessage cnsMessage = new CNSMessage();
     	cnsMessage.generateMessageId();
+    	cnsMessage.setTimestamp(new Date());
     	cnsMessage.setMessage(message);
     	
     	if (request.getParameter("MessageStructure") != null) {

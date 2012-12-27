@@ -19,6 +19,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -571,6 +572,7 @@ public class CNSEndpointPublisherProducerTest {
     void createPublishJob(String topicArn) {
     	CNSMessage cnsMsg = new CNSMessage();
         cnsMsg.generateMessageId();
+        cnsMsg.setTimestamp(new Date());
         cnsMsg.setUserId(testUserId);
         cnsMsg.setMessage("test message");
         cnsMsg.setTopicArn(topicArn);
