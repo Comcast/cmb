@@ -46,7 +46,7 @@ import com.comcast.cmb.common.util.CMBProperties;
  * Following class uses the HttpClient library version 4.1.3 
  * @author aseem, bwolf
  */
-public class HTTPEndpointPublisherApache implements IEndpointPublisher {
+public class HTTPEndpointSyncPublisher implements IEndpointPublisher {
 
 	private final static SchemeRegistry schemeRegistry = new SchemeRegistry();
 	private final static PoolingClientConnectionManager cm;
@@ -77,7 +77,7 @@ public class HTTPEndpointPublisherApache implements IEndpointPublisher {
 	private String endpoint;
 	private String message;
 	private User user;
-	private static Logger logger = Logger.getLogger(HTTPEndpointPublisherApache.class);
+	private static Logger logger = Logger.getLogger(HTTPEndpointSyncPublisher.class);
 
 	public static int getNumConnectionsInPool() {
 		return cm.getTotalStats().getAvailable();

@@ -26,7 +26,7 @@ import org.jfree.util.Log;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.PersistenceException;
 import com.comcast.cmb.common.util.RollingWindowCapture;
-import com.comcast.cns.io.HTTPEndpointPublisherApache;
+import com.comcast.cns.io.HTTPEndpointSyncPublisher;
 import com.comcast.cns.tools.CNSEndpointPublisherJobConsumer;
 import com.comcast.cns.tools.CNSPublisher;
 
@@ -76,7 +76,7 @@ public class CNSMonitor implements CNSMonitorMBean {
 
     @Override
     public int getNumPooledHttpConnections() {
-        return HTTPEndpointPublisherApache.getNumConnectionsInPool();
+        return HTTPEndpointSyncPublisher.getNumConnectionsInPool();
     }
     
     public void registerPublishMessage() {
