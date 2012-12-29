@@ -119,7 +119,7 @@ public class CNSEndpointPublisherJobConsumer implements CNSPublisherPartitionRun
         }
     }
     
-    public static void submitForReDelivery(CNSPublishJob job, long delay, TimeUnit unit) {
+    public static void submitForReDelivery(Runnable job, long delay, TimeUnit unit) {
     	reDeliveryHandlers.schedule(job, delay, unit);
     }
     
@@ -282,8 +282,8 @@ public class CNSEndpointPublisherJobConsumer implements CNSPublisherPartitionRun
                     AtomicInteger endpointPublishJobCount = new AtomicInteger(subs.size());                
                     
                     for (CNSEndpointSubscriptionInfo sub : subs) {             
-                        CNSPublishJob pubjob = new CNSPublishJob(endpointPublishJob.getMessage(), pubUser, sub.protocol, sub.endpoint, sub.subArn, queueUrl, msg.getReceiptHandle(), endpointPublishJobCount);
-                        deliveryHandlers.submit(pubjob);
+                        Runnable publishJob = new CNSPublishJob(endpointPublishJob.getMessage(), pubUser, sub.protocol, sub.endpoint, sub.subArn, queueUrl, msg.getReceiptHandle(), endpointPublishJobCount);
+                        deliveryHandlers.submit(publishJob);
                     }
                     
                 } catch (TopicNotFoundException e) {

@@ -43,7 +43,7 @@ import com.comcast.cmb.common.util.CMBException;
 import com.comcast.cmb.common.util.CMBProperties;
 
 /**
- * Following class uses the HttpClient library version 4.1.3 
+ * Following class uses the HttpClient library version 4.2.1 
  * @author aseem, bwolf
  */
 public class HTTPEndpointSyncPublisher implements IEndpointPublisher {
@@ -147,13 +147,13 @@ public class HTTPEndpointSyncPublisher implements IEndpointPublisher {
 
 				InputStream instream = entity.getContent();
 				InputStreamReader responseReader = new InputStreamReader(instream);
-				StringBuffer responseB = new StringBuffer();
+				StringBuffer buffer = new StringBuffer();
 
 				char []arr = new char[1024];
 				int size = 0;
 
 				while ((size = responseReader.read(arr, 0, arr.length)) != -1) {
-					responseB.append(arr, 0, size);
+					buffer.append(arr, 0, size);
 				}      
 
 				instream.close();
