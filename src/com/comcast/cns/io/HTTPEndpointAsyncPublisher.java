@@ -1,36 +1,24 @@
-package com.comcast.cns.io;
-
-/*
- * ====================================================================
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
- *
+/**
+ * Copyright 2012 Comcast Corporation
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
  *   http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied.  See the License for the
- * specific language governing permissions and limitations
- * under the License.
- * ====================================================================
- *
- * This software consists of voluntary contributions made by many
- * individuals on behalf of the Apache Software Foundation.  For more
- * information on the Apache Software Foundation, please see
- * <http://www.apache.org/>.
- *
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
+
+package com.comcast.cns.io;
 
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.net.URL;
-import java.util.concurrent.CountDownLatch;
 
 import org.apache.http.HttpHost;
 import org.apache.http.HttpRequestInterceptor;
@@ -41,7 +29,6 @@ import org.apache.http.impl.nio.DefaultHttpClientIODispatch;
 import org.apache.http.impl.nio.pool.BasicNIOConnPool;
 import org.apache.http.impl.nio.reactor.DefaultConnectingIOReactor;
 import org.apache.http.message.BasicHttpEntityEnclosingRequest;
-import org.apache.http.message.BasicHttpRequest;
 import org.apache.http.nio.entity.NStringEntity;
 import org.apache.http.nio.protocol.BasicAsyncRequestProducer;
 import org.apache.http.nio.protocol.BasicAsyncResponseConsumer;
@@ -91,34 +78,27 @@ public class HTTPEndpointAsyncPublisher implements IEndpointPublisher {
 		
 		try {
 			
-	        // HTTP parameters for the client
 	        httpParams = new SyncBasicHttpParams();
 	        httpParams
 	            .setIntParameter(CoreConnectionPNames.SO_TIMEOUT, CMBProperties.getInstance().getHttpTimeoutSeconds() * 1000)
 	            .setIntParameter(CoreConnectionPNames.CONNECTION_TIMEOUT, CMBProperties.getInstance().getHttpTimeoutSeconds() * 1000)
 	            .setIntParameter(CoreConnectionPNames.SOCKET_BUFFER_SIZE, 8 * 1024)
 	            .setParameter(CoreProtocolPNames.USER_AGENT, "CNS/" + CMBControllerServlet.VERSION);
-	        // Create HTTP protocol processing chain
+
 	        httpProcessor = new ImmutableHttpProcessor(new HttpRequestInterceptor[] {
-	                // Use standard client-side protocol interceptors
 	                new RequestContent(),
 	                new RequestTargetHost(),
 	                new RequestConnControl(),
 	                new RequestUserAgent(),
 	                new RequestExpectContinue()});
-	        // Create client-side HTTP protocol handler
+
 	        HttpAsyncRequestExecutor protocolHandler = new HttpAsyncRequestExecutor();
-	        // Create client-side I/O event dispatch
 	        final IOEventDispatch ioEventDispatch = new DefaultHttpClientIODispatch(protocolHandler, httpParams);
-	        // Create client-side I/O reactor
 	        final ConnectingIOReactor ioReactor = new DefaultConnectingIOReactor();
-	        // Create HTTP connection pool
+
 	        connectionPool = new BasicNIOConnPool(ioReactor, httpParams);
-	        // Limit total number of connections to just two
 	        connectionPool.setDefaultMaxPerRoute(2); // maybe adjust pool size
 	        connectionPool.setMaxTotal(2);
-	        
-	        // Run the I/O reactor in a separate thread
 	        
 	        Thread t = new Thread(new Runnable() {
 	
