@@ -145,7 +145,7 @@ public class CNSWorkerStatePageServlet extends AdminServletBase {
 				boolean consumerOverloaded = Boolean.parseBoolean(XmlUtil.getCurrentLevelTextValue(stats, "ConsumerOverloaded"));
 				out.println("<td"+(consumerOverloaded ? alarmColor : okColor)+">"+consumerOverloaded+"</td>");
 				boolean cqsServiceAvailable = Boolean.parseBoolean(XmlUtil.getCurrentLevelTextValue(stats, "CqsServiceAvailable"));
-				out.println("<td"+(!cqsServiceAvailable ? alarmColor : okColor)+">"+cqsServiceAvailable+"</td>");
+				out.println("<td"+((!cqsServiceAvailable && (activeProducer || activeConsumer))? alarmColor : okColor)+">"+cqsServiceAvailable+"</td>");
 				out.println("<td>"+XmlUtil.getCurrentLevelTextValue(stats, "NumPooledHttpConnections")+"</td>");
 				out.println("<td><form action=\"\" method=\"POST\"><input type='hidden' name='Host' value='"+host+"'><input type='submit' value='Clear Queues' name='ClearQueues'/></form></td>");
 				out.println("<td><form action=\"\" method=\"POST\"><input type='hidden' name='Host' value='"+host+"'><input type='submit' value='Remove Record' name='RemoveRecord'/></form></td>");
@@ -184,7 +184,9 @@ public class CNSWorkerStatePageServlet extends AdminServletBase {
 					out.println("<td>"+endpoint+"</td>");
 					out.println("<td>"+endpointErrorCounts.get(endpoint)+"</td>");
 					
-					if (endpointErrorCounts.get(endpoint) > CMBProperties.getInstance().getEndpointFailureCountToSuspensionThreshold()) {
+					int failureSuspensionThreshold = CMBProperties.getInstance().getEndpointFailureCountToSuspensionThreshold();
+					
+					if (failureSuspensionThreshold != 0 && endpointErrorCounts.get(endpoint) > failureSuspensionThreshold) {
 						out.println("<td bgcolor='#C00000'><i>suspended</i></td>");
 					} else {
 						out.println("<td>&nbsp;</td>");
