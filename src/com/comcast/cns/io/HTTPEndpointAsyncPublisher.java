@@ -98,7 +98,7 @@ public class HTTPEndpointAsyncPublisher implements IEndpointPublisher {
 
 	        connectionPool = new BasicNIOConnPool(ioReactor, httpParams);
 	        connectionPool.setDefaultMaxPerRoute(2); // maybe adjust pool size
-	        connectionPool.setMaxTotal(2);
+	        connectionPool.setMaxTotal(8);
 	        
 	        Thread t = new Thread(new Runnable() {
 	
@@ -168,10 +168,10 @@ public class HTTPEndpointAsyncPublisher implements IEndpointPublisher {
 	public void send() throws Exception {
 		
         HttpAsyncRequester requester = new HttpAsyncRequester(httpProcessor, new DefaultConnectionReuseStrategy(), httpParams);
-        URL url = new URL(endpoint);
+        final URL url = new URL(endpoint);
         final HttpHost target = new HttpHost(url.getHost(), url.getPort(), url.getProtocol());
         
-        BasicHttpEntityEnclosingRequest request = new BasicHttpEntityEnclosingRequest("POST", url.getPath());
+        BasicHttpEntityEnclosingRequest request = new BasicHttpEntityEnclosingRequest("POST", url.getPath() + (url.getQuery() == null ? "" : "?" + url.getQuery()));
         request.setEntity(new NStringEntity(message));
         
         requester.execute(
@@ -182,19 +182,25 @@ public class HTTPEndpointAsyncPublisher implements IEndpointPublisher {
                 new FutureCallback<HttpResponse>() {
 
 		            public void completed(final HttpResponse response) {
-		                System.out.println(target + "->" + response.getStatusLine());
-		                postReactor.onSuccess();
+		                int statusCode = response.getStatusLine().getStatusCode();
+		                if (statusCode == 200 || statusCode == 201) {
+			                //logger.info(target + " " + url.getPath() + " " + url.getQuery() + " -> " + response.getStatusLine());
+			                postReactor.onSuccess();
+		                } else {
+			                logger.warn(target + "://" + url.getPath() + "?" + url.getQuery() + " -> " + response.getStatusLine());
+		                	postReactor.onFailure(statusCode);
+		                }
 		            }
 		
 		            public void failed(final Exception ex) {
-		                System.out.println(target + "->" + ex);
+		                logger.warn(target + " " + url.getPath() + " " + url.getQuery(), ex);
 		                postReactor.onFailure(0);
 		            }
 		
 		            public void cancelled() {
-		                System.out.println(target + " cancelled");
+		                logger.warn(target + " " + url.getPath() + " " + url.getQuery() + " -> " + "cancelled");
 		                postReactor.onFailure(1);
 		            }
-        });
+                });
     }
 }
