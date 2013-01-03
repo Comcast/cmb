@@ -58,7 +58,7 @@ abstract public class CMBControllerServlet extends HttpServlet {
      * for a particular thread 
      */
     public final static ValueAccumulator valueAccumulator = new ValueAccumulator();
-    public final static String VERSION = "2.2.12";
+    public final static String VERSION = "2.2.13";
 
     @Override    
     public void init() throws ServletException {

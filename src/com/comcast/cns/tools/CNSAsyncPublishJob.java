@@ -28,9 +28,11 @@ import com.comcast.cmb.common.util.CMBException;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.ValueAccumulator.AccumulatorName;
 import com.comcast.cns.controller.CNSMonitor;
+import com.comcast.cns.io.EndpointAsyncPublisherWrapper;
+import com.comcast.cns.io.EndpointPublisherFactory;
 import com.comcast.cns.io.HTTPEndpointAsyncPublisher;
 import com.comcast.cns.io.IEndpointPublisher;
-import com.comcast.cns.io.IHttpPostReactor;
+import com.comcast.cns.io.IPublisherCallback;
 import com.comcast.cns.model.CNSMessage;
 import com.comcast.cns.model.CNSRetryPolicy;
 import com.comcast.cns.model.CNSSubscriptionAttributes;
@@ -46,7 +48,7 @@ import com.comcast.cns.util.Util;
  *
  * Class is thread-safe
  */
-public class CNSAsyncPublishJob implements Runnable, IHttpPostReactor {
+public class CNSAsyncPublishJob implements Runnable, IPublisherCallback {
 	
     private static Logger logger = Logger.getLogger(CNSAsyncPublishJob.class);
     
@@ -236,17 +238,15 @@ public class CNSAsyncPublishJob implements Runnable, IHttpPostReactor {
     @Override
     public void run() {
         
-    	// todo: add support for other protocols using asynchronous model
-    	
-    	if (protocol != CnsSubscriptionProtocol.http && protocol != CnsSubscriptionProtocol.https) {
-    		logger.error("event=aborting_job reason=unsupported_protocol protocol=" + protocol);
-    		return;
-    	}
-    	
     	//long ts1 = System.currentTimeMillis();
         //CMBControllerServlet.valueAccumulator.initializeAllCounters();
                     
-        publisher = new HTTPEndpointAsyncPublisher(this);
+    	if (protocol == CnsSubscriptionProtocol.http || protocol == CnsSubscriptionProtocol.https) {
+    		publisher = new HTTPEndpointAsyncPublisher(this);
+    	} else {
+    		publisher = new EndpointAsyncPublisherWrapper(this, EndpointPublisherFactory.getPublisherInstance(protocol));
+    	}
+    	
         runCommonAndRetry();
         
         //long ts2 = System.currentTimeMillis();            

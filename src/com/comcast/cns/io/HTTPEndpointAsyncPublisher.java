@@ -66,7 +66,7 @@ public class HTTPEndpointAsyncPublisher implements IEndpointPublisher {
 	private String endpoint;
 	private String message;
 	private User user;
-	private IHttpPostReactor postReactor;
+	private IPublisherCallback callback;
 	
 	private static HttpProcessor httpProcessor;
 	private static HttpParams httpParams;
@@ -121,8 +121,8 @@ public class HTTPEndpointAsyncPublisher implements IEndpointPublisher {
 		}
 	}
 	
-	public HTTPEndpointAsyncPublisher(IHttpPostReactor postReactor) {
-		this.postReactor = postReactor;
+	public HTTPEndpointAsyncPublisher(IPublisherCallback callback) {
+		this.callback = callback;
 	}
 	
 	@Override
@@ -171,6 +171,8 @@ public class HTTPEndpointAsyncPublisher implements IEndpointPublisher {
         final URL url = new URL(endpoint);
         final HttpHost target = new HttpHost(url.getHost(), url.getPort(), url.getProtocol());
         
+        
+        
         BasicHttpEntityEnclosingRequest request = new BasicHttpEntityEnclosingRequest("POST", url.getPath() + (url.getQuery() == null ? "" : "?" + url.getQuery()));
         request.setEntity(new NStringEntity(message));
         
@@ -185,21 +187,21 @@ public class HTTPEndpointAsyncPublisher implements IEndpointPublisher {
 		                int statusCode = response.getStatusLine().getStatusCode();
 		                if (statusCode == 200 || statusCode == 201) {
 			                //logger.info(target + " " + url.getPath() + " " + url.getQuery() + " -> " + response.getStatusLine());
-			                postReactor.onSuccess();
+			                callback.onSuccess();
 		                } else {
 			                logger.warn(target + "://" + url.getPath() + "?" + url.getQuery() + " -> " + response.getStatusLine());
-		                	postReactor.onFailure(statusCode);
+		                	callback.onFailure(statusCode);
 		                }
 		            }
 		
 		            public void failed(final Exception ex) {
 		                logger.warn(target + " " + url.getPath() + " " + url.getQuery(), ex);
-		                postReactor.onFailure(0);
+		                callback.onFailure(0);
 		            }
 		
 		            public void cancelled() {
 		                logger.warn(target + " " + url.getPath() + " " + url.getQuery() + " -> " + "cancelled");
-		                postReactor.onFailure(1);
+		                callback.onFailure(1);
 		            }
                 });
     }
