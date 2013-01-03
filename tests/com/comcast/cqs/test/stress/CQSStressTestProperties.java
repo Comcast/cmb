@@ -30,8 +30,8 @@ import com.comcast.cmb.common.util.CMBProperties;
  */
 public class CQSStressTestProperties {
 	
-    private final int totalMinutes;
-    private final int totalMessagesPerQueue;
+    private final int testDurationSeconds;
+    private final int messagesPerQueuePerSecond;
     private final int numberOfQueues;
     private final int numberOfSendersPerQueue;
     private final int numberOfReceiversPerQueue;
@@ -67,16 +67,16 @@ public class CQSStressTestProperties {
 			FileInputStream fileStream = new FileInputStream(file);
 			props.load(fileStream);
             
-            totalMinutes = Integer.parseInt(props.getProperty("cmb.cqs.stress.totalMinutes", "240"));
-            totalMessagesPerQueue = Integer.parseInt(props.getProperty("cmb.cqs.stress.totalMessagesPerQueue", "0"));
+            testDurationSeconds = Integer.parseInt(props.getProperty("cmb.cqs.stress.testDurationSeconds", "100"));
+            messagesPerQueuePerSecond = Integer.parseInt(props.getProperty("cmb.cqs.stress.messagesPerQueuePerSecond", "100"));
             numberOfQueues = Integer.parseInt(props.getProperty("cmb.cqs.stress.numberOfQueues", "5"));
-            numberOfSendersPerQueue = Integer.parseInt(props.getProperty("cmb.cqs.stress.numberOfSendersPerQueue", "3"));
+            numberOfSendersPerQueue = Integer.parseInt(props.getProperty("cmb.cqs.stress.numberOfSendersPerQueue", "4"));
             numberOfReceiversPerQueue = Integer.parseInt(props.getProperty("cmb.cqs.stress.numberOfReceiversPerQueue", "15"));
-            sendMessageBatchSize = Integer.parseInt(props.getProperty("cmb.cqs.stress.sendMessageBatchSize", "10"));
+            sendMessageBatchSize = Integer.parseInt(props.getProperty("cmb.cqs.stress.sendMessageBatchSize", "1"));
             receiveMessageBatchSize = Integer.parseInt(props.getProperty("cmb.cqs.stress.receiveMessageBatchSize", "1"));
-            delayBetweenSendsMS = Integer.parseInt(props.getProperty("cmb.cqs.stress.delayBetweenSendsMS", "1"));
+            delayBetweenSendsMS = Integer.parseInt(props.getProperty("cmb.cqs.stress.delayBetweenSendsMS", "0"));
             delayBetweenReceivesMS = Integer.parseInt(props.getProperty("cmb.cqs.stress.delayBetweenReceivesMS", "5"));
-            delayBetweenReceiveAndDeleteMS = Integer.parseInt(props.getProperty("cmb.cqs.stress.delayBetweenReceiveAndDeleteMS", "5"));
+            delayBetweenReceiveAndDeleteMS = Integer.parseInt(props.getProperty("cmb.cqs.stress.delayBetweenReceiveAndDeleteMS", "40"));
             revisiblePercentage = Integer.parseInt(props.getProperty("cmb.cqs.stress.revisiblePercentage", "0"));
             
             String queueNamesString = props.getProperty("cmb.cqs.stress.queueNames");
@@ -99,12 +99,12 @@ public class CQSStressTestProperties {
 		return instance;
 	}
 	
-	public int getTotalMinutes() {
-		return totalMinutes;
+	public int getTestDurationSeconds() {
+		return testDurationSeconds;
 	}
 
-	public int getTotalMessagesPerQueue() {
-		return totalMessagesPerQueue;
+	public int getMessagesPerQueuePerSecond() {
+		return messagesPerQueuePerSecond;
 	}
 
 	public int getNumberOfQueues() {

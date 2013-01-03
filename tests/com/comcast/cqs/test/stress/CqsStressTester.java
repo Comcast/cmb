@@ -219,7 +219,7 @@ public class CqsStressTester {
     		return null;
     	}
     	
-    	int numberOfMessagesPerSec = CQSStressTestProperties.getInstance().getTotalMessagesPerQueue();
+    	int numberOfMessagesPerSec = CQSStressTestProperties.getInstance().getMessagesPerQueuePerSecond();
 		ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(queueUrls.size()*senderCount);
 		
 		for (String queueUrl : queueUrls) {
@@ -319,9 +319,8 @@ public class CqsStressTester {
 			long totalDuplicates = 0;
 			long totalOutOfOrderMessages = 0;
 			
-			int totalNumberOfSeconds = CQSStressTestProperties.getInstance().getTotalMinutes() * 60;
-	    	Thread.currentThread();
-			Thread.sleep(totalNumberOfSeconds*1000);
+			int testDurationSeconds = CQSStressTestProperties.getInstance().getTestDurationSeconds();
+			Thread.sleep(testDurationSeconds*1000);
 			
 			if (scheduledExecutorService != null) {
 				scheduledExecutorService.shutdown();
