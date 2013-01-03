@@ -141,7 +141,9 @@ public class HTTPEndpointSyncPublisher implements IEndpointPublisher {
 
 		HttpEntity entity = response.getEntity();
 
-		if (statusCode != 200 && statusCode != 201) {
+		// accept all 2xx status codes
+		
+		if (statusCode > 200 || statusCode >= 300) {
 
 			if (entity != null) {
 

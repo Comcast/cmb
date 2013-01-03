@@ -171,8 +171,6 @@ public class HTTPEndpointAsyncPublisher implements IEndpointPublisher {
         final URL url = new URL(endpoint);
         final HttpHost target = new HttpHost(url.getHost(), url.getPort(), url.getProtocol());
         
-        
-        
         BasicHttpEntityEnclosingRequest request = new BasicHttpEntityEnclosingRequest("POST", url.getPath() + (url.getQuery() == null ? "" : "?" + url.getQuery()));
         request.setEntity(new NStringEntity(message));
         
@@ -184,9 +182,12 @@ public class HTTPEndpointAsyncPublisher implements IEndpointPublisher {
                 new FutureCallback<HttpResponse>() {
 
 		            public void completed(final HttpResponse response) {
+		            	
 		                int statusCode = response.getStatusLine().getStatusCode();
-		                if (statusCode == 200 || statusCode == 201) {
-			                //logger.info(target + " " + url.getPath() + " " + url.getQuery() + " -> " + response.getStatusLine());
+		                
+		                // accept all 2xx status codes
+		                
+		                if (statusCode >= 200 && statusCode < 300) {
 			                callback.onSuccess();
 		                } else {
 			                logger.warn(target + "://" + url.getPath() + "?" + url.getQuery() + " -> " + response.getStatusLine());

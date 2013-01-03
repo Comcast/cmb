@@ -30,6 +30,12 @@ import java.util.Properties;
  */
 public class CMBProperties {
 	
+	public enum IO_MODE {
+	    SYNC, ASYNC 
+	}
+	
+	private final IO_MODE cnsIOMode;
+	
 	private final int cnsMessageExpirationSeconds;
 	
 	private final int httpTimeoutSeconds;
@@ -229,6 +235,7 @@ public class CMBProperties {
             httpPublisherEndpointConnectionsPerRouteSize = Integer.parseInt(props.getProperty("cmb.cns.publisher.http.connectionsPerRouteSize", "50"));
             httpTimeoutSeconds = Integer.parseInt(props.getProperty("cmb.cns.publisher.http.httpTimeoutSeconds", "5"));
             acceptableHttpStatusCodes = Arrays.asList(props.getProperty("cmb.cns.publisher.http.acceptableStatusCodes", "200").split(","));
+            cnsIOMode = IO_MODE.valueOf(props.getProperty("cmb.cns.publisher.http.iomode", "sync").toUpperCase());
 			
             cnsCacheExpiring = Integer.parseInt(props.getProperty("cmb.cns.cacheExpiringInSeconds", "60"));
             cnsCacheSizeLimit = Integer.parseInt(props.getProperty("cmb.cns.cacheSizeLimit", "1000"));
@@ -633,5 +640,9 @@ public class CMBProperties {
 	
 	public int getCnsMessageExpirationSeconds() {
 		return cnsMessageExpirationSeconds;
+	}
+
+	public IO_MODE getCnsIOMode() {
+		return cnsIOMode;
 	}
 }

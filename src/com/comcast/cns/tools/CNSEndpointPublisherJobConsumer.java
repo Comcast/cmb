@@ -35,6 +35,7 @@ import com.comcast.cmb.common.controller.CMBControllerServlet;
 import com.comcast.cmb.common.model.User;
 import com.comcast.cmb.common.persistence.PersistenceFactory;
 import com.comcast.cmb.common.util.CMBProperties;
+import com.comcast.cmb.common.util.CMBProperties.IO_MODE;
 import com.comcast.cmb.common.util.PersistenceException;
 import com.comcast.cmb.common.util.RollingWindowCapture;
 import com.comcast.cmb.common.util.ValueAccumulator.AccumulatorName;
@@ -282,7 +283,15 @@ public class CNSEndpointPublisherJobConsumer implements CNSPublisherPartitionRun
                     AtomicInteger endpointPublishJobCount = new AtomicInteger(subs.size());                
                     
                     for (CNSEndpointSubscriptionInfo sub : subs) {             
-                        Runnable publishJob = new CNSPublishJob(endpointPublishJob.getMessage(), pubUser, sub.protocol, sub.endpoint, sub.subArn, queueUrl, msg.getReceiptHandle(), endpointPublishJobCount);
+                        
+                    	Runnable publishJob = null;
+                        
+                        if (CMBProperties.getInstance().getCnsIOMode() == IO_MODE.SYNC) {
+                        	publishJob = new CNSPublishJob(endpointPublishJob.getMessage(), pubUser, sub.protocol, sub.endpoint, sub.subArn, queueUrl, msg.getReceiptHandle(), endpointPublishJobCount);
+                        } else {
+                        	publishJob = new CNSAsyncPublishJob(endpointPublishJob.getMessage(), pubUser, sub.protocol, sub.endpoint, sub.subArn, queueUrl, msg.getReceiptHandle(), endpointPublishJobCount);
+                        }
+
                         deliveryHandlers.submit(publishJob);
                     }
                     

@@ -115,33 +115,32 @@ public class CNSPublisher {
     	
         Util.initLog4jTest();
 
-    	logger.info("event=startup version=" + CMBControllerServlet.VERSION + " ip=" + InetAddress.getLocalHost().getHostAddress());
+    	logger.info("event=startup version=" + CMBControllerServlet.VERSION + " ip=" + InetAddress.getLocalHost().getHostAddress() + " io_mode=" + CMBProperties.getInstance().getCnsIOMode());
         
     	modes = parseMode(argv[0]);
         logger.info("modes=" + modes);        
         
         if (modes.contains(Mode.Producer)) {
-        	CNSEndpointPublisherJobProducer.initialize();           
-        	jobProducers = new CNSPublisherJobThread[CMBProperties.getInstance().getNumEPPubJobProducers()];        	
+        	
+        	CNSEndpointPublisherJobProducer.initialize(); 
+        	jobProducers = new CNSPublisherJobThread[CMBProperties.getInstance().getNumEPPubJobProducers()]; 
+        	
             for (int i = 0; i < jobProducers.length; i++) {
-                jobProducers[i] = new CNSPublisherJobThread("CNSEPJobProducer-" + i, new CNSEndpointPublisherJobProducer(), 
-                        CMBProperties.getInstance().getNumPublishJobQs(), 
-                        CMBProperties.getInstance().getProducerProcessingMaxDelay());
+                jobProducers[i] = new CNSPublisherJobThread("CNSEPJobProducer-" + i, new CNSEndpointPublisherJobProducer(), CMBProperties.getInstance().getNumPublishJobQs(), CMBProperties.getInstance().getProducerProcessingMaxDelay());
                 jobProducers[i].start();
             }
         } 
         
         if (modes.contains(Mode.Consumer)) {
+        	
             CNSEndpointPublisherJobConsumer.initialize();
             consumers = new CNSPublisherJobThread[CMBProperties.getInstance().getNumEPPubJobConsumers()];
+            
             for (int i = 0; i < consumers.length; i++) {
-                consumers[i] = new CNSPublisherJobThread("CNSEPJobConsumer-" + i, new CNSEndpointPublisherJobConsumer(), 
-                        CMBProperties.getInstance().getNumEPPublishJobQs(), 
-                        CMBProperties.getInstance().getConsumerProcessingMaxDelay());
+                consumers[i] = new CNSPublisherJobThread("CNSEPJobConsumer-" + i, new CNSEndpointPublisherJobConsumer(), CMBProperties.getInstance().getNumEPPublishJobQs(), CMBProperties.getInstance().getConsumerProcessingMaxDelay());
                 consumers[i].start();
             }
 
-            //register monitoring bean
             MBeanServer mbs = ManagementFactory.getPlatformMBeanServer(); 
             ObjectName name = new ObjectName("com.comcast.cns.controller:type=CNSMonitorMBean");
             
