@@ -158,13 +158,13 @@
     	<url-pattern>/CQSUser/PERMISSIONS/*</url-pattern>
     </servlet-mapping>
 
-	<servlet-mapping>
-		<servlet-name>CNSWorkerStatePageServlet</servlet-name>
-		<url-pattern>/CNSWorkerState/*</url-pattern>
-	</servlet-mapping>
 	<servlet>
 		<servlet-name>CNSWorkerStatePageServlet</servlet-name>
 		<servlet-class>com.comcast.cns.controller.CNSWorkerStatePageServlet</servlet-class>
 	</servlet>
+	<servlet-mapping>
+		<servlet-name>CNSWorkerStatePageServlet</servlet-name>
+		<url-pattern>/CNSWorkerState/*</url-pattern>
+	</servlet-mapping>
     
 </web-app>
