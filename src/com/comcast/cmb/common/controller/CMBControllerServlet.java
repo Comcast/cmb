@@ -33,11 +33,15 @@ import com.comcast.cqs.controller.CQSControllerServlet;
 
 import org.apache.log4j.Logger;
 
+import javax.servlet.AsyncContext;
+import javax.servlet.AsyncEvent;
+import javax.servlet.AsyncListener;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 /**
  * Abstract class for all servlets
@@ -49,7 +53,8 @@ abstract public class CMBControllerServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
 
     private static Logger logger = Logger.getLogger(CMBControllerServlet.class);
-
+    
+    private static volatile ScheduledThreadPoolExecutor workerPool; 
     protected IUserPersistence userHandler = null;
     protected IAuthModule authModule = null;
     
@@ -66,6 +71,7 @@ abstract public class CMBControllerServlet extends HttpServlet {
             Util.initLog4j();
             //load the cmb.properties            
             CMBProperties.getInstance();
+            workerPool = new ScheduledThreadPoolExecutor(CMBProperties.getInstance().getNumDeliveryHandlers());
         } catch (Exception ex) {
         	throw new ServletException(ex);
         }
@@ -234,20 +240,59 @@ abstract public class CMBControllerServlet extends HttpServlet {
 
     @Override
     public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-
-        ReceiptModule.init();
-        logger.debug("event=doGet pathInfo="+request.getPathInfo()+" queryString="+request.getQueryString());        
-        
-        handleRequest(request, response);
+    	doPost(request, response);
     }
 
     @Override
     public void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 
-        ReceiptModule.init();
-        logger.debug("event=doPost pathInfo="+request.getPathInfo()+" queryString="+request.getQueryString());
+    	// create the async context, otherwise getAsyncContext() will be null
+    	final AsyncContext ctx = request.startAsync();
 
-        handleRequest(request, response);
+    	// set the timeout
+    	ctx.setTimeout(21000);
+
+    	// attach listener to respond to lifecycle events of this AsyncContext
+    	ctx.addListener(new AsyncListener() {
+    		public void onComplete(AsyncEvent event) throws IOException {
+    			logger.info("onComplete called");
+    		}
+    		public void onTimeout(AsyncEvent event) throws IOException {
+    			logger.info("onTimeout called");
+    		}
+    		public void onError(AsyncEvent event) throws IOException {
+    			logger.info("onError called");
+    		}
+    		public void onStartAsync(AsyncEvent event) throws IOException {
+    			logger.info("onStartAsync called");
+    		}
+    	});
+
+    	// spawn task in background thread
+    	
+    	workerPool.submit(new Runnable() {
+    		public void run() {
+
+    			try {
+    				ReceiptModule.init();
+
+    				if (ctx.getRequest() instanceof HttpServletRequest && ctx.getResponse() instanceof HttpServletResponse) {
+    				
+    					HttpServletRequest request = (HttpServletRequest)ctx.getRequest();
+    					HttpServletResponse response = (HttpServletResponse)ctx.getResponse();
+    					logger.info("event=doGet pathInfo="+request.getPathInfo()+" queryString="+request.getQueryString());        
+    					handleRequest(request, response);
+    					logger.info("done");
+    					
+    				}
+    			} catch (Exception ex) {
+    				logger.error("event=failure", ex);
+    			}
+
+    			ctx.complete();
+    			logger.info("complete");
+    		}
+    	});
     }
 
     private String createErrorResponse(String code, String errorMsg) {

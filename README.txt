@@ -132,14 +132,26 @@ Example response:
    If you are installing both Tomcat instances on a single server make sure to configure
    them to listen on different ports by changing the default HTTP port number (8080) in 
    the <Connector> element of the conf/server.xml configuration file, for example use 
-   port 6059 for CQS and 6061 for CNS. 
+   port 6059 for CQS and 6061 for CNS. Also, activate asynchronous request support
+   (Servlet API 3.0) by switching to Http11NioProtocol and increase connection timeout
+   to 25 seconds.
    
    vi tomcat-cqs/conf/server.xml   
    vi tomcat-cns/conf/server.xml
+
+   Example:
+
+   Comment out the original connector configuration
+   
+   <!--<Connector connectionTimeout="20000" port="8080" protocol="HTTP/1.1" redirectPort="8443"/>-->
+
+   and replace with 
+
+   <Connector connectionTimeout="25000" port="6059" protocol="org.apache.coyote.http11.Http11NioProtocol" redirectPort="6443"/>
    
    IMPORTANT: Be sure to also change all other Tomcat ports including shutdown port 
    (default is 8005) and AJP port (default is 8009).
-
+ 
    NOTE: Optionally add additional redundant servers behind a load balancer. Do not start
    any Tomcat instances yet.
 
