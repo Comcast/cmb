@@ -2,7 +2,7 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
 	<properties>
-	    <buildnum>2.2.12</buildnum>
+	    <buildnum>2.2.13</buildnum>
 	    <projectname>cns-worker</projectname>
 	</properties>
 
@@ -16,6 +16,13 @@
 
 	<dependencies>
 	
+		<dependency>
+			<groupId>javax</groupId>
+			<artifactId>javaee-web-api</artifactId>
+			<version>6.0</version>
+			<scope>provided</scope>
+		</dependency>
+		
 		<dependency>
 			<groupId>com.amazonaws</groupId>
 			<artifactId>aws-java-sdk</artifactId>

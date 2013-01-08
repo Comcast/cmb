@@ -255,16 +255,12 @@ abstract public class CMBControllerServlet extends HttpServlet {
     	// attach listener to respond to lifecycle events of this AsyncContext
     	ctx.addListener(new AsyncListener() {
     		public void onComplete(AsyncEvent event) throws IOException {
-    			logger.info("onComplete called");
     		}
     		public void onTimeout(AsyncEvent event) throws IOException {
-    			logger.info("onTimeout called");
     		}
     		public void onError(AsyncEvent event) throws IOException {
-    			logger.info("onError called");
     		}
     		public void onStartAsync(AsyncEvent event) throws IOException {
-    			logger.info("onStartAsync called");
     		}
     	});
 
