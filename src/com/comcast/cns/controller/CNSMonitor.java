@@ -95,6 +95,9 @@ public class CNSMonitor implements CNSMonitorMBean {
             newVal = oldVal;
         }
         newVal.addAndGet(remaining);
+        if (newVal.intValue() == 0) {
+        	messageIdToSendRemaining.remove(messageId);
+        }
     }
     
     @Override
