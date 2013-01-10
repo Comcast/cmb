@@ -65,26 +65,63 @@ public class UserAuthModule implements IAuthModule {
     }
     
     private Map<String, String> getAllParameters(HttpServletRequest requestUrl) {
-        Enumeration<String> enumeration = requestUrl.getParameterNames();
-
+        
+    	Enumeration<String> enumeration = requestUrl.getParameterNames();
         Map<String, String> parameters = new HashMap<String, String>();
-        while(enumeration.hasMoreElements()) {
+
+        while (enumeration.hasMoreElements()) {
             String name = enumeration.nextElement();
-            
             parameters.put(name, requestUrl.getParameter(name));
         }
+
         return parameters;
     }
 
-    @Override
-    public User authenticateByRequest(HttpServletRequest requestUrl) throws CMBException {
+    private Map<String, String> getAllHeaders(HttpServletRequest requestUrl) {
         
-        Map<String, String> parameters = getAllParameters(requestUrl);
+    	Enumeration<String> enumeration = requestUrl.getHeaderNames();
+        Map<String, String> headers = new HashMap<String, String>();
+
+        while (enumeration.hasMoreElements()) {
+            String name = enumeration.nextElement();
+            headers.put(name, requestUrl.getHeader(name));
+        }
+
+        return headers;
+    }
+    
+    @Override
+    public User authenticateByRequest(HttpServletRequest request) throws CMBException {
+        
+        Map<String, String> parameters = getAllParameters(request);
+        Map<String, String> headers = getAllHeaders(request);
+        
+        // sample header
+        
+        //content-type=application/x-www-form-urlencoded; 
+        //charset=utf-8 
+        //x-amz-date=20130109T230435Z 
+        //connection=Keep-Alive
+        //host=localhost:7070
+        //content-length=36
+        //user-agent=aws-sdk-java/1.3.27 Mac_OS_X/10.7 Java_HotSpot(TM)_64-Bit_Server_VM/20.12-b01-434
+        //authorization=AWS4-HMAC-SHA256 
+        //Credential=50AL8M5BLRQB4LG5MU1C/20130109/us-east-1/us-east-1/aws4_request
+        //SignedHeaders=host;user-agent;x-amz-content-sha256;x-amz-date
+        //Signature=f4afd88c15fc41aacae2dc8b7d014673a0a51b4bfc7f2932993329be65c3f2fd
+        //x-amz-content-sha256=48a38266faf90970d6c7fea9b15e6ba366e5f6397c2970fc893f8a7b5e207bd0
         
         String accessKey = parameters.get("AWSAccessKeyId");
         
+        if (accessKey == null && headers.containsKey("authorization")) {
+        	String authorization = headers.get("authorization");
+        	if (authorization.contains("Credential=") && authorization.contains("/")) {
+        		accessKey = authorization.substring(authorization.indexOf("Credential=") + "Credential=".length(), authorization.indexOf("/"));
+        	}
+        }
+        
         if (accessKey == null) {
-            logger.error("event=authentication status=failed request="+requestUrl+" message=missing_access_key");
+            logger.error("event=authentication status=failed request="+request+" message=missing_access_key");
             throw new AuthenticationException(CMBErrorCodes.InvalidAccessKeyId, "No Access Key provided");   
         }
         
@@ -99,12 +136,12 @@ public class UserAuthModule implements IAuthModule {
             }
             
             if (user == null) {
-                logger.error("event=authentication status=failed request="+requestUrl+" access_key="+accessKey+" message=invalid_accesskey");
+                logger.error("event=authentication status=failed request="+request+" access_key="+accessKey+" message=invalid_accesskey");
                 throw new AuthenticationException(CMBErrorCodes.InvalidAccessKeyId, "AccessKey="+accessKey+" is not valid");
             }
             
         } catch (Exception ex) {
-            logger.error("event=authentication status=failed request="+requestUrl+" message=exception", ex);
+            logger.error("event=authentication status=failed request="+request+" message=exception", ex);
             throw new AuthenticationException(CMBErrorCodes.InvalidAccessKeyId, "AccessKey="+accessKey+" is not valid");
         }
 
@@ -116,7 +153,7 @@ public class UserAuthModule implements IAuthModule {
         String signatureToCheck = parameters.get("Signature");
         
         if (signatureToCheck == null) {
-            logger.error("event=authentication status=failed request="+requestUrl+" message=cannot_find_signature");
+            logger.error("event=authentication status=failed request="+request+" message=cannot_find_signature");
             throw new AuthenticationException(CMBErrorCodes.MissingParameter, "Signature not found");
         }
 
@@ -128,21 +165,21 @@ public class UserAuthModule implements IAuthModule {
         } else if (expiration != null) {
             AuthUtil.checkExpiration(expiration);
         } else {
-            logger.error("event=authentication status=failed request="+requestUrl+" message=no_time_stamp_or_expiration");
+            logger.error("event=authentication status=failed request="+request+" message=no_time_stamp_or_expiration");
             throw new AuthenticationException(CMBErrorCodes.MissingParameter, "Request must provide either Timestamp or Expires parameter");
         }
 
         String version = parameters.get("SignatureVersion");
         
         if (!version.equals("1") && !version.equals("2")) {
-        	logger.error("event=authentication status=failed request="+requestUrl+" signature_version="+version+" message=invalid_signature_version");
+        	logger.error("event=authentication status=failed request="+request+" signature_version="+version+" message=invalid_signature_version");
             throw new AuthenticationException(CMBErrorCodes.NoSuchVersion, "SignatureVersion="+version+" is not valid");
         }
 
         String signatureMethod = parameters.get("SignatureMethod");
         
         if (!signatureMethod.equals("HmacSHA256") && !signatureMethod.equals("HmacSHA1")) {	
-            logger.error("event=authentication status=failed request="+requestUrl+" signature_method="+signatureMethod+" message=invalid_signature_method");
+            logger.error("event=authentication status=failed request="+request+" signature_method="+signatureMethod+" message=invalid_signature_method");
             throw new AuthenticationException(CMBErrorCodes.InvalidParameterValue, "SignatureMethod="+signatureMethod+" is not valid");
         }
        
@@ -150,16 +187,16 @@ public class UserAuthModule implements IAuthModule {
         String signature = null;
         
         try {
-            url = new URL(requestUrl.getRequestURL().toString());
+            url = new URL(request.getRequestURL().toString());
             parameters.remove("Signature");
         	signature = AuthUtil.generateSignature(url, parameters, version, signatureMethod, user.getAccessSecret());
         } catch (Exception ex) {
-            logger.error("event=authentication status=failed request="+requestUrl+" url="+url+" message=invalid_url");
+            logger.error("event=authentication status=failed request="+request+" url="+url+" message=invalid_url");
             throw new AuthenticationException(CMBErrorCodes.InternalError, "Invalid Url="+url);
         }
 
         if (signature == null || !signature.equals(signatureToCheck)) {
-            logger.error("event=authentication status=failed request="+requestUrl+" signature="+signature+" signature_given="+signatureToCheck+" message=signature_mismatch");
+            logger.error("event=authentication status=failed request="+request+" signature="+signature+" signature_given="+signatureToCheck+" message=signature_mismatch");
             throw new AuthenticationException(CMBErrorCodes.InvalidSignature, "Invalid signature");
         }
 
