@@ -6,7 +6,7 @@ cd $workingDir
 THE_CLASSPATH=
 for i in `ls *.jar`
 do
-  THE_CLASSPATH=${THE_CLASSPATH}\;${i}
+  THE_CLASSPATH=${THE_CLASSPATH}:${i}
 done
 
 echo ${THE_CLASSPATH}
@@ -18,4 +18,4 @@ echo $4
 echo $5
 echo $6
 
-java -Xmx1280m -classpath cmb.jar:${THE_CLASSPATH} -Dcmb.log4j.propertyFile=config/log4j.properties -Dcmb.propertyFile=config/cmb.properties com.comcast.cns.test.stress.CNSStressTest $1 $2 $3 $4 $5 $6
+java -Xmx1280m -classpath ${THE_CLASSPATH} -Dcmb.log4j.propertyFile=config/log4j.properties -Dcmb.propertyFile=config/cmb.properties com.comcast.cns.test.stress.CNSStressTest $1 $2 $3 $4 $5 $6
