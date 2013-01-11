@@ -49,6 +49,7 @@ public class CQSSendMessageAction extends CQSAction {
 	
 	@Override
 	public boolean doAction(User user, HttpServletRequest request, HttpServletResponse response) throws Exception {
+		
 	    CQSQueue queue = CQSControllerServlet.getCachedQueue(user, request);
 		long ts2 = System.currentTimeMillis();
         
@@ -102,6 +103,8 @@ public class CQSSendMessageAction extends CQSAction {
             throw new CMBException(CMBErrorCodes.InternalError, "Failed to add message to queue");
         }
         
+        CQSLongPollSender.send(queue.getArn());
+        
         message.setReceiptHandle(receiptHandle);
         message.setMessageId(receiptHandle);
         long ts4 = System.currentTimeMillis();
@@ -114,5 +117,4 @@ public class CQSSendMessageAction extends CQSAction {
         
         return true;
 	}
-
 }

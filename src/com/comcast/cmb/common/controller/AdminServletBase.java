@@ -159,10 +159,10 @@ public abstract class AdminServletBase extends HttpServlet {
         }
 		
         awsCredentials = new BasicAWSCredentials(user.getAccessKey(), user.getAccessSecret());
-		
+        
         sqs = new AmazonSQSClient(awsCredentials);
         sqs.setEndpoint(CMBProperties.getInstance().getCQSServerUrl());
-
+        
         sns = new AmazonSNSClient(awsCredentials);
         sns.setEndpoint(CMBProperties.getInstance().getCNSServerUrl());
     }

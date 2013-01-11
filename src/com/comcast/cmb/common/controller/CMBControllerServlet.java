@@ -34,8 +34,6 @@ import com.comcast.cqs.controller.CQSControllerServlet;
 import org.apache.log4j.Logger;
 
 import javax.servlet.AsyncContext;
-import javax.servlet.AsyncEvent;
-import javax.servlet.AsyncListener;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -51,15 +49,17 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 abstract public class CMBControllerServlet extends HttpServlet {
 
     private static final long serialVersionUID = 1L;
-
+    
     private static Logger logger = Logger.getLogger(CMBControllerServlet.class);
     
     private static volatile ScheduledThreadPoolExecutor workerPool; 
+    private static volatile boolean initialized = false;
+    
     protected IUserPersistence userHandler = null;
     protected IAuthModule authModule = null;
     
     /**
-     * This instnace of the acccumulator is used throughout the code to accumulate response times
+     * This instance of the acccumulator is used throughout the code to accumulate response times
      * for a particular thread 
      */
     public final static ValueAccumulator valueAccumulator = new ValueAccumulator();
@@ -68,10 +68,12 @@ abstract public class CMBControllerServlet extends HttpServlet {
     @Override    
     public void init() throws ServletException {
         try {
-            Util.initLog4j();
-            //load the cmb.properties            
-            CMBProperties.getInstance();
-            workerPool = new ScheduledThreadPoolExecutor(CMBProperties.getInstance().getNumDeliveryHandlers());
+            if (!initialized) {
+	        	Util.initLog4j();
+	            CMBProperties.getInstance();
+	            workerPool = new ScheduledThreadPoolExecutor(CMBProperties.getInstance().getNumDeliveryHandlers());
+	            initialized = true;
+            }
         } catch (Exception ex) {
         	throw new ServletException(ex);
         }
@@ -253,7 +255,7 @@ abstract public class CMBControllerServlet extends HttpServlet {
     	ctx.setTimeout(21000);
 
     	// attach listener to respond to lifecycle events of this AsyncContext
-    	ctx.addListener(new AsyncListener() {
+    	/*ctx.addListener(new AsyncListener() {
     		public void onComplete(AsyncEvent event) throws IOException {
     		}
     		public void onTimeout(AsyncEvent event) throws IOException {
@@ -262,11 +264,12 @@ abstract public class CMBControllerServlet extends HttpServlet {
     		}
     		public void onStartAsync(AsyncEvent event) throws IOException {
     		}
-    	});
+    	});*/
 
     	// spawn task in background thread
     	
     	workerPool.submit(new Runnable() {
+    	
     		public void run() {
 
     			try {
@@ -276,17 +279,15 @@ abstract public class CMBControllerServlet extends HttpServlet {
     				
     					HttpServletRequest request = (HttpServletRequest)ctx.getRequest();
     					HttpServletResponse response = (HttpServletResponse)ctx.getResponse();
-    					logger.info("event=doGet pathInfo="+request.getPathInfo()+" queryString="+request.getQueryString());        
-    					handleRequest(request, response);
-    					logger.info("done");
     					
+    					handleRequest(request, response);
     				}
+
     			} catch (Exception ex) {
     				logger.error("event=failure", ex);
     			}
 
     			ctx.complete();
-    			logger.info("complete");
     		}
     	});
     }

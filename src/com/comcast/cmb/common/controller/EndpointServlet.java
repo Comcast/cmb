@@ -168,7 +168,7 @@ public class EndpointServlet extends HttpServlet {
             return;
     	}
 
-        logger.info("pathInfo="+pathInfo+" ip="+request.getRemoteAddr());
+        //logger.info("pathInfo="+pathInfo+" ip="+request.getRemoteAddr());
     	
         if (pathInfo.toLowerCase().startsWith("/recv")) {
             doReceiveMessage(request, response);
@@ -206,7 +206,7 @@ public class EndpointServlet extends HttpServlet {
             return;
     	}
         
-        logger.info("pathInfo="+pathInfo+" ip="+request.getRemoteAddr());
+        //logger.info("pathInfo="+pathInfo+" ip="+request.getRemoteAddr());
 
     	if (pathInfo.toLowerCase().startsWith("/recv")) {
             doReceiveMessage(request, response);
@@ -644,7 +644,7 @@ public class EndpointServlet extends HttpServlet {
         }*/
 
     	addMessage(msg);
-        logger.info("event=received_message status_code=200 msg_id=" + msg.id);
+        //logger.info("event=received_message status_code=200 msg_id=" + msg.id);
         doOutput(200, response, "Ok", "Ok");
     }
     

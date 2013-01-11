@@ -58,7 +58,7 @@ public class CQSControllerServlet extends CMBControllerServlet {
     private static volatile HashMap<String, CQSAction> actionMap;
     
     protected static volatile ICQSQueuePersistence queuePersistence = null;
-    protected static volatile ICQSMessagePersistence messagePersistence = null;    
+    protected static volatile ICQSMessagePersistence messagePersistence = null;  
     
     static ExpiringCache<String, CQSQueue> queueCache = new ExpiringCache<String, CQSQueue>(CMBProperties.getInstance().getCqsCacheSizeLimit());
     
@@ -76,7 +76,6 @@ public class CQSControllerServlet extends CMBControllerServlet {
             return queue;
         }
     }
-    
 
     public void initPersistence() {
         queuePersistence = PersistenceFactory.getQueuePersistence();
@@ -89,6 +88,12 @@ public class CQSControllerServlet extends CMBControllerServlet {
     	try {
         
     		super.init();
+    		
+            if (CMBProperties.getInstance().isCqsLongPollEnabled()) {
+	    		CQSLongPollReceiver.listen();
+	            CQSLongPollSender.init();
+            }
+        
             initPersistence();
             initActions();
 
@@ -98,7 +103,7 @@ public class CQSControllerServlet extends CMBControllerServlet {
             if (!mbs.isRegistered(name)) {
             	mbs.registerMBean(CQSMonitor.Inst, name);
             }
-        
+            
     	} catch (Exception ex) {
             throw new ServletException(ex);
         }
@@ -288,9 +293,14 @@ public class CQSControllerServlet extends CMBControllerServlet {
     public void destroy() {
         
     	try {
+    		
             logger.info("event=servlet_destroy");
+            
             RedisCachedCassandraPersistence.executor.shutdown();
             RedisCachedCassandraPersistence.revisibilityExecutor.shutdown();
+            CQSLongPollSender.shutdown();
+            CQSLongPollReceiver.shutdown();
+            
         } catch(Exception e) {
             logger.error("event=exception_while_shutting_down_executors", e);
         }

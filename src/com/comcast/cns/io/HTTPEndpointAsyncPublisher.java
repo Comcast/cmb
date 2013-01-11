@@ -173,7 +173,7 @@ public class HTTPEndpointAsyncPublisher implements IEndpointPublisher {
         
         BasicHttpEntityEnclosingRequest request = new BasicHttpEntityEnclosingRequest("POST", url.getPath() + (url.getQuery() == null ? "" : "?" + url.getQuery()));
         request.setEntity(new NStringEntity(message));
-        
+
         requester.execute(
                 new BasicAsyncRequestProducer(target, request),
                 new BasicAsyncResponseConsumer(),

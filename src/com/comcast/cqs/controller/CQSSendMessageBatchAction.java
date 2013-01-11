@@ -49,6 +49,7 @@ public class CQSSendMessageBatchAction extends CQSAction {
 		
 	@Override
 	public boolean doAction(User user, HttpServletRequest request, HttpServletResponse response) throws Exception {
+		
 	    CQSQueue queue = CQSControllerServlet.getCachedQueue(user, request);
         List<CQSMessage> msgList = new ArrayList<CQSMessage>();
         List<String> idList = new ArrayList<String>();
@@ -124,7 +125,9 @@ public class CQSSendMessageBatchAction extends CQSAction {
         }
         
 		Map<String, String> result = PersistenceFactory.getCQSMessagePersistence().sendMessageBatch(queue, msgList);
-        
+
+        CQSLongPollSender.send(queue.getArn());
+		
         for (CQSMessage message: msgList) {
         	message.setMessageId(result.get(message.getSuppliedMessageId()));
         	message.setReceiptHandle(result.get(message.getSuppliedMessageId()));
@@ -137,5 +140,4 @@ public class CQSSendMessageBatchAction extends CQSAction {
         
         return true;
 	}
-
 }

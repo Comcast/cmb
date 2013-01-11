@@ -42,6 +42,7 @@ public class CQSConstants {
     public static final String SENT_TIMESTAMP = "SentTimestamp";
     public static final String VISIBILITY_TIMEOUT = "VisibilityTimeout";    
 	public static final String LATEST_TIMESTAMP = "latestTimestamp";
+	public static final String WAIT_TIME_SECONDS = "WaitTimeSeconds";
 	
 	public static final String COL_ARN = "arn";
 	public static final String COL_NAME = "name";

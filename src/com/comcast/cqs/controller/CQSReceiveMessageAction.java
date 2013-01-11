@@ -25,6 +25,8 @@ import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.log4j.Logger;
+
 import com.comcast.cmb.common.model.User;
 import com.comcast.cmb.common.persistence.PersistenceFactory;
 import com.comcast.cmb.common.util.CMBErrorCodes;
@@ -41,6 +43,8 @@ import com.comcast.cqs.util.CQSConstants;
  *
  */
 public class CQSReceiveMessageAction extends CQSAction {
+	
+    private static Logger logger = Logger.getLogger(CQSReceiveMessageAction.class);
 
 	public CQSReceiveMessageAction() {
 		super("ReceiveMessage");
@@ -49,10 +53,10 @@ public class CQSReceiveMessageAction extends CQSAction {
 	public CQSReceiveMessageAction(String actionName) {
 	    super(actionName);
 	}
-
 	
 	@Override
 	public boolean doAction(User user, HttpServletRequest request, HttpServletResponse response) throws Exception {
+		
 	    CQSQueue queue = CQSControllerServlet.getCachedQueue(user, request);
 		List<CQSMessage> messageList = getMessages(request, true, queue);
         
@@ -90,12 +94,55 @@ public class CQSReceiveMessageAction extends CQSAction {
         if (useParams && request.getParameter(CQSConstants.VISIBILITY_TIMEOUT) != null) {
         	msgParam.put(CQSConstants.VISIBILITY_TIMEOUT, request.getParameter(CQSConstants.VISIBILITY_TIMEOUT));
         }
+        
+        int waitTimeSeconds = 0;
+        
+        if (useParams && request.getParameter(CQSConstants.WAIT_TIME_SECONDS) != null) {
+        	
+        	if (!CMBProperties.getInstance().isCqsLongPollEnabled()) {
+                throw new CMBException(CMBErrorCodes.InvalidParameterValue, "Long polling not enabled.");
+        	}
+        	
+        	waitTimeSeconds = Integer.parseInt(request.getParameter(CQSConstants.WAIT_TIME_SECONDS));
+        	
+        	if (waitTimeSeconds < 1 || waitTimeSeconds > 20) {
+                throw new CMBException(CMBErrorCodes.InvalidParameterValue, "The value for WaitTimeSeconds must be an integer number between 1 and 20.");
+        	}
+        }
                 
         List<CQSMessage> messageList = PersistenceFactory.getCQSMessagePersistence().receiveMessage(queue, msgParam);
+        
+        // wait for long poll if desired
+
+        if (messageList.size() == 0 && waitTimeSeconds > 0) {
+        	
+        	CQSLongPollReceiver.queueMonitors.putIfAbsent(queue.getArn(), new Object());
+        	Object monitor = CQSLongPollReceiver.queueMonitors.get(queue.getArn());
+        	long referenceTime = System.currentTimeMillis();
+        	
+        	synchronized (monitor) {
+        		
+        		while (messageList.size() == 0) {
+        		
+        			long now = System.currentTimeMillis();
+        			long waitPeriodMillis = waitTimeSeconds*1000 - (now-referenceTime); 
+        			
+        			if (waitPeriodMillis <= 0) {
+        				break;
+        			}
+        			
+        			logger.info("event=waiting_for_longpoll millis=" + waitPeriodMillis);
+        			
+        			monitor.wait(waitPeriodMillis);
+        			messageList = PersistenceFactory.getCQSMessagePersistence().receiveMessage(queue, msgParam);
+        		}
+        		
+    			logger.info("event=done_waiting");
+        	}
+        }
         
         CQSMonitor.Inst.addNumberOfMessagesReturned(queue.getRelativeUrl(), messageList.size());
 		
         return messageList;
 	}
-
 }

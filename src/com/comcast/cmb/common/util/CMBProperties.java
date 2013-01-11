@@ -35,6 +35,9 @@ public class CMBProperties {
 	}
 	
 	private final IO_MODE cnsIOMode;
+
+	private final int cqsLongPollPort;
+	private final boolean cqsLongPollEnabled;
 	
 	private final int cnsMessageExpirationSeconds;
 	
@@ -170,6 +173,9 @@ public class CMBProperties {
 			
 			FileInputStream fileStream = new FileInputStream(file);
 			props.load(fileStream);
+			
+			cqsLongPollPort = Integer.parseInt(props.getProperty("cmb.cqs.longpoll.port", "5555"));
+			cqsLongPollEnabled = Boolean.parseBoolean(props.getProperty("cmb.cqs.longpoll.enable", "true"));
 			
 			cnsServerUrl = props.getProperty("cmb.cns.server.url");
 			cqsServerUrl = props.getProperty("cmb.cqs.server.url");
@@ -644,5 +650,13 @@ public class CMBProperties {
 
 	public IO_MODE getCnsIOMode() {
 		return cnsIOMode;
+	}
+
+	public int getCqsLongPollPort() {
+		return cqsLongPollPort;
+	}
+
+	public boolean isCqsLongPollEnabled() {
+		return cqsLongPollEnabled;
 	}
 }
