@@ -220,7 +220,67 @@ public class CQSLongPollTest {
 	        }
 		}
     }
+    
+    private class MultiMessageSender extends Thread {
+    	public void run() {
+    		try {
+    			for (int i=0; i<5000; i++) {
+    				sqs.sendMessage(new SendMessageRequest(queueUrl, "test message"));
+    			}
+			} catch (Exception ex) {
+				logger.error("error", ex);
+			}
+    	}
+    }
 
+    @Test
+    public void testLongPollLoad() {
+
+    	try {
+
+    		String queueName = QUEUE_PREFIX + randomGenerator.nextLong();
+	        CreateQueueRequest createQueueRequest = new CreateQueueRequest(queueName);
+	        createQueueRequest.setAttributes(attributeParams);
+	        queueUrl = sqs.createQueue(createQueueRequest).getQueueUrl();
+	        
+	        ICQSMessagePersistence messagePersistence = RedisCachedCassandraPersistence.getInstance();
+			messagePersistence.clearQueue(queueUrl);
+			
+			logger.info("queue " + queueUrl + "created");
+	        
+	        Thread.sleep(1000);
+	        
+	        (new MultiMessageSender()).start();
+
+	        int messageCounter = 0;
+	        
+	        long begin = System.currentTimeMillis();
+	        
+	        while (messageCounter < 5000) {
+	        	
+		        ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest();
+				receiveMessageRequest.setQueueUrl(queueUrl);
+				receiveMessageRequest.setMaxNumberOfMessages(1);
+				receiveMessageRequest.setWaitTimeSeconds(20);
+				ReceiveMessageResult receiveMessageResult = sqs.receiveMessage(receiveMessageRequest);
+				messageCounter += receiveMessageResult.getMessages().size();
+	        }
+	        
+	        long end = System.currentTimeMillis();
+	        
+	        logger.info("duration=" + (end-begin));
+	        
+	        assertTrue("wrong number of messages: " + messageCounter, messageCounter == 5000);
+	        
+		} catch (Exception ex) {
+			ex.printStackTrace();
+		} finally {
+	        if (queueUrl != null) {
+	        	sqs.deleteQueue(new DeleteQueueRequest(queueUrl));
+	        }
+		}
+    }    
+    
     @After    
     public void tearDown() {
         CMBControllerServlet.valueAccumulator.deleteAllCounters();
