@@ -16,8 +16,12 @@
 package com.comcast.cqs.controller;
 
 import java.net.InetSocketAddress;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executors;
+
+import javax.servlet.AsyncContext;
 
 import org.apache.log4j.Logger;
 import org.jboss.netty.bootstrap.ServerBootstrap;
@@ -32,7 +36,11 @@ import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.channel.SimpleChannelHandler;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 
+import com.comcast.cmb.common.persistence.PersistenceFactory;
 import com.comcast.cmb.common.util.CMBProperties;
+import com.comcast.cqs.io.CQSMessagePopulator;
+import com.comcast.cqs.model.CQSMessage;
+import com.comcast.cqs.model.CQSQueue;
 
 public class CQSLongPollReceiver {
 	
@@ -40,7 +48,9 @@ public class CQSLongPollReceiver {
     
     private static ChannelFactory serverSocketChannelFactory;
 
-    public static volatile ConcurrentHashMap<String,Object> queueMonitors; 
+    //public static volatile ConcurrentHashMap<String,Object> queueMonitors; 
+    
+    public static volatile ConcurrentHashMap<String, ConcurrentLinkedQueue<AsyncContext>> contextQueues;
 
 	//
 	// long poll design:
@@ -61,13 +71,34 @@ public class CQSLongPollReceiver {
 	// no short cut if send and receive happens on same api server (could add that as performance improvement)
 	// receive publishes to all api servers regardless of whether they are actually listening or not (to save management overhead)
 	// long poll receiver thread is single point of failure on api server
+    //
+    // redesign to allow for true async implementation:
+    //
+    // prerequisite: use application level request or response wrappers to allow additional meta-data to travel with the async context, such as: 
+    //   long requestReceivedMillis (timestamp when request was received)
+    //   boolean requestActive (true at first but false if request times out or ends in error, set by async event handlers)
+    //   boolean completed (only set to true by ReceiveMessage api as all other apis are just run in pseudo-asynchronous mode)
+    // upon receive() do everything as usual up until reading messages from redis/cassandra
+    // if messages are found immediately, return these messages and complete the async context as usual 
+    // otherwise put async context on in-memory queue (e.g. ConcurrentLinkedQueue) and do NOT complete context (note: we need one in-mem queue per cqs queue, referenced via a concurrent hash map!)
+    // when any of the async events occurs (complete, timeout, error) we mark the async context as outdated
+    // when receiving an external send() notification we look up the correct in-mem queue and pull an async context from it
+    //   if no context there we do nothing (nobody is currently long-polling)
+    //   if a context is there but it's marked as outdated we simply discard it and check for further elements on the queue
+    //   if an active async context is found we try to read messages
+    //     if messages are found we generate a response and complete the context, potentially we could keep going as long as we can find messages
+    //     if no messages are found (and there is long poll time left) we put the context back on the queue
 	//
+    // miscellaneous todos:
+    //
+    // use dc flag to enforce dc locality, maybe do this for cns worker ping as well
+    // deepen shallow heath check (to make sure redis and cassandra are available)
+    // keep established tcp connections alive and reuse where possible (reuse netty channel if possible)
+    // get rid of unneccessary worker pool
+    // sensible tcp settings for client and server
+    // multiple workers / api servers per host?
+    //
     
-    //todo: sensible tcp settings for client and server
-    //todo: spill over between dcs?
-    //todo: multiple workers / api servers per host?
-    //todo: migrate to a truly asynchronous implementation
-	
 	private static class LongPollServerHandler extends SimpleChannelHandler {
 
 		StringBuffer queueArn = new StringBuffer("");
@@ -83,16 +114,72 @@ public class CQSLongPollReceiver {
 				
 				if (c == ';') {
 					
-					Object monitor = queueMonitors.get(queueArn.toString());
-					logger.info("event=notification_received notification=" + queueArn + " source=" + e.getRemoteAddress());
-					queueArn = new StringBuffer("");
+					//Object monitor = queueMonitors.get(queueArn.toString());
 					
-					if (monitor != null) {
+					logger.info("event=notification_received notification=" + queueArn + " source=" + e.getRemoteAddress());
+
+					contextQueues.putIfAbsent(queueArn.toString(), new ConcurrentLinkedQueue<AsyncContext>());
+					ConcurrentLinkedQueue<AsyncContext> contextQueue = contextQueues.get(queueArn.toString());
+					
+					AsyncContext asyncContext = contextQueue.poll();
+					
+					if (asyncContext == null) {
+						logger.info("event=no_pending_receive");
+						break;
+					}
+					
+					if (asyncContext.getRequest() == null || !(asyncContext.getRequest() instanceof CMBHttpServletRequest)) {
+						logger.info("event=skipping_invalid_context");
+						break;
+					}
+					
+					CMBHttpServletRequest cmbHttpServletRequest = (CMBHttpServletRequest)asyncContext.getRequest();
+					
+					// skip if request is already finished or outdated
+					
+					if (!cmbHttpServletRequest.isActive() || System.currentTimeMillis() - cmbHttpServletRequest.getRequestReceivedTimestamp() > cmbHttpServletRequest.getWaitTime()) {
+						logger.info("event=skipping_outdated_context");
+						continue;
+					}
+					
+			        try {
+
+			        	CQSQueue queue = cmbHttpServletRequest.getQueue();
+			        	List<CQSMessage> messageList = PersistenceFactory.getCQSMessagePersistence().receiveMessage(queue, cmbHttpServletRequest.getReceiveAttributes());
+					
+						if (messageList.size() > 0) {
+							
+							logger.info("event=messages_found action=completing count=" + messageList.size());
+							
+							CQSMonitor.Inst.addNumberOfMessagesReturned(queue.getRelativeUrl(), messageList.size());
+					        String out = CQSMessagePopulator.getReceiveMessageResponseAfterSerializing(messageList, cmbHttpServletRequest.getFilterAttributes());
+					        asyncContext.getResponse().getWriter().println(out);
+					        asyncContext.complete();
+						
+						} else {
+							
+							// if there's poll time left, so put back on queue
+							
+							if (cmbHttpServletRequest.getWaitTime() - System.currentTimeMillis() + cmbHttpServletRequest.getRequestReceivedTimestamp() > 0) {
+								logger.info("event=no_messages_found action=re_queueing time_left_ms=" + (cmbHttpServletRequest.getWaitTime() - System.currentTimeMillis() + cmbHttpServletRequest.getRequestReceivedTimestamp()));
+								contextQueue.offer(asyncContext);
+							}
+						}
+			        
+			        } catch (Exception ex) {
+						logger.error("event=queue_poll_error", ex);
+					}
+					
+			        // start reading new message
+			        
+			        queueArn = new StringBuffer("");
+					
+					/*if (monitor != null) {
 						synchronized (monitor) {
 							logger.info("event=notifying_thread");
 							monitor.notify();
 						}
-					}
+					}*/
 					
 				} else {
 					queueArn.append(c);
@@ -109,7 +196,9 @@ public class CQSLongPollReceiver {
 
 	public static void listen() {
 		
-        queueMonitors = new ConcurrentHashMap<String,Object>();
+        //queueMonitors = new ConcurrentHashMap<String,Object>();
+        
+        contextQueues = new ConcurrentHashMap<String, ConcurrentLinkedQueue<AsyncContext>>();
 
 		serverSocketChannelFactory = new NioServerSocketChannelFactory(Executors.newCachedThreadPool(), Executors.newCachedThreadPool());
 
@@ -120,8 +209,6 @@ public class CQSLongPollReceiver {
 				return Channels.pipeline(new LongPollServerHandler());
 			}
 		});
-
-		//todo: add other tcp options, e.g. timeout here
 
 		serverBootstrap.setOption("child.tcpNoDelay", true);
 		serverBootstrap.setOption("child.keepAlive", true);

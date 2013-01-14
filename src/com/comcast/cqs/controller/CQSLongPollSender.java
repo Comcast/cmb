@@ -88,8 +88,6 @@ public class CQSLongPollSender {
 			}
 		});
 	
-		//todo: add other tcp options, e.g. timeout here
-	
 		clientBootstrap.setOption("connectTimeoutMillis", 2000);
 		clientBootstrap.setOption("tcpNoDelay", true);
 		clientBootstrap.setOption("keepAlive", true);

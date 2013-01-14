@@ -15,6 +15,7 @@
  */
 package com.comcast.cqs.controller;
 
+import java.util.HashMap;
 import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
@@ -24,6 +25,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.comcast.cmb.common.model.User;
+import com.comcast.cmb.common.persistence.PersistenceFactory;
 import com.comcast.cqs.model.CQSMessage;
 import com.comcast.cqs.model.CQSQueue;
 /**
@@ -39,12 +41,16 @@ public class CQSReceiveMessageBodyAction extends CQSReceiveMessageAction {
 	
 	@Override
 	public boolean doAction(User user, HttpServletRequest request, HttpServletResponse response) throws Exception {
+		
 	    CQSQueue queue = CQSControllerServlet.getCachedQueue(user, request);
-		List<CQSMessage> messageList = getMessages(request, false, queue);
-        String out = "";
+		
+        HashMap<String, String> msgParam = new HashMap<String, String>();
+        List<CQSMessage> messageList = PersistenceFactory.getCQSMessagePersistence().receiveMessage(queue, msgParam);
+        
+		String out = "";
         response.setContentType("text/html");
         
-        if (messageList == null || messageList.size() > 0) {
+        if (messageList.size() > 0) {
         	
         	out += messageList.get(0).getBody();
 	        

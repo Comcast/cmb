@@ -30,6 +30,7 @@ import com.comcast.cmb.common.util.ValueAccumulator;
 import com.comcast.cmb.common.util.ValueAccumulator.AccumulatorName;
 import com.comcast.cns.controller.CNSControllerServlet;
 import com.comcast.cqs.controller.CQSControllerServlet;
+import com.comcast.cqs.controller.CMBHttpServletRequest;
 
 import org.apache.log4j.Logger;
 
@@ -244,55 +245,53 @@ abstract public class CMBControllerServlet extends HttpServlet {
     public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
     	doPost(request, response);
     }
-
+    
     @Override
     public void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 
     	// create the async context, otherwise getAsyncContext() will be null
-    	final AsyncContext ctx = request.startAsync();
 
-    	// set the timeout
-    	ctx.setTimeout(21000);
-
-    	// attach listener to respond to lifecycle events of this AsyncContext
-    	/*ctx.addListener(new AsyncListener() {
-    		public void onComplete(AsyncEvent event) throws IOException {
-    		}
-    		public void onTimeout(AsyncEvent event) throws IOException {
-    		}
-    		public void onError(AsyncEvent event) throws IOException {
-    		}
-    		public void onStartAsync(AsyncEvent event) throws IOException {
-    		}
-    	});*/
-
-    	// spawn task in background thread
+    	final AsyncContext asyncContext = request.startAsync(new CMBHttpServletRequest(request), response);
     	
-    	workerPool.submit(new Runnable() {
-    	
-    		public void run() {
+    	if (asyncContext == null) {
 
-    			try {
-    				ReceiptModule.init();
+    		// this should only be happening for certain unit tests
+    		
+    		handleRequest(request, response);
+    		
+    	} else {
 
-    				if (ctx.getRequest() instanceof HttpServletRequest && ctx.getResponse() instanceof HttpServletResponse) {
-    				
-    					HttpServletRequest request = (HttpServletRequest)ctx.getRequest();
-    					HttpServletResponse response = (HttpServletResponse)ctx.getResponse();
-    					
-    					handleRequest(request, response);
-    				}
-
-    			} catch (Exception ex) {
-    				logger.error("event=failure", ex);
-    			}
-
-    			ctx.complete();
-    		}
-    	});
+	    	// spawn task in background thread
+	    	
+	    	workerPool.submit(new Runnable() {
+	    	
+	    		public void run() {
+	
+	    			try {
+	    				
+	    				ReceiptModule.init();
+	
+	    				if (asyncContext.getRequest() instanceof CMBHttpServletRequest && asyncContext.getResponse() instanceof HttpServletResponse) {
+	    				
+	    					CMBHttpServletRequest request = (CMBHttpServletRequest)asyncContext.getRequest();
+	    					HttpServletResponse response = (HttpServletResponse)asyncContext.getResponse();
+	    					
+	    					handleRequest(request, response);
+	    				}
+	
+	    			} catch (Exception ex) {
+	    				logger.error("event=failure", ex);
+	    			}
+	
+	    			if (!((CMBHttpServletRequest)asyncContext.getRequest()).isQueuedForProcessing()) {
+	    				asyncContext.complete();
+	    			}
+	    		}
+	    	});
+    	}
     }
 
-    private String createErrorResponse(String code, String errorMsg) {
+    public static String createErrorResponse(String code, String errorMsg) {
         StringBuffer message = new StringBuffer("<ErrorResponse>")
                 .append("<Error>")
                 .append("<Type>Sender</Type>")

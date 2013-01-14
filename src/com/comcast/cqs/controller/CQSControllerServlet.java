@@ -89,9 +89,13 @@ public class CQSControllerServlet extends CMBControllerServlet {
         
     		super.init();
     		
-            if (CMBProperties.getInstance().isCqsLongPollEnabled()) {
-	    		CQSLongPollReceiver.listen();
-	            CQSLongPollSender.init();
+            try {
+	    		if (CMBProperties.getInstance().isCqsLongPollEnabled()) {
+		    		CQSLongPollReceiver.listen();
+		            CQSLongPollSender.init();
+	            }
+            } catch (Exception ex) {
+            	logger.warn("event=failed_to_start_longpoll_module", ex);
             }
         
             initPersistence();

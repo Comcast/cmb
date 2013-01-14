@@ -16,23 +16,26 @@
 package com.comcast.cqs.controller;
 
 import java.io.IOException;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
+import javax.servlet.AsyncContext;
+import javax.servlet.AsyncEvent;
+import javax.servlet.AsyncListener;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.log4j.Logger;
 
+import com.comcast.cmb.common.controller.CMBControllerServlet;
 import com.comcast.cmb.common.model.User;
 import com.comcast.cmb.common.persistence.PersistenceFactory;
 import com.comcast.cmb.common.util.CMBErrorCodes;
 import com.comcast.cmb.common.util.CMBException;
 import com.comcast.cmb.common.util.CMBProperties;
-import com.comcast.cmb.common.util.PersistenceException;
 import com.comcast.cqs.io.CQSMessagePopulator;
 import com.comcast.cqs.model.CQSMessage;
 import com.comcast.cqs.model.CQSQueue;
@@ -57,8 +60,7 @@ public class CQSReceiveMessageAction extends CQSAction {
 	@Override
 	public boolean doAction(User user, HttpServletRequest request, HttpServletResponse response) throws Exception {
 		
-	    CQSQueue queue = CQSControllerServlet.getCachedQueue(user, request);
-		List<CQSMessage> messageList = getMessages(request, true, queue);
+    	CQSQueue queue = CQSControllerServlet.getCachedQueue(user, request);
         
         Map<String, String[]> requestParams = request.getParameterMap();
         List<String> filterAttributes = new ArrayList<String>();
@@ -69,18 +71,68 @@ public class CQSReceiveMessageAction extends CQSAction {
         	}
         }
         
-        String out = CQSMessagePopulator.getReceiveMessageResponseAfterSerializing(messageList, filterAttributes);
+        // null checks on async context only required for certain load test
         
-        response.getWriter().println(out);
-        
-        return messageList != null && messageList.size() > 0 ? true : false;
-    }
+    	AsyncContext asyncContext = request.getAsyncContext();
+    	
+    	if (asyncContext != null) {
+
+	    	asyncContext.addListener(new AsyncListener() {
 	
-	protected List<CQSMessage> getMessages(HttpServletRequest request, boolean useParams, CQSQueue queue) throws PersistenceException, CMBException, IOException, NoSuchAlgorithmException, InterruptedException {
-		
+	    		@Override
+				public void onComplete(AsyncEvent asyncEvent) throws IOException {
+					((CMBHttpServletRequest)asyncEvent.getSuppliedRequest()).setActive(false);
+				}
+				
+	    		@Override
+				public void onError(AsyncEvent asyncEvent) throws IOException {
+	
+	    			logger.info("event=on_error");
+	    			
+	    			int httpCode = CMBErrorCodes.InternalError.getHttpCode();
+	                String code = CMBErrorCodes.InternalError.getCMBCode();
+	                String message = "There is an internal problem with CMB";
+	                
+	                if (asyncEvent.getThrowable() instanceof CMBException) {
+	                    httpCode = ((CMBException)asyncEvent.getThrowable()).getHttpCode();
+	                    code = ((CMBException)asyncEvent.getThrowable()).getCMBCode();
+	                    message = asyncEvent.getThrowable().getMessage();
+	                }
+	
+	                String errXml = CMBControllerServlet.createErrorResponse(code, message);
+	
+	                ((HttpServletResponse)asyncEvent.getSuppliedResponse()).setStatus(httpCode);
+		            asyncEvent.getSuppliedResponse().getWriter().println(errXml);
+	
+		            asyncEvent.getAsyncContext().complete();
+				}
+				
+	    		@Override
+				public void onStartAsync(AsyncEvent asyncEvent) throws IOException {
+				}
+				
+	    		@Override
+				public void onTimeout(AsyncEvent asyncEvent) throws IOException {
+	
+	    			logger.info("event=on_timeout");
+	    			
+					((CMBHttpServletRequest)asyncEvent.getSuppliedRequest()).setActive(false);
+		        	String out = CQSMessagePopulator.getReceiveMessageResponseAfterSerializing(new ArrayList<CQSMessage>(), new ArrayList<String>());
+		            asyncEvent.getSuppliedResponse().getWriter().println(out);
+					
+		            asyncEvent.getAsyncContext().complete();
+				}
+	    	});
+    	}
+
+    	if (asyncContext != null) {
+	    	((CMBHttpServletRequest)asyncContext.getRequest()).setFilterAttributes(filterAttributes);
+	        ((CMBHttpServletRequest)asyncContext.getRequest()).setQueue(queue);
+    	}
+    	
         HashMap<String, String> msgParam = new HashMap<String, String>();
         
-        if (useParams && request.getParameter(CQSConstants.MAX_NUMBER_OF_MESSAGES) != null) {
+        if (request.getParameter(CQSConstants.MAX_NUMBER_OF_MESSAGES) != null) {
             
         	int maxNumberOfMessages = Integer.parseInt(request.getParameter(CQSConstants.MAX_NUMBER_OF_MESSAGES));
             
@@ -91,13 +143,13 @@ public class CQSReceiveMessageAction extends CQSAction {
             msgParam.put(CQSConstants.MAX_NUMBER_OF_MESSAGES, "" + maxNumberOfMessages);
         }
 
-        if (useParams && request.getParameter(CQSConstants.VISIBILITY_TIMEOUT) != null) {
+        if (request.getParameter(CQSConstants.VISIBILITY_TIMEOUT) != null) {
         	msgParam.put(CQSConstants.VISIBILITY_TIMEOUT, request.getParameter(CQSConstants.VISIBILITY_TIMEOUT));
         }
         
         int waitTimeSeconds = 0;
         
-        if (useParams && request.getParameter(CQSConstants.WAIT_TIME_SECONDS) != null) {
+        if (request.getParameter(CQSConstants.WAIT_TIME_SECONDS) != null) {
         	
         	if (!CMBProperties.getInstance().isCqsLongPollEnabled()) {
                 throw new CMBException(CMBErrorCodes.InvalidParameterValue, "Long polling not enabled.");
@@ -108,15 +160,33 @@ public class CQSReceiveMessageAction extends CQSAction {
         	if (waitTimeSeconds < 1 || waitTimeSeconds > 20) {
                 throw new CMBException(CMBErrorCodes.InvalidParameterValue, "The value for WaitTimeSeconds must be an integer number between 1 and 20.");
         	}
+        	
+        	// set timeout appropriately
+        	
+        	if (asyncContext != null) {
+	        	asyncContext.setTimeout(waitTimeSeconds * 1000);
+	            ((CMBHttpServletRequest)asyncContext.getRequest()).setWaitTime(waitTimeSeconds * 1000);
+        	}
         }
                 
         List<CQSMessage> messageList = PersistenceFactory.getCQSMessagePersistence().receiveMessage(queue, msgParam);
         
         // wait for long poll if desired
-
-        if (messageList.size() == 0 && waitTimeSeconds > 0) {
+        
+        if (asyncContext != null && messageList.size() == 0 && waitTimeSeconds > 0) {
         	
-        	CQSLongPollReceiver.queueMonitors.putIfAbsent(queue.getArn(), new Object());
+        	// put context on async queue to wait for long poll
+        	
+        	logger.info("event=queueing_context queue_arn=" + queue.getArn() + " wait_time_sec=" + waitTimeSeconds);
+        	
+        	CQSLongPollReceiver.contextQueues.putIfAbsent(queue.getArn(), new ConcurrentLinkedQueue<AsyncContext>());
+			ConcurrentLinkedQueue<AsyncContext> contextQueue = CQSLongPollReceiver.contextQueues.get(queue.getArn());
+			
+			if (contextQueue.offer(asyncContext)) {
+	            ((CMBHttpServletRequest)asyncContext.getRequest()).setIsQueuedForProcessing(true);
+			}
+			
+        	/*CQSLongPollReceiver.queueMonitors.putIfAbsent(queue.getArn(), new Object());
         	Object monitor = CQSLongPollReceiver.queueMonitors.get(queue.getArn());
         	long referenceTime = System.currentTimeMillis();
         	
@@ -138,11 +208,19 @@ public class CQSReceiveMessageAction extends CQSAction {
         		}
         		
     			logger.info("event=done_waiting");
-        	}
+        	}*/
+
+        } else {
+
+            CQSMonitor.Inst.addNumberOfMessagesReturned(queue.getRelativeUrl(), messageList.size());
+        	String out = CQSMessagePopulator.getReceiveMessageResponseAfterSerializing(messageList, filterAttributes);
+            response.getWriter().println(out);
+            
+            if (asyncContext != null) {
+            	asyncContext.complete();
+            }
         }
         
-        CQSMonitor.Inst.addNumberOfMessagesReturned(queue.getRelativeUrl(), messageList.size());
-		
-        return messageList;
-	}
+        return messageList != null && messageList.size() > 0 ? true : false;
+    }
 }
