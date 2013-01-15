@@ -128,12 +128,12 @@ public class CQSLongPollReceiver {
 						break;
 					}
 					
-					if (asyncContext.getRequest() == null || !(asyncContext.getRequest() instanceof CMBHttpServletRequest)) {
+					if (asyncContext.getRequest() == null || !(asyncContext.getRequest() instanceof CQSHttpServletRequest)) {
 						logger.info("event=skipping_invalid_context");
 						break;
 					}
 					
-					CMBHttpServletRequest cmbHttpServletRequest = (CMBHttpServletRequest)asyncContext.getRequest();
+					CQSHttpServletRequest cmbHttpServletRequest = (CQSHttpServletRequest)asyncContext.getRequest();
 					
 					// skip if request is already finished or outdated
 					

@@ -81,7 +81,7 @@ public class CQSReceiveMessageAction extends CQSAction {
 	
 	    		@Override
 				public void onComplete(AsyncEvent asyncEvent) throws IOException {
-					((CMBHttpServletRequest)asyncEvent.getSuppliedRequest()).setActive(false);
+					((CQSHttpServletRequest)asyncEvent.getSuppliedRequest()).setActive(false);
 				}
 				
 	    		@Override
@@ -104,7 +104,7 @@ public class CQSReceiveMessageAction extends CQSAction {
 	                ((HttpServletResponse)asyncEvent.getSuppliedResponse()).setStatus(httpCode);
 		            asyncEvent.getSuppliedResponse().getWriter().println(errXml);
 		            
-		            CQSQueue queue = ((CMBHttpServletRequest)asyncEvent.getSuppliedRequest()).getQueue();
+		            CQSQueue queue = ((CQSHttpServletRequest)asyncEvent.getSuppliedRequest()).getQueue();
 		            
 		            if (queue != null) {
 		            	
@@ -128,11 +128,11 @@ public class CQSReceiveMessageAction extends CQSAction {
 	
 	    			logger.info("event=on_timeout");
 	    			
-					((CMBHttpServletRequest)asyncEvent.getSuppliedRequest()).setActive(false);
+					((CQSHttpServletRequest)asyncEvent.getSuppliedRequest()).setActive(false);
 		        	String out = CQSMessagePopulator.getReceiveMessageResponseAfterSerializing(new ArrayList<CQSMessage>(), new ArrayList<String>());
 		            asyncEvent.getSuppliedResponse().getWriter().println(out);
 		            
-		            CQSQueue queue = ((CMBHttpServletRequest)asyncEvent.getSuppliedRequest()).getQueue();
+		            CQSQueue queue = ((CQSHttpServletRequest)asyncEvent.getSuppliedRequest()).getQueue();
 
 		            if (queue != null) {
 		            	
@@ -150,8 +150,8 @@ public class CQSReceiveMessageAction extends CQSAction {
     	}
 
     	if (asyncContext != null) {
-	    	((CMBHttpServletRequest)asyncContext.getRequest()).setFilterAttributes(filterAttributes);
-	        ((CMBHttpServletRequest)asyncContext.getRequest()).setQueue(queue);
+	    	((CQSHttpServletRequest)asyncContext.getRequest()).setFilterAttributes(filterAttributes);
+	        ((CQSHttpServletRequest)asyncContext.getRequest()).setQueue(queue);
     	}
     	
         HashMap<String, String> msgParam = new HashMap<String, String>();
@@ -189,7 +189,7 @@ public class CQSReceiveMessageAction extends CQSAction {
         	
         	if (asyncContext != null) {
 	        	asyncContext.setTimeout(waitTimeSeconds * 1000);
-	            ((CMBHttpServletRequest)asyncContext.getRequest()).setWaitTime(waitTimeSeconds * 1000);
+	            ((CQSHttpServletRequest)asyncContext.getRequest()).setWaitTime(waitTimeSeconds * 1000);
         	}
         }
                 
@@ -207,7 +207,7 @@ public class CQSReceiveMessageAction extends CQSAction {
 			ConcurrentLinkedQueue<AsyncContext> contextQueue = CQSLongPollReceiver.contextQueues.get(queue.getArn());
 			
 			if (contextQueue.offer(asyncContext)) {
-	            ((CMBHttpServletRequest)asyncContext.getRequest()).setIsQueuedForProcessing(true);
+	            ((CQSHttpServletRequest)asyncContext.getRequest()).setIsQueuedForProcessing(true);
 			}
 			
         	/*CQSLongPollReceiver.queueMonitors.putIfAbsent(queue.getArn(), new Object());

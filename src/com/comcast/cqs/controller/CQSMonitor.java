@@ -300,7 +300,7 @@ public class CQSMonitor implements CQSMonitorMBean {
 				
 				if (asyncContext.getRequest() != null) {
 
-					CMBHttpServletRequest request = ((CMBHttpServletRequest)(asyncContext.getRequest()));
+					CQSHttpServletRequest request = ((CQSHttpServletRequest)(asyncContext.getRequest()));
 					
 					if (request.isActive() && System.currentTimeMillis()-request.getRequestReceivedTimestamp()<=request.getWaitTime()) {
 						count++;
@@ -347,7 +347,7 @@ public class CQSMonitor implements CQSMonitorMBean {
 				
 				if (asyncContext.getRequest() != null) {
 				
-					CMBHttpServletRequest request = ((CMBHttpServletRequest)(asyncContext.getRequest()));
+					CQSHttpServletRequest request = ((CQSHttpServletRequest)(asyncContext.getRequest()));
 					
 					if (!request.isActive() || System.currentTimeMillis()-request.getRequestReceivedTimestamp()>request.getWaitTime()) {
 						count++;

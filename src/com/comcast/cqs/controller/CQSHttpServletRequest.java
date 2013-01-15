@@ -26,21 +26,21 @@ import javax.servlet.http.Part;
 
 import com.comcast.cqs.model.CQSQueue;
 
-public class CMBHttpServletRequest implements HttpServletRequest {
+public class CQSHttpServletRequest implements HttpServletRequest {
 	
-	private HttpServletRequest r;
+	private volatile HttpServletRequest request;
 	
-	private long requestReceivedTimestamp;
-	private long waitTime;
-	private boolean isActive;
-	private boolean isQueuedForProcessing;
+	private volatile long requestReceivedTimestamp;
+	private volatile long waitTime;
+	private volatile boolean isActive;
+	private volatile boolean isQueuedForProcessing;
 
-	private CQSQueue queue;
-	private Map<String, String> receiveAttributes;
-	private List<String> filterAttributes;
+	private volatile CQSQueue queue;
+	private volatile Map<String, String> receiveAttributes;
+	private volatile List<String> filterAttributes;
 	
-	public CMBHttpServletRequest(HttpServletRequest httpServletRequest) {
-		r = httpServletRequest;
+	public CQSHttpServletRequest(HttpServletRequest httpServletRequest) {
+		request = httpServletRequest;
 		isActive = true;
 		isQueuedForProcessing = false;
 		requestReceivedTimestamp = System.currentTimeMillis();
@@ -104,335 +104,335 @@ public class CMBHttpServletRequest implements HttpServletRequest {
 
 	@Override
 	public AsyncContext getAsyncContext() {
-		return r.getAsyncContext();
+		return request.getAsyncContext();
 	}
 
 	@Override
 	public Object getAttribute(String arg0) {
-		return r.getAttribute(arg0);
+		return request.getAttribute(arg0);
 	}
 
 	@Override
 	public Enumeration<String> getAttributeNames() {
-		return r.getAttributeNames();
+		return request.getAttributeNames();
 	}
 
 	@Override
 	public String getCharacterEncoding() {
-		return r.getCharacterEncoding();
+		return request.getCharacterEncoding();
 	}
 
 	@Override
 	public int getContentLength() {
-		return r.getContentLength();
+		return request.getContentLength();
 	}
 
 	@Override
 	public String getContentType() {
-		return r.getContentType();
+		return request.getContentType();
 	}
 
 	@Override
 	public DispatcherType getDispatcherType() {
-		return r.getDispatcherType();
+		return request.getDispatcherType();
 	}
 
 	@Override
 	public ServletInputStream getInputStream() throws IOException {
-		return r.getInputStream();
+		return request.getInputStream();
 	}
 
 	@Override
 	public String getLocalAddr() {
-		return r.getLocalAddr();
+		return request.getLocalAddr();
 	}
 
 	@Override
 	public String getLocalName() {
-		return r.getLocalName();
+		return request.getLocalName();
 	}
 
 	@Override
 	public int getLocalPort() {
-		return r.getLocalPort();
+		return request.getLocalPort();
 	}
 
 	@Override
 	public Locale getLocale() {
-		return r.getLocale();
+		return request.getLocale();
 	}
 
 	@Override
 	public Enumeration<Locale> getLocales() {
-		return r.getLocales();
+		return request.getLocales();
 	}
 
 	@Override
 	public String getParameter(String arg0) {
-		return r.getParameter(arg0);
+		return request.getParameter(arg0);
 	}
 
 	@Override
 	public Map<String, String[]> getParameterMap() {
-		return r.getParameterMap();
+		return request.getParameterMap();
 	}
 
 	@Override
 	public Enumeration<String> getParameterNames() {
-		return r.getParameterNames();
+		return request.getParameterNames();
 	}
 
 	@Override
 	public String[] getParameterValues(String arg0) {
-		return r.getParameterValues(arg0);
+		return request.getParameterValues(arg0);
 	}
 
 	@Override
 	public String getProtocol() {
-		return r.getProtocol();
+		return request.getProtocol();
 	}
 
 	@Override
 	public BufferedReader getReader() throws IOException {
-		return r.getReader();
+		return request.getReader();
 	}
 
 	@Override
 	public String getRealPath(String arg0) {
-		return r.getRealPath(arg0);
+		return request.getRealPath(arg0);
 	}
 
 	@Override
 	public String getRemoteAddr() {
-		return r.getRemoteAddr();
+		return request.getRemoteAddr();
 	}
 
 	@Override
 	public String getRemoteHost() {
-		return r.getRemoteHost();
+		return request.getRemoteHost();
 	}
 
 	@Override
 	public int getRemotePort() {
-		return r.getRemotePort();
+		return request.getRemotePort();
 	}
 
 	@Override
 	public RequestDispatcher getRequestDispatcher(String arg0) {
-		return r.getRequestDispatcher(arg0);
+		return request.getRequestDispatcher(arg0);
 	}
 
 	@Override
 	public String getScheme() {
-		return r.getScheme();
+		return request.getScheme();
 	}
 
 	@Override
 	public String getServerName() {
-		return r.getServerName();
+		return request.getServerName();
 	}
 
 	@Override
 	public int getServerPort() {
-		return r.getServerPort();
+		return request.getServerPort();
 	}
 
 	@Override
 	public ServletContext getServletContext() {
-		return r.getServletContext();
+		return request.getServletContext();
 	}
 
 	@Override
 	public boolean isAsyncStarted() {
-		return r.isAsyncStarted();
+		return request.isAsyncStarted();
 	}
 
 	@Override
 	public boolean isAsyncSupported() {
-		return r.isAsyncSupported();
+		return request.isAsyncSupported();
 	}
 
 	@Override
 	public boolean isSecure() {
-		return r.isSecure();
+		return request.isSecure();
 	}
 
 	@Override
 	public void removeAttribute(String arg0) {
-		r.removeAttribute(arg0);
+		request.removeAttribute(arg0);
 	}
 
 	@Override
 	public void setAttribute(String arg0, Object arg1) {
-		r.setAttribute(arg0, arg1);
+		request.setAttribute(arg0, arg1);
 	}
 
 	@Override
 	public void setCharacterEncoding(String arg0)
 			throws UnsupportedEncodingException {
-		r.setCharacterEncoding(arg0);
+		request.setCharacterEncoding(arg0);
 	}
 
 	@Override
 	public AsyncContext startAsync() {
-		return r.startAsync();
+		return request.startAsync();
 	}
 
 	@Override
 	public AsyncContext startAsync(ServletRequest arg0, ServletResponse arg1) {
-		return r.startAsync(arg0, arg1);
+		return request.startAsync(arg0, arg1);
 	}
 
 	@Override
 	public boolean authenticate(HttpServletResponse arg0) throws IOException,
 			ServletException {
-		return r.authenticate(arg0);
+		return request.authenticate(arg0);
 	}
 
 	@Override
 	public String getAuthType() {
-		return r.getAuthType();
+		return request.getAuthType();
 	}
 
 	@Override
 	public String getContextPath() {
-		return r.getContextPath();
+		return request.getContextPath();
 	}
 
 	@Override
 	public Cookie[] getCookies() {
-		return r.getCookies();
+		return request.getCookies();
 	}
 
 	@Override
 	public long getDateHeader(String arg0) {
-		return r.getDateHeader(arg0);
+		return request.getDateHeader(arg0);
 	}
 
 	@Override
 	public String getHeader(String arg0) {
-		return r.getHeader(arg0);
+		return request.getHeader(arg0);
 	}
 
 	@Override
 	public Enumeration<String> getHeaderNames() {
-		return r.getHeaderNames();
+		return request.getHeaderNames();
 	}
 
 	@Override
 	public Enumeration<String> getHeaders(String arg0) {
-		return r.getHeaders(arg0);
+		return request.getHeaders(arg0);
 	}
 
 	@Override
 	public int getIntHeader(String arg0) {
-		return r.getIntHeader(arg0);
+		return request.getIntHeader(arg0);
 	}
 
 	@Override
 	public String getMethod() {
-		return r.getMethod();
+		return request.getMethod();
 	}
 
 	@Override
 	public Part getPart(String arg0) throws IOException, IllegalStateException,
 			ServletException {
-		return r.getPart(arg0);
+		return request.getPart(arg0);
 	}
 
 	@Override
 	public Collection<Part> getParts() throws IOException,
 			IllegalStateException, ServletException {
-		return r.getParts();
+		return request.getParts();
 	}
 
 	@Override
 	public String getPathInfo() {
-		return r.getPathInfo();
+		return request.getPathInfo();
 	}
 
 	@Override
 	public String getPathTranslated() {
-		return r.getPathTranslated();
+		return request.getPathTranslated();
 	}
 
 	@Override
 	public String getQueryString() {
-		return r.getQueryString();
+		return request.getQueryString();
 	}
 
 	@Override
 	public String getRemoteUser() {
-		return r.getRemoteUser();
+		return request.getRemoteUser();
 	}
 
 	@Override
 	public String getRequestURI() {
-		return r.getRequestURI();
+		return request.getRequestURI();
 	}
 
 	@Override
 	public StringBuffer getRequestURL() {
-		return r.getRequestURL();
+		return request.getRequestURL();
 	}
 
 	@Override
 	public String getRequestedSessionId() {
-		return r.getRequestedSessionId();
+		return request.getRequestedSessionId();
 	}
 
 	@Override
 	public String getServletPath() {
-		return r.getServletPath();
+		return request.getServletPath();
 	}
 
 	@Override
 	public HttpSession getSession() {
-		return r.getSession();
+		return request.getSession();
 	}
 
 	@Override
 	public HttpSession getSession(boolean arg0) {
-		return r.getSession(arg0);
+		return request.getSession(arg0);
 	}
 
 	@Override
 	public Principal getUserPrincipal() {
-		return r.getUserPrincipal();
+		return request.getUserPrincipal();
 	}
 
 	@Override
 	public boolean isRequestedSessionIdFromCookie() {
-		return r.isRequestedSessionIdFromCookie();
+		return request.isRequestedSessionIdFromCookie();
 	}
 
 	@Override
 	public boolean isRequestedSessionIdFromURL() {
-		return r.isRequestedSessionIdFromURL();
+		return request.isRequestedSessionIdFromURL();
 	}
 
 	@Override
 	public boolean isRequestedSessionIdFromUrl() {
-		return r.isRequestedSessionIdFromUrl();
+		return request.isRequestedSessionIdFromUrl();
 	}
 
 	@Override
 	public boolean isRequestedSessionIdValid() {
-		return r.isRequestedSessionIdValid();
+		return request.isRequestedSessionIdValid();
 	}
 
 	@Override
 	public boolean isUserInRole(String arg0) {
-		return r.isUserInRole(arg0);
+		return request.isUserInRole(arg0);
 	}
 
 	@Override
 	public void login(String arg0, String arg1) throws ServletException {
-		r.login(arg0, arg1);
+		request.login(arg0, arg1);
 	}
 
 	@Override
 	public void logout() throws ServletException {
-		r.logout();
+		request.logout();
 	}
 }

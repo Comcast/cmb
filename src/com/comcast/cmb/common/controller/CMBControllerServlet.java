@@ -30,7 +30,7 @@ import com.comcast.cmb.common.util.ValueAccumulator;
 import com.comcast.cmb.common.util.ValueAccumulator.AccumulatorName;
 import com.comcast.cns.controller.CNSControllerServlet;
 import com.comcast.cqs.controller.CQSControllerServlet;
-import com.comcast.cqs.controller.CMBHttpServletRequest;
+import com.comcast.cqs.controller.CQSHttpServletRequest;
 
 import org.apache.log4j.Logger;
 
@@ -251,7 +251,7 @@ abstract public class CMBControllerServlet extends HttpServlet {
 
     	// create the async context, otherwise getAsyncContext() will be null
 
-    	final AsyncContext asyncContext = request.startAsync(new CMBHttpServletRequest(request), response);
+    	final AsyncContext asyncContext = request.startAsync(new CQSHttpServletRequest(request), response);
     	
     	if (asyncContext == null) {
 
@@ -271,9 +271,9 @@ abstract public class CMBControllerServlet extends HttpServlet {
 	    				
 	    				ReceiptModule.init();
 	
-	    				if (asyncContext.getRequest() instanceof CMBHttpServletRequest && asyncContext.getResponse() instanceof HttpServletResponse) {
+	    				if (asyncContext.getRequest() instanceof CQSHttpServletRequest && asyncContext.getResponse() instanceof HttpServletResponse) {
 	    				
-	    					CMBHttpServletRequest request = (CMBHttpServletRequest)asyncContext.getRequest();
+	    					CQSHttpServletRequest request = (CQSHttpServletRequest)asyncContext.getRequest();
 	    					HttpServletResponse response = (HttpServletResponse)asyncContext.getResponse();
 	    					
 	    					handleRequest(request, response);
@@ -283,7 +283,7 @@ abstract public class CMBControllerServlet extends HttpServlet {
 	    				logger.error("event=failure", ex);
 	    			}
 	
-	    			if (!((CMBHttpServletRequest)asyncContext.getRequest()).isQueuedForProcessing()) {
+	    			if (!((CQSHttpServletRequest)asyncContext.getRequest()).isQueuedForProcessing()) {
 	    				asyncContext.complete();
 	    			}
 	    		}
