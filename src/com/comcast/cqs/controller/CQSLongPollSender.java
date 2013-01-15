@@ -122,9 +122,10 @@ public class CQSLongPollSender {
         		Map<String, String> values = new HashMap<String, String>();
 	        	values.put("listenerTimestamp", now + "");
 	        	values.put("port", CMBProperties.getInstance().getCqsLongPollPort() + "");
+	        	values.put("dataCenter", CMBProperties.getInstance().getCmbDataCenter());
                 cassandraHandler.insertOrUpdateRow(hostAddress, "CQSLongPollListeners", values, HConsistencyLevel.QUORUM);
 
-                // read all other pings
+                // read all other pings but ensure we are data-center local
                 
         		List<Row<String, String, String>> rows = cassandraHandler.readNextNNonEmptyRows("CQSLongPollListeners", null, 1000, 10, new StringSerializer(), new StringSerializer(), new StringSerializer(), HConsistencyLevel.QUORUM);
         		
@@ -133,6 +134,7 @@ public class CQSLongPollSender {
         			for (Row<String, String, String> row : rows) {
         				
         				String host = row.getKey();
+        				String dataCenter = CMBProperties.getInstance().getCmbDataCenter();
         				long timestamp = 0, port = 0;
         				
         				if (row.getColumnSlice().getColumnByName("listenerTimestamp") != null) {
@@ -143,9 +145,13 @@ public class CQSLongPollSender {
         					port = Long.parseLong(row.getColumnSlice().getColumnByName("port").getValue());
         				}
         				
-        				if (now-timestamp < 5*60*1000) {
+        				if (row.getColumnSlice().getColumnByName("dataCenter") != null) {
+        					dataCenter = row.getColumnSlice().getColumnByName("dataCenter").getValue();
+        				}
+
+        				if (now-timestamp < 5*60*1000 && dataCenter.equals(CMBProperties.getInstance().getCmbDataCenter())) {
         					activelyLongPollingCQSApiServers.put(host, port);
-        					logger.info("event=found_active_api_server host=" + host + " port=" + port);
+        					logger.info("event=found_active_api_server host=" + host + " port=" + port + " data_center=" + dataCenter);
         				}
         			}
         		}                
