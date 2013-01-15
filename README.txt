@@ -147,7 +147,7 @@ Example response:
 
    and replace with 
 
-   <Connector connectionTimeout="25000" port="6059" protocol="org.apache.coyote.http11.Http11NioProtocol" redirectPort="6443"/>
+   <Connector connectionTimeout="25000" port="6059" protocol="org.apache.coyote.http11.Http11NioProtocol" redirectPort="6443" maxThreads="256" acceptCount="1000" maxConnections="1000"/>
    
    IMPORTANT: Be sure to also change all other Tomcat ports including shutdown port 
    (default is 8005) and AJP port (default is 8009).
