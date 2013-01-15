@@ -19,6 +19,8 @@ import java.util.Map;
 
 public class CNSWorkerStats {
 	
+	private String dataCenter;
+	
 	private String ipAddress;
 	
 	private long producerTimestamp;
@@ -42,6 +44,14 @@ public class CNSWorkerStats {
 	private boolean cqsServiceAvailable;
 	
 	private int numPooledHttpConnections;
+
+	public String getDataCenter() {
+		return dataCenter;
+	}
+
+	public void setDataCenter(String dataCenter) {
+		this.dataCenter = dataCenter;
+	}
 
 	public int getNumPooledHttpConnections() {
 		return numPooledHttpConnections;
