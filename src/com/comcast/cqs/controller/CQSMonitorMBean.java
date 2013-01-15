@@ -91,5 +91,29 @@ public interface CQSMonitorMBean {
      * @return The timestamp in milliseconds of the oldest message in queue or null if none exists
      */
     public Long getOldestMessageCreatedTSMS(String queueUrl);
+    
+	/**
+	 * 
+	 * @return Number of all long poll receives (active and dead) across all queues
+	 */
+    public long getNumberOfLPReceives();
 
+    /**
+	 * 
+	 * @return Number of actively pending long poll receives across all queues
+	 */
+    public long getNumberOfActivelyPendingLPReceives();
+    
+    /**
+     * 
+     * @return Number of outdated but not yet cleaned up long poll receives across all queues
+     */
+    public long getNumberOfDeadLPReceives();
+    
+    /**
+     * 
+     * @param queueArn
+     * @return Number of all long poll receives (active and dead) per queue
+     */
+    public long getNumberOfLPReceives(String queueArn);
 }

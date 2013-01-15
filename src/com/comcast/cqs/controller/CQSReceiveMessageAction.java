@@ -103,7 +103,19 @@ public class CQSReceiveMessageAction extends CQSAction {
 	
 	                ((HttpServletResponse)asyncEvent.getSuppliedResponse()).setStatus(httpCode);
 		            asyncEvent.getSuppliedResponse().getWriter().println(errXml);
-	
+		            
+		            CQSQueue queue = ((CMBHttpServletRequest)asyncEvent.getSuppliedRequest()).getQueue();
+		            
+		            if (queue != null) {
+		            	
+		            	ConcurrentLinkedQueue<AsyncContext> queueContextsList = CQSLongPollReceiver.contextQueues.get(queue.getArn());
+	            		AsyncContext asyncContext = asyncEvent.getAsyncContext(); 
+		            	
+	            		if (queueContextsList != null && asyncContext != null) {
+		            		queueContextsList.remove(asyncContext);
+		            	}
+		            }
+		            
 		            asyncEvent.getAsyncContext().complete();
 				}
 				
@@ -119,6 +131,18 @@ public class CQSReceiveMessageAction extends CQSAction {
 					((CMBHttpServletRequest)asyncEvent.getSuppliedRequest()).setActive(false);
 		        	String out = CQSMessagePopulator.getReceiveMessageResponseAfterSerializing(new ArrayList<CQSMessage>(), new ArrayList<String>());
 		            asyncEvent.getSuppliedResponse().getWriter().println(out);
+		            
+		            CQSQueue queue = ((CMBHttpServletRequest)asyncEvent.getSuppliedRequest()).getQueue();
+
+		            if (queue != null) {
+		            	
+		            	ConcurrentLinkedQueue<AsyncContext> queueContextsList = CQSLongPollReceiver.contextQueues.get(queue.getArn());
+	            		AsyncContext asyncContext = asyncEvent.getAsyncContext(); 
+		            	
+	            		if (queueContextsList != null && asyncContext != null) {
+		            		queueContextsList.remove(asyncContext);
+		            	}
+		            }
 					
 		            asyncEvent.getAsyncContext().complete();
 				}

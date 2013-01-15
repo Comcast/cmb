@@ -63,6 +63,7 @@ public class CQSLongPollTest {
     private final static String QUEUE_PREFIX = "TSTQ_"; 
     
     private static String queueUrl;
+    private static Map messageMap;
     
     @Before
     public void setup() throws Exception {
@@ -70,6 +71,8 @@ public class CQSLongPollTest {
         Util.initLog4jTest();
         CMBControllerServlet.valueAccumulator.initializeAllCounters();
         PersistenceFactory.reset();
+        
+        messageMap = new HashMap<String, String>();
         
         try {
         	
@@ -99,9 +102,23 @@ public class CQSLongPollTest {
 
             sqs = new AmazonSQSClient(credentialsUser);
             sqs.setEndpoint(CMBProperties.getInstance().getCQSServerUrl());
-
+            
             sns = new AmazonSNSClient(credentialsUser1);
             sns.setEndpoint(CMBProperties.getInstance().getCNSServerUrl());
+            
+            queueUrl = null;
+            
+    		String queueName = QUEUE_PREFIX + randomGenerator.nextLong();
+	        CreateQueueRequest createQueueRequest = new CreateQueueRequest(queueName);
+	        createQueueRequest.setAttributes(attributeParams);
+	        queueUrl = sqs.createQueue(createQueueRequest).getQueueUrl();
+	        
+	        ICQSMessagePersistence messagePersistence = RedisCachedCassandraPersistence.getInstance();
+			messagePersistence.clearQueue(queueUrl);
+			
+			logger.info("queue " + queueUrl + "created");
+	        
+	        Thread.sleep(1000);
             
         } catch (Exception ex) {
             logger.error("setup failed", ex);
@@ -131,18 +148,6 @@ public class CQSLongPollTest {
 
     	try {
 
-    		String queueName = QUEUE_PREFIX + randomGenerator.nextLong();
-	        CreateQueueRequest createQueueRequest = new CreateQueueRequest(queueName);
-	        createQueueRequest.setAttributes(attributeParams);
-	        queueUrl = sqs.createQueue(createQueueRequest).getQueueUrl();
-	        
-	        ICQSMessagePersistence messagePersistence = RedisCachedCassandraPersistence.getInstance();
-			messagePersistence.clearQueue(queueUrl);
-			
-			logger.info("queue " + queueUrl + "created");
-	        
-	        Thread.sleep(1000);
-
 			ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest();
 			receiveMessageRequest.setQueueUrl(queueUrl);
 			receiveMessageRequest.setMaxNumberOfMessages(1);
@@ -170,10 +175,6 @@ public class CQSLongPollTest {
 	        
 		} catch (Exception ex) {
 			ex.printStackTrace();
-		} finally {
-	        if (queueUrl != null) {
-	        	sqs.deleteQueue(new DeleteQueueRequest(queueUrl));
-	        }
 		}
     }
 
@@ -181,18 +182,6 @@ public class CQSLongPollTest {
     	
     	try {
 
-    		String queueName = QUEUE_PREFIX + randomGenerator.nextLong();
-	        CreateQueueRequest createQueueRequest = new CreateQueueRequest(queueName);
-	        createQueueRequest.setAttributes(attributeParams);
-	        queueUrl = sqs.createQueue(createQueueRequest).getQueueUrl();
-	        
-	        ICQSMessagePersistence messagePersistence = RedisCachedCassandraPersistence.getInstance();
-			messagePersistence.clearQueue(queueUrl);
-			
-			logger.info("queue " + queueUrl + "created");
-	        
-	        Thread.sleep(1000);
-	        
 			ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest();
 			receiveMessageRequest.setQueueUrl(queueUrl);
 			receiveMessageRequest.setMaxNumberOfMessages(1);
@@ -216,10 +205,6 @@ public class CQSLongPollTest {
 	        
 		} catch (Exception ex) {
 			ex.printStackTrace();
-		} finally {
-	        if (queueUrl != null) {
-	        	sqs.deleteQueue(new DeleteQueueRequest(queueUrl));
-	        }
 		}
     }
     
@@ -239,9 +224,16 @@ public class CQSLongPollTest {
     }
 
     private class MultiMessageSender extends Thread {
+    	int count;
+    	int delay;
+    	public MultiMessageSender(int count, int delay) {
+    		this.count = count;
+    		this.delay = delay;
+    	}
     	public void run() {
     		try {
-    			for (int i=0; i<5000; i++) {
+    			Thread.sleep(delay);
+    			for (int i=0; i<count; i++) {
     				sqs.sendMessage(new SendMessageRequest(queueUrl, "test message " + i));
     			}
 			} catch (Exception ex) {
@@ -256,25 +248,11 @@ public class CQSLongPollTest {
     	
     	try {
 
-    		String queueName = QUEUE_PREFIX + randomGenerator.nextLong();
-	        CreateQueueRequest createQueueRequest = new CreateQueueRequest(queueName);
-	        createQueueRequest.setAttributes(attributeParams);
-	        queueUrl = sqs.createQueue(createQueueRequest).getQueueUrl();
-	        
-	        ICQSMessagePersistence messagePersistence = RedisCachedCassandraPersistence.getInstance();
-			messagePersistence.clearQueue(queueUrl);
-			
-			logger.info("queue " + queueUrl + "created");
-	        
-	        Thread.sleep(1000);
-	        
-	        (new MultiMessageSender()).start();
+	        (new MultiMessageSender(5000,0)).start();
 
 	        int messageCounter = 0;
 	        
 	        long begin = System.currentTimeMillis();
-	        
-	        Map receivedMessages = new HashMap<String, String>();
 	        
 	        while (messageCounter < 5000) {
 	        	
@@ -288,7 +266,7 @@ public class CQSLongPollTest {
 				
 				ReceiveMessageResult receiveMessageResult = sqs.receiveMessage(receiveMessageRequest);
 				messageCounter += receiveMessageResult.getMessages().size();
-				receivedMessages.put(receiveMessageResult.getMessages().get(0).getBody(), "");
+				messageMap.put(receiveMessageResult.getMessages().get(0).getBody(), "");
 				
 				DeleteMessageRequest deleteMessageRequest = new DeleteMessageRequest();
 				deleteMessageRequest.setQueueUrl(queueUrl);
@@ -300,14 +278,10 @@ public class CQSLongPollTest {
 	        
 	        logger.info("duration=" + (end-begin));
 	        
-	        assertTrue("wrong number of messages: " + receivedMessages.size(), receivedMessages.size() == 5000);
+	        assertTrue("wrong number of messages: " + messageMap.size(), messageMap.size() == 5000);
 	        
 		} catch (Exception ex) {
 			ex.printStackTrace();
-		} finally {
-	        if (queueUrl != null) {
-	        	sqs.deleteQueue(new DeleteQueueRequest(queueUrl));
-	        }
 		}
     }
 
@@ -325,18 +299,6 @@ public class CQSLongPollTest {
     public void testInvalidParameters() {
 
     	try {
-
-    		String queueName = QUEUE_PREFIX + randomGenerator.nextLong();
-	        CreateQueueRequest createQueueRequest = new CreateQueueRequest(queueName);
-	        createQueueRequest.setAttributes(attributeParams);
-	        queueUrl = sqs.createQueue(createQueueRequest).getQueueUrl();
-	        
-	        ICQSMessagePersistence messagePersistence = RedisCachedCassandraPersistence.getInstance();
-			messagePersistence.clearQueue(queueUrl);
-			
-			logger.info("queue " + queueUrl + "created");
-	        
-	        Thread.sleep(1000);
 
 			ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest();
 			receiveMessageRequest.setQueueUrl(queueUrl);
@@ -372,15 +334,72 @@ public class CQSLongPollTest {
 	        
 		} catch (Exception ex) {
 			ex.printStackTrace();
-		} finally {
-	        if (queueUrl != null) {
-	        	sqs.deleteQueue(new DeleteQueueRequest(queueUrl));
+		}
+    }
+    
+    private class MessageReceiver extends Thread {
+    	
+    	public void run() {
+    		
+    		try {
+    	    
+    			ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest();
+    			receiveMessageRequest.setQueueUrl(queueUrl);
+    			receiveMessageRequest.setMaxNumberOfMessages(1);
+    			receiveMessageRequest.setWaitTimeSeconds(20);
+    			
+    			ReceiveMessageResult receiveMessageResult = sqs.receiveMessage(receiveMessageRequest);
+    			
+    			if (receiveMessageResult.getMessages().size() == 1) {
+    				
+    				messageMap.put(receiveMessageResult.getMessages().get(0).getBody(), "");
+    			
+	    			DeleteMessageRequest deleteMessageRequest = new DeleteMessageRequest();
+	    			deleteMessageRequest.setQueueUrl(queueUrl);
+	    			deleteMessageRequest.setReceiptHandle(receiveMessageResult.getMessages().get(0).getReceiptHandle());
+	    			sqs.deleteMessage(deleteMessageRequest);
+    			}
+    			
+			} catch (Exception ex) {
+				logger.error("error", ex);
+			}
+    	}
+    }
+    
+    @Test
+    public void testConcurrentLPRequests() {
+    	
+    	try {
+
+	        // apparently there is a limit of 50 concurrent operations in aws sdk 
+	        
+	        int numMessages = 25;
+	        
+	        for (int i=0; i<numMessages; i++) {
+	        	new MessageReceiver().start();
 	        }
+	        
+	        Thread.sleep(2000);
+	        
+	    	for (int i=0; i<numMessages; i++) {
+				sqs.sendMessage(new SendMessageRequest(queueUrl, "test message " + i));
+			}
+	    	
+	    	Thread.sleep(1000);
+	    	
+	    	assertTrue("Wrong number of messages: " + messageMap.size(), messageMap.size() == numMessages);
+    	
+    	} catch (Exception ex) {
+			ex.printStackTrace();
 		}
     }
 
     @After    
     public void tearDown() {
         CMBControllerServlet.valueAccumulator.deleteAllCounters();
+        
+        if (queueUrl != null) {
+        	sqs.deleteQueue(new DeleteQueueRequest(queueUrl));
+        }
     }    
 }
