@@ -34,6 +34,8 @@ public class CMBProperties {
 	    SYNC, ASYNC 
 	}
 	
+	private final String cmbDataCenter;
+	
 	private final IO_MODE cnsIOMode;
 
 	private final int cqsLongPollPort;
@@ -173,6 +175,8 @@ public class CMBProperties {
 			
 			FileInputStream fileStream = new FileInputStream(file);
 			props.load(fileStream);
+			
+			cmbDataCenter = props.getProperty("cmb.dc.name", "default");
 			
 			cqsLongPollPort = Integer.parseInt(props.getProperty("cmb.cqs.longpoll.port", "5555"));
 			cqsLongPollEnabled = Boolean.parseBoolean(props.getProperty("cmb.cqs.longpoll.enable", "true"));
@@ -658,5 +662,9 @@ public class CMBProperties {
 
 	public boolean isCqsLongPollEnabled() {
 		return cqsLongPollEnabled;
+	}
+
+	public String getCmbDataCenter() {
+		return cmbDataCenter;
 	}
 }

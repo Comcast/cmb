@@ -88,7 +88,13 @@ public class CNSGetWorkerStatsAction extends CNSAction {
 					stats.setMode(row.getColumnSlice().getColumnByName("mode").getValue());
 				}
 
-				statsList.add(stats);
+				if (row.getColumnSlice().getColumnByName("dataCenter") != null) {
+					stats.setDataCenter(row.getColumnSlice().getColumnByName("dataCenter").getValue());
+				}
+
+				if (stats.getDataCenter() != null && stats.getDataCenter().equals(CMBProperties.getInstance().getCmbDataCenter())) {
+					statsList.add(stats);
+				}
 			}
 		}
 		

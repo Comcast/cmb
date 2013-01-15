@@ -111,7 +111,7 @@ public class CNSWorkerStatePageServlet extends AdminServletBase {
 			out.println("<h2 align='left'>CNS Worker Stats</h2>");
 			
 			out.println("<span class='simple'><table border='1'>");
-			out.println("<tr><th>Host</th><th>Jmx Port</th><th>Mode</th><th>Msg Published</th>");
+			out.println("<tr><th>Host</th><th>Jmx Port</th><th>Mode</th><th>Data Center</th><th>Msg Published</th>");
 			out.println("<th>Producer Heartbeat</th><th>Active</th><th>Consumer Heartbeat</th><th>Active</th>");
 			out.println("<th>Delivery Queue Size</th><th>Redelivery Queue Size</th><th>Consumer Overloaded</th><th>Cqs Service Available</th><th>Http Pool Size</th><th></th><th></th></tr>");
 
@@ -131,6 +131,8 @@ public class CNSWorkerStatePageServlet extends AdminServletBase {
 				out.println("<td>"+XmlUtil.getCurrentLevelTextValue(stats, "JmxPort")+"</td>");
 				String mode = XmlUtil.getCurrentLevelTextValue(stats, "Mode");
 				out.println("<td>"+mode+"</td>");
+				String dataCenter = XmlUtil.getCurrentLevelTextValue(stats, "DataCenter");
+				out.println("<td>"+dataCenter+"</td>");
 				out.println("<td>"+XmlUtil.getCurrentLevelTextValue(stats, "NumPublishedMessages")+"</td>");
 				out.println("<td>"+new Date(Long.parseLong(XmlUtil.getCurrentLevelTextValue(stats, "ProducerTimestamp")))+"</td>");
 				boolean activeProducer = Boolean.parseBoolean(XmlUtil.getCurrentLevelTextValue(stats, "ActiveProducer"));

@@ -134,7 +134,7 @@ public class CNSEndpointPublisherJobProducer implements CNSPublisherPartitionRun
 	    
 	    try {
 
-	        if (CNSPublisher.lastProducerMinute.compareAndSet(ts1/(1000*60)-1, ts1/(1000*60))) {
+            if (CNSPublisher.lastProducerMinute.getAndSet(ts1/(1000*60)) != ts1/(1000*60)) {
                 
 	        	String hostAddress = InetAddress.getLocalHost().getHostAddress();
                 logger.info("event=ping version=" + CMBControllerServlet.VERSION + " ip=" + hostAddress);
@@ -144,6 +144,7 @@ public class CNSEndpointPublisherJobProducer implements CNSPublisherPartitionRun
 		        	values.put("producerTimestamp", System.currentTimeMillis() + "");
 		        	values.put("jmxport", System.getProperty("com.sun.management.jmxremote.port", "0"));
 		        	values.put("mode", CNSPublisher.getModeString());
+		        	values.put("dataCenter", CMBProperties.getInstance().getCmbDataCenter());
 	                CNSPublisher.cassandraHandler.insertOrUpdateRow(hostAddress, "CNSWorkers", values, HConsistencyLevel.QUORUM);
 	        	} catch (Exception ex) {
 	        		logger.warn("event=ping_glitch", ex);

@@ -32,6 +32,7 @@ public class CNSWorkerStatsPopulator {
 			res += "\t\t\t<IpAddress>"+s.getIpAddress()+"</IpAddress>\n";
 			res += "\t\t\t<JmxPort>"+s.getJmxPort()+"</JmxPort>\n";
 			res += "\t\t\t<Mode>"+s.getMode()+"</Mode>\n";
+			res += "\t\t\t<DataCenter>"+s.getDataCenter()+"</DataCenter>\n";
 			res += "\t\t\t<NumPublishedMessages>"+s.getNumPublishedMessages()+"</NumPublishedMessages>\n";
 			res += "\t\t\t<ProducerTimestamp>"+s.getProducerTimestamp()+"</ProducerTimestamp>\n";
 			res += "\t\t\t<ActiveProducer>"+s.isProducerActive()+"</ActiveProducer>\n";

@@ -53,8 +53,8 @@ public class CNSPublisher {
     
     // used for ping
     
-    public static volatile AtomicLong lastProducerMinute = new AtomicLong(System.currentTimeMillis()/(1000*60)); 
-    public static volatile AtomicLong lastConsumerMinute = new AtomicLong(System.currentTimeMillis()/(1000*60)); 
+    public static volatile AtomicLong lastProducerMinute = new AtomicLong(0); 
+    public static volatile AtomicLong lastConsumerMinute = new AtomicLong(0); 
     
 	public static volatile CassandraPersistence cassandraHandler = new CassandraPersistence(CMBProperties.getInstance().getCMBCNSKeyspace());
     
