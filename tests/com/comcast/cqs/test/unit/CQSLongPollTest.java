@@ -143,6 +143,11 @@ public class CQSLongPollTest {
     	}
     }
     
+
+    /**
+     * Simple functional test: Call receive() with 20 sec TO, then 5 sec later call send()
+     * and check if message is received exactly once after around 5 sec.
+     */
     @Test
     public void testLongPoll() {
 
@@ -169,15 +174,57 @@ public class CQSLongPollTest {
 			
 			assertTrue("Wrong message content", receiveMessageResult.getMessages().get(0).getBody().equals("test message"));
 			
-			assertTrue("Message came back too fast: " + (end-start) + " ms", end-start >= 4900);
+			assertTrue("Message came back too fast: " + (end-start) + " ms", end-start >= 4750);
 			
-			assertTrue("Message came back too slow: " + (end-start) + " ms", end-start <= 5100);
+			assertTrue("Message came back too slow: " + (end-start) + " ms", end-start <= 5250);
+	        
+		} catch (Exception ex) {
+			ex.printStackTrace();
+		}
+    }
+    
+    /**
+     * Simple functional test: Like testLongPoll above but in this test send() happens before
+     * receive(). Here we ensure that the message is received immediately despite a long poll
+     * timeout of 20 sec.
+     */
+    @Test
+    public void testLongPollNoDelay() {
+
+    	try {
+
+			ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest();
+			receiveMessageRequest.setQueueUrl(queueUrl);
+			receiveMessageRequest.setMaxNumberOfMessages(1);
+			receiveMessageRequest.setWaitTimeSeconds(20);
+			
+			long start = System.currentTimeMillis();
+			
+            sqs.sendMessage(new SendMessageRequest(queueUrl, "test message"));
+			
+			logger.info("calling receive message");
+			
+			ReceiveMessageResult receiveMessageResult = sqs.receiveMessage(receiveMessageRequest);
+			
+			logger.info("receive message returns");
+			
+			long end = System.currentTimeMillis();
+			
+			assertTrue("No message received", receiveMessageResult.getMessages().size() == 1);
+			
+			assertTrue("Wrong message content", receiveMessageResult.getMessages().get(0).getBody().equals("test message"));
+			
+			assertTrue("Message came back too slow: " + (end-start) + " ms", end-start <= 250);
 	        
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		}
     }
 
+    /**
+     * Test if long poll calls timeout after desired periods of wait time (e.g. after 1, 5, 20 sec) and if
+     * the normal empty response comes back indicating no messages available.
+     */
     private void testLongPollTimeout(int timeoutSecs) {
     	
     	try {
@@ -242,6 +289,13 @@ public class CQSLongPollTest {
     	}
     }
     
+    /** 
+     * Single-threaded load test, with one thread sending 5000 messages and another thread receiving
+     * messages. Test verifies that 5000 unique messages are received with no duplicates (all 5000
+     * messages have different content to spot duplicates). Test can be benchmarked against sending 
+     * and receiving 5000 messages without using the long poll feature (WaitTime parameter not set).
+     */
+    
     private void testLongPollLoad(int timeoutSecs) {
     	
     	// set timeoutSecs to 0 to test traditional polling receives (mainly for benchmarking)
@@ -295,6 +349,10 @@ public class CQSLongPollTest {
     	testLongPollLoad(0);
     }   
     
+    /**
+     * Functional test to check if correct errors are produced for invalid parameters. So far we only
+     * test WaitSeconds > 20. Other tests could include WaitSeconds < 1 or WaitSeconds not an integer.
+     */
     @Test
     public void testInvalidParameters() {
 
@@ -366,6 +424,11 @@ public class CQSLongPollTest {
     	}
     }
     
+    /**
+     * Multi-threaded load test. This test launches 25 concurrent message receivers each of them consecutively
+     * calling receive() with a TO of 20 sec. After a dealy of 2 sec a single threaded messages sender starts 
+     * sending 25 seconds. Test verifies that 25 unique messages are received. 
+     */
     @Test
     public void testConcurrentLPRequests() {
     	
