@@ -157,5 +157,15 @@
     <servlet-mapping>
     	<servlet-name>CQSQueuePermissionsPage</servlet-name>
     	<url-pattern>/CQSUser/PERMISSIONS/*</url-pattern>
-    </servlet-mapping>   
+    </servlet-mapping>
+
+	<servlet>
+		<servlet-name>CQSAPIStatePageServlet</servlet-name>
+		<servlet-class>com.comcast.cqs.controller.CQSAPIStatePageServlet</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>CQSAPIStatePageServlet</servlet-name>
+		<url-pattern>/CQSAPIState/*</url-pattern>
+	</servlet-mapping>
+    
 </web-app>

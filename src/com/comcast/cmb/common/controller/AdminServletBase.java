@@ -59,6 +59,7 @@ public abstract class AdminServletBase extends HttpServlet {
 	public static final String cqsAdminUrl = cqsAdminBaseUrl + "ADMIN";
 	
 	public static final String cnsServiceBaseUrl = CMBProperties.getInstance().getCNSServerUrl();
+	public static final String cqsServiceBaseUrl = CMBProperties.getInstance().getCQSServerUrl();
 	
     protected volatile User user = null;
     

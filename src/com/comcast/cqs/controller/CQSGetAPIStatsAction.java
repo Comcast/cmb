@@ -132,27 +132,6 @@ public class CQSGetAPIStatsAction extends CQSAction {
 						}
 					}
 
-					/*Integer deliveryQueueSize = (Integer)mbeanConn.getAttribute(cnsWorkerMonitor, "DeliveryQueueSize");
-					stats.setDeliveryQueueSize(deliveryQueueSize);
-					
-					Integer redeliveryQueueSize = (Integer)mbeanConn.getAttribute(cnsWorkerMonitor, "RedeliveryQueueSize");
-					stats.setRedeliveryQueueSize(redeliveryQueueSize);
-					
-					Boolean consumerOverloaded = (Boolean)mbeanConn.getAttribute(cnsWorkerMonitor, "ConsumerOverloaded");
-					stats.setConsumerOverloaded(consumerOverloaded);
-					
-					Integer numPublishedMessages = (Integer)mbeanConn.getAttribute(cnsWorkerMonitor, "NumPublishedMessages");
-					stats.setNumPublishedMessages(numPublishedMessages);
-					
-					Map<String, Integer> errorCountForEndpoints = (Map<String, Integer>)mbeanConn.getAttribute(cnsWorkerMonitor, "RecentErrorCountForEndpoints");
-					stats.setErrorCountForEndpoints(errorCountForEndpoints);
-
-					Boolean cqsServiceAvailable = (Boolean)mbeanConn.getAttribute(cnsWorkerMonitor, "CQSServiceAvailable");
-					stats.setCqsServiceAvailable(cqsServiceAvailable);
-					
-					Integer numPooledHttpConnections = (Integer)mbeanConn.getAttribute(cnsWorkerMonitor, "NumPooledHttpConnections");
-					stats.setNumPooledHttpConnections(numPooledHttpConnections);*/
-
 				} catch (Exception ex) {
 
 					logger.warn("event=failed_to_connect_to_jmx_server url=" + url);

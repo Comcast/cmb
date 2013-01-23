@@ -97,6 +97,7 @@ public class CQSLongPollReceiver {
     // optimize when to send notifications
     // get rid of unneccessary worker pool
     // sensible tcp settings for client and server
+    // stats, clear and manage apis should require admin user but should not require signatures
     // multiple workers / api servers per host?
     //
     

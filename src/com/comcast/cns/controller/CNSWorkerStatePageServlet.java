@@ -171,7 +171,7 @@ public class CNSWorkerStatePageServlet extends AdminServletBase {
 				}
 			}
 			
-			out.println("</table><span>");
+			out.println("</table></span>");
 			
 			if (endpointErrorCounts.size() > 0) {
 			
