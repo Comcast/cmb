@@ -19,7 +19,10 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import com.comcast.cmb.common.model.User;
+import com.comcast.cmb.common.persistence.CassandraPersistence;
+import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cqs.controller.CQSAction;
+import com.comcast.cqs.persistence.RedisPayloadCacheCassandraPersistence;
 
 /**
  * Provide a basic health-check URL for load-balancers to hit to monitor whether service is up and version
@@ -33,9 +36,53 @@ public class HealthCheckShallow extends CQSAction {
 
     @Override
     public boolean doAction(User user, HttpServletRequest request, HttpServletResponse response) throws Exception {        
-        response.setStatus(HttpServletResponse.SC_OK);
-        response.getOutputStream().print("<HealthCheckShallowResponse>CNS/CQS Service Version " + CMBControllerServlet.VERSION + " Up</HealthCheckShallowResponse>");
+        
+    	
+    	boolean healthy = true;
+        
+        StringBuffer sb = new StringBuffer("");
+        
+        sb.append("<HealthCheckShallowResponse>\n");
+        sb.append("\t<Version>" + CMBControllerServlet.VERSION + "</Version>\n");
+        
+        try {
+        	if (RedisPayloadCacheCassandraPersistence.isAlive()) {
+        		sb.append("\t<Redis>OK</Redis>\n");
+        	} else {
+        		sb.append("\t<Redis>Some or all shards down.</Redis>\n");
+        		healthy = false;
+        	}
+        } catch (Exception ex) {
+    		sb.append("\t<Redis>Cache unavailable: "+ex.getMessage()+"</Redis>\n");
+    		healthy = false;
+        }
+        
+        try {
+        	
+        	CassandraPersistence cassandra = new CassandraPersistence(CMBProperties.getInstance().getCMBCommonKeyspace());
+        	
+        	if (cassandra.isAlive()) {
+        		sb.append("\t<Cassandra>OK</Cassandra>\n");
+        	} else {
+        		sb.append("\t<Cassandra>Ring unavailable.</Cassandra>\n");
+        		healthy = false;
+        	}
+        } catch (Exception ex) {
+    		sb.append("\t<Cassandra>Ring unavailable: "+ex.getMessage()+"</Cassandra>\n");
+    		healthy = false;
+        }
+
+        sb.append("</HealthCheckShallowResponse>");
+        
+    	if (healthy) {
+    		response.setStatus(HttpServletResponse.SC_OK);
+    	} else {
+    		response.setStatus(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
+    	}
+
+    	response.getOutputStream().print(sb.toString());
         response.flushBuffer();
+        
         return true;
     }
     

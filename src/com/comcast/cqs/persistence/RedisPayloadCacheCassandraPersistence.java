@@ -35,7 +35,6 @@ import java.util.TreeSet;
 import org.apache.log4j.Logger;
 
 import redis.clients.jedis.Jedis;
-import redis.clients.jedis.JedisShardInfo;
 import redis.clients.jedis.ShardedJedis;
 import redis.clients.jedis.Transaction;
 import redis.clients.jedis.exceptions.JedisException;
@@ -124,6 +123,38 @@ public class RedisPayloadCacheCassandraPersistence implements ICQSMessagePersist
         }
     }
     
+    public static boolean isAlive() {
+        
+    	boolean brokenJedis = false;
+        ShardedJedis jedis = RedisCachedCassandraPersistence.getResource();
+        
+        try {
+        
+        	Collection<Jedis> shards = jedis.getAllShards();
+        	
+        	boolean allShardsActive = true;
+        	
+        	for (Jedis shard : shards) {
+        		shard.set("test", "test");
+        		allShardsActive &= shard.get("test").equals("test");
+        	}
+        	
+        	return allShardsActive;
+        	
+        } catch (JedisException ex) {
+        
+        	brokenJedis = true;
+            throw ex;
+        
+        } finally {
+            RedisCachedCassandraPersistence.returnResource(jedis, brokenJedis);
+        }
+    }
+
+    
+    /**
+     * Clear cache across all shards. Useful for data center fail-over scenarios.
+     */
     public static void flushAll() {
         
     	boolean brokenJedis = false;
@@ -147,6 +178,10 @@ public class RedisPayloadCacheCassandraPersistence implements ICQSMessagePersist
         }
     }
     
+    /**
+     * Get number of redis shards
+     * @return number of redis shards
+     */
     public static int getNumberOfShards() {
         
     	boolean brokenJedis = false;
@@ -162,6 +197,10 @@ public class RedisPayloadCacheCassandraPersistence implements ICQSMessagePersist
         }
     }
 
+    /**
+     * Get all redis shard infos
+     * @return list of hash maps, one for each shard
+     */
     public static List<Map<String, String>> getInfo() {
         
     	boolean brokenJedis = false;

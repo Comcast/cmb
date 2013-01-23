@@ -53,6 +53,7 @@ import me.prettyprint.hector.api.beans.HSuperColumn;
 import me.prettyprint.hector.api.beans.OrderedRows;
 import me.prettyprint.hector.api.beans.Row;
 import me.prettyprint.hector.api.beans.SuperSlice;
+import me.prettyprint.hector.api.ddl.KeyspaceDefinition;
 import me.prettyprint.hector.api.exceptions.HectorException;
 import me.prettyprint.hector.api.factory.HFactory;
 import me.prettyprint.hector.api.mutation.MutationResult;
@@ -161,6 +162,24 @@ public class CassandraPersistence {
 		
 		long ts2 = System.currentTimeMillis();
 		CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CassandraTime, (ts2 - ts1));
+	}
+	
+	public boolean isAlive() {
+		
+		boolean alive = true;
+		
+		List<KeyspaceDefinition> keyspaces = cluster.describeKeyspaces();
+		List<String> names = new ArrayList<String>();
+		
+		for (KeyspaceDefinition k : keyspaces) {
+			names.add(k.getName());
+		}
+		
+		alive &= names.contains(CMBProperties.getInstance().getCMBCQSKeyspace());
+		alive &= names.contains(CMBProperties.getInstance().getCMBCNSKeyspace());
+		alive &= names.contains(CMBProperties.getInstance().getCMBCommonKeyspace());
+		
+		return alive;
 	}
 	
 	public Keyspace getKeySpace(HConsistencyLevel consistencyLevel) {
