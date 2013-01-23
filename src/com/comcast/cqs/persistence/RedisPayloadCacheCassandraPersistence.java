@@ -22,6 +22,8 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.UnsupportedEncodingException;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -33,6 +35,7 @@ import java.util.TreeSet;
 import org.apache.log4j.Logger;
 
 import redis.clients.jedis.Jedis;
+import redis.clients.jedis.JedisShardInfo;
 import redis.clients.jedis.ShardedJedis;
 import redis.clients.jedis.Transaction;
 import redis.clients.jedis.exceptions.JedisException;
@@ -58,6 +61,7 @@ import com.comcast.cqs.persistence.RedisCachedCassandraPersistence.SetFailedExce
  * Class is thread-safe
  */
 public class RedisPayloadCacheCassandraPersistence implements ICQSMessagePersistence {
+	
     private static final Logger logger = Logger.getLogger(RedisPayloadCacheCassandraPersistence.class);
     
     private volatile ICQSMessagePersistenceIdSequence idSeq;
@@ -120,6 +124,88 @@ public class RedisPayloadCacheCassandraPersistence implements ICQSMessagePersist
         }
     }
     
+    public static void flushAll() {
+        
+    	boolean brokenJedis = false;
+        ShardedJedis jedis = RedisCachedCassandraPersistence.getResource();
+        
+        try {
+        
+        	Collection<Jedis> shards = jedis.getAllShards();
+        	
+        	for (Jedis shard : shards) {
+        		shard.flushAll();
+        	}
+        	
+        } catch (JedisException ex) {
+        
+        	brokenJedis = true;
+            throw ex;
+        
+        } finally {
+            RedisCachedCassandraPersistence.returnResource(jedis, brokenJedis);
+        }
+    }
+    
+    public static int getNumberOfShards() {
+        
+    	boolean brokenJedis = false;
+        ShardedJedis jedis = RedisCachedCassandraPersistence.getResource();
+        
+        try {
+        	return jedis.getAllShards().size();
+        } catch (JedisException ex) {
+        	brokenJedis = true;
+            throw ex;
+        } finally {
+            RedisCachedCassandraPersistence.returnResource(jedis, brokenJedis);
+        }
+    }
+
+    public static List<Map<String, String>> getInfo() {
+        
+    	boolean brokenJedis = false;
+        ShardedJedis jedis = RedisCachedCassandraPersistence.getResource();
+        List<Map<String, String>> shardInfos = new ArrayList<Map<String, String>>();
+        
+        try {
+        
+        	Collection<Jedis> shards = jedis.getAllShards();
+
+            for (Jedis shard : shards) {
+        		
+            	String info = shard.info();
+        		String lines[] = info.split("\n");
+        		Map<String, String> entries = new HashMap<String, String>();
+        		
+        		for (String line : lines) {
+        			
+        			if (line != null && line.length() > 0) {
+	        			
+        				String keyValue[] = line.split(":");
+	        			
+        				if (keyValue.length == 2) {
+	        				entries.put(keyValue[0], keyValue[1]);
+	        			}
+        			}
+        			
+        		}
+        		
+        		shardInfos.add(entries);
+        	}
+            
+            return shardInfos;
+
+        } catch (JedisException ex) {
+        
+        	brokenJedis = true;
+            throw ex;
+        
+        } finally {
+            RedisCachedCassandraPersistence.returnResource(jedis, brokenJedis);
+        }
+    }
+
     /**
      * Set the state for a payloadcache or throw exception if someone else beat us to it.
      * This is an atomic operation
@@ -500,6 +586,4 @@ public class RedisPayloadCacheCassandraPersistence implements ICQSMessagePersist
             throws PersistenceException, IOException, NoSuchAlgorithmException {
         return persistenceStorage.peekQueueRandom(queueUrl, length);
     }
-
-    
 }

@@ -15,6 +15,9 @@
  */
 package com.comcast.cqs.controller;
 
+import java.util.List;
+import java.util.Map;
+
 /**
  * Provide interface for CQS Monitoring
  * @author aseem
@@ -96,24 +99,41 @@ public interface CQSMonitorMBean {
 	 * 
 	 * @return Number of all long poll receives (active and dead) across all queues
 	 */
-    public long getNumberOfLPReceives();
+    public long getNumberOfLongPollReceives();
 
     /**
 	 * 
 	 * @return Number of actively pending long poll receives across all queues
 	 */
-    public long getNumberOfActivelyPendingLPReceives();
+    public long getNumberOfActivelyPendingLongPollReceives();
     
     /**
      * 
      * @return Number of outdated but not yet cleaned up long poll receives across all queues
      */
-    public long getNumberOfDeadLPReceives();
+    public long getNumberOfDeadLongPollReceives();
     
     /**
      * 
      * @param queueArn
      * @return Number of all long poll receives (active and dead) per queue
      */
-    public long getNumberOfLPReceives(String queueArn);
+    public long getNumberOfLongPollReceives(String queueArn);
+    
+    /**
+     * 
+     * @return Number of redis shards
+     */
+    public int getNumberOfRedisShards();
+    
+    /**
+     * 
+     * @return Composite info string of all redis shards
+     */
+    public List<Map<String, String>> getRedisShardInfos();
+    
+    /**
+     * Clear entire redis cache
+     */
+    public void flushRedis();
 }

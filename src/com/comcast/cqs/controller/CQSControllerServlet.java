@@ -28,6 +28,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.log4j.Logger;
 
 import com.comcast.cmb.common.controller.CMBControllerServlet;
+import com.comcast.cmb.common.controller.ClearCache;
 import com.comcast.cmb.common.controller.HealthCheckShallow;
 import com.comcast.cmb.common.model.CMBPolicy;
 import com.comcast.cmb.common.model.User;
@@ -135,6 +136,7 @@ public class CQSControllerServlet extends CMBControllerServlet {
         final CQSClearQueueAction clearQueueAction = new CQSClearQueueAction();
         final CQSPeekMessageAction peekMessageAction = new CQSPeekMessageAction();
         final HealthCheckShallow healthCheckShallow = new HealthCheckShallow();
+        final ClearCache clearCache = new ClearCache();
         
         actionMap = new HashMap<String, CQSAction>() {{
             put(createQueueAction.getName(), createQueueAction);
@@ -156,6 +158,7 @@ public class CQSControllerServlet extends CMBControllerServlet {
             put(setQueueAttributesAction.getName(), setQueueAttributesAction);
             put(clearQueueAction.getName(), clearQueueAction);
             put(healthCheckShallow.getName(), healthCheckShallow);
+            put(clearCache.getName(), clearCache);
         }};
     }
     
@@ -249,7 +252,7 @@ public class CQSControllerServlet extends CMBControllerServlet {
             	
         CQSQueue queue = null;
         
-        if (!action.equals("CreateQueue") && !action.equals("healthCheckShallow") && !action.equals("GetQueueUrl") && !action.equals("ListQueues")) {
+        if (!action.equals("CreateQueue") && !action.equals("healthCheckShallow") && !action.equals("clearCache") && !action.equals("GetQueueUrl") && !action.equals("ListQueues")) {
             queue = getCachedQueue(user, request);
     	}
 

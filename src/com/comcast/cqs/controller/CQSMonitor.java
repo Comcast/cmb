@@ -18,6 +18,7 @@ package com.comcast.cqs.controller;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -27,6 +28,7 @@ import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.RollingWindowCapture;
 import com.comcast.cmb.common.util.RollingWindowCapture.PayLoad;
 import com.comcast.cqs.persistence.RedisCachedCassandraPersistence;
+import com.comcast.cqs.persistence.RedisPayloadCacheCassandraPersistence;
 import com.comcast.cqs.util.Util;
 
 /**
@@ -282,7 +284,7 @@ public class CQSMonitor implements CQSMonitorMBean {
     }
 
 	@Override
-	public long getNumberOfActivelyPendingLPReceives() {
+	public long getNumberOfActivelyPendingLongPollReceives() {
 		
 		if (CQSLongPollReceiver.contextQueues == null) {
 			return 0;
@@ -313,7 +315,7 @@ public class CQSMonitor implements CQSMonitorMBean {
 	}
 
 	@Override
-	public long getNumberOfLPReceives() {
+	public long getNumberOfLongPollReceives() {
 
 		if (CQSLongPollReceiver.contextQueues == null) {
 			return 0;
@@ -329,7 +331,7 @@ public class CQSMonitor implements CQSMonitorMBean {
 	}
 	
 	@Override
-	public long getNumberOfDeadLPReceives() {
+	public long getNumberOfDeadLongPollReceives() {
 
 		if (CQSLongPollReceiver.contextQueues == null) {
 			return 0;
@@ -360,12 +362,27 @@ public class CQSMonitor implements CQSMonitorMBean {
 	}
 
 	@Override
-	public long getNumberOfLPReceives(String queueArn) {
+	public long getNumberOfLongPollReceives(String queueArn) {
 
 		if (CQSLongPollReceiver.contextQueues == null) {
 			return 0;
 		}
 		
 		return CQSLongPollReceiver.contextQueues.get(queueArn).size();
+	}
+
+	@Override
+	public int getNumberOfRedisShards() {
+		return RedisPayloadCacheCassandraPersistence.getNumberOfShards();
+	}
+
+	@Override
+	public List<Map<String, String>> getRedisShardInfos() {
+		return RedisPayloadCacheCassandraPersistence.getInfo();
+	}
+
+	@Override
+	public void flushRedis() {
+		RedisPayloadCacheCassandraPersistence.flushAll();
 	}
 }

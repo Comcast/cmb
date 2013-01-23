@@ -24,6 +24,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import com.comcast.cmb.common.controller.Action;
 import com.comcast.cmb.common.controller.CMBControllerServlet;
+import com.comcast.cmb.common.controller.ClearCache;
 import com.comcast.cmb.common.controller.HealthCheckShallow;
 import com.comcast.cmb.common.model.CMBPolicy;
 import com.comcast.cmb.common.model.User;
@@ -106,9 +107,10 @@ public class CNSControllerServlet extends CMBControllerServlet {
     	final CNSGetTopicAttributesAction getTopicAttributes = new CNSGetTopicAttributesAction();
     	final CNSAddPermissionAction addPermission = new CNSAddPermissionAction();
     	final CNSRemovePermissionAction removePermission = new CNSRemovePermissionAction();
-    	final HealthCheckShallow healthCheckShallow = new HealthCheckShallow();
     	final CNSGetWorkerStatsAction getWorkerStats = new CNSGetWorkerStatsAction();
     	final CNSManageWorkerAction manageWorker = new CNSManageWorkerAction();
+    	final HealthCheckShallow healthCheckShallow = new HealthCheckShallow();
+        final ClearCache clearCache = new ClearCache();
     	
     	actionMap = new HashMap<String, Action>(){{
     	    put(confirmSubscription.getName(), confirmSubscription);    	    
@@ -129,6 +131,7 @@ public class CNSControllerServlet extends CMBControllerServlet {
     	    put(healthCheckShallow.getName(), healthCheckShallow);
     	    put(getWorkerStats.getName(), getWorkerStats);
     	    put(manageWorker.getName(), manageWorker);
+    	    put(clearCache.getName(), clearCache);
     	}};
     }
     

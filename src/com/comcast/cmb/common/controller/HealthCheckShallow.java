@@ -22,7 +22,7 @@ import com.comcast.cmb.common.model.User;
 import com.comcast.cqs.controller.CQSAction;
 
 /**
- * Provide a gasic health-check URL for load-balancers to hit to monitor weather service is up and version
+ * Provide a basic health-check URL for load-balancers to hit to monitor whether service is up and version
  * @author aseem
  */
 public class HealthCheckShallow extends CQSAction {
