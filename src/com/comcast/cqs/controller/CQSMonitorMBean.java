@@ -118,7 +118,7 @@ public interface CQSMonitorMBean {
      * @param queueArn
      * @return Number of all long poll receives (active and dead) per queue
      */
-    public long getNumberOfLongPollReceives(String queueArn);
+    public long getNumberOfLongPollReceivesForQueue(String queueArn);
     
     /**
      * 

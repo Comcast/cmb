@@ -122,6 +122,7 @@ public class CQSLongPollSender {
         		Map<String, String> values = new HashMap<String, String>();
 	        	values.put("listenerTimestamp", now + "");
 	        	values.put("port", CMBProperties.getInstance().getCqsLongPollPort() + "");
+	        	values.put("jmxport", System.getProperty("com.sun.management.jmxremote.port", "0"));
 	        	values.put("dataCenter", CMBProperties.getInstance().getCmbDataCenter());
                 cassandraHandler.insertOrUpdateRow(hostAddress, "CQSLongPollListeners", values, HConsistencyLevel.QUORUM);
 
@@ -148,7 +149,7 @@ public class CQSLongPollSender {
         				if (row.getColumnSlice().getColumnByName("dataCenter") != null) {
         					dataCenter = row.getColumnSlice().getColumnByName("dataCenter").getValue();
         				}
-
+        				
         				if (now-timestamp < 5*60*1000 && dataCenter.equals(CMBProperties.getInstance().getCmbDataCenter())) {
         					activelyLongPollingCQSApiServers.put(host, port);
         					logger.info("event=found_active_api_server host=" + host + " port=" + port + " data_center=" + dataCenter);

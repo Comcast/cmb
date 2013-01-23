@@ -91,9 +91,10 @@ public class CQSLongPollReceiver {
 	//
     // miscellaneous todos:
     //
-    // use dc flag to enforce dc locality, maybe do this for cns worker ping as well
     // deepen shallow heath check (to make sure redis and cassandra are available)
     // keep established tcp connections alive and reuse where possible (reuse netty channel if possible)
+    // long poll receive to check for messages on timeout
+    // optimize when to send notifications
     // get rid of unneccessary worker pool
     // sensible tcp settings for client and server
     // multiple workers / api servers per host?

@@ -135,6 +135,7 @@ public class CQSControllerServlet extends CMBControllerServlet {
         final CQSSetQueueAttributesAction setQueueAttributesAction = new CQSSetQueueAttributesAction();
         final CQSClearQueueAction clearQueueAction = new CQSClearQueueAction();
         final CQSPeekMessageAction peekMessageAction = new CQSPeekMessageAction();
+        final CQSGetAPIStatsAction getAPIStats = new CQSGetAPIStatsAction();
         final HealthCheckShallow healthCheckShallow = new HealthCheckShallow();
         final ClearCache clearCache = new ClearCache();
         
@@ -159,6 +160,7 @@ public class CQSControllerServlet extends CMBControllerServlet {
             put(clearQueueAction.getName(), clearQueueAction);
             put(healthCheckShallow.getName(), healthCheckShallow);
             put(clearCache.getName(), clearCache);
+            put(getAPIStats.getName(), getAPIStats);
         }};
     }
     
@@ -252,7 +254,7 @@ public class CQSControllerServlet extends CMBControllerServlet {
             	
         CQSQueue queue = null;
         
-        if (!action.equals("CreateQueue") && !action.equals("healthCheckShallow") && !action.equals("clearCache") && !action.equals("GetQueueUrl") && !action.equals("ListQueues")) {
+        if (!action.equals("CreateQueue") && !action.equals("healthCheckShallow") && !action.equals("clearCache") && !action.equals("GetQueueUrl") && !action.equals("ListQueues") && !action.equals("GetAPIStats")) {
             queue = getCachedQueue(user, request);
     	}
 

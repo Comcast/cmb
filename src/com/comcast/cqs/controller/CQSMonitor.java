@@ -24,12 +24,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.servlet.AsyncContext;
 
+import org.apache.log4j.Logger;
+
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.RollingWindowCapture;
 import com.comcast.cmb.common.util.RollingWindowCapture.PayLoad;
 import com.comcast.cqs.persistence.RedisCachedCassandraPersistence;
 import com.comcast.cqs.persistence.RedisPayloadCacheCassandraPersistence;
-import com.comcast.cqs.util.Util;
 
 /**
  * Implement the monitoring for CQS
@@ -40,6 +41,8 @@ import com.comcast.cqs.util.Util;
 public class CQSMonitor implements CQSMonitorMBean {
 
     public final static CQSMonitor Inst = new CQSMonitor();
+    
+    private static Logger logger = Logger.getLogger(CQSMonitor.class);
     
     public enum CacheType {
         QCache,
@@ -322,7 +325,7 @@ public class CQSMonitor implements CQSMonitorMBean {
 		}
 		
 		long count = 0;
-		
+
 		for (String queueArn : CQSLongPollReceiver.contextQueues.keySet()) {
 			count += CQSLongPollReceiver.contextQueues.get(queueArn).size();
 		}
@@ -362,7 +365,7 @@ public class CQSMonitor implements CQSMonitorMBean {
 	}
 
 	@Override
-	public long getNumberOfLongPollReceives(String queueArn) {
+	public long getNumberOfLongPollReceivesForQueue(String queueArn) {
 
 		if (CQSLongPollReceiver.contextQueues == null) {
 			return 0;
