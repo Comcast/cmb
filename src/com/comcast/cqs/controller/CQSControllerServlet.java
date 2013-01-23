@@ -254,7 +254,7 @@ public class CQSControllerServlet extends CMBControllerServlet {
             	
         CQSQueue queue = null;
         
-        if (!action.equals("CreateQueue") && !action.equals("healthCheckShallow") && !action.equals("clearCache") && !action.equals("GetQueueUrl") && !action.equals("ListQueues") && !action.equals("GetAPIStats")) {
+        if (!action.equals("CreateQueue") && !action.equals("HealthCheck") && !action.equals("ClearCache") && !action.equals("GetQueueUrl") && !action.equals("ListQueues") && !action.equals("GetAPIStats")) {
             queue = getCachedQueue(user, request);
     	}
 

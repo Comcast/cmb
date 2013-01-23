@@ -74,7 +74,7 @@ public class CQSAPIStatePageServlet extends AdminServletBase {
 		if (parameters.containsKey("ClearCache")) {
 			
 			try {
-				httpGet(cqsServiceBaseUrl + "?Action=clearCache&AWSAccessKeyId=" + cnsAdminUser.getAccessKey());
+				httpGet(cqsServiceBaseUrl + "?Action=ClearCache&AWSAccessKeyId=" + cnsAdminUser.getAccessKey());
 			} catch (Exception ex) {
 				logger.error("event=failed_to_clear_queues", ex);
 				throw new ServletException(ex);

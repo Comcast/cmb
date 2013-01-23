@@ -29,7 +29,7 @@ import com.comcast.cqs.persistence.RedisPayloadCacheCassandraPersistence;
 public class ClearCache extends CQSAction {
 
     public ClearCache() {
-        super("clearCache");
+        super("ClearCache");
     }
 
     @Override

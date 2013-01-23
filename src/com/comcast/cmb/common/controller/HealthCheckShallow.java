@@ -31,7 +31,7 @@ import com.comcast.cqs.persistence.RedisPayloadCacheCassandraPersistence;
 public class HealthCheckShallow extends CQSAction {
 
     public HealthCheckShallow() {
-        super("healthCheckShallow");
+        super("HealthCheck");
     }
 
     @Override
@@ -42,7 +42,7 @@ public class HealthCheckShallow extends CQSAction {
         
         StringBuffer sb = new StringBuffer("");
         
-        sb.append("<HealthCheckShallowResponse>\n");
+        sb.append("<HealthCheckResponse>\n");
         sb.append("\t<Version>" + CMBControllerServlet.VERSION + "</Version>\n");
         
         try {
@@ -72,7 +72,7 @@ public class HealthCheckShallow extends CQSAction {
     		healthy = false;
         }
 
-        sb.append("</HealthCheckShallowResponse>");
+        sb.append("</HealthCheckResponse>");
         
     	if (healthy) {
     		response.setStatus(HttpServletResponse.SC_OK);

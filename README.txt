@@ -118,6 +118,38 @@ Example response:
 </CreateQueueResponse> 
 
 --------------------------------------------------------------------------------------------
+- Multi-Data-Center Deployment and Failover (CQS)
+--------------------------------------------------------------------------------------------
+
+A CQS deployment consists of a Cassandra ring, one or more Redis shards and one or more
+Servlet API 3.0 compatible application servers (typically Tomcat or Jetty) to host the
+CQS REST API front end and Admin UI web site. A production deployment typically consists
+of two (or more) identical deployments in separate data centers with the ability to fail-
+over in case service in one data center becomes unavailable. 
+
+A small two-data-center deployment could look like this: One 8-Node Cassandra ring (4 nodes 
+in each data center), 2 independent redis shards per data center (four machines total), 2 
+redundant CQS API servers per data center (also 4 machines total). Each data center also 
+hosts a simple load balancer directing traffic to its two CQS API servers. One of the two
+data centers is the designated active data center while the second one operates in stand by
+mode. All CQS API calls are routed through a global load balancer which will direct all
+traffic to the local load balancer of the active data center.
+
+Every few seconds the global load balancer should call a health check API on the currently
+active CQS service. 
+
+http://primarycqsserviceurl/?Action=HealthCheck&AWSAccessKeyId=someaccesskey
+
+While the service is available this call will return some XML encoded information along
+with HTTP 200. Should any of the service components (App Server, Redis or Cassandra)
+fail the return code will change to HTTP 503. The global load balancer should detect 
+this and start directing all CQS traffic to the second data center. Before sending
+CQS request to the fail-over data center, the global load balancer should submit a
+clear cache request to make sure the Redis cache does not contain any stale data.
+
+http://primarycqsserviceurl/?Action=ClearCache&AWSAccessKeyId=someaccesskey
+
+--------------------------------------------------------------------------------------------
 - Installation Guide
 --------------------------------------------------------------------------------------------
 
@@ -456,8 +488,5 @@ Finally the admin UI provides a dashboard like view of all CNS workers at
    set.
    
 2. CMB requires Cassandra version 1.0.10 or higher or Cassandra version 1.1.X.
-
-3. The WaitTimeSeconds parameter in the ReceiveMessage API for long-poll-style requests
-   is currently not supported in CQS.
-   
+ 
 
