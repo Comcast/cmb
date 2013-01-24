@@ -16,6 +16,7 @@
  */
 package com.comcast.cmb.common.model;
 
+import com.amazonaws.util.BinaryUtils;
 import com.comcast.cmb.common.persistence.IUserPersistence;
 import com.comcast.cmb.common.util.AuthUtil;
 import com.comcast.cmb.common.util.AuthenticationException;
@@ -117,9 +118,16 @@ public class UserAuthModule implements IAuthModule {
         String accessKey = parameters.get("AWSAccessKeyId");
         
         if (accessKey == null && headers.containsKey("authorization")) {
+        	
         	String authorization = headers.get("authorization");
+        	
         	if (authorization.contains("Credential=") && authorization.contains("/")) {
+        		
         		accessKey = authorization.substring(authorization.indexOf("Credential=") + "Credential=".length(), authorization.indexOf("/"));
+        		
+        		if (CMBProperties.getInstance().getEnableSignatureAuth()) {
+                    throw new AuthenticationException(CMBErrorCodes.InvalidAccessKeyId, "AWS4 signatures currently not supported.");
+        		}
         	}
         }
         
