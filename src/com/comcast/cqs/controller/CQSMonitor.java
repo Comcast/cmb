@@ -21,11 +21,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import javax.servlet.AsyncContext;
 
 import org.apache.log4j.Logger;
 
+import com.comcast.cmb.common.controller.CMBControllerServlet;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.RollingWindowCapture;
 import com.comcast.cmb.common.util.RollingWindowCapture.PayLoad;
@@ -387,5 +389,21 @@ public class CQSMonitor implements CQSMonitorMBean {
 	@Override
 	public void flushRedis() {
 		RedisPayloadCacheCassandraPersistence.flushAll();
+	}
+
+	@Override
+	public Map<String, AtomicLong> getCallStats() {
+		return CMBControllerServlet.callStats;
+	}
+
+	@Override
+	public Map<String, AtomicLong> getCallFailureStats() {
+		return CMBControllerServlet.callFailureStats;
+	}
+
+	@Override
+	public void resetCallStats() {
+		CMBControllerServlet.callStats = new ConcurrentHashMap<String, AtomicLong>();
+		CMBControllerServlet.callFailureStats = new ConcurrentHashMap<String, AtomicLong>();
 	}
 }

@@ -28,7 +28,9 @@ public class CQSAPIStatsPopulator {
 		res +=  "\t<GetAPIStatsResult>\n";
 
 		for (CQSAPIStats s : stats) {
+			
 			res += "\t\t<Stats>\n";
+			
 			res += "\t\t\t<IpAddress>"+s.getIpAddress()+"</IpAddress>\n";
 			res += "\t\t\t<JmxPort>"+s.getJmxPort()+"</JmxPort>\n";
 			res += "\t\t\t<LongPollPort>"+s.getLongPollPort()+"</LongPollPort>\n";
@@ -37,6 +39,27 @@ public class CQSAPIStatsPopulator {
 			res += "\t\t\t<NumberOfLongPollReceives>"+s.getNumberOfLongPollReceives()+"</NumberOfLongPollReceives>\n";
 			res += "\t\t\t<NumberOfRedisKeys>"+s.getNumberOfRedisKeys()+"</NumberOfRedisKeys>\n";
 			res += "\t\t\t<NumberOfRedisShards>"+s.getNumberOfRedisShards()+"</NumberOfRedisShards>\n";
+			
+			res += "\t\t\t<CallStats>\n";
+			
+			if (s.getCallStats() != null) {
+				for (String action : s.getCallStats().keySet()) {
+					res += "\t\t\t\t<"+action+">"+s.getCallStats().get(action)+"</"+action+">\n";
+				}
+			}
+			
+			res += "\t\t\t</CallStats>\n";
+			
+			res += "\t\t\t<CallFailureStats>\n";
+			
+			if (s.getCallFailureStats() != null) {
+				for (String action : s.getCallFailureStats().keySet()) {
+					res += "\t\t\t\t<"+action+">"+s.getCallFailureStats().get(action)+"</"+action+">\n";
+				}
+			}
+			
+			res += "\t\t\t</CallFailureStats>\n";
+			
 			res += "\t\t</Stats>\n";
 		}
 

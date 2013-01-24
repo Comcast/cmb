@@ -17,6 +17,7 @@ package com.comcast.cqs.controller;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Provide interface for CQS Monitoring
@@ -136,4 +137,21 @@ public interface CQSMonitorMBean {
      * Clear entire redis cache
      */
     public void flushRedis();
+    
+    /**
+     * 
+     * @return
+     */
+    public Map<String, AtomicLong> getCallStats();
+    
+    /**
+     * 
+     * @return
+     */
+    public Map<String, AtomicLong> getCallFailureStats();
+    
+    /**
+     * 
+     */
+    public void resetCallStats();
 }

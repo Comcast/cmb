@@ -15,6 +15,9 @@
  */
 package com.comcast.cqs.model;
 
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
+
 public class CQSAPIStats {
 	
 	private String dataCenter;
@@ -33,6 +36,26 @@ public class CQSAPIStats {
 	
 	private int numberOfRedisShards;
 	
+	Map<String, AtomicLong> callStats;
+	
+	Map<String, AtomicLong> callFailureStats; 
+	
+	public Map<String, AtomicLong> getCallStats() {
+		return callStats;
+	}
+
+	public void setCallStats(Map<String, AtomicLong> callStats) {
+		this.callStats = callStats;
+	}
+
+	public Map<String, AtomicLong> getCallFailureStats() {
+		return callFailureStats;
+	}
+
+	public void setCallFailureStats(Map<String, AtomicLong> callFailureStats) {
+		this.callFailureStats = callFailureStats;
+	}
+
 	public int getNumberOfRedisShards() {
 		return numberOfRedisShards;
 	}

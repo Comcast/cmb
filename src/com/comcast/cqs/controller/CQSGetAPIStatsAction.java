@@ -18,6 +18,7 @@ package com.comcast.cqs.controller;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 
 import javax.management.MBeanServerConnection;
 import javax.management.ObjectName;
@@ -131,6 +132,14 @@ public class CQSGetAPIStatsAction extends CQSAction {
 							stats.setNumberOfRedisKeys(numKeys);
 						}
 					}
+					
+					Map<String, AtomicLong> callStats = (Map<String, AtomicLong>)mbeanConn.getAttribute(cqsAPIMonitor, "CallStats");
+					
+					stats.setCallStats(callStats);
+					
+					Map<String, AtomicLong> callFailureStats = (Map<String, AtomicLong>)mbeanConn.getAttribute(cqsAPIMonitor, "CallFailureStats");
+
+					stats.setCallFailureStats(callFailureStats);
 
 				} catch (Exception ex) {
 

@@ -40,7 +40,9 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Abstract class for all servlets
@@ -64,8 +66,12 @@ abstract public class CMBControllerServlet extends HttpServlet {
      * for a particular thread 
      */
     public final static ValueAccumulator valueAccumulator = new ValueAccumulator();
+    
     public final static String VERSION = "2.2.14";
 
+    public volatile static ConcurrentHashMap<String, AtomicLong> callStats;
+    public volatile static ConcurrentHashMap<String, AtomicLong> callFailureStats;
+    
     @Override    
     public void init() throws ServletException {
         try {
@@ -73,6 +79,8 @@ abstract public class CMBControllerServlet extends HttpServlet {
 	        	Util.initLog4j();
 	            CMBProperties.getInstance();
 	            workerPool = new ScheduledThreadPoolExecutor(CMBProperties.getInstance().getNumDeliveryHandlers());
+	            callStats = new ConcurrentHashMap<String, AtomicLong>();
+	            callFailureStats = new ConcurrentHashMap<String, AtomicLong>();
 	            initialized = true;
             }
         } catch (Exception ex) {
@@ -151,10 +159,6 @@ abstract public class CMBControllerServlet extends HttpServlet {
             	// Return code for ReceiveMessage() is number of messages received. If it is zero, do not write a log line to dial 
             	// down logging for CNS polling of producer and consumer queues.
             	
-            } else if (action != null && action.equals("GetQueueUrl") && user != null && user.getUserName().equals(CMBProperties.getInstance().getCnsUserName())) {
-            	
-            	// Do not log GetQueueUrl if cns internal user calls it to dial down logging for CNS polling of producer and consumer queues.
-            
             } else {
             
 	            logger.info(
@@ -185,6 +189,15 @@ abstract public class CMBControllerServlet extends HttpServlet {
 	                    (user != null ? " user_name=" + user.getUserName() : "")
 	                    
 	            ); 
+	            
+	            if (action != null && !action.equals("")) {
+		            
+		            callStats.putIfAbsent(action, new AtomicLong());
+		            
+		            if (callStats.get(action).incrementAndGet() == Long.MAX_VALUE - 100) {
+			            callStats = new ConcurrentHashMap<String, AtomicLong>();
+		            }
+	            }
 	                    
             }
        
@@ -235,6 +248,15 @@ abstract public class CMBControllerServlet extends HttpServlet {
 
             response.setStatus(httpCode);
             response.getWriter().println(errXml);
+            
+            if (action != null && !action.equals("")) {
+
+            	callFailureStats.putIfAbsent(action, new AtomicLong());
+            
+	            if (callFailureStats.get(action).incrementAndGet() == Long.MAX_VALUE - 100) {
+		            callFailureStats = new ConcurrentHashMap<String, AtomicLong>();
+	            }
+            }
             
         } finally {
             valueAccumulator.deleteAllCounters();

@@ -61,6 +61,28 @@ public class XmlUtil {
 		return elements;
 	}
 
+	public static List<Element> getChildNodes(Element ele) {
+		
+		List<Element> elements = new ArrayList<Element>();
+		
+		if (ele == null) {
+			return elements;
+		}
+
+		NodeList nl = ele.getChildNodes();
+		
+		if (nl != null && nl.getLength() > 0) {
+			for (Integer i=0; i<nl.getLength(); i++) {
+				Node node = nl.item(i);
+				if (node instanceof Element) {
+					elements.add((Element)node);
+				}
+			}
+		}
+	
+		return elements;
+	}
+
 	public static List<Element> getCurrentLevelChildNodes(Element ele, String tagName) {
 		
 		List<Element> elements = new ArrayList<Element>();
