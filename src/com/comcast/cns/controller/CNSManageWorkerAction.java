@@ -35,6 +35,7 @@ import me.prettyprint.hector.api.beans.Row;
 
 import org.apache.log4j.Logger;
 
+import com.comcast.cmb.common.model.CMBPolicy;
 import com.comcast.cmb.common.model.User;
 import com.comcast.cmb.common.persistence.CassandraPersistence;
 import com.comcast.cmb.common.util.CMBErrorCodes;
@@ -55,6 +56,11 @@ public class CNSManageWorkerAction extends CNSAction {
 	public CNSManageWorkerAction() {
 		super("ManageWorker");
 	}
+	
+    @Override
+    public boolean isActionAllowed(User user, HttpServletRequest request, String service, CMBPolicy policy) throws Exception {
+    	return true;
+    }
 
 	/**
 	 * Get various stats about active cns workers

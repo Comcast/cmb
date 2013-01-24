@@ -29,8 +29,10 @@ import org.apache.log4j.Logger;
 
 import javax.servlet.http.HttpServletRequest;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
@@ -40,12 +42,13 @@ import java.util.concurrent.Callable;
  *
  */
 public class UserAuthModule implements IAuthModule {
-    IUserPersistence userPersistence;
-    
-    //Cache user-ids to user instances
-    static ExpiringCache<String, User> userCache = new ExpiringCache<String, User>(CMBProperties.getInstance().getUserCacheSizeLimit());
+
+	private IUserPersistence userPersistence;
+    private static ExpiringCache<String, User> userCache = new ExpiringCache<String, User>(CMBProperties.getInstance().getUserCacheSizeLimit());
 
     private static final Logger logger = Logger.getLogger(UserAuthModule.class);
+    
+    private static final List<String> ADMIN_ACTIONS = Arrays.asList(new String[] { "HealthCheck", "ClearCache", "GetAPIStats", "GetWorkerStats", "ManageWorker" });
     
     public class UserCallable implements Callable<User> {
         String accessKey = null;
@@ -143,6 +146,17 @@ public class UserAuthModule implements IAuthModule {
         } catch (Exception ex) {
             logger.error("event=authentication status=failed request="+request+" message=exception", ex);
             throw new AuthenticationException(CMBErrorCodes.InvalidAccessKeyId, "AccessKey="+accessKey+" is not valid");
+        }
+        
+        // admin actions do not require signatures but can only be performed by admin user
+        
+        if (ADMIN_ACTIONS.contains(parameters.get("Action"))) {
+        	if (CMBProperties.getInstance().getCnsUserName().equals(user.getUserName())) {
+                logger.debug("event=authentication status=success action=admin_action");
+        		return user;
+        	} else {
+                throw new AuthenticationException(CMBErrorCodes.InvalidAccessKeyId, "User not authorized to perform admin actions.");
+        	}
         }
 
         if (!CMBProperties.getInstance().getEnableSignatureAuth()) {

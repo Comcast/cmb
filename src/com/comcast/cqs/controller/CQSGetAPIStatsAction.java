@@ -53,6 +53,7 @@ public class CQSGetAPIStatsAction extends CQSAction {
 		super("GetAPIStats");
 	}
 	
+	@Override
     public boolean isActionAllowed(User user, HttpServletRequest request, String service, CMBPolicy policy) throws Exception {
     	return true;
     }

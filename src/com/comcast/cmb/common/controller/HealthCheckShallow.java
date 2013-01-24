@@ -18,6 +18,7 @@ package com.comcast.cmb.common.controller;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import com.comcast.cmb.common.model.CMBPolicy;
 import com.comcast.cmb.common.model.User;
 import com.comcast.cmb.common.persistence.CassandraPersistence;
 import com.comcast.cmb.common.util.CMBProperties;
@@ -32,6 +33,11 @@ public class HealthCheckShallow extends CQSAction {
 
     public HealthCheckShallow() {
         super("HealthCheck");
+    }
+
+    @Override
+    public boolean isActionAllowed(User user, HttpServletRequest request, String service, CMBPolicy policy) throws Exception {
+    	return true;
     }
 
     @Override
@@ -84,10 +90,5 @@ public class HealthCheckShallow extends CQSAction {
         response.flushBuffer();
         
         return true;
-    }
-    
-    @Override
-    public boolean isAuthRequired() {
-        return false;
     }
 }

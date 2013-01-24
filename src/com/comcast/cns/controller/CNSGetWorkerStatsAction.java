@@ -33,6 +33,7 @@ import me.prettyprint.hector.api.beans.Row;
 
 import org.apache.log4j.Logger;
 
+import com.comcast.cmb.common.model.CMBPolicy;
 import com.comcast.cmb.common.model.User;
 import com.comcast.cmb.common.persistence.CassandraPersistence;
 import com.comcast.cmb.common.util.CMBProperties;
@@ -50,6 +51,11 @@ public class CNSGetWorkerStatsAction extends CNSAction {
 	public CNSGetWorkerStatsAction() {
 		super("GetWorkerStats");
 	}
+	
+    @Override
+    public boolean isActionAllowed(User user, HttpServletRequest request, String service, CMBPolicy policy) throws Exception {
+    	return true;
+    }
 
     /**
      * Get various stats about active cns workers

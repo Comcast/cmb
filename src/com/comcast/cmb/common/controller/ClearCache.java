@@ -18,6 +18,7 @@ package com.comcast.cmb.common.controller;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import com.comcast.cmb.common.model.CMBPolicy;
 import com.comcast.cmb.common.model.User;
 import com.comcast.cqs.controller.CQSAction;
 import com.comcast.cqs.persistence.RedisPayloadCacheCassandraPersistence;
@@ -31,6 +32,11 @@ public class ClearCache extends CQSAction {
     public ClearCache() {
         super("ClearCache");
     }
+    
+    @Override
+    public boolean isActionAllowed(User user, HttpServletRequest request, String service, CMBPolicy policy) throws Exception {
+    	return true;
+    }
 
     @Override
     public boolean doAction(User user, HttpServletRequest request, HttpServletResponse response) throws Exception {       
@@ -39,10 +45,5 @@ public class ClearCache extends CQSAction {
         response.getOutputStream().print("<ClearCacheResponse>OK</ClearCacheResponse>");
         response.flushBuffer();
         return true;
-    }
-    
-    @Override
-    public boolean isAuthRequired() {
-        return false;
     }
 }
