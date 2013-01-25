@@ -35,6 +35,9 @@
 		<fileSet>
 			<directory>${project.build.directory}/lib</directory>
 			<outputDirectory>lib</outputDirectory>
+			<excludes>
+				<exclude>javaee-web-api*</exclude>
+			</excludes>
 		</fileSet>
 	</fileSets>
 
