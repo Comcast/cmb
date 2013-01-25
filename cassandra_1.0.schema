@@ -4,9 +4,9 @@
 
 -- note: drop keyspaces only if they exist already
 
--- drop keyspace CNS;
--- drop keyspace CQS;
--- drop keyspace CMB;
+--drop keyspace CNS;
+--drop keyspace CQS;
+--drop keyspace CMB;
 
 create keyspace CNS;
 create keyspace CQS;
@@ -295,6 +295,31 @@ create column family CNSWorkers
   and replicate_on_write = true
   and row_cache_provider = 'ConcurrentLinkedHashCacheProvider'
   and compaction_strategy = 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy';
+  
+--
+-- CNSAPIServers Column Family
+-- 
+-- heart beat for cns api servers
+--
+
+create column family CNSAPIServers
+  with column_type = 'Standard'
+  and comparator = 'UTF8Type'
+  and default_validation_class = 'UTF8Type'
+  and key_validation_class = 'UTF8Type'
+  and rows_cached = 0.0
+  and row_cache_save_period = 0
+  and row_cache_keys_to_save = 2147483647
+  and keys_cached = 200000.0
+  and key_cache_save_period = 600
+  and read_repair_chance = 0.1
+  and gc_grace = 5
+  and min_compaction_threshold = 4
+  and max_compaction_threshold = 32
+  and replicate_on_write = true
+  and row_cache_provider = 'ConcurrentLinkedHashCacheProvider'
+  and compaction_strategy = 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy';
+  
 
 --
 -- CQS Column Families
@@ -393,12 +418,12 @@ create column family CQSQueues
   and compression_options = {'chunk_length_kb' : '64', 'sstable_compression' : 'org.apache.cassandra.io.compress.SnappyCompressor'};
   
 --
--- CQSLongPollListeners Column Family
+-- CQSAPIServers Column Family
 -- 
--- heart beat for longpolling cqs api servers
+-- heart beat for cqs api servers
 --
 
-create column family CQSLongPollListeners
+create column family CQSAPIServers
   with column_type = 'Standard'
   and comparator = 'UTF8Type'
   and default_validation_class = 'UTF8Type'
