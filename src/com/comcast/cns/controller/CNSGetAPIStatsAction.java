@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.comcast.cqs.controller;
+package com.comcast.cns.controller;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -45,11 +45,11 @@ import com.comcast.cqs.model.CQSAPIStats;
  * @author bwolf, jorge
  *
  */
-public class CQSGetAPIStatsAction extends CQSAction {
+public class CNSGetAPIStatsAction extends CNSAction {
 
-	private static Logger logger = Logger.getLogger(CQSGetAPIStatsAction.class);
+	private static Logger logger = Logger.getLogger(CNSGetAPIStatsAction.class);
 	
-	public CQSGetAPIStatsAction() {
+	public CNSGetAPIStatsAction() {
 		super("GetAPIStats");
 	}
 	
@@ -67,9 +67,9 @@ public class CQSGetAPIStatsAction extends CQSAction {
 	@Override
 	public boolean doAction(User user, HttpServletRequest request, HttpServletResponse response) throws Exception {
 		
-		CassandraPersistence cassandraHandler = new CassandraPersistence(CMBProperties.getInstance().getCMBCQSKeyspace());
+		CassandraPersistence cassandraHandler = new CassandraPersistence(CMBProperties.getInstance().getCMBCNSKeyspace());
 		
-		List<Row<String, String, String>> rows = cassandraHandler.readNextNNonEmptyRows("CQSAPIServers", null, 1000, 10, new StringSerializer(), new StringSerializer(), new StringSerializer(), HConsistencyLevel.QUORUM);
+		List<Row<String, String, String>> rows = cassandraHandler.readNextNNonEmptyRows("CNSAPIServers", null, 1000, 10, new StringSerializer(), new StringSerializer(), new StringSerializer(), HConsistencyLevel.QUORUM);
 		List<CQSAPIStats> statsList = new ArrayList<CQSAPIStats>();
 		
 		if (rows != null) {
@@ -85,10 +85,6 @@ public class CQSGetAPIStatsAction extends CQSAction {
 				
 				if (row.getColumnSlice().getColumnByName("jmxport") != null) {
 					stats.setJmxPort(Long.parseLong(row.getColumnSlice().getColumnByName("jmxport").getValue()));
-				}
-
-				if (row.getColumnSlice().getColumnByName("port") != null) {
-					stats.setLongPollPort(Long.parseLong(row.getColumnSlice().getColumnByName("port").getValue()));
 				}
 
 				if (row.getColumnSlice().getColumnByName("dataCenter") != null) {
@@ -119,21 +115,6 @@ public class CQSGetAPIStatsAction extends CQSAction {
 
 					ObjectName cqsAPIMonitor = new ObjectName("com.comcast.cqs.controller:type=CQSMonitorMBean");
 
-					Long numberOfLongPollReceives = (Long)mbeanConn.getAttribute(cqsAPIMonitor, "NumberOfLongPollReceives");
-					stats.setNumberOfLongPollReceives(numberOfLongPollReceives);
-					
-					Integer numberOfRedisShards = (Integer)mbeanConn.getAttribute(cqsAPIMonitor, "NumberOfRedisShards");
-					stats.setNumberOfRedisShards(numberOfRedisShards);
-
-					List<Map<String, String>> redisShardInfos = (List<Map<String, String>>)mbeanConn.getAttribute(cqsAPIMonitor, "RedisShardInfos");
-					
-					for (Map<String, String> shardInfo : redisShardInfos) {
-						if (shardInfo.containsKey("db0")) {
-							long numKeys = Long.parseLong(shardInfo.get("db0").split(",")[0].split("=")[1]);
-							stats.setNumberOfRedisKeys(numKeys);
-						}
-					}
-					
 					Map<String, AtomicLong> callStats = (Map<String, AtomicLong>)mbeanConn.getAttribute(cqsAPIMonitor, "CallStats");
 					
 					stats.setCallStats(callStats);

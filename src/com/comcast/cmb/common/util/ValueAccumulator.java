@@ -62,7 +62,7 @@ public final class ValueAccumulator {
     public void initializeCounters(AccumulatorName ...keys) {
         for (AccumulatorName key : keys) {
             if (keyToValue.get()[key.ordinal()] != -1L) {
-                logger.warn("initializeCounter called but on an in-use counter. Please call deleteCounter()");
+                //logger.warn("initializeCounter called but on an in-use counter. Please call deleteCounter()");
             }
             keyToValue.get()[key.ordinal()] = 0L;
         }
@@ -71,7 +71,7 @@ public final class ValueAccumulator {
     public void initializeAllCounters() {
         for (AccumulatorName key : accumulatorNameValues) {
             if (keyToValue.get()[key.ordinal()] != -1L) {
-                logger.warn("initializeCounter called but on an in-use counter. Please call deleteCounter()");
+                //logger.warn("initializeCounter called but on an in-use counter. Please call deleteCounter()");
             }
             keyToValue.get()[key.ordinal()] = 0L;
         }
@@ -85,7 +85,7 @@ public final class ValueAccumulator {
     public void addToCounter(AccumulatorName key, long ammount){
         long val = keyToValue.get()[key.ordinal()];
         if (val == -1L) {
-            logger.warn("Must initialize Accumulator before adding to counter with key=" + key + ", not adding to the counter the new ammount=" + ammount);
+            //logger.warn("Must initialize Accumulator before adding to counter with key=" + key + ", not adding to the counter the new ammount=" + ammount);
             return;
         }
         keyToValue.get()[key.ordinal()] = val + ammount;

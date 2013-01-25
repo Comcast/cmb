@@ -15,12 +15,9 @@
  */
 package com.comcast.cqs.controller;
 
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicLong;
@@ -46,7 +43,6 @@ import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.channel.SimpleChannelHandler;
 import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
 
-import com.comcast.cmb.common.controller.CMBControllerServlet;
 import com.comcast.cmb.common.persistence.CassandraPersistence;
 import com.comcast.cmb.common.util.CMBProperties;
 
@@ -56,8 +52,8 @@ public class CQSLongPollSender {
     private static ClientBootstrap clientBootstrap;
     private static ChannelFactory clientSocketChannelFactory;
 	private static volatile ConcurrentHashMap<String, Long> activelyLongPollingCQSApiServers;
-    private static volatile AtomicLong lastLongPollPingMinute = new AtomicLong(0);
     private static volatile boolean initialized = false;
+    public static volatile AtomicLong lastLPPingMinute = new AtomicLong(0);
 
 	private static class CQSLongPollClientHandler extends SimpleChannelHandler {
 
@@ -109,26 +105,15 @@ public class CQSLongPollSender {
 		
         long now = System.currentTimeMillis();
         
-        if (lastLongPollPingMinute.getAndSet(now/(1000*60)) != now/(1000*60)) {
+        if (lastLPPingMinute.getAndSet(now/(1000*60)) != now/(1000*60)) {
 
         	try {
 
         		CassandraPersistence cassandraHandler = new CassandraPersistence(CMBProperties.getInstance().getCMBCQSKeyspace());
 
-        		// write ping
-        		
-        		String hostAddress = InetAddress.getLocalHost().getHostAddress();
-        		logger.info("event=ping version=" + CMBControllerServlet.VERSION + " ip=" + hostAddress);
-        		Map<String, String> values = new HashMap<String, String>();
-	        	values.put("listenerTimestamp", now + "");
-	        	values.put("port", CMBProperties.getInstance().getCqsLongPollPort() + "");
-	        	values.put("jmxport", System.getProperty("com.sun.management.jmxremote.port", "0"));
-	        	values.put("dataCenter", CMBProperties.getInstance().getCmbDataCenter());
-                cassandraHandler.insertOrUpdateRow(hostAddress, "CQSLongPollListeners", values, HConsistencyLevel.QUORUM);
-
-                // read all other pings but ensure we are data-center local
+                // read all other pings but ensure we are data-center local and lookign at a cqs service
                 
-        		List<Row<String, String, String>> rows = cassandraHandler.readNextNNonEmptyRows("CQSLongPollListeners", null, 1000, 10, new StringSerializer(), new StringSerializer(), new StringSerializer(), HConsistencyLevel.QUORUM);
+        		List<Row<String, String, String>> rows = cassandraHandler.readNextNNonEmptyRows("CQSAPIServers", null, 1000, 10, new StringSerializer(), new StringSerializer(), new StringSerializer(), HConsistencyLevel.QUORUM);
         		
         		if (rows != null) {
         			
@@ -138,8 +123,8 @@ public class CQSLongPollSender {
         				String dataCenter = CMBProperties.getInstance().getCmbDataCenter();
         				long timestamp = 0, port = 0;
         				
-        				if (row.getColumnSlice().getColumnByName("listenerTimestamp") != null) {
-        					timestamp = (Long.parseLong(row.getColumnSlice().getColumnByName("listenerTimestamp").getValue()));
+        				if (row.getColumnSlice().getColumnByName("timestamp") != null) {
+        					timestamp = (Long.parseLong(row.getColumnSlice().getColumnByName("timestamp").getValue()));
         				}
         				
         				if (row.getColumnSlice().getColumnByName("port") != null) {

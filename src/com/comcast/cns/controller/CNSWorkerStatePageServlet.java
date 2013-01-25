@@ -98,8 +98,6 @@ public class CNSWorkerStatePageServlet extends AdminServletBase {
 		
 		out.println("<body>");
 
-		out.println("<h2><a href='/ADMIN'>All Users</a></h2>");
-
 		try {
 
 			String workerStateXml = httpGet(cnsServiceBaseUrl + "?Action=GetWorkerStats&AWSAccessKeyId=" + cnsAdminUser.getAccessKey());
@@ -200,6 +198,75 @@ public class CNSWorkerStatePageServlet extends AdminServletBase {
 				out.println("</table></span>");
 			
 			}
+			
+			// api call stats
+			
+			String apiStateXml = httpGet(cnsServiceBaseUrl + "?Action=GetAPIStats&AWSAccessKeyId=" + cnsAdminUser.getAccessKey());
+			
+			root = XmlUtil.buildDoc(apiStateXml);
+			
+			statsList = XmlUtil.getCurrentLevelChildNodes(XmlUtil.getCurrentLevelChildNodes(root, "GetAPIStatsResult").get(0), "Stats");
+			
+			out.println("<h2 align='left'>CNS API Stats</h2>");
+			
+			out.println("<span class='simple'><table border='1'>");
+			out.println("<tr><th>Ip Address</th><th>JMX Port</th><th>Data Center</th><th>Time Stamp</th></tr>");
+
+			Map<String, Long> aggregateCallStats = new HashMap<String, Long>();
+			Map<String, Long> aggregateCallFailureStats = new HashMap<String, Long>();
+			
+			for (Element stats : statsList) {
+				
+				out.println("<tr>");
+				out.println("<td>"+XmlUtil.getCurrentLevelTextValue(stats, "IpAddress")+"</td>");
+				out.println("<td>"+XmlUtil.getCurrentLevelTextValue(stats, "JmxPort")+"</td>");
+				out.println("<td>"+XmlUtil.getCurrentLevelTextValue(stats, "DataCenter")+"</td>");
+				out.println("<td>"+new Date(Long.parseLong(XmlUtil.getCurrentLevelTextValue(stats, "Timestamp")))+"</td>");
+				out.println("</tr>");
+				
+				Element callStats = XmlUtil.getChildNodes(stats, "CallStats").get(0);
+				
+				for (Element action : XmlUtil.getChildNodes(callStats)) {
+					String actionName = action.getNodeName();
+					if (!aggregateCallStats.containsKey(actionName)) {
+						aggregateCallStats.put(actionName, Long.parseLong(XmlUtil.getCurrentLevelTextValue(callStats, actionName)));
+					} else {
+						aggregateCallStats.put(actionName, aggregateCallStats.get(actionName) + Long.parseLong(XmlUtil.getCurrentLevelTextValue(callStats, actionName)));
+					}
+				}
+
+				Element callFailureStats = XmlUtil.getChildNodes(stats, "CallFailureStats").get(0);
+				
+				for (Element action : XmlUtil.getChildNodes(callFailureStats)) {
+					String actionName = action.getNodeName();
+					if (!aggregateCallFailureStats.containsKey(actionName)) {
+						aggregateCallFailureStats.put(actionName, Long.parseLong(XmlUtil.getCurrentLevelTextValue(callFailureStats, actionName)));
+					} else {
+						aggregateCallFailureStats.put(actionName, aggregateCallFailureStats.get(actionName) + Long.parseLong(XmlUtil.getCurrentLevelTextValue(callFailureStats, actionName)));
+					}
+				}
+			}
+			
+			out.println("</table></span>");
+			
+			out.println("<h2 align='left'>CNS Call Stats</h2>");
+			out.println("<span class='simple'><table border='1'>");
+
+			for (String action : aggregateCallStats.keySet()) {
+				out.println("<tr><td>"+action+"</td><td>"+aggregateCallStats.get(action)+"</td></tr>");
+			}
+			
+			out.println("</table></span>");
+
+			out.println("<h2 align='left'>CNS Call Failure Stats</h2>");
+			out.println("<span class='simple'><table border='1'>");
+
+			for (String action : aggregateCallFailureStats.keySet()) {
+				out.println("<tr><td>"+action+"</td><td>"+aggregateCallFailureStats.get(action)+"</td></tr>");
+			}
+			
+			out.println("</table></span>");
+
 
 		} catch (Exception ex) {
 			logger.error("", ex);

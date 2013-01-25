@@ -212,8 +212,17 @@ public abstract class AdminServletBase extends HttpServlet {
     	simpleHeader(request, out, title);
     	
     	if (isAuthenticated(request)) {
+    		
     		out.println("<span class='header'>");
-    		out.println("<table width='100%' border='0'><tr><td width='100%' align='left'>Welcome "+getAuthenticatedUser(request).getUserName()+" | <a href='/UserLogin?Logout=Logout'>logout</a></td></tr></table>");
+    		out.println("<table width='100%' border='0'><tr><td width='100%' align='left'>Welcome " + getAuthenticatedUser(request).getUserName() + " | ");
+    		
+    		if (isAdmin(request)) {
+    			out.println("<a href='/ADMIN'>All Users</a>" + " | ");
+    			out.println("<a href='" + cnsAdminBaseUrl + "CNSWorkerState'>CNS Dashboard</a>" + " | ");
+    			out.println("<a href='" + cqsAdminBaseUrl + "CQSAPIState'>CQS Dashboard</a>" + " | ");
+    		}
+    		
+    		out.println("<a href='/UserLogin?Logout=Logout'>logout</a></td></tr></table>");
     		out.println("</span>");
     	}
     	

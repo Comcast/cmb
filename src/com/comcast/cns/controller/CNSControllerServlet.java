@@ -15,12 +15,19 @@
  */
 package com.comcast.cns.controller;
 
+import java.net.InetAddress;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicLong;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
+import org.apache.log4j.Logger;
+
+import me.prettyprint.hector.api.HConsistencyLevel;
 
 import com.comcast.cmb.common.controller.Action;
 import com.comcast.cmb.common.controller.CMBControllerServlet;
@@ -28,6 +35,7 @@ import com.comcast.cmb.common.controller.ClearCache;
 import com.comcast.cmb.common.controller.HealthCheckShallow;
 import com.comcast.cmb.common.model.CMBPolicy;
 import com.comcast.cmb.common.model.User;
+import com.comcast.cmb.common.persistence.CassandraPersistence;
 import com.comcast.cmb.common.persistence.PersistenceFactory;
 import com.comcast.cmb.common.util.CMBErrorCodes;
 import com.comcast.cmb.common.util.CMBException;
@@ -35,6 +43,7 @@ import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cns.model.CNSTopicAttributes;
 import com.comcast.cns.persistence.ICNSSubscriptionPersistence;
 import com.comcast.cns.persistence.ICNSTopicPersistence;
+import com.comcast.cqs.controller.CQSControllerServlet;
 
 /**
  * Servlet for handling all CNS actions
@@ -46,6 +55,10 @@ public class CNSControllerServlet extends CMBControllerServlet {
 	protected static volatile ICNSTopicPersistence topicHandler;
 	private static volatile ICNSSubscriptionPersistence subscriptionHandler;
     private static volatile HashMap<String, Action> actionMap;
+
+    public static volatile AtomicLong lastCNSPingMinute = new AtomicLong(0);
+    
+    private static Logger logger = Logger.getLogger(CNSControllerServlet.class);
 
     /**
      * NodeName global constant is used to identify this process uniquely across all API servers
@@ -111,6 +124,7 @@ public class CNSControllerServlet extends CMBControllerServlet {
     	final CNSManageWorkerAction manageWorker = new CNSManageWorkerAction();
     	final HealthCheckShallow healthCheckShallow = new HealthCheckShallow();
         final ClearCache clearCache = new ClearCache();
+        final CNSGetAPIStatsAction getAPIStats = new CNSGetAPIStatsAction();
     	
     	actionMap = new HashMap<String, Action>(){{
     	    put(confirmSubscription.getName(), confirmSubscription);    	    
@@ -132,6 +146,7 @@ public class CNSControllerServlet extends CMBControllerServlet {
     	    put(getWorkerStats.getName(), getWorkerStats);
     	    put(manageWorker.getName(), manageWorker);
     	    put(clearCache.getName(), clearCache);
+    	    put(getAPIStats.getName(), getAPIStats);
     	}};
     }
     
@@ -146,6 +161,28 @@ public class CNSControllerServlet extends CMBControllerServlet {
 
     @Override
     protected boolean handleAction(String action, User user, HttpServletRequest request, HttpServletResponse response) throws Exception {
+    	
+        long now = System.currentTimeMillis();
+    	
+    	if (lastCNSPingMinute.getAndSet(now/(1000*60)) != now/(1000*60)) {
+
+        	try {
+
+        		CassandraPersistence cassandraHandler = new CassandraPersistence(CMBProperties.getInstance().getCMBCNSKeyspace());
+
+        		// write ping
+        		
+        		String hostAddress = InetAddress.getLocalHost().getHostAddress();
+        		logger.info("event=ping version=" + CMBControllerServlet.VERSION + " ip=" + hostAddress);
+        		Map<String, String> values = new HashMap<String, String>();
+	        	values.put("timestamp", now + "");
+	        	values.put("jmxport", System.getProperty("com.sun.management.jmxremote.port", "0"));
+	        	values.put("dataCenter", CMBProperties.getInstance().getCmbDataCenter());
+                cassandraHandler.insertOrUpdateRow(hostAddress, "CNSAPIServers", values, HConsistencyLevel.QUORUM);
+        	} catch (Exception ex) {
+        		logger.warn("event=ping_failed", ex);
+        	}
+        }
     	
     	if (!CMBProperties.getInstance().getCNSServiceEnabled()) {
             throw new CMBException(CMBErrorCodes.InternalError, "CNS service is disabled");

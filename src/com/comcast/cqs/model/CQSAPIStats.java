@@ -36,9 +36,9 @@ public class CQSAPIStats {
 	
 	private int numberOfRedisShards;
 	
-	Map<String, AtomicLong> callStats;
+	private Map<String, AtomicLong> callStats;
 	
-	Map<String, AtomicLong> callFailureStats; 
+	private Map<String, AtomicLong> callFailureStats; 
 	
 	public Map<String, AtomicLong> getCallStats() {
 		return callStats;

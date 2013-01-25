@@ -16,14 +16,19 @@
 package com.comcast.cqs.controller;
 
 import java.lang.management.ManagementFactory;
+import java.net.InetAddress;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicLong;
 
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
+import me.prettyprint.hector.api.HConsistencyLevel;
 
 import org.apache.log4j.Logger;
 
@@ -32,6 +37,7 @@ import com.comcast.cmb.common.controller.ClearCache;
 import com.comcast.cmb.common.controller.HealthCheckShallow;
 import com.comcast.cmb.common.model.CMBPolicy;
 import com.comcast.cmb.common.model.User;
+import com.comcast.cmb.common.persistence.CassandraPersistence;
 import com.comcast.cmb.common.persistence.PersistenceFactory;
 import com.comcast.cmb.common.util.CMBErrorCodes;
 import com.comcast.cmb.common.util.CMBException;
@@ -60,6 +66,8 @@ public class CQSControllerServlet extends CMBControllerServlet {
     
     protected static volatile ICQSQueuePersistence queuePersistence = null;
     protected static volatile ICQSMessagePersistence messagePersistence = null;  
+    
+    public static volatile AtomicLong lastCQSPingMinute = new AtomicLong(0);
     
     static ExpiringCache<String, CQSQueue> queueCache = new ExpiringCache<String, CQSQueue>(CMBProperties.getInstance().getCqsCacheSizeLimit());
     
@@ -186,6 +194,7 @@ public class CQSControllerServlet extends CMBControllerServlet {
      * @throws Exception
      */
     public static CQSQueue getCachedQueue(User user, HttpServletRequest request) throws Exception {
+    	
         String queueUrl = null;
         CQSQueue queue = null;
 
@@ -237,6 +246,30 @@ public class CQSControllerServlet extends CMBControllerServlet {
     
     @Override
     protected boolean handleAction(String action, User user, HttpServletRequest request, HttpServletResponse response) throws Exception {
+    	
+        long now = System.currentTimeMillis();
+    	
+    	if (lastCQSPingMinute.getAndSet(now/(1000*60)) != now/(1000*60)) {
+
+        	try {
+
+        		CassandraPersistence cassandraHandler = new CassandraPersistence(CMBProperties.getInstance().getCMBCQSKeyspace());
+
+        		// write ping
+        		
+        		String hostAddress = InetAddress.getLocalHost().getHostAddress();
+        		logger.info("event=ping version=" + CMBControllerServlet.VERSION + " ip=" + hostAddress);
+        		Map<String, String> values = new HashMap<String, String>();
+	        	values.put("timestamp", now + "");
+	        	values.put("port", CMBProperties.getInstance().getCqsLongPollPort() + "");
+	        	values.put("jmxport", System.getProperty("com.sun.management.jmxremote.port", "0"));
+	        	values.put("dataCenter", CMBProperties.getInstance().getCmbDataCenter());
+                cassandraHandler.insertOrUpdateRow(hostAddress, "CQSAPIServers", values, HConsistencyLevel.QUORUM);
+                
+        	} catch (Exception ex) {
+        		logger.warn("event=ping_failed", ex);
+        	}
+        }
     	
     	if (!CMBProperties.getInstance().getCQSServiceEnabled()) {
             throw new CMBException(CMBErrorCodes.InternalError, "CQS service is disabled");

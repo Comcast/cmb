@@ -16,6 +16,7 @@
 package com.comcast.cns.model;
 
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class CNSWorkerStats {
 	
@@ -44,7 +45,7 @@ public class CNSWorkerStats {
 	private boolean cqsServiceAvailable;
 	
 	private int numPooledHttpConnections;
-
+	
 	public String getDataCenter() {
 		return dataCenter;
 	}

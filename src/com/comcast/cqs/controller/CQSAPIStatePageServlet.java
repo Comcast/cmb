@@ -90,13 +90,11 @@ public class CQSAPIStatePageServlet extends AdminServletBase {
 		
 		out.println("<body>");
 
-		out.println("<h2><a href='/ADMIN'>All Users</a></h2>");
-
 		try {
 
-			String workerStateXml = httpGet(cqsServiceBaseUrl + "?Action=GetAPIStats&AWSAccessKeyId=" + cnsAdminUser.getAccessKey());
+			String apiStateXml = httpGet(cqsServiceBaseUrl + "?Action=GetAPIStats&AWSAccessKeyId=" + cnsAdminUser.getAccessKey());
 			
-			Element root = XmlUtil.buildDoc(workerStateXml);
+			Element root = XmlUtil.buildDoc(apiStateXml);
 			
 			List<Element> statsList = XmlUtil.getCurrentLevelChildNodes(XmlUtil.getCurrentLevelChildNodes(root, "GetAPIStatsResult").get(0), "Stats");
 			
