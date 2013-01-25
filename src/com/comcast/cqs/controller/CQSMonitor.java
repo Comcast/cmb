@@ -42,9 +42,16 @@ import com.comcast.cqs.persistence.RedisPayloadCacheCassandraPersistence;
  */
 public class CQSMonitor implements CQSMonitorMBean {
 
-    public final static CQSMonitor Inst = new CQSMonitor();
+    private final static CQSMonitor Inst = new CQSMonitor();
     
     private static Logger logger = Logger.getLogger(CQSMonitor.class);
+    
+	private CQSMonitor() {
+	}
+
+	public static CQSMonitor getInstance() {
+		return Inst;
+	}   
     
     public enum CacheType {
         QCache,

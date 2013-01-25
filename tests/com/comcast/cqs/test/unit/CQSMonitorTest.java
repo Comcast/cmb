@@ -31,41 +31,41 @@ public class CQSMonitorTest {
     public void setup() throws Exception {
         Util.initLog4jTest();
         CMBControllerServlet.valueAccumulator.initializeAllCounters();
-        CQSMonitor.Inst.clearAllState();
+        CQSMonitor.getInstance().clearAllState();
     }
 
     @Test
     public void testMessageCount() {
-        CQSMonitor.Inst.addNumberOfMessagesReturned("test", 10);
-        CQSMonitor.Inst.addNumberOfMessagesReturned("test", 10);
-        if (CQSMonitor.Inst.getNumberOfMessagesReturned("test") != 20) {
-            fail("Expected 20 messages. Got=" + CQSMonitor.Inst.getNumberOfMessagesReturned("test"));
+        CQSMonitor.getInstance().addNumberOfMessagesReturned("test", 10);
+        CQSMonitor.getInstance().addNumberOfMessagesReturned("test", 10);
+        if (CQSMonitor.getInstance().getNumberOfMessagesReturned("test") != 20) {
+            fail("Expected 20 messages. Got=" + CQSMonitor.getInstance().getNumberOfMessagesReturned("test"));
         }
     }
     
     @Test
     public void testCacheHit() {
-        CQSMonitor.Inst.registerCacheHit("test", 5, 10, CacheType.QCache);
-        CQSMonitor.Inst.registerCacheHit("test", 5, 10, CacheType.QCache);
+        CQSMonitor.getInstance().registerCacheHit("test", 5, 10, CacheType.QCache);
+        CQSMonitor.getInstance().registerCacheHit("test", 5, 10, CacheType.QCache);
         //should be 50% hit
-        if (CQSMonitor.Inst.getCacheHitPercent("test", CacheType.QCache) != 50) {
-            fail("Expected 50% Got=" + CQSMonitor.Inst.getCacheHitPercent("test", CacheType.QCache));
+        if (CQSMonitor.getInstance().getCacheHitPercent("test", CacheType.QCache) != 50) {
+            fail("Expected 50% Got=" + CQSMonitor.getInstance().getCacheHitPercent("test", CacheType.QCache));
         }
     }
     
     @Test
     public void testNumMessages() {
-        CQSMonitor.Inst.addNumberOfMessagesReceived("test", 1);
-        if (CQSMonitor.Inst.getNumberOfMessagesInQueue("test") != 1) {
-            fail("Expected 1. Got:" + CQSMonitor.Inst.getNumberOfMessagesInQueue("test"));
+        CQSMonitor.getInstance().addNumberOfMessagesReceived("test", 1);
+        if (CQSMonitor.getInstance().getNumberOfMessagesInQueue("test") != 1) {
+            fail("Expected 1. Got:" + CQSMonitor.getInstance().getNumberOfMessagesInQueue("test"));
         }
-        CQSMonitor.Inst.addNumberOfMessagesReturned("test", 1);
-        if (CQSMonitor.Inst.getNumberOfMessagesInQueue("test") != 0) {
-            fail("Expected 0. Got:" + CQSMonitor.Inst.getNumberOfMessagesInQueue("test"));
+        CQSMonitor.getInstance().addNumberOfMessagesReturned("test", 1);
+        if (CQSMonitor.getInstance().getNumberOfMessagesInQueue("test") != 0) {
+            fail("Expected 0. Got:" + CQSMonitor.getInstance().getNumberOfMessagesInQueue("test"));
         }
         
-        if (CQSMonitor.Inst.getNumberOfMessagesDeleted("test") != 1) {
-            fail("Expected 1. Got:" + CQSMonitor.Inst.getNumberOfMessagesDeleted("test"));
+        if (CQSMonitor.getInstance().getNumberOfMessagesDeleted("test") != 1) {
+            fail("Expected 1. Got:" + CQSMonitor.getInstance().getNumberOfMessagesDeleted("test"));
         }
     }
     

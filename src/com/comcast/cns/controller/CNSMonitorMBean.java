@@ -16,6 +16,7 @@
 package com.comcast.cns.controller;
 
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Interface for monitoring CNS
@@ -25,65 +26,19 @@ import java.util.Map;
 public interface CNSMonitorMBean {
 
     /**
-     * @return total number of publishMessage() called across all topics in a rolling window
+     * 
+     * @return
      */
-    public int getNumPublishedMessages();
-    
-    /**
-     * @return number of http connections in the pool for HTTP publisher
-     */    
-    public int getNumPooledHttpConnections();
+    public Map<String, AtomicLong> getCallStats();
     
     /**
      * 
-     * @return total number of publish jobs for which at least one endpoint is not yet succesfully published
-     *  but we are still trying
+     * @return
      */
-    public int getPendingPublishJobs();
-    
-    /**
-     * 
-     * @return map of endpointURL -> failure-rate-percentage, numTries, Topic1, Topic2,..
-     */
-    public Map<String, String> getErrorRateForEndpoints();
-    
-    /**
-     * 
-     * @return map of endpointURL -> number of failures over last 60 seconds
-     */
-    public Map<String, Integer> getRecentErrorCountForEndpoints();
-    
-    /**
-     * 
-     * @return size of delivery handler queue
-     */
-    public int getDeliveryQueueSize();
-    
-    /**
-     * 
-     * @return size of redelivery handler queue
-     */
-    public int getRedeliveryQueueSize();
+    public Map<String, AtomicLong> getCallFailureStats();
     
     /**
      * 
      */
-    public boolean isCQSServiceAvailable();
-    
-    /**
-     * 
-     * @return true if consumer is no longer taking new ep-publish-jobs off the queue
-     * because its too busy. false otherwise
-     */
-    public boolean isConsumerOverloaded();
-
-    /**
-     * Clear all bad endpoint state
-     */
-    public void clearBadEndpointsState();
-    
-    /**
-     * Clear all worker queues and reinitialize (potentially useful when worker is overloaded)
-     */
-    public boolean clearWorkerQueues();
+    public void resetCallStats();
 }

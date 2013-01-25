@@ -386,7 +386,7 @@ public class RedisCachedCassandraPersistenceTest {
     @Test
     public void testSendMessage() throws Exception {
         testSendMessage(false);
-        Long oldestMsgTS = CQSMonitor.Inst.getOldestMessageCreatedTSMS("testQueue"); 
+        Long oldestMsgTS = CQSMonitor.getInstance().getOldestMessageCreatedTSMS("testQueue"); 
         if (oldestMsgTS == null || oldestMsgTS > System.currentTimeMillis()) {
             fail("Expected oldestMsgs. Instead failed");
         }
@@ -412,8 +412,8 @@ public class RedisCachedCassandraPersistenceTest {
         }
         
         //ensure the cache hit ratio was 100%
-        if (CQSMonitor.Inst.getReceiveMessageCacheHitPercent("testQueue") != 100) {
-            fail("Expected cache hit to be 100% instead got:" + CQSMonitor.Inst.getReceiveMessageCacheHitPercent("testQueue"));
+        if (CQSMonitor.getInstance().getReceiveMessageCacheHitPercent("testQueue") != 100) {
+            fail("Expected cache hit to be 100% instead got:" + CQSMonitor.getInstance().getReceiveMessageCacheHitPercent("testQueue"));
         }
         
         

@@ -114,7 +114,7 @@ public class CQSControllerServlet extends CMBControllerServlet {
             ObjectName name = new ObjectName("com.comcast.cqs.controller:type=CQSMonitorMBean");
             
             if (!mbs.isRegistered(name)) {
-            	mbs.registerMBean(CQSMonitor.Inst, name);
+            	mbs.registerMBean(CQSMonitor.getInstance(), name);
             }
             
     	} catch (Exception ex) {

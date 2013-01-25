@@ -20,14 +20,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.log4j.Logger;
 
-import com.comcast.cmb.common.controller.CMBControllerServlet;
 import com.comcast.cmb.common.model.User;
 import com.comcast.cmb.common.persistence.PersistenceFactory;
 import com.comcast.cmb.common.util.CMBErrorCodes;
 import com.comcast.cmb.common.util.CMBException;
 import com.comcast.cmb.common.util.CMBProperties;
-import com.comcast.cmb.common.util.ValueAccumulator.AccumulatorName;
-import com.comcast.cns.controller.CNSMonitor;
 import com.comcast.cns.io.EndpointAsyncPublisherWrapper;
 import com.comcast.cns.io.EndpointPublisherFactory;
 import com.comcast.cns.io.HTTPEndpointAsyncPublisher;
@@ -261,9 +258,9 @@ public class CNSAsyncPublishJob implements Runnable, IPublisherCallback {
 
         letMessageDieForEndpoint();
 
-        CNSMonitor.getInstance().registerSendsRemaining(message.getMessageId(), -1);
-        CNSMonitor.getInstance().registerBadEndpoint(endpoint, 0, 1, message.getTopicArn());
-        CNSMonitor.getInstance().registerPublishMessage();
+        CNSWorkerMonitor.getInstance().registerSendsRemaining(message.getMessageId(), -1);
+        CNSWorkerMonitor.getInstance().registerBadEndpoint(endpoint, 0, 1, message.getTopicArn());
+        CNSWorkerMonitor.getInstance().registerPublishMessage();
 	}
 
 	@Override
@@ -288,7 +285,7 @@ public class CNSAsyncPublishJob implements Runnable, IPublisherCallback {
 
             	logger.warn("event=failed_to_deliver_message action=retry status_code=" + status + " endpoint=" + endpoint);
 
-            	CNSMonitor.getInstance().registerBadEndpoint(endpoint, 1, 1, message.getTopicArn());
+            	CNSWorkerMonitor.getInstance().registerBadEndpoint(endpoint, 1, 1, message.getTopicArn());
             	doRetry();
             }
         

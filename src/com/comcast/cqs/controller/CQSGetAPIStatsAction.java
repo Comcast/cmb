@@ -144,7 +144,7 @@ public class CQSGetAPIStatsAction extends CQSAction {
 
 				} catch (Exception ex) {
 
-					logger.warn("event=failed_to_connect_to_jmx_server url=" + url);
+					logger.warn("event=failed_to_connect_to_jmx_server url=" + url, ex);
 
 				} finally {
 

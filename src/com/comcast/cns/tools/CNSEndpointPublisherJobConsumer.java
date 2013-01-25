@@ -39,7 +39,6 @@ import com.comcast.cmb.common.util.CMBProperties.IO_MODE;
 import com.comcast.cmb.common.util.PersistenceException;
 import com.comcast.cmb.common.util.RollingWindowCapture;
 import com.comcast.cmb.common.util.ValueAccumulator.AccumulatorName;
-import com.comcast.cns.controller.CNSMonitor;
 import com.comcast.cns.model.CNSEndpointPublishJob;
 import com.comcast.cns.model.CNSEndpointPublishJob.CNSEndpointSubscriptionInfo;
 import com.comcast.cns.persistence.CNSCachedEndpointPublishJob;
@@ -266,7 +265,7 @@ public class CNSEndpointPublisherJobConsumer implements CNSPublisherPartitionRun
 	        String queueName = CNS_CONSUMER_QUEUE_NAME_PREFIX + partition;
 	        String queueUrl = CQSHandler.getQueueUrl(queueName);
 	        Message msg = CQSHandler.receiveMessage(queueUrl);
-    		CNSMonitor.getInstance().registerCQSServiceAvailable(true);
+    		CNSWorkerMonitor.getInstance().registerCQSServiceAvailable(true);
 
             if (msg != null) {   
             	
@@ -279,7 +278,7 @@ public class CNSEndpointPublisherJobConsumer implements CNSPublisherPartitionRun
                     User pubUser = PersistenceFactory.getUserPersistence().getUserById(endpointPublishJob.getMessage().getUserId());
                     List<? extends CNSEndpointSubscriptionInfo> subs = endpointPublishJob.getSubInfos();
                     
-                    CNSMonitor.getInstance().registerSendsRemaining(endpointPublishJob.getMessage().getMessageId(), subs.size());
+                    CNSWorkerMonitor.getInstance().registerSendsRemaining(endpointPublishJob.getMessage().getMessageId(), subs.size());
                     
                     AtomicInteger endpointPublishJobCount = new AtomicInteger(subs.size());                
                     
@@ -314,7 +313,7 @@ public class CNSEndpointPublisherJobConsumer implements CNSPublisherPartitionRun
 
 	    	if (ex.getCause() instanceof HttpHostConnectException) {
 	    		logger.error("event=cqs_service_unavailable", ex);
-	    		CNSMonitor.getInstance().registerCQSServiceAvailable(false);
+	    		CNSWorkerMonitor.getInstance().registerCQSServiceAvailable(false);
 	    	} else {
 	        	CQSHandler.ensureQueuesExist(CNS_CONSUMER_QUEUE_NAME_PREFIX, CMBProperties.getInstance().getNumEPPublishJobQs());
 	    	}

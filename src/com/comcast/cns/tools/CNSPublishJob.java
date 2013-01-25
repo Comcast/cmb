@@ -27,7 +27,6 @@ import com.comcast.cmb.common.util.CMBErrorCodes;
 import com.comcast.cmb.common.util.CMBException;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.ValueAccumulator.AccumulatorName;
-import com.comcast.cns.controller.CNSMonitor;
 import com.comcast.cns.io.EndpointPublisherFactory;
 import com.comcast.cns.io.IEndpointPublisher;
 import com.comcast.cns.model.CNSMessage;
@@ -203,9 +202,9 @@ public class CNSPublishJob implements Runnable {
         
         letMessageDieForEndpoint();
 
-        CNSMonitor.getInstance().registerSendsRemaining(message.getMessageId(), -1);
-        CNSMonitor.getInstance().registerBadEndpoint(endpoint, 0, 1, message.getTopicArn());
-        CNSMonitor.getInstance().registerPublishMessage();
+        CNSWorkerMonitor.getInstance().registerSendsRemaining(message.getMessageId(), -1);
+        CNSWorkerMonitor.getInstance().registerBadEndpoint(endpoint, 0, 1, message.getTopicArn());
+        CNSWorkerMonitor.getInstance().registerPublishMessage();
     }
     
     private void runCommonAndRetry(IEndpointPublisher pub, CnsSubscriptionProtocol protocol, String endpoint, String subArn) {
@@ -255,7 +254,7 @@ public class CNSPublishJob implements Runnable {
 
                 	logger.warn("event=failed_to_deliver_message action=retry status_code=" + errorCode + " endpoint=" + endpoint);
 
-                	CNSMonitor.getInstance().registerBadEndpoint(endpoint, 1, 1, message.getTopicArn());
+                	CNSWorkerMonitor.getInstance().registerBadEndpoint(endpoint, 1, 1, message.getTopicArn());
 	            	doRetry(pub, protocol, endpoint, subArn);
                 }
             

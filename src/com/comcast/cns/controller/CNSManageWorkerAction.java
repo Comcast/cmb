@@ -43,6 +43,7 @@ import com.comcast.cmb.common.util.CMBException;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cns.io.CNSWorkerStatsPopulator;
 import com.comcast.cns.model.CNSWorkerStats;
+import com.comcast.cns.tools.CNSWorkerMonitorMBean;
 import com.comcast.cns.util.CNSErrorCodes;
 /**
  * Subscribe action
@@ -135,8 +136,8 @@ public class CNSManageWorkerAction extends CNSAction {
 						jmxConnector = JMXConnectorFactory.connect(serviceUrl, null);
 
 						MBeanServerConnection mbeanConn = jmxConnector.getMBeanServerConnection();
-						ObjectName cnsWorkerMonitor = new ObjectName("com.comcast.cns.controller:type=CNSMonitorMBean");
-						CNSMonitorMBean mbeanProxy = JMX.newMBeanProxy(mbeanConn, cnsWorkerMonitor,	CNSMonitorMBean.class, false);
+						ObjectName cnsWorkerMonitor = new ObjectName("com.comcast.cns.tools:type=CNSWorkerMonitorMBean");
+						CNSWorkerMonitorMBean mbeanProxy = JMX.newMBeanProxy(mbeanConn, cnsWorkerMonitor,	CNSWorkerMonitorMBean.class, false);
 
 						mbeanProxy.clearWorkerQueues();
 

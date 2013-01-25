@@ -15,12 +15,15 @@
  */
 package com.comcast.cns.controller;
 
+import java.lang.management.ManagementFactory;
 import java.net.InetAddress;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -43,7 +46,6 @@ import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cns.model.CNSTopicAttributes;
 import com.comcast.cns.persistence.ICNSSubscriptionPersistence;
 import com.comcast.cns.persistence.ICNSTopicPersistence;
-import com.comcast.cqs.controller.CQSControllerServlet;
 
 /**
  * Servlet for handling all CNS actions
@@ -101,6 +103,19 @@ public class CNSControllerServlet extends CMBControllerServlet {
     public void init() throws ServletException {
         
     	super.init();
+    	
+        try {
+        	
+	    	MBeanServer mbs = ManagementFactory.getPlatformMBeanServer(); 
+	        ObjectName name = new ObjectName("com.comcast.cns.controller:type=CNSMonitorMBean");
+	        
+	        if (!mbs.isRegistered(name)) {
+	        	mbs.registerMBean(CNSMonitor.getInstance(), name);
+	        }
+	        
+        } catch (Exception ex) {
+        	logger.warn("event=failed_to_register_monitor", ex);
+        }
     	
     	topicHandler = PersistenceFactory.getTopicPersistence();
     	subscriptionHandler = PersistenceFactory.getSubscriptionPersistence();

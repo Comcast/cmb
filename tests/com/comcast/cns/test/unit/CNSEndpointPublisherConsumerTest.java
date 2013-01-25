@@ -62,7 +62,6 @@ import com.comcast.cmb.common.model.User;
 import com.comcast.cmb.common.persistence.PersistenceFactory;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.Util;
-import com.comcast.cns.controller.CNSMonitor;
 import com.comcast.cns.io.IEndpointPublisher;
 import com.comcast.cns.model.CNSEndpointPublishJob;
 import com.comcast.cns.model.CNSMessage;
@@ -76,6 +75,7 @@ import com.comcast.cns.model.CNSSubscription.CnsSubscriptionProtocol;
 import com.comcast.cns.persistence.ICNSAttributesPersistence;
 import com.comcast.cns.tools.CNSEndpointPublisherJobConsumer;
 import com.comcast.cns.tools.CNSPublishJob;
+import com.comcast.cns.tools.CNSWorkerMonitor;
 import com.amazonaws.services.sqs.model.Message;
 
 public class CNSEndpointPublisherConsumerTest {
@@ -855,16 +855,16 @@ public class CNSEndpointPublisherConsumerTest {
     @Test
     public void testBadEndpointMetric() throws Exception {
 
-        CNSMonitor.getInstance().clearBadEndpointsState();
-        CNSMonitor.getInstance().registerBadEndpoint("test-endpoint", 1, 1, "test-topic");
-        CNSMonitor.getInstance().registerBadEndpoint("test-endpoint", 0, 1, "test-topic");
-        CNSMonitor.getInstance().registerBadEndpoint("test-endpoint2", 0, 1, "test-topic");
+        CNSWorkerMonitor.getInstance().clearBadEndpointsState();
+        CNSWorkerMonitor.getInstance().registerBadEndpoint("test-endpoint", 1, 1, "test-topic");
+        CNSWorkerMonitor.getInstance().registerBadEndpoint("test-endpoint", 0, 1, "test-topic");
+        CNSWorkerMonitor.getInstance().registerBadEndpoint("test-endpoint2", 0, 1, "test-topic");
         
-        if (CNSMonitor.getInstance().getErrorRateForEndpoints().size() != 1) {
-            fail("Expected 1 bad endpoint. got:" + CNSMonitor.getInstance().getErrorRateForEndpoints());
+        if (CNSWorkerMonitor.getInstance().getErrorRateForEndpoints().size() != 1) {
+            fail("Expected 1 bad endpoint. got:" + CNSWorkerMonitor.getInstance().getErrorRateForEndpoints());
         }        
         
-        logger.info("metric=" + CNSMonitor.getInstance().getErrorRateForEndpoints());        
+        logger.info("metric=" + CNSWorkerMonitor.getInstance().getErrorRateForEndpoints());        
     }
 
 }

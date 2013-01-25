@@ -124,7 +124,7 @@ public class CNSGetWorkerStatsAction extends CNSAction {
 
 					//Set<ObjectName> beanSet = mbeanConn.queryNames(null, null);
 
-					ObjectName cnsWorkerMonitor = new ObjectName("com.comcast.cns.controller:type=CNSMonitorMBean");
+					ObjectName cnsWorkerMonitor = new ObjectName("com.comcast.cns.tools:type=CNSWorkerMonitorMBean");
 
 					Integer deliveryQueueSize = (Integer)mbeanConn.getAttribute(cnsWorkerMonitor, "DeliveryQueueSize");
 					stats.setDeliveryQueueSize(deliveryQueueSize);
@@ -149,7 +149,7 @@ public class CNSGetWorkerStatsAction extends CNSAction {
 
 				} catch (Exception ex) {
 
-					logger.warn("event=failed_to_connect_to_jmx_server url=" + url);
+					logger.warn("event=failed_to_connect_to_jmx_server url=" + url, ex);
 
 				} finally {
 

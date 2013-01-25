@@ -598,7 +598,7 @@ public class RedisPayloadCacheCassandraPersistence implements ICQSMessagePersist
             }
         }
         logger.info("event=getMessages satus=success missedIds=" + missedIds.size() + " cachedIds=" + (ids.size() - missedIds.size()));
-        CQSMonitor.Inst.registerCacheHit(queueUrl, (ids.size() - missedIds.size()), ids.size(), CacheType.PayloadCache);
+        CQSMonitor.getInstance().registerCacheHit(queueUrl, (ids.size() - missedIds.size()), ids.size(), CacheType.PayloadCache);
         return messageIdToMessage;
     }
     

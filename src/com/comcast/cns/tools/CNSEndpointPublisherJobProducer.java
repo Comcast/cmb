@@ -35,7 +35,6 @@ import com.comcast.cmb.common.persistence.PersistenceFactory;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.PersistenceException;
 import com.comcast.cmb.common.util.ValueAccumulator.AccumulatorName;
-import com.comcast.cns.controller.CNSMonitor;
 import com.comcast.cns.model.CNSEndpointPublishJob;
 import com.comcast.cns.model.CNSMessage;
 import com.comcast.cns.model.CNSSubscription;
@@ -154,7 +153,7 @@ public class CNSEndpointPublisherJobProducer implements CNSPublisherPartitionRun
 	        String publishJobQName = CNS_PRODUCER_QUEUE_NAME_PREFIX + partition;
 	        String queueUrl = CQSHandler.getQueueUrl(publishJobQName);
 	        Message message = CQSHandler.receiveMessage(queueUrl); 
-    		CNSMonitor.getInstance().registerCQSServiceAvailable(true);
+    		CNSWorkerMonitor.getInstance().registerCQSServiceAvailable(true);
 
 	        if (message != null) {
 	        	
@@ -211,7 +210,7 @@ public class CNSEndpointPublisherJobProducer implements CNSPublisherPartitionRun
 	    	
 	    	if (ex.getCause() instanceof HttpHostConnectException) {
 	    		logger.error("event=cqs_service_unavailable", ex);
-	    		CNSMonitor.getInstance().registerCQSServiceAvailable(false);
+	    		CNSWorkerMonitor.getInstance().registerCQSServiceAvailable(false);
 	    	} else {
 	    		CQSHandler.ensureQueuesExist(CNS_PRODUCER_QUEUE_NAME_PREFIX, CMBProperties.getInstance().getNumPublishJobQs());
 	    	}

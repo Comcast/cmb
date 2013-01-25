@@ -15,202 +15,42 @@
  */
 package com.comcast.cns.controller;
 
-import java.util.Enumeration;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
-import org.jfree.util.Log;
-
-import com.comcast.cmb.common.util.CMBProperties;
-import com.comcast.cmb.common.util.PersistenceException;
-import com.comcast.cmb.common.util.RollingWindowCapture;
-import com.comcast.cns.io.HTTPEndpointSyncPublisher;
-import com.comcast.cns.tools.CNSEndpointPublisherJobConsumer;
-import com.comcast.cns.tools.CNSPublisher;
+import com.comcast.cmb.common.controller.CMBControllerServlet;
 
 /**
  * The implementation of monitoring for CNS.
- * @author aseem
+ * @author aseem, boris
  * Class is thread-safe
  */
 
 public class CNSMonitor implements CNSMonitorMBean {
 
 	private static final CNSMonitor Inst = new CNSMonitor();
-	private CNSMonitor() {}
-    public static CNSMonitor getInstance() {return Inst;}
-        
-    public ConcurrentHashMap<String, AtomicInteger> messageIdToSendRemaining = new ConcurrentHashMap<String, AtomicInteger>();
-    
-    private class BadEndpointInfo {
-        AtomicInteger errors = new AtomicInteger();
-        AtomicInteger tries = new AtomicInteger();
-        ConcurrentHashMap<String, Boolean> topics = new ConcurrentHashMap<String, Boolean>(); 
-    }
-    
-    private ConcurrentHashMap<String, BadEndpointInfo> badEndpoints = new ConcurrentHashMap<String, CNSMonitor.BadEndpointInfo>();
-    private boolean cqsServiceAvailable = true;
-
-    private class GenericEvent extends RollingWindowCapture.PayLoad{
-        final AtomicInteger num = new AtomicInteger(1);
-        final long timeStamp = System.currentTimeMillis();
-    }
-
-    private class CountMessagesVisitor implements RollingWindowCapture.Visitor<GenericEvent> {
-        int num = 0;
-        public void processNode(GenericEvent n){
-            num += n.num.get();
-        }
-    }
-    
-    private RollingWindowCapture<GenericEvent> publishMsgRW = new RollingWindowCapture<GenericEvent>(CMBProperties.getInstance().getRollingWindowTimeSec(), 10000);
-
-    @Override
-    public int getNumPublishedMessages() {
-        CountMessagesVisitor c = new CountMessagesVisitor();
-        publishMsgRW.visitAllNodes(c);
-        return c.num;
-    }
-
-    @Override
-    public int getNumPooledHttpConnections() {
-        return HTTPEndpointSyncPublisher.getNumConnectionsInPool();
-    }
-    
-    public void registerPublishMessage() {
-        GenericEvent currentHead = publishMsgRW.getLatestPayload();
-        if (currentHead == null || System.currentTimeMillis() - currentHead.timeStamp > 60000L) {
-            publishMsgRW.addNow(new GenericEvent());
-        } else {
-            currentHead.num.incrementAndGet();
-        }
-    }
-
-    public void registerSendsRemaining(String messageId, int remaining) {
-        AtomicInteger newVal = new AtomicInteger();
-        AtomicInteger oldVal = messageIdToSendRemaining.putIfAbsent(messageId, newVal);
-        if (oldVal != null) {
-            newVal = oldVal;
-        }
-        newVal.addAndGet(remaining);
-        if (newVal.intValue() == 0) {
-        	messageIdToSendRemaining.remove(messageId);
-        }
-    }
-    
-    @Override
-    public int getPendingPublishJobs() {
-        int numNonZero = 0;
-        for (Map.Entry<String, AtomicInteger> entry : messageIdToSendRemaining.entrySet()) {
-            if (entry.getValue().get() != 0) {
-                numNonZero++;
-            }
-        }
-        return numNonZero;
-    }
-
-    public void clearBadEndpointsState() {
-        badEndpoints.clear();
-    }
-    
-    /**
-     * Only capture stats for endpoints that have previous errors.
-     * @param endpoint
-     * @param errors
-     * @param numTries
-     * @param topic
-     */
-    public void registerBadEndpoint(String endpoint, int errors, int numTries, String topic) {
-        
-    	if (!badEndpoints.containsKey(endpoint) && errors == 0) {
-            return; //no errors for this endpoint. Its good. return
-        }
-        
-    	BadEndpointInfo newVal = new BadEndpointInfo();
-        BadEndpointInfo oldVal = badEndpoints.putIfAbsent(endpoint, newVal);
-        
-        if (oldVal != null) {
-            newVal = oldVal;
-        }
-        
-        newVal.errors.addAndGet(errors);
-        newVal.tries.addAndGet(numTries);
-        newVal.topics.putIfAbsent(topic, Boolean.TRUE);
-    }
-
-    /**
-     * @return map of endpointURL -> failure-rate, numTries, List<Topics>
-     */
-    @Override
-    public Map<String, String> getErrorRateForEndpoints() {
-
-    	HashMap<String, String> ret = new HashMap<String, String>();
-        
-    	for (Map.Entry<String, BadEndpointInfo> entry : badEndpoints.entrySet()) {
-        
-    		String endpoint = entry.getKey();
-            BadEndpointInfo val = entry.getValue();
-            StringBuffer sb = new StringBuffer();
-            int failureRate = (val.tries.get() > 0) ? (int) (((float) val.errors.get() / (float) val.tries.get()) * 100) : 0;
-            sb.append("failureRate=").append(failureRate).append(",numTries=").append(val.tries.get()).append(",topics=");
-            Enumeration<String> topics = val.topics.keys();
-            
-            if (topics.hasMoreElements()) {
-                sb.append(topics.nextElement());
-            }
-
-            while (topics.hasMoreElements()) {
-                sb.append(",").append(topics.nextElement());
-            }
-            
-            ret.put(endpoint, sb.toString());
-        }
-    	
-        return ret;
-    }
-
-    @Override
-    public Map<String, Integer> getRecentErrorCountForEndpoints() {
-    	return CNSEndpointPublisherJobConsumer.getBadResponseCounts();
-    }
-
-    @Override
-    public int getDeliveryQueueSize() {
-        return CNSEndpointPublisherJobConsumer.MonitoringInterface.getDeliveryHandlersQueueSize();
-    }
-
-    @Override
-    public int getRedeliveryQueueSize() {
-        return CNSEndpointPublisherJobConsumer.MonitoringInterface.getReDeliveryHandlersQueueSize();
-    }
-
-    @Override
-    public boolean isConsumerOverloaded() {
-        return CNSEndpointPublisherJobConsumer.isOverloaded();
-    }
-    
-	@Override
-	public boolean clearWorkerQueues() {
-		
-		try {
-			CNSPublisher.clearQueues();
-			clearBadEndpointsState();
-			return true;
-		} catch (PersistenceException ex) {
-			Log.error("event=clear_queue_failure", ex);
-		}
-		
-		return false;
-	}
 	
+	private CNSMonitor() {
+	}
+
+	public static CNSMonitor getInstance() {
+		return Inst;
+	}
+        
 	@Override
-	public boolean isCQSServiceAvailable() {
-		return cqsServiceAvailable;
+	public Map<String, AtomicLong> getCallStats() {
+		return CMBControllerServlet.callStats;
 	}
-	
-	public void registerCQSServiceAvailable(boolean available) {
-		cqsServiceAvailable = available;
+
+	@Override
+	public Map<String, AtomicLong> getCallFailureStats() {
+		return CMBControllerServlet.callFailureStats;
 	}
+
+	@Override
+	public void resetCallStats() {
+		CMBControllerServlet.callStats = new ConcurrentHashMap<String, AtomicLong>();
+		CMBControllerServlet.callFailureStats = new ConcurrentHashMap<String, AtomicLong>();
+	}	
 }

@@ -113,7 +113,7 @@ public class CNSGetAPIStatsAction extends CNSAction {
 
 					MBeanServerConnection mbeanConn = jmxConnector.getMBeanServerConnection();
 
-					ObjectName cqsAPIMonitor = new ObjectName("com.comcast.cqs.controller:type=CQSMonitorMBean");
+					ObjectName cqsAPIMonitor = new ObjectName("com.comcast.cns.controller:type=CNSMonitorMBean");
 
 					Map<String, AtomicLong> callStats = (Map<String, AtomicLong>)mbeanConn.getAttribute(cqsAPIMonitor, "CallStats");
 					
@@ -125,7 +125,7 @@ public class CNSGetAPIStatsAction extends CNSAction {
 
 				} catch (Exception ex) {
 
-					logger.warn("event=failed_to_connect_to_jmx_server url=" + url);
+					logger.warn("event=failed_to_connect_to_jmx_server url=" + url, ex);
 
 				} finally {
 

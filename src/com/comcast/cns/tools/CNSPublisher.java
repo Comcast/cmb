@@ -30,7 +30,6 @@ import com.comcast.cmb.common.persistence.CassandraPersistence;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.PersistenceException;
 import com.comcast.cmb.common.util.Util;
-import com.comcast.cns.controller.CNSMonitor;
 
 /**
  * The main class for the tool that sends out notifications or creates endpointPublich jobs
@@ -142,10 +141,10 @@ public class CNSPublisher {
             }
 
             MBeanServer mbs = ManagementFactory.getPlatformMBeanServer(); 
-            ObjectName name = new ObjectName("com.comcast.cns.controller:type=CNSMonitorMBean");
+            ObjectName name = new ObjectName("com.comcast.cns.tools:type=CNSWorkerMonitorMBean");
             
             if (!mbs.isRegistered(name)) {
-                mbs.registerMBean(CNSMonitor.getInstance(), name);
+                mbs.registerMBean(CNSWorkerMonitor.getInstance(), name);
             }
         }        
     }    

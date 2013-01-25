@@ -153,7 +153,7 @@ public class CQSLongPollReceiver {
 							
 							logger.info("event=messages_found action=completing count=" + messageList.size());
 							
-							CQSMonitor.Inst.addNumberOfMessagesReturned(queue.getRelativeUrl(), messageList.size());
+							CQSMonitor.getInstance().addNumberOfMessagesReturned(queue.getRelativeUrl(), messageList.size());
 					        String out = CQSMessagePopulator.getReceiveMessageResponseAfterSerializing(messageList, cmbHttpServletRequest.getFilterAttributes());
 					        asyncContext.getResponse().getWriter().println(out);
 					        asyncContext.complete();

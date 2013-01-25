@@ -236,7 +236,7 @@ public class CQSReceiveMessageAction extends CQSAction {
 
         } else {
 
-            CQSMonitor.Inst.addNumberOfMessagesReturned(queue.getRelativeUrl(), messageList.size());
+            CQSMonitor.getInstance().addNumberOfMessagesReturned(queue.getRelativeUrl(), messageList.size());
         	String out = CQSMessagePopulator.getReceiveMessageResponseAfterSerializing(messageList, filterAttributes);
             response.getWriter().println(out);
             

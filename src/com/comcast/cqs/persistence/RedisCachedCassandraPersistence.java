@@ -975,7 +975,7 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
                         }
                     }
                     if (messageIds.size() == 0) {
-                        CQSMonitor.Inst.registerEmptyResp(queue.getRelativeUrl(), 1);
+                        CQSMonitor.getInstance().registerEmptyResp(queue.getRelativeUrl(), 1);
                         return Collections.emptyList();
                     }
                     //by here messageIds have Underlying layer's messageids. Get messages
@@ -1071,7 +1071,7 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
                     returnResource(jedis, brokenJedis);
                 }
             }
-            CQSMonitor.Inst.registerCacheHit(queue.getRelativeUrl(), ret.size(), ret.size(), CacheType.QCache); //all ids from cache
+            CQSMonitor.getInstance().registerCacheHit(queue.getRelativeUrl(), ret.size(), ret.size(), CacheType.QCache); //all ids from cache
             log.debug("event=receive_message cache_available=true num_messages_ret=" + ret.size());
             for (CQSMessage msg : ret) {
                 log.debug("event=receive_message message_body=" + msg.getBody());
@@ -1091,7 +1091,7 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
             }
             //Note: In this case there is no message hiding.            
 
-            CQSMonitor.Inst.registerCacheHit(queue.getRelativeUrl(), 0, ret.size(), CacheType.QCache); //all ids missed cache
+            CQSMonitor.getInstance().registerCacheHit(queue.getRelativeUrl(), 0, ret.size(), CacheType.QCache); //all ids missed cache
             log.debug("event=receive_message cache_available=false numMessagesRet=" + ret.size());
             
             for (CQSMessage msg : ret) {
@@ -1100,7 +1100,7 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
         }
         
         if (ret.size() == 0) {
-            CQSMonitor.Inst.registerEmptyResp(queue.getRelativeUrl(), 1);
+            CQSMonitor.getInstance().registerEmptyResp(queue.getRelativeUrl(), 1);
         }
         
         return ret;
