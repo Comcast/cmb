@@ -87,7 +87,8 @@ public class UserAuthModule implements IAuthModule {
 
         while (enumeration.hasMoreElements()) {
             String name = enumeration.nextElement();
-            headers.put(name, requestUrl.getHeader(name));
+            headers.put(name.toLowerCase(), requestUrl.getHeader(name));
+            logger.debug("event=found_header key=" + name + " value=" + requestUrl.getHeader(name) + " storing_as=" + name.toLowerCase());
         }
 
         return headers;

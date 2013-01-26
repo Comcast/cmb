@@ -158,7 +158,7 @@ public class CNSControllerServlet extends CMBControllerServlet {
     	    put(addPermission.getName(), addPermission);
     	    put(removePermission.getName(), removePermission);
     	    put(healthCheckShallow.getName(), healthCheckShallow);
-            put("shallowHealthCheck", healthCheckShallow); // for backward-compatibility
+            put("healthCheckShallow", healthCheckShallow); // for backward-compatibility
     	    put(getWorkerStats.getName(), getWorkerStats);
     	    put(manageWorker.getName(), manageWorker);
     	    put(clearCache.getName(), clearCache);
