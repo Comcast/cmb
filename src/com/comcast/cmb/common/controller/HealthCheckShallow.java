@@ -39,6 +39,11 @@ public class HealthCheckShallow extends CQSAction {
     public boolean isActionAllowed(User user, HttpServletRequest request, String service, CMBPolicy policy) throws Exception {
     	return true;
     }
+    
+    @Override
+    public boolean isAuthRequired() {
+        return false;
+    }
 
     @Override
     public boolean doAction(User user, HttpServletRequest request, HttpServletResponse response) throws Exception {        

@@ -167,6 +167,7 @@ public class CQSControllerServlet extends CMBControllerServlet {
             put(setQueueAttributesAction.getName(), setQueueAttributesAction);
             put(clearQueueAction.getName(), clearQueueAction);
             put(healthCheckShallow.getName(), healthCheckShallow);
+            put("shallowHealthCheck", healthCheckShallow); // for backward-compatibility
             put(clearCache.getName(), clearCache);
             put(getAPIStats.getName(), getAPIStats);
         }};

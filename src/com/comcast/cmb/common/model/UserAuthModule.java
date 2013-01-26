@@ -16,7 +16,6 @@
  */
 package com.comcast.cmb.common.model;
 
-import com.amazonaws.util.BinaryUtils;
 import com.comcast.cmb.common.persistence.IUserPersistence;
 import com.comcast.cmb.common.util.AuthUtil;
 import com.comcast.cmb.common.util.AuthenticationException;
