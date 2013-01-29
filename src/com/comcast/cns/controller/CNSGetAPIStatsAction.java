@@ -101,7 +101,7 @@ public class CNSGetAPIStatsAction extends CNSAction {
 		
 		for (CQSAPIStats stats : statsList) {
 			
-			if (stats.getJmxPort() > 0) {
+			if (stats.getJmxPort() > 0 && System.currentTimeMillis() - stats.getTimestamp() < 5*60*1000) {
 			
 				JMXConnector jmxConnector = null;
 				String url = null;
