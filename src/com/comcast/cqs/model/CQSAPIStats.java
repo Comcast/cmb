@@ -40,6 +40,16 @@ public class CQSAPIStats {
 	
 	private Map<String, AtomicLong> callFailureStats; 
 	
+	private String serviceUrl;
+	
+	public String getServiceUrl() {
+		return serviceUrl;
+	}
+
+	public void setServiceUrl(String serviceUrl) {
+		this.serviceUrl = serviceUrl;
+	}
+
 	public Map<String, AtomicLong> getCallStats() {
 		return callStats;
 	}

@@ -34,7 +34,6 @@ import me.prettyprint.hector.api.HConsistencyLevel;
 
 import com.comcast.cmb.common.controller.Action;
 import com.comcast.cmb.common.controller.CMBControllerServlet;
-import com.comcast.cmb.common.controller.ClearCache;
 import com.comcast.cmb.common.controller.HealthCheckShallow;
 import com.comcast.cmb.common.model.CMBPolicy;
 import com.comcast.cmb.common.model.User;
@@ -46,6 +45,7 @@ import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cns.model.CNSTopicAttributes;
 import com.comcast.cns.persistence.ICNSSubscriptionPersistence;
 import com.comcast.cns.persistence.ICNSTopicPersistence;
+import com.comcast.cqs.controller.CQSManageServiceAction;
 
 /**
  * Servlet for handling all CNS actions
@@ -138,7 +138,7 @@ public class CNSControllerServlet extends CMBControllerServlet {
     	final CNSGetWorkerStatsAction getWorkerStats = new CNSGetWorkerStatsAction();
     	final CNSManageWorkerAction manageWorker = new CNSManageWorkerAction();
     	final HealthCheckShallow healthCheckShallow = new HealthCheckShallow();
-        final ClearCache clearCache = new ClearCache();
+        final CQSManageServiceAction clearCache = new CQSManageServiceAction();
         final CNSGetAPIStatsAction getAPIStats = new CNSGetAPIStatsAction();
     	
     	actionMap = new HashMap<String, Action>(){{
@@ -194,6 +194,7 @@ public class CNSControllerServlet extends CMBControllerServlet {
 	        	values.put("timestamp", now + "");
 	        	values.put("jmxport", System.getProperty("com.sun.management.jmxremote.port", "0"));
 	        	values.put("dataCenter", CMBProperties.getInstance().getCmbDataCenter());
+	        	values.put("serviceUrl", CMBProperties.getInstance().getCNSServerUrl());
                 cassandraHandler.insertOrUpdateRow(hostAddress, "CNSAPIServers", values, HConsistencyLevel.QUORUM);
         	} catch (Exception ex) {
         		logger.warn("event=ping_failed", ex);

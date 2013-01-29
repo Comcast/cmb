@@ -95,6 +95,10 @@ public class CQSGetAPIStatsAction extends CQSAction {
 					stats.setDataCenter(row.getColumnSlice().getColumnByName("dataCenter").getValue());
 				}
 				
+				if (row.getColumnSlice().getColumnByName("serviceUrl") != null) {
+					stats.setServiceUrl(row.getColumnSlice().getColumnByName("serviceUrl").getValue());
+				}
+
 				statsList.add(stats);
 			}
 		}

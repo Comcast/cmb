@@ -17,6 +17,8 @@ package com.comcast.cns.controller;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 import javax.management.JMX;
 import javax.management.MBeanServerConnection;
@@ -35,6 +37,7 @@ import me.prettyprint.hector.api.beans.Row;
 
 import org.apache.log4j.Logger;
 
+import com.comcast.cmb.common.controller.CMBControllerServlet;
 import com.comcast.cmb.common.model.CMBPolicy;
 import com.comcast.cmb.common.model.User;
 import com.comcast.cmb.common.persistence.CassandraPersistence;
@@ -72,18 +75,18 @@ public class CNSManageWorkerAction extends CNSAction {
 	@Override
 	public boolean doAction(User user, HttpServletRequest request, HttpServletResponse response) throws Exception {
 
-		String host = request.getParameter("Host");
-
-		if (host == null || host.equals("")) {
-			logger.error("event=cns_manage_worker status=failure errorType=InvalidParameters details=missing_parameter_host");
-			throw new CMBException(CNSErrorCodes.CNS_InvalidParameter,"Request parameter Host missing.");
-		}
-
 		String task = request.getParameter("Task");
 
 		if (task == null || task.equals("")) {
 			logger.error("event=cns_manage_worker status=failure errorType=InvalidParameters details=missing_parameter_task");
-			throw new CMBException(CNSErrorCodes.CNS_InvalidParameter,"Request parameter Task missing.");
+			throw new CMBException(CNSErrorCodes.MissingParameter,"Request parameter Task missing.");
+		}
+
+		String host = request.getParameter("Host");
+
+		if (!task.equals("ClearAPIStats") && (host == null || host.equals(""))) {
+			logger.error("event=cns_manage_worker status=failure errorType=InvalidParameters details=missing_parameter_host");
+			throw new CMBException(CNSErrorCodes.MissingParameter,"Request parameter Host missing.");
 		}
 
 		CassandraPersistence cassandraHandler = new CassandraPersistence(CMBProperties.getInstance().getCMBCNSKeyspace());
@@ -141,7 +144,7 @@ public class CNSManageWorkerAction extends CNSAction {
 
 						mbeanProxy.clearWorkerQueues();
 
-						String res = CNSWorkerStatsPopulator.getGetWorkerClearQueuesResponse();	
+						String res = CNSWorkerStatsPopulator.getGetManageWorkerResponse();	
 						response.getWriter().println(res);
 
 						return true;
@@ -162,6 +165,13 @@ public class CNSManageWorkerAction extends CNSAction {
 			ColumnFamilyTemplate<String, String> usersTemplate = new ThriftColumnFamilyTemplate<String, String>(cassandraHandler.getKeySpace(HConsistencyLevel.QUORUM), "CNSWorkers", StringSerializer.get(), StringSerializer.get());
 			cassandraHandler.delete(usersTemplate, host, null);
 			
+			return true;
+			
+		} else if (task.equals("ClearAPIStats")) {
+			
+            CMBControllerServlet.callStats = new ConcurrentHashMap<String, AtomicLong>();
+            CMBControllerServlet.callFailureStats = new ConcurrentHashMap<String, AtomicLong>();
+
 			return true;
 
 		} else {

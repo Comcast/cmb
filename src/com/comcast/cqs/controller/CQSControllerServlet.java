@@ -33,7 +33,6 @@ import me.prettyprint.hector.api.HConsistencyLevel;
 import org.apache.log4j.Logger;
 
 import com.comcast.cmb.common.controller.CMBControllerServlet;
-import com.comcast.cmb.common.controller.ClearCache;
 import com.comcast.cmb.common.controller.HealthCheckShallow;
 import com.comcast.cmb.common.model.CMBPolicy;
 import com.comcast.cmb.common.model.User;
@@ -145,7 +144,7 @@ public class CQSControllerServlet extends CMBControllerServlet {
         final CQSPeekMessageAction peekMessageAction = new CQSPeekMessageAction();
         final CQSGetAPIStatsAction getAPIStats = new CQSGetAPIStatsAction();
         final HealthCheckShallow healthCheckShallow = new HealthCheckShallow();
-        final ClearCache clearCache = new ClearCache();
+        final CQSManageServiceAction clearCache = new CQSManageServiceAction();
         
         actionMap = new HashMap<String, CQSAction>() {{
             put(createQueueAction.getName(), createQueueAction);
@@ -265,6 +264,7 @@ public class CQSControllerServlet extends CMBControllerServlet {
 	        	values.put("port", CMBProperties.getInstance().getCqsLongPollPort() + "");
 	        	values.put("jmxport", System.getProperty("com.sun.management.jmxremote.port", "0"));
 	        	values.put("dataCenter", CMBProperties.getInstance().getCmbDataCenter());
+	        	values.put("serviceUrl", CMBProperties.getInstance().getCQSServerUrl());
                 cassandraHandler.insertOrUpdateRow(hostAddress, "CQSAPIServers", values, HConsistencyLevel.QUORUM);
                 
         	} catch (Exception ex) {
@@ -288,7 +288,7 @@ public class CQSControllerServlet extends CMBControllerServlet {
             	
         CQSQueue queue = null;
         
-        if (!action.equals("CreateQueue") && !action.equals("healthCheckShallow") && !action.equals("HealthCheck") && !action.equals("ClearCache") && !action.equals("GetQueueUrl") && !action.equals("ListQueues") && !action.equals("GetAPIStats")) {
+        if (!action.equals("CreateQueue") && !action.equals("healthCheckShallow") && !action.equals("HealthCheck") && !action.equals("ManageService") && !action.equals("GetQueueUrl") && !action.equals("ListQueues") && !action.equals("GetAPIStats")) {
             queue = getCachedQueue(user, request);
     	}
 

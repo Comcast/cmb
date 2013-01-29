@@ -90,6 +90,16 @@ public class CNSWorkerStatePageServlet extends AdminServletBase {
 				logger.error("event=failed_to_clear_queues", ex);
 				throw new ServletException(ex);
 			}
+		
+		} else if (parameters.containsKey("ClearAPIStats")) {
+			
+			try {
+				String url = request.getParameter("Url");
+				httpGet(url + "?Action=ManageWorker&Task=ClearAPIStats&AWSAccessKeyId=" + cnsAdminUser.getAccessKey());
+			} catch (Exception ex) {
+				logger.error("event=failed_to_clear_queues", ex);
+				throw new ServletException(ex);
+			}
 		}
 		
 		out.println("<html>");
@@ -210,7 +220,7 @@ public class CNSWorkerStatePageServlet extends AdminServletBase {
 			out.println("<h2 align='left'>CNS API Stats</h2>");
 			
 			out.println("<span class='simple'><table border='1'>");
-			out.println("<tr><th>Ip Address</th><th>JMX Port</th><th>Data Center</th><th>Time Stamp</th></tr>");
+			out.println("<tr><th>Ip Address</th><th>Url</th><th>JMX Port</th><th>Data Center</th><th>Time Stamp</th><th></th></tr>");
 
 			Map<String, Long> aggregateCallStats = new HashMap<String, Long>();
 			Map<String, Long> aggregateCallFailureStats = new HashMap<String, Long>();
@@ -218,10 +228,14 @@ public class CNSWorkerStatePageServlet extends AdminServletBase {
 			for (Element stats : statsList) {
 				
 				out.println("<tr>");
-				out.println("<td>"+XmlUtil.getCurrentLevelTextValue(stats, "IpAddress")+"</td>");
+				String host = XmlUtil.getCurrentLevelTextValue(stats, "IpAddress");
+				out.println("<td>" + host + "</td>");
+				String url = XmlUtil.getCurrentLevelTextValue(stats, "ServiceUrl");
+				out.println("<td>"+url+"</td>");
 				out.println("<td>"+XmlUtil.getCurrentLevelTextValue(stats, "JmxPort")+"</td>");
 				out.println("<td>"+XmlUtil.getCurrentLevelTextValue(stats, "DataCenter")+"</td>");
 				out.println("<td>"+new Date(Long.parseLong(XmlUtil.getCurrentLevelTextValue(stats, "Timestamp")))+"</td>");
+				out.println("<td><form action=\"\" method=\"POST\"><input type='hidden' name='Url' value='"+url+"'><input type='submit' value='Clear API Stats' name='ClearAPIStats'/></form></td>");
 				out.println("</tr>");
 				
 				Element callStats = XmlUtil.getChildNodes(stats, "CallStats").get(0);
@@ -266,7 +280,6 @@ public class CNSWorkerStatePageServlet extends AdminServletBase {
 			}
 			
 			out.println("</table></span>");
-
 
 		} catch (Exception ex) {
 			logger.error("", ex);

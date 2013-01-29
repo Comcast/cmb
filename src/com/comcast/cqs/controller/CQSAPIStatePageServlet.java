@@ -74,7 +74,7 @@ public class CQSAPIStatePageServlet extends AdminServletBase {
 		if (parameters.containsKey("ClearCache")) {
 			
 			try {
-				httpGet(cqsServiceBaseUrl + "?Action=ClearCache&AWSAccessKeyId=" + cnsAdminUser.getAccessKey());
+				httpGet(cqsServiceBaseUrl + "?Action=ManageService&Task=ClearCache&AWSAccessKeyId=" + cnsAdminUser.getAccessKey());
 			} catch (Exception ex) {
 				logger.error("event=failed_to_clear_queues", ex);
 				throw new ServletException(ex);
@@ -82,6 +82,15 @@ public class CQSAPIStatePageServlet extends AdminServletBase {
 	
 		} else if (parameters.containsKey("RemoveRecord")) {
 			
+		} else if (parameters.containsKey("ClearAPIStats")) {
+			
+			try {
+				String url = request.getParameter("Url");
+				httpGet(url + "?Action=ManageService&Task=ClearAPIStats&AWSAccessKeyId=" + cnsAdminUser.getAccessKey());
+			} catch (Exception ex) {
+				logger.error("event=failed_to_clear_queues", ex);
+				throw new ServletException(ex);
+			}
 		}
 		
 		out.println("<html>");
@@ -101,7 +110,7 @@ public class CQSAPIStatePageServlet extends AdminServletBase {
 			out.println("<h2 align='left'>CQS API Stats</h2>");
 			
 			out.println("<span class='simple'><table border='1'>");
-			out.println("<tr><th>Ip Address</th><th>JMX Port</th><th>Long Poll Port</th><th>Data Center</th><th>Time Stamp</th><th>Num Long Poll Receives</th><th>Num Redis Keys</th><th>Num Redis Shards</th><th></th></tr>");
+			out.println("<tr><th>Ip Address</th><th>Url</th><th>JMX Port</th><th>Long Poll Port</th><th>Data Center</th><th>Time Stamp</th><th>Num Long Poll Receives</th><th>Num Redis Keys</th><th>Num Redis Shards</th><th></th><th></th></tr>");
 
 			Map<String, Long> aggregateCallStats = new HashMap<String, Long>();
 			Map<String, Long> aggregateCallFailureStats = new HashMap<String, Long>();
@@ -109,7 +118,10 @@ public class CQSAPIStatePageServlet extends AdminServletBase {
 			for (Element stats : statsList) {
 				
 				out.println("<tr>");
-				out.println("<td>"+XmlUtil.getCurrentLevelTextValue(stats, "IpAddress")+"</td>");
+				String host = XmlUtil.getCurrentLevelTextValue(stats, "IpAddress");
+				out.println("<td>" + host + "</td>");
+				String url = XmlUtil.getCurrentLevelTextValue(stats, "ServiceUrl");
+				out.println("<td>"+url+"</td>");
 				out.println("<td>"+XmlUtil.getCurrentLevelTextValue(stats, "JmxPort")+"</td>");
 				out.println("<td>"+XmlUtil.getCurrentLevelTextValue(stats, "LongPollPort")+"</td>");
 				out.println("<td>"+XmlUtil.getCurrentLevelTextValue(stats, "DataCenter")+"</td>");
@@ -118,6 +130,7 @@ public class CQSAPIStatePageServlet extends AdminServletBase {
 				out.println("<td>"+XmlUtil.getCurrentLevelTextValue(stats, "NumberOfRedisKeys")+"</td>");
 				out.println("<td>"+XmlUtil.getCurrentLevelTextValue(stats, "NumberOfRedisShards")+"</td>");
 				out.println("<td><form action=\"\" method=\"POST\"><input type='submit' value='Clear Cache' name='ClearCache'/></form></td>");
+				out.println("<td><form action=\"\" method=\"POST\"><input type='hidden' name='Url' value='"+url+"'><input type='submit' value='Clear API Stats' name='ClearAPIStats'/></form></td>");
 				out.println("</tr>");
 				
 				Element callStats = XmlUtil.getChildNodes(stats, "CallStats").get(0);
@@ -162,7 +175,7 @@ public class CQSAPIStatePageServlet extends AdminServletBase {
 			}
 			
 			out.println("</table></span>");
-
+			
 		} catch (Exception ex) {
 			logger.error("", ex);
 			throw new ServletException(ex);

@@ -35,6 +35,7 @@ public class CQSAPIStatsPopulator {
 			res += "\t\t\t<JmxPort>"+s.getJmxPort()+"</JmxPort>\n";
 			res += "\t\t\t<LongPollPort>"+s.getLongPollPort()+"</LongPollPort>\n";
 			res += "\t\t\t<DataCenter>"+s.getDataCenter()+"</DataCenter>\n";
+			res += "\t\t\t<ServiceUrl>"+s.getServiceUrl()+"</ServiceUrl>\n";
 			res += "\t\t\t<Timestamp>"+s.getTimestamp()+"</Timestamp>\n";
 			res += "\t\t\t<NumberOfLongPollReceives>"+s.getNumberOfLongPollReceives()+"</NumberOfLongPollReceives>\n";
 			res += "\t\t\t<NumberOfRedisKeys>"+s.getNumberOfRedisKeys()+"</NumberOfRedisKeys>\n";

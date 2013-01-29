@@ -64,13 +64,13 @@ public class CNSWorkerStatsPopulator {
 		return res;
 	}
 
-	public static String getGetWorkerClearQueuesResponse() {
+	public static String getGetManageWorkerResponse() {
 
 		String res = "";
 		
-		res += "<GetWorkerClearQueuesResponse>\n";
+		res += "<GetManageWorkerResponse>\n";
 		res += "\t" + CNSPopulator.getResponseMetadata() + "\n";
-		res += "</GetWorkerClearQueuesResponse>";
+		res += "</GetManageWorkerResponse>";
 
 		return res;
 	}

@@ -48,7 +48,7 @@ public class UserAuthModule implements IAuthModule {
 
     private static final Logger logger = Logger.getLogger(UserAuthModule.class);
     
-    private static final List<String> ADMIN_ACTIONS = Arrays.asList(new String[] { "HealthCheck", "ClearCache", "GetAPIStats", "GetWorkerStats", "ManageWorker" });
+    private static final List<String> ADMIN_ACTIONS = Arrays.asList(new String[] { "HealthCheck", "ManageService", "GetAPIStats", "GetWorkerStats", "ManageWorker" });
     
     public class UserCallable implements Callable<User> {
         String accessKey = null;

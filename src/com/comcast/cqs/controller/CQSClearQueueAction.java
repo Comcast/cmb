@@ -28,17 +28,17 @@ import com.comcast.cqs.model.CQSQueue;
  *
  */
 public class CQSClearQueueAction extends CQSAction {
+	
+	public CQSClearQueueAction() {
+		super("ClearQueue");
+	}
 
-    public CQSClearQueueAction() {
-        super("ClearQueue");
-    }       
-
-    @Override
-    public boolean doAction(User user, HttpServletRequest request, HttpServletResponse response) throws Exception {
-        CQSQueue queue = CQSControllerServlet.getCachedQueue(user, request);
-        PersistenceFactory.getCQSMessagePersistence().clearQueue(queue.getRelativeUrl());
-        String out = CQSMessagePopulator.getClearQueueResponse();
-        response.getWriter().println(out);
-        return true;
-    }
+	@Override
+	public boolean doAction(User user, HttpServletRequest request, HttpServletResponse response) throws Exception {
+		CQSQueue queue = CQSControllerServlet.getCachedQueue(user, request);
+		PersistenceFactory.getCQSMessagePersistence().clearQueue(queue.getRelativeUrl());
+		String out = CQSMessagePopulator.getClearQueueResponse();
+		response.getWriter().println(out);
+		return true;
+	}
 }
