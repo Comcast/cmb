@@ -74,7 +74,6 @@ public class CQSCreateQueueAction extends CQSAction {
         CQSQueue newQueue = new CQSQueue(queueName, user.getUserId());
         CQSQueue existingQueue = PersistenceFactory.getQueuePersistence().getQueue(newQueue.getRelativeUrl());
         
-        // Populating the attribute field if any are given
         boolean throwQueueExistsError = false;
         int index = 1;
         String attributeName = request.getParameter("Attribute." + index + ".Name");
