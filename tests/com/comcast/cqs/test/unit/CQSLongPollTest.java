@@ -276,12 +276,15 @@ public class CQSLongPollTest {
     }
 
     private class MultiMessageSender extends Thread {
+
     	int count;
     	int delay;
+    	
     	public MultiMessageSender(int count, int delay) {
     		this.count = count;
     		this.delay = delay;
     	}
+    	
     	public void run() {
     		try {
     			Thread.sleep(delay);

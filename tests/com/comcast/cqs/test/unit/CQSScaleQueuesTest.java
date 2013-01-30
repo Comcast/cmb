@@ -85,6 +85,20 @@ public class CQSScaleQueuesTest {
     public void Create10000Queues() {
     	CreateNQueues(10000);
     }*/
+    
+    private void receiveMessage(String queueUrl) {
+
+    	ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest();
+		receiveMessageRequest.setQueueUrl(queueUrl);
+		receiveMessageRequest.setMaxNumberOfMessages(1);
+
+		ReceiveMessageResult receiveMessageResult = sqs.receiveMessage(receiveMessageRequest);
+		
+    	DeleteMessageRequest deleteMessageRequest = new DeleteMessageRequest();
+		deleteMessageRequest.setQueueUrl(queueUrl);
+		deleteMessageRequest.setReceiptHandle(receiveMessageResult.getMessages().get(0).getReceiptHandle());
+		sqs.deleteMessage(deleteMessageRequest);
+    }
 
     private void CreateNQueues(long n) {
 
@@ -147,26 +161,29 @@ public class CQSScaleQueuesTest {
     		for (String queueUrl : queueUrls) {
 
     			try {
-	    			ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest();
-	    			receiveMessageRequest.setQueueUrl(queueUrl);
-	    			receiveMessageRequest.setMaxNumberOfMessages(1);
-	
-	    			ReceiveMessageResult receiveMessageResult = sqs.receiveMessage(receiveMessageRequest);
-	    			
-	    			//assertTrue("No message found for queue " + queueUrl, receiveMessageResult.getMessages().size() == 1);
-	    			
-	            	logger.info("received message on queue " + counter + ": " + queueUrl);
-	
-	            	DeleteMessageRequest deleteMessageRequest = new DeleteMessageRequest();
-					deleteMessageRequest.setQueueUrl(queueUrl);
-					deleteMessageRequest.setReceiptHandle(receiveMessageResult.getMessages().get(0).getReceiptHandle());
-					sqs.deleteMessage(deleteMessageRequest);
-					
+    				
+    				receiveMessage(queueUrl);
+    				logger.info("received message on queue " + counter + ": " + queueUrl);
 					counter++;
 					
     			} catch (Exception ex) {
-    				logger.error("read failure", ex);
+    				
+    				logger.error("read failure, will retry: " + queueUrl, ex);
     				readFailures++;
+    				
+    				try {
+
+        				Thread.sleep(500);
+    					receiveMessage(queueUrl);
+        				logger.info("received message on queue " + counter + ": " + queueUrl);
+    					counter++;
+    					
+    				} catch (Exception ex2) {
+
+    					logger.error("read failure, giving up: " + queueUrl, ex);
+        				readFailures++;
+    				}
+    				
     			}
     		}
 
