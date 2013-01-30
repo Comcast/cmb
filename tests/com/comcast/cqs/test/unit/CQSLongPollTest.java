@@ -28,8 +28,6 @@ import org.junit.Test;
 
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.services.sns.AmazonSNS;
-import com.amazonaws.services.sns.AmazonSNSClient;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClient;
 import com.amazonaws.services.sqs.model.CreateQueueRequest;
@@ -53,12 +51,17 @@ public class CQSLongPollTest {
     private static Logger logger = Logger.getLogger(CQSIntegrationTest.class);
 
     private AmazonSQS sqs = null;
-    private AmazonSNS sns = null;
+    
+    // alternateSqs is referring to a separate cqs api server using the same redis and cassandra to simulate 
+    // random distribution of requests by load ablancer within a single data center
+    
+    //todo: put url of alternate cqs service here
+    
+    private String alternateCqsServiceUrl = "http://sqs-test5.plaxo.com:6060/";
+    private AmazonSQS alternateSqs = null;
     
     private HashMap<String, String> attributeParams = new HashMap<String, String>();
     private User user = null;
-    private User user1 = null;
-    private User user2 = null;
     private Random randomGenerator = new Random();
     private final static String QUEUE_PREFIX = "TSTQ_"; 
     
@@ -86,31 +89,20 @@ public class CQSLongPollTest {
 
             BasicAWSCredentials credentialsUser = new BasicAWSCredentials(user.getAccessKey(), user.getAccessSecret());
 
-            user1 = userPersistence.getUserByName("cqs_unit_test_1");
-
-            if (user1 == null) {
-                user1 = userPersistence.createUser("cqs_unit_test_1", "cqs_unit_test_1");
-            }
-
-            user2 = userPersistence.getUserByName("cqs_unit_test_2");
-
-            if (user2 == null) {
-                user2 = userPersistence.createUser("cqs_unit_test_2", "cqs_unit_test_2");
-            }
-
-            BasicAWSCredentials credentialsUser1 = new BasicAWSCredentials(user1.getAccessKey(), user1.getAccessSecret());
-
             sqs = new AmazonSQSClient(credentialsUser);
             sqs.setEndpoint(CMBProperties.getInstance().getCQSServerUrl());
             
-            sns = new AmazonSNSClient(credentialsUser1);
-            sns.setEndpoint(CMBProperties.getInstance().getCNSServerUrl());
+            if (alternateCqsServiceUrl != null) {
+            	alternateSqs = new AmazonSQSClient(credentialsUser);
+            	alternateSqs.setEndpoint(alternateCqsServiceUrl);
+            }
             
             queueUrl = null;
             
     		String queueName = QUEUE_PREFIX + randomGenerator.nextLong();
 	        CreateQueueRequest createQueueRequest = new CreateQueueRequest(queueName);
 	        createQueueRequest.setAttributes(attributeParams);
+	        
 	        queueUrl = sqs.createQueue(createQueueRequest).getQueueUrl();
 	        
 	        ICQSMessagePersistence messagePersistence = RedisCachedCassandraPersistence.getInstance();
@@ -143,13 +135,11 @@ public class CQSLongPollTest {
     	}
     }
     
-
     /**
      * Simple functional test: Call receive() with 20 sec TO, then 5 sec later call send()
      * and check if message is received exactly once after around 5 sec.
      */
-    @Test
-    public void testLongPoll() {
+    private void testLongPoll(AmazonSQS receiverSqs) {
 
     	try {
 
@@ -164,7 +154,7 @@ public class CQSLongPollTest {
 			
 			logger.info("calling receive message");
 			
-			ReceiveMessageResult receiveMessageResult = sqs.receiveMessage(receiveMessageRequest);
+			ReceiveMessageResult receiveMessageResult = receiverSqs.receiveMessage(receiveMessageRequest);
 			
 			logger.info("receive message returns");
 			
@@ -181,6 +171,21 @@ public class CQSLongPollTest {
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		}
+    }
+
+    @Test
+    public void testLongPoll() {
+    	testLongPoll(sqs);
+    }
+    
+    @Test
+    public void testLongPollWithLoadBalancer() {
+    	
+    	if (alternateSqs == null) {
+    		fail("must configure alternate cqs service endpoint for this test");
+    	}
+    	
+    	testLongPoll(alternateSqs);
     }
     
     /**
@@ -429,9 +434,8 @@ public class CQSLongPollTest {
      * calling receive() with a TO of 20 sec. After a dealy of 2 sec a single threaded messages sender starts 
      * sending 25 seconds. Test verifies that 25 unique messages are received. 
      */
-    @Test
-    public void testConcurrentLPRequests() {
-    	
+    private void testConcurrentLPRequests(AmazonSQS senderSqs) {
+
     	try {
 
 	        // apparently there is a limit of 50 concurrent operations in aws sdk 
@@ -445,7 +449,7 @@ public class CQSLongPollTest {
 	        Thread.sleep(2000);
 	        
 	    	for (int i=0; i<numMessages; i++) {
-				sqs.sendMessage(new SendMessageRequest(queueUrl, "test message " + i));
+	    		senderSqs.sendMessage(new SendMessageRequest(queueUrl, "test message " + i));
 			}
 	    	
 	    	Thread.sleep(1000);
@@ -455,6 +459,22 @@ public class CQSLongPollTest {
     	} catch (Exception ex) {
 			ex.printStackTrace();
 		}
+    	
+    }
+    
+    @Test
+    public void testConcurrentLPRequests() {
+    	testConcurrentLPRequests(sqs);
+    }
+
+    @Test
+    public void testConcurrentLPRequestsLoadBalancer() {
+
+    	if (alternateSqs == null) {
+    		fail("must configure alternate cqs service endpoint for this test");
+    	}
+    	
+    	testConcurrentLPRequests(alternateSqs);
     }
 
     @After    
