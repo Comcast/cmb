@@ -74,7 +74,8 @@ public class CQSAPIStatePageServlet extends AdminServletBase {
 		if (parameters.containsKey("ClearCache")) {
 			
 			try {
-				httpGet(cqsServiceBaseUrl + "?Action=ManageService&Task=ClearCache&AWSAccessKeyId=" + cnsAdminUser.getAccessKey());
+				String url = request.getParameter("Url") + "?Action=ManageService&Task=ClearCache&AWSAccessKeyId=" + cnsAdminUser.getAccessKey();
+				httpGet(url);
 			} catch (Exception ex) {
 				logger.error("event=failed_to_clear_queues", ex);
 				throw new ServletException(ex);
@@ -85,8 +86,8 @@ public class CQSAPIStatePageServlet extends AdminServletBase {
 		} else if (parameters.containsKey("ClearAPIStats")) {
 			
 			try {
-				String url = request.getParameter("Url");
-				httpGet(url + "?Action=ManageService&Task=ClearAPIStats&AWSAccessKeyId=" + cnsAdminUser.getAccessKey());
+				String url = request.getParameter("Url") + "?Action=ManageService&Task=ClearAPIStats&AWSAccessKeyId=" + cnsAdminUser.getAccessKey();
+				httpGet(url);
 			} catch (Exception ex) {
 				logger.error("event=failed_to_clear_queues", ex);
 				throw new ServletException(ex);
@@ -129,7 +130,7 @@ public class CQSAPIStatePageServlet extends AdminServletBase {
 				out.println("<td>"+XmlUtil.getCurrentLevelTextValue(stats, "NumberOfLongPollReceives")+"</td>");
 				out.println("<td>"+XmlUtil.getCurrentLevelTextValue(stats, "NumberOfRedisKeys")+"</td>");
 				out.println("<td>"+XmlUtil.getCurrentLevelTextValue(stats, "NumberOfRedisShards")+"</td>");
-				out.println("<td><form action=\"\" method=\"POST\"><input type='submit' value='Clear Cache' name='ClearCache'/></form></td>");
+				out.println("<td><form action=\"\" method=\"POST\"><input type='hidden' name='Url' value='"+url+"'><input type='submit' value='Clear Cache' name='ClearCache'/></form></td>");
 				out.println("<td><form action=\"\" method=\"POST\"><input type='hidden' name='Url' value='"+url+"'><input type='submit' value='Clear API Stats' name='ClearAPIStats'/></form></td>");
 				out.println("</tr>");
 				
