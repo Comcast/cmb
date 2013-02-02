@@ -120,6 +120,11 @@ public class CQSLongPollSender {
         			for (Row<String, String, String> row : rows) {
         				
         				String host = row.getKey();
+        				
+    					if (host.contains(":")) {
+    						host = host.substring(0, host.indexOf(":"));
+    					}
+        				
         				String dataCenter = CMBProperties.getInstance().getCmbDataCenter();
         				long timestamp = 0, port = 0;
         				
@@ -136,7 +141,7 @@ public class CQSLongPollSender {
         				}
         				
         				if (now-timestamp < 5*60*1000 && dataCenter.equals(CMBProperties.getInstance().getCmbDataCenter())) {
-        					activelyLongPollingCQSApiServers.put(host, port);
+        					activelyLongPollingCQSApiServers.put(host + ":" + port, new Long(0));
         					logger.info("event=found_active_api_server host=" + host + " port=" + port + " data_center=" + dataCenter);
         				}
         			}
@@ -149,12 +154,16 @@ public class CQSLongPollSender {
 	
 		final String msg = queueArn;
 
-		for (String host : activelyLongPollingCQSApiServers.keySet()) {
+		for (String endpoint : activelyLongPollingCQSApiServers.keySet()) {
 		
-			ChannelFuture channelFuture = clientBootstrap.connect(new InetSocketAddress(host, activelyLongPollingCQSApiServers.get(host).intValue()));
+			String e[] = endpoint.split(":");
+			String host = e[0];
+			String port = e[1];
+			
+			ChannelFuture channelFuture = clientBootstrap.connect(new InetSocketAddress(host, Integer.parseInt(port)));
 			
 			final String h = host;
-			final int p = activelyLongPollingCQSApiServers.get(host).intValue();
+			final int p = Integer.parseInt(port);
 			
 			channelFuture.addListener(new ChannelFutureListener() {
 	

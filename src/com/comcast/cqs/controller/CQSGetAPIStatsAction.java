@@ -98,8 +98,14 @@ public class CQSGetAPIStatsAction extends CQSAction {
 				if (row.getColumnSlice().getColumnByName("serviceUrl") != null) {
 					stats.setServiceUrl(row.getColumnSlice().getColumnByName("serviceUrl").getValue());
 				}
+				
+				if (row.getColumnSlice().getColumnByName("redisServerList") != null) {
+					stats.setRedisServerList(row.getColumnSlice().getColumnByName("redisServerList").getValue());
+				}
 
-				statsList.add(stats);
+				if (stats.getIpAddress().contains(":")) {
+					statsList.add(stats);
+				}
 			}
 		}
 		
@@ -113,6 +119,11 @@ public class CQSGetAPIStatsAction extends CQSAction {
 				try {
 
 					String host = stats.getIpAddress();  
+					
+					if (host.contains(":")) {
+						host = host.substring(0, host.indexOf(":"));
+					}
+					
 					long port = stats.getJmxPort();
 					url = "service:jmx:rmi:///jndi/rmi://" + host + ":" + port + "/jmxrmi";
 

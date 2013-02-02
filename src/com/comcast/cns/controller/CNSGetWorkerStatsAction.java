@@ -16,6 +16,7 @@
 package com.comcast.cns.controller;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -106,7 +107,9 @@ public class CNSGetWorkerStatsAction extends CNSAction {
 		
 		for (CNSWorkerStats stats : statsList) {
 			
-			if (stats.getJmxPort() > 0) {
+			long now = System.currentTimeMillis();
+			
+			if (stats.getJmxPort() > 0 && (now-stats.getConsumerTimestamp()<5*60*1000 || now-stats.getProducerTimestamp()<5*60*1000)) {
 			
 				JMXConnector jmxConnector = null;
 				String url = null;
@@ -116,9 +119,9 @@ public class CNSGetWorkerStatsAction extends CNSAction {
 					String host = stats.getIpAddress();  
 					long port = stats.getJmxPort();
 					url = "service:jmx:rmi:///jndi/rmi://" + host + ":" + port + "/jmxrmi";
-
+					
 					JMXServiceURL serviceUrl = new JMXServiceURL(url);
-					jmxConnector = JMXConnectorFactory.connect(serviceUrl, null);
+					jmxConnector = JMXConnectorFactory.connect(serviceUrl);
 
 					MBeanServerConnection mbeanConn = jmxConnector.getMBeanServerConnection();
 

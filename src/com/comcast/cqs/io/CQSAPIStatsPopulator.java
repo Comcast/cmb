@@ -40,6 +40,7 @@ public class CQSAPIStatsPopulator {
 			res += "\t\t\t<NumberOfLongPollReceives>"+s.getNumberOfLongPollReceives()+"</NumberOfLongPollReceives>\n";
 			res += "\t\t\t<NumberOfRedisKeys>"+s.getNumberOfRedisKeys()+"</NumberOfRedisKeys>\n";
 			res += "\t\t\t<NumberOfRedisShards>"+s.getNumberOfRedisShards()+"</NumberOfRedisShards>\n";
+			res += "\t\t\t<RedisServerList>"+s.getRedisServerList()+"</RedisServerList>\n";
 			
 			res += "\t\t\t<CallStats>\n";
 			

@@ -189,13 +189,27 @@ public class CNSControllerServlet extends CMBControllerServlet {
         		// write ping
         		
         		String hostAddress = InetAddress.getLocalHost().getHostAddress();
+        		String serviceUrl = CMBProperties.getInstance().getCNSServerUrl();
+        		String servicePort = "";
+        		
+        		int startIdx = serviceUrl.indexOf(":", "https://".length());
+        		int endIdx = serviceUrl.indexOf("/", startIdx);
+        		
+        		if (startIdx>0 && endIdx>startIdx) {
+        			servicePort = serviceUrl.substring(startIdx+1, endIdx);
+        		}
+        		
         		logger.info("event=ping version=" + CMBControllerServlet.VERSION + " ip=" + hostAddress);
+        		
         		Map<String, String> values = new HashMap<String, String>();
+        		
 	        	values.put("timestamp", now + "");
 	        	values.put("jmxport", System.getProperty("com.sun.management.jmxremote.port", "0"));
 	        	values.put("dataCenter", CMBProperties.getInstance().getCmbDataCenter());
-	        	values.put("serviceUrl", CMBProperties.getInstance().getCNSServerUrl());
-                cassandraHandler.insertOrUpdateRow(hostAddress, "CNSAPIServers", values, HConsistencyLevel.QUORUM);
+	        	values.put("serviceUrl", serviceUrl);
+	        	
+                cassandraHandler.insertOrUpdateRow(hostAddress + ":" + servicePort, "CNSAPIServers", values, HConsistencyLevel.QUORUM);
+                
         	} catch (Exception ex) {
         		logger.warn("event=ping_failed", ex);
         	}

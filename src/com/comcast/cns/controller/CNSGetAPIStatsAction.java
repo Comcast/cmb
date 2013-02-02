@@ -95,7 +95,9 @@ public class CNSGetAPIStatsAction extends CNSAction {
 					stats.setServiceUrl(row.getColumnSlice().getColumnByName("serviceUrl").getValue());
 				}
 
-				statsList.add(stats);
+				if (stats.getIpAddress().contains(":")) {
+					statsList.add(stats);
+				}
 			}
 		}
 		
@@ -109,6 +111,11 @@ public class CNSGetAPIStatsAction extends CNSAction {
 				try {
 
 					String host = stats.getIpAddress();  
+					
+					if (host.contains(":")) {
+						host = host.substring(0, host.indexOf(":"));
+					}
+
 					long port = stats.getJmxPort();
 					url = "service:jmx:rmi:///jndi/rmi://" + host + ":" + port + "/jmxrmi";
 

@@ -28,7 +28,7 @@ import com.comcast.cqs.model.CQSQueue;
 
 public class CQSHttpServletRequest implements HttpServletRequest {
 	
-	private volatile HttpServletRequest request;
+	private final HttpServletRequest request;
 	
 	private volatile long requestReceivedTimestamp;
 	private volatile long waitTime;

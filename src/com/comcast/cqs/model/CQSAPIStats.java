@@ -42,6 +42,16 @@ public class CQSAPIStats {
 	
 	private String serviceUrl;
 	
+	private String redisServerList;
+	
+	public String getRedisServerList() {
+		return redisServerList;
+	}
+
+	public void setRedisServerList(String redisServerList) {
+		this.redisServerList = redisServerList;
+	}
+
 	public String getServiceUrl() {
 		return serviceUrl;
 	}

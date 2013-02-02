@@ -258,14 +258,28 @@ public class CQSControllerServlet extends CMBControllerServlet {
         		// write ping
         		
         		String hostAddress = InetAddress.getLocalHost().getHostAddress();
+        		String serviceUrl = CMBProperties.getInstance().getCQSServerUrl();
+        		String servicePort = "";
+        		
+        		int startIdx = serviceUrl.indexOf(":", "https://".length());
+        		int endIdx = serviceUrl.indexOf("/", startIdx);
+        		
+        		if (startIdx>0 && endIdx>startIdx) {
+        			servicePort = serviceUrl.substring(startIdx+1, endIdx);
+        		}
+        		
         		logger.info("event=ping version=" + CMBControllerServlet.VERSION + " ip=" + hostAddress);
+        		
         		Map<String, String> values = new HashMap<String, String>();
-	        	values.put("timestamp", now + "");
+	        	
+        		values.put("timestamp", now + "");
 	        	values.put("port", CMBProperties.getInstance().getCqsLongPollPort() + "");
 	        	values.put("jmxport", System.getProperty("com.sun.management.jmxremote.port", "0"));
 	        	values.put("dataCenter", CMBProperties.getInstance().getCmbDataCenter());
-	        	values.put("serviceUrl", CMBProperties.getInstance().getCQSServerUrl());
-                cassandraHandler.insertOrUpdateRow(hostAddress, "CQSAPIServers", values, HConsistencyLevel.QUORUM);
+	        	values.put("serviceUrl", serviceUrl);
+	        	values.put("redisServerList", CMBProperties.getInstance().getRedisServerList());
+	        	
+                cassandraHandler.insertOrUpdateRow(hostAddress + ":" + servicePort, "CQSAPIServers", values, HConsistencyLevel.QUORUM);
                 
         	} catch (Exception ex) {
         		logger.warn("event=ping_failed", ex);

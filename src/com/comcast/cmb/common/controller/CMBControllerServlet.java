@@ -40,6 +40,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Enumeration;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.atomic.AtomicLong;
@@ -56,6 +57,7 @@ abstract public class CMBControllerServlet extends HttpServlet {
     private static Logger logger = Logger.getLogger(CMBControllerServlet.class);
     
     private static volatile ScheduledThreadPoolExecutor workerPool; 
+    
     private static volatile boolean initialized = false;
     
     protected IUserPersistence userHandler = null;
@@ -67,22 +69,26 @@ abstract public class CMBControllerServlet extends HttpServlet {
      */
     public final static ValueAccumulator valueAccumulator = new ValueAccumulator();
     
-    public final static String VERSION = "2.2.16";
+    public final static String VERSION = "2.2.17";
 
     public volatile static ConcurrentHashMap<String, AtomicLong> callStats;
     public volatile static ConcurrentHashMap<String, AtomicLong> callFailureStats;
     
     @Override    
     public void init() throws ServletException {
-        try {
-            if (!initialized) {
-	        	Util.initLog4j();
+        
+    	try {
+            
+    		if (!initialized) {
+	        	
+            	Util.initLog4j();
 	            CMBProperties.getInstance();
 	            workerPool = new ScheduledThreadPoolExecutor(CMBProperties.getInstance().getNumDeliveryHandlers());
 	            callStats = new ConcurrentHashMap<String, AtomicLong>();
 	            callFailureStats = new ConcurrentHashMap<String, AtomicLong>();
 	            initialized = true;
             }
+    		
         } catch (Exception ex) {
         	throw new ServletException(ex);
         }
@@ -137,6 +143,13 @@ abstract public class CMBControllerServlet extends HttpServlet {
             response.setContentType("text/xml");
         	
             if (!isValidAction(action)) {
+            	
+            	Enumeration<String> keys = request.getParameterNames(); 
+            	while (keys.hasMoreElements()) {
+            		String key = keys.nextElement();
+            		logger.info("key=" + key + " value=" + request.getParameter(key));
+            	}
+            	
                 throw new CMBException(CMBErrorCodes.InvalidAction, action + " is not a valid action");
             }
 
@@ -283,7 +296,8 @@ abstract public class CMBControllerServlet extends HttpServlet {
     		
     	} else {
 
-	    	// spawn task in background thread
+	    	// should be ok to not use worker pool as we are doing fully asynchronous i/o and would not
+    		// not occupy the http handler threads for an extended period of time
 	    	
 	    	workerPool.submit(new Runnable() {
 	    	
@@ -308,6 +322,7 @@ abstract public class CMBControllerServlet extends HttpServlet {
 	    			if (!((CQSHttpServletRequest)asyncContext.getRequest()).isQueuedForProcessing()) {
 	    				asyncContext.complete();
 	    			}
+	    			
 	    		}
 	    	});
     	}

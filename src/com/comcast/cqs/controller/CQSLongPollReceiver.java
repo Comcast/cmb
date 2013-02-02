@@ -91,14 +91,11 @@ public class CQSLongPollReceiver {
 	//
     // miscellaneous todos:
     //
-    // deepen shallow heath check (to make sure redis and cassandra are available)
     // keep established tcp connections alive and reuse where possible (reuse netty channel if possible)
     // long poll receive to check for messages on timeout
     // optimize when to send notifications
     // get rid of unneccessary worker pool
     // sensible tcp settings for client and server
-    // stats, clear and manage apis should require admin user but should not require signatures
-    // multiple workers / api servers per host?
     //
     
 	private static class LongPollServerHandler extends SimpleChannelHandler {
