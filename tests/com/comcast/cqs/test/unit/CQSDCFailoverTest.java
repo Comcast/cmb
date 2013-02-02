@@ -35,15 +35,18 @@ public class CQSDCFailoverTest {
 	
     private static Logger logger = Logger.getLogger(CQSIntegrationTest.class);
 
-    private AmazonSQS sqs = null;
+    private AmazonSQS primarySqs = null;
     
     // alternateSqs is referring to a separate cqs api server using a separate redis service but the same
     // cassandra ring to simulate fail-over across data center boundaries
     
     //todo: put url of alternate cqs service here
     
-    private String alternateCqsServiceUrl = "http://sqs-test5.plaxo.com:6060/";
+    private String alternateCqsServiceUrl = "http://localhost:6059/";
+    
     private AmazonSQS alternateSqs = null;
+    
+    private AmazonSQS currentSqs = null;
     
     private HashMap<String, String> attributeParams = new HashMap<String, String>();
     private User user = null;
@@ -51,10 +54,8 @@ public class CQSDCFailoverTest {
     private final static String QUEUE_PREFIX = "TSTQ_"; 
     
     private static String queueUrl;
-    private static Map messageMap;
+    private static Map<String, String> messageMap;
     
-	public static volatile boolean useAlternateSqs = false;
-
     @Before
     public void setup() throws Exception {
     	
@@ -76,13 +77,15 @@ public class CQSDCFailoverTest {
 
             BasicAWSCredentials credentialsUser = new BasicAWSCredentials(user.getAccessKey(), user.getAccessSecret());
 
-            sqs = new AmazonSQSClient(credentialsUser);
-            sqs.setEndpoint(CMBProperties.getInstance().getCQSServerUrl());
+            primarySqs = new AmazonSQSClient(credentialsUser);
+            primarySqs.setEndpoint(CMBProperties.getInstance().getCQSServerUrl());
             
             if (alternateCqsServiceUrl != null) {
             	alternateSqs = new AmazonSQSClient(credentialsUser);
             	alternateSqs.setEndpoint(alternateCqsServiceUrl);
             }
+            
+            currentSqs = primarySqs;
             
             queueUrl = null;
             
@@ -90,7 +93,7 @@ public class CQSDCFailoverTest {
 	        CreateQueueRequest createQueueRequest = new CreateQueueRequest(queueName);
 	        createQueueRequest.setAttributes(attributeParams);
 	        
-	        queueUrl = sqs.createQueue(createQueueRequest).getQueueUrl();
+	        queueUrl = primarySqs.createQueue(createQueueRequest).getQueueUrl();
 	        
 	        ICQSMessagePersistence messagePersistence = RedisCachedCassandraPersistence.getInstance();
 			messagePersistence.clearQueue(queueUrl);
@@ -114,7 +117,7 @@ public class CQSDCFailoverTest {
         CMBControllerServlet.valueAccumulator.deleteAllCounters();
         
         if (queueUrl != null) {
-        	sqs.deleteQueue(new DeleteQueueRequest(queueUrl));
+        	primarySqs.deleteQueue(new DeleteQueueRequest(queueUrl));
         }
     } 
     
@@ -130,20 +133,12 @@ public class CQSDCFailoverTest {
     		try {
     			logger.info("starting sending messages");
     			for (int i=0; i<count; i++) {
-    				if (useAlternateSqs) {
-    					alternateSqs.sendMessage(new SendMessageRequest(queueUrl, "test message " + i));
-    				} else {
-    					sqs.sendMessage(new SendMessageRequest(queueUrl, "test message " + i));
-    				}
+					currentSqs.sendMessage(new SendMessageRequest(queueUrl, "test message " + i));
     			}
 			} catch (Exception ex) {
 				logger.error("error", ex);
 			}
     	}
-    }
-    
-    private void receiveMessage() {
-    	
     }
     
     /**
@@ -175,16 +170,10 @@ public class CQSDCFailoverTest {
 	        	
 	        	try {
         		
-	        		AmazonSQS cqs = sqs;
-		        	
-		        	if (useAlternateSqs) {
-		        		cqs = alternateSqs;
-		        	}
-		        	
 		        	// flip to second data center half-way through the test
 		        	
-		        	if (messageCounter >= NUM_MESSAGES/2 && !useAlternateSqs) {
-		        		useAlternateSqs = true;
+		        	if (messageCounter >= NUM_MESSAGES/2 && currentSqs == primarySqs) {
+		        		currentSqs = alternateSqs;
 		        		logger.info("switching to secondary data center");
 		        	}
 		        	
@@ -192,7 +181,7 @@ public class CQSDCFailoverTest {
 					receiveMessageRequest.setQueueUrl(queueUrl);
 					receiveMessageRequest.setMaxNumberOfMessages(1);
 					
-					ReceiveMessageResult receiveMessageResult = cqs.receiveMessage(receiveMessageRequest);
+					ReceiveMessageResult receiveMessageResult = currentSqs.receiveMessage(receiveMessageRequest);
 					
 					if (receiveMessageResult.getMessages().size() == 1) {
 					
@@ -202,7 +191,7 @@ public class CQSDCFailoverTest {
 						DeleteMessageRequest deleteMessageRequest = new DeleteMessageRequest();
 						deleteMessageRequest.setQueueUrl(queueUrl);
 						deleteMessageRequest.setReceiptHandle(receiveMessageResult.getMessages().get(0).getReceiptHandle());
-						cqs.deleteMessage(deleteMessageRequest);
+						currentSqs.deleteMessage(deleteMessageRequest);
 						
 						messageFound = true;
 					

@@ -86,7 +86,7 @@ public class CQSScaleQueuesTest {
     	CreateNQueues(10000);
     }*/
     
-    private void receiveMessage(String queueUrl) {
+    private boolean receiveMessage(String queueUrl) {
 
     	ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest();
 		receiveMessageRequest.setQueueUrl(queueUrl);
@@ -94,10 +94,17 @@ public class CQSScaleQueuesTest {
 
 		ReceiveMessageResult receiveMessageResult = sqs.receiveMessage(receiveMessageRequest);
 		
-    	DeleteMessageRequest deleteMessageRequest = new DeleteMessageRequest();
-		deleteMessageRequest.setQueueUrl(queueUrl);
-		deleteMessageRequest.setReceiptHandle(receiveMessageResult.getMessages().get(0).getReceiptHandle());
-		sqs.deleteMessage(deleteMessageRequest);
+		if (receiveMessageResult.getMessages().size() == 1) {
+		
+	    	DeleteMessageRequest deleteMessageRequest = new DeleteMessageRequest();
+			deleteMessageRequest.setQueueUrl(queueUrl);
+			deleteMessageRequest.setReceiptHandle(receiveMessageResult.getMessages().get(0).getReceiptHandle());
+			sqs.deleteMessage(deleteMessageRequest);
+		
+			return true;
+		}
+		
+		return false;
     }
 
     private void CreateNQueues(long n) {
@@ -160,30 +167,24 @@ public class CQSScaleQueuesTest {
     		
     		for (String queueUrl : queueUrls) {
 
-    			try {
-    				
-    				receiveMessage(queueUrl);
-    				logger.info("received message on queue " + counter + ": " + queueUrl);
-					counter++;
-					
-    			} catch (Exception ex) {
-    				
-    				logger.error("read failure, will retry: " + queueUrl, ex);
-    				readFailures++;
-    				
-    				try {
-
-        				Thread.sleep(500);
-    					receiveMessage(queueUrl);
-        				logger.info("received message on queue " + counter + ": " + queueUrl);
-    					counter++;
-    					
-    				} catch (Exception ex2) {
-
-    					logger.error("read failure, giving up: " + queueUrl, ex);
-        				readFailures++;
-    				}
-    				
+    			boolean messageReceived = false;
+    			int attempts = 0;
+    			
+    			while (!messageReceived && attempts < 10) {
+    			
+	    			try {
+	    				
+	    				messageReceived = receiveMessage(queueUrl);
+	    				logger.info("received message on queue " + counter + ": " + queueUrl);
+						counter++;
+						
+	    			} catch (Exception ex) {
+	    				
+	    				logger.error("read failure, will retry: " + queueUrl, ex);
+	    				readFailures++;
+	    			}
+	    			
+	    			attempts++;
     			}
     		}
 

@@ -57,7 +57,7 @@ public class CQSLongPollTest {
     
     //todo: put url of alternate cqs service here
     
-    private String alternateCqsServiceUrl = "http://sqs-test5.plaxo.com:6060/";
+    private String alternateCqsServiceUrl = "http://localhost:6059/";
     private AmazonSQS alternateSqs = null;
     
     private HashMap<String, String> attributeParams = new HashMap<String, String>();
