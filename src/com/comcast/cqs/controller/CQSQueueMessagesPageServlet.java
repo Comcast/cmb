@@ -17,6 +17,9 @@ package com.comcast.cqs.controller;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -25,14 +28,15 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.log4j.Logger;
+import org.w3c.dom.Element;
 
 import com.amazonaws.services.sqs.model.DeleteMessageRequest;
 import com.amazonaws.services.sqs.model.SendMessageRequest;
 import com.comcast.cmb.common.controller.AdminServlet;
 import com.comcast.cmb.common.controller.AdminServletBase;
 import com.comcast.cmb.common.controller.CMBControllerServlet;
+import com.comcast.cmb.common.util.XmlUtil;
 import com.comcast.cqs.model.CQSMessage;
-import com.comcast.cqs.persistence.RedisCachedCassandraPersistence;
 import com.comcast.cqs.util.Util;
 
 /**
@@ -63,11 +67,8 @@ public class CQSQueueMessagesPageServlet extends AdminServletBase {
 		Map<?, ?> parameters = request.getParameterMap();
 
 		String queueUrl = Util.getAbsoluteQueueUrlForName(queueName, userId);
-		String relativeQueueUrl = Util.getRelativeQueueUrlForName(queueName, userId);
 
 		connect(userId);
-		
-		RedisCachedCassandraPersistence messagePersistence = RedisCachedCassandraPersistence.getInstance();
 		
 		if (parameters.containsKey("Send")) {
 			
@@ -96,10 +97,10 @@ public class CQSQueueMessagesPageServlet extends AdminServletBase {
 		
 		out.println("<html>");
 		
-		header(request, out, "Messages for Queue " + queueName);
+		header(request, out, "Peek Messages for Queue " + queueName);
 		
 		out.println("<body>");
-		out.println("<h2>Messages for Queue " + queueName + "</h2>");
+		out.println("<h2>Peek Messages for Queue " + queueName + "</h2>");
 		
 		if (user != null) {
 			out.println("<table><tr><td><b>User Name:</b></td><td>"+ user.getUserName()+"</td></tr>");
@@ -109,69 +110,114 @@ public class CQSQueueMessagesPageServlet extends AdminServletBase {
 			out.println("<tr><td><b>Queue Name:</b></td><td>"+queueName+"</td></tr></table>");
 		}
 		
-        out.print("<p><table><tr><td><b>Message</b></td><td></td></tr>");
-        out.print("<form action=\"");
-        out.print(response.encodeURL("MESSAGE") + "?userId="+userId+"&queueName="+queueName);
-        out.print("\" ");
-        out.println("method=POST>");
-        out.print("<tr><td><textarea rows='3' cols='50' name='message'></textarea><input type='hidden' name='userId' value='"+ userId + "'></td><td valign='bottom'><input type='submit' value='Send' name='Send' /></td></tr></form></table></p>");
+        out.println("<p><table><tr><td><b>Send message:</b></td><td></td></tr>");
+        out.println("<form action=\""+response.encodeURL("MESSAGE") + "?userId="+userId+"&queueName="+queueName+"\" method=POST>");
+        out.println("<tr><td><textarea rows='3' cols='50' name='message'></textarea><input type='hidden' name='userId' value='"+ userId + "'></td><td valign='bottom'><input type='submit' value='Send' name='Send' /></td></tr></form></table></p>");
 
-        List<CQSMessage> msgs = null;
+        List<CQSMessage> messages = null;
         
 		try {
 			
 			if (queueUrl != null) {
 				
+				String peekRequestUrl = cqsServiceBaseUrl + user.getUserId() + "/" + queueName + "?Action=PeekMessage&AWSAccessKeyId=" + user.getAccessKey() + "&MaxNumberOfMessages=10";
+
 				if (prevHandle != null) {
-					msgs = messagePersistence.peekQueue(relativeQueueUrl, prevHandle, null, 10);
+					peekRequestUrl += "&PreviousReceiptHandle=" + prevHandle; 
 				} else if (nextHandle != null) {
-					msgs = messagePersistence.peekQueue(relativeQueueUrl, null, nextHandle, 10);
-				} else {
-					msgs = messagePersistence.peekQueue(relativeQueueUrl, null, null, 10);
+					peekRequestUrl += "&NextReceiptHandle=" + nextHandle; 
+				}
+
+				logger.info("query=" + peekRequestUrl);
+
+				String peekXml = httpGet(peekRequestUrl);
+				Element root = XmlUtil.buildDoc(peekXml);
+				
+				List<Element> messageElements = XmlUtil.getCurrentLevelChildNodes(XmlUtil.getCurrentLevelChildNodes(root, "ReceiveMessageResult").get(0), "Message");
+				
+				for (Element messageElement : messageElements) {
+					
+					if (messages == null) {
+						messages = new ArrayList<CQSMessage>();
+					}
+					
+					String body = XmlUtil.getCurrentLevelTextValue(messageElement, "Body");
+					String id = XmlUtil.getCurrentLevelTextValue(messageElement, "MessageId").trim();
+					String handle = XmlUtil.getCurrentLevelTextValue(messageElement, "ReceiptHandle").trim();
+					
+					CQSMessage msg = new CQSMessage(id, body);
+					msg.setReceiptHandle(handle);
+					
+					List<Element> attributeElements = XmlUtil.getCurrentLevelChildNodes(messageElement, "Attribute");
+					Map<String, String> attributes = new HashMap<String, String>();
+					
+					
+					for (Element attribute : attributeElements) {
+						
+						String name = XmlUtil.getCurrentLevelTextValue(attribute, "Name");
+						String value = XmlUtil.getCurrentLevelTextValue(attribute, "Value");
+						
+						if (name != null && value != null) {
+							attributes.put(name, value);
+						}
+					}
+					
+					msg.setAttributes(attributes);
+					
+					messages.add(msg);
 				}
 			}
 		
 		} catch (Exception ex) {
-			logger.error("event=peekQueue status=failed queue_url=" + queueUrl, ex);
+			logger.error("event=peekMessage status=failed queue_url=" + queueUrl, ex);
 			throw new ServletException(ex);
 		}
 
 		String previousHandle = null;
 		nextHandle = null;
         
-		for (int i = 0; msgs != null && i < msgs.size(); i++) {
+		for (int i = 0; messages != null && i < messages.size(); i++) {
         
-			CQSMessage cqsMsg = msgs.get(i);
-        	String msg = cqsMsg.getBody();
-        	Map<String, String> attrs = cqsMsg.getAttributes();
-        	String createdDateStr = "";
+			CQSMessage message = messages.get(i);
         	
-        	if (attrs.get("CreatedTime") != null) {
-        		createdDateStr = attrs.get("CreatedTime");
+			Map<String, String> attributes = message.getAttributes();
+        	
+        	String timeSent = "";
+        	
+        	if (attributes.get("SentTimestamp") != null) {
+        		timeSent = new Date(Long.parseLong(attributes.get("SentTimestamp"))).toString();
         	}
+        	
+        	String timeReceived = "";
+        	
+        	if (attributes.get("ApproximateFirstReceiveTimestamp") != null) {
+        		timeReceived = new Date(Long.parseLong(attributes.get("ApproximateFirstReceiveTimestamp"))).toString();
+        	}
+        	
         	
         	if (i == 0) {
-        		out.println("<p><hr width='100%' align='left' /><p><table border='1' width='100%'>");
-        		out.println("<tr><td><b>Message</b></td>");
-        		out.println("<td><b>Created Date</b></td>");
-        		out.println("<td>&nbsp;</td></tr>");
-        		previousHandle = cqsMsg.getReceiptHandle();
+        		out.println("<p><hr width='100%' align='left' /><p><span class='content'><table>");
+        		out.println("<tr><th></th><th>Receipt Handle</th><th>MD5</th><th>Body</th><th>Time Sent</th><th>Time First Received (Appr.)</th><th>Receive Count (Appr.)</th><th>Sender</th><th>&nbsp;</th></tr>");
+        		previousHandle = message.getReceiptHandle();
         	}
         	
-        	out.print("<form action=\"");
-            out.print(response.encodeURL("MESSAGE") + "?userId="+user.getUserId()+"&queueName="+queueName+"&receiptHandle="+cqsMsg.getReceiptHandle());
-            out.print("\" ");
-            out.println("method=POST>");
-        	out.println("<td>" + msg + "</td>");
-        	out.println("<td>"+ createdDateStr + "</td>");
-		    out.println("<td><input type='submit' value='Delete' name='Delete' /><input type='hidden' name='queueUrl' value='"+ queueUrl+ "' /></td></tr></form>");
+        	out.println("<tr>");
+        	out.println("<td>" + i + "</td>");
+        	out.println("<td>" + message.getReceiptHandle() + "</td>");
+        	out.println("<td>" + message.getMD5OfBody() + "</td>");
+        	out.println("<td>" + message.getBody() + "</td>");
+        	out.println("<td>"+ timeSent + "</td>");
+        	out.println("<td>"+ timeReceived + "</td>");
+        	out.println("<td>"+ attributes.get("ApproximateReceiveCount") + "</td>");
+        	out.println("<td>"+ attributes.get("SenderId") + "</td>");
+		    out.println("<td><form action=\""+response.encodeURL("MESSAGE") + "?userId="+user.getUserId()+"&queueName="+queueName+"&receiptHandle="+message.getReceiptHandle()+"\" method=POST><input type='submit' value='Delete' name='Delete' /><input type='hidden' name='queueUrl' value='"+ queueUrl+ "' /></form></td></tr>");
 		    
-		    if (i == msgs.size() - 1) {
-		    	nextHandle = cqsMsg.getReceiptHandle();
+		    if (i == messages.size() - 1) {
+		    	nextHandle = message.getReceiptHandle();
 		    }
         }
 		
-        out.println("</table>");
+        out.println("</table></span>");
         
         if (prevHandle != null) {
         	
@@ -182,7 +228,7 @@ public class CQSQueueMessagesPageServlet extends AdminServletBase {
         	}
         }
         
-        if (msgs != null && msgs.size() > 0) {
+        if (messages != null && messages.size() > 0) {
         	out.println("<a style='float:right;' href='" + response.encodeURL("MESSAGE") + "?userId="+user.getUserId()+"&queueName="+queueName+"&prevHandle="+nextHandle+"'>Next</a>");
         }
         

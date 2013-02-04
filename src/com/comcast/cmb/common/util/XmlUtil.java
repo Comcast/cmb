@@ -112,7 +112,9 @@ public class XmlUtil {
 		
 		if (nl != null && nl.size() == 1) {
 			Element el = (Element)nl.get(0);
-			textVal = el.getFirstChild().getNodeValue();
+			if (el.getFirstChild() != null) {
+				textVal = el.getFirstChild().getNodeValue();
+			}
 		}
 	
 		return textVal;

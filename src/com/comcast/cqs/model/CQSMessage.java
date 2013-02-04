@@ -56,10 +56,21 @@ public final class CQSMessage implements Serializable {
 	public CQSMessage(String body, Map<String, String> attributes) throws NoSuchAlgorithmException, UnsupportedEncodingException {
 		this.messageId = UUID.randomUUID().toString();
 		receiptHandle = messageId;
-		this.setBody(body);
-		this.setAttributes(attributes);
+		setBody(body);
+		setAttributes(attributes);
 		MessageDigest digest = MessageDigest.getInstance("MD5");
-		this.setMD5OfBody(Base64.encodeBase64String(digest.digest(body.getBytes("UTF-8"))));
+		setMD5OfBody(Base64.encodeBase64String(digest.digest(body.getBytes("UTF-8"))));
+	}
+	
+	public CQSMessage(String messageId, String body) throws NoSuchAlgorithmException, UnsupportedEncodingException {
+		
+		this.messageId = messageId;
+		this.body = body;
+
+		if (body != null) {
+			MessageDigest digest = MessageDigest.getInstance("MD5");
+			setMD5OfBody(Base64.encodeBase64String(digest.digest(body.getBytes("UTF-8"))));
+		}
 	}
 	
 	public String getMessageId() {
