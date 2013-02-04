@@ -100,6 +100,44 @@ public class Util {
 		return url;
 	}
 
+	public static String getRelativeQueueUrlForArn(String arn) {
+		
+		if (arn == null) {
+			return null;
+		}
+		
+		// do not check prefix
+				
+		String elements[] = arn.split(":");
+		
+		if (elements.length != 6) {
+			return null;
+		}
+		
+		String url = elements[4] + "/" + elements[5];
+		
+		return url;
+	}
+
+	public static String getNameForArn(String arn) {
+		
+		if (arn == null) {
+			return null;
+		}
+		
+		// do not check prefix
+				
+		String elements[] = arn.split(":");
+		
+		if (elements.length != 6) {
+			return null;
+		}
+		
+		String name = elements[5];
+		
+		return name;
+	}
+
 	public static String getAbsoluteQueueUrlForName(String queueName, String userId) {
 		
 		
@@ -167,6 +205,21 @@ public class Util {
 		return elements[3];
 	}
 
+	public static String getUserIdForRelativeQueueUrl(String url) {
+		
+		if (url == null) {
+			return null;
+		}
+		
+		String elements[] = url.split("/");
+		
+		if (elements.length != 2) {
+			return null;
+		}
+		
+		return elements[0];
+	}
+
 	public static String getArnForAbsoluteQueueUrl(String url) {
 		
 		if (url == null) {
@@ -184,6 +237,23 @@ public class Util {
 		return arn;
 	}
 	
+	public static String getArnForRelativeQueueUrl(String url) {
+		
+		if (url == null) {
+			return null;
+		}
+		
+		String elements[] = url.split("/");
+		
+		if (elements.length != 2) {
+			return null;
+		}
+		
+		String arn = "arn:cmb:cqs:" + CMBProperties.getInstance().getRegion() + ":" + elements[0] + ":" + elements[1];
+
+		return arn;
+	}
+
 	/*
 	 * user supplied message id in CQS batch actions can only contain alphanumeric, hyphen, and underscore
 	 */

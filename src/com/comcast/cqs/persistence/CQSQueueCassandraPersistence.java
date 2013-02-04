@@ -23,14 +23,13 @@ import java.util.Map;
 
 import org.apache.log4j.Logger;
 
-import me.prettyprint.cassandra.model.CqlRows;
 import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.cassandra.service.template.ColumnFamilyTemplate;
 import me.prettyprint.cassandra.service.template.ThriftColumnFamilyTemplate;
 import me.prettyprint.hector.api.HConsistencyLevel;
 import me.prettyprint.hector.api.beans.ColumnSlice;
+import me.prettyprint.hector.api.beans.HColumn;
 import me.prettyprint.hector.api.beans.Row;
-import me.prettyprint.hector.api.query.QueryResult;
 
 import com.comcast.cmb.common.persistence.CassandraPersistence;
 import com.comcast.cmb.common.util.CMBProperties;
@@ -38,6 +37,7 @@ import com.comcast.cmb.common.util.PersistenceException;
 import com.comcast.cqs.model.CQSQueue;
 import com.comcast.cqs.util.CQSConstants;
 import com.comcast.cqs.util.CQSErrorCodes;
+import com.comcast.cqs.util.Util;
 /**
  * Cassandra persistence for queues
  * @author aseem, jorge, bwolf, baosen, vvenkatraman
@@ -46,13 +46,17 @@ import com.comcast.cqs.util.CQSErrorCodes;
 public class CQSQueueCassandraPersistence extends CassandraPersistence implements ICQSQueuePersistence {
     
 	private ColumnFamilyTemplate<String, String> queuesTemplateString;
+	private ColumnFamilyTemplate<String, String> queuesByUserTemplateString;
 	
 	private static final String COLUMN_FAMILY_QUEUES = "CQSQueues";
+	private static final String COLUMN_FAMILY_QUEUES_BY_USER = "CQSQueuesByUserId";
+
 	public static final Logger logger = Logger.getLogger(CQSQueueCassandraPersistence.class);
 
 	public CQSQueueCassandraPersistence() {
 		super(CMBProperties.getInstance().getCMBCQSKeyspace());
 		queuesTemplateString = new ThriftColumnFamilyTemplate<String, String>(keyspaces.get(HConsistencyLevel.QUORUM), COLUMN_FAMILY_QUEUES, StringSerializer.get(), StringSerializer.get());
+		queuesByUserTemplateString = new ThriftColumnFamilyTemplate<String, String>(keyspaces.get(HConsistencyLevel.QUORUM), COLUMN_FAMILY_QUEUES_BY_USER, StringSerializer.get(), StringSerializer.get());
 	}
 
 	@Override
@@ -75,6 +79,8 @@ public class CQSQueueCassandraPersistence extends CassandraPersistence implement
 		queueData.put(CQSConstants.COL_CREATED_TIME, (new Long(createdTime)).toString());
 
 		insertOrUpdateRow(queue.getRelativeUrl(), COLUMN_FAMILY_QUEUES, queueData, HConsistencyLevel.QUORUM);
+		
+		update(queuesByUserTemplateString, queue.getOwnerUserId(), queue.getArn(), "", StringSerializer.get(), StringSerializer.get(), StringSerializer.get());
 	}
 	
 	@Override
@@ -91,7 +97,8 @@ public class CQSQueueCassandraPersistence extends CassandraPersistence implement
 			throw new PersistenceException (CQSErrorCodes.InvalidRequest, message);
 		}
 		
-		delete(queuesTemplateString, queueUrl, null);	
+		delete(queuesTemplateString, queueUrl, null);
+		delete(queuesByUserTemplateString, Util.getUserIdForRelativeQueueUrl(queueUrl), Util.getArnForRelativeQueueUrl(queueUrl));
 	}
 
 	@Override
@@ -102,29 +109,25 @@ public class CQSQueueCassandraPersistence extends CassandraPersistence implement
 			throw new PersistenceException(CQSErrorCodes.InvalidParameterValue, "Invalid userId " + userId);
 		}
 			
-		String query = "SELECT * from " + COLUMN_FAMILY_QUEUES + " where " + CQSConstants.COL_OWNER_USER_ID + "='" + userId +"'";
-		QueryResult<CqlRows<String,String,String>> res = super.readRows(query, HConsistencyLevel.QUORUM);
-		
-		if (res == null) {
-			return null;
-		}
-		
-		CqlRows<String,String,String> rows = res.get();
 		List<CQSQueue> queueList = new ArrayList<CQSQueue>();
-		
-		if (rows == null || rows.getCount() == 0) {
-			return queueList;
-		}
 
+		Row<String, String, String> row = null;
 		
-		for (me.prettyprint.hector.api.beans.Row<String, String, String> row : rows) {
+		row = readRow(COLUMN_FAMILY_QUEUES_BY_USER, userId, 1000, new StringSerializer(), new StringSerializer(), new StringSerializer(), HConsistencyLevel.QUORUM);
 		
-			CQSQueue queue = fillQueueFromCqlRow(row);
-			
-			if (queue != null) {
+		if (row != null) {
+
+			for (HColumn<String, String> c : row.getColumnSlice().getColumns()) {
+
+				String arn = c.getName();
+				CQSQueue queue = new CQSQueue(Util.getNameForArn(arn), Util.getQueueOwnerFromArn(arn));
+				queue.setRelativeUrl(Util.getRelativeQueueUrlForArn(arn));
+				queue.setArn(arn);
+				
 				if (queueName_prefix != null && !queue.getName().startsWith(queueName_prefix)) {
 					continue;
 				}
+				
 				queueList.add(queue);
 			}
 		}
