@@ -36,7 +36,6 @@ import com.comcast.cmb.common.persistence.PersistenceFactory;
 import com.comcast.cmb.common.util.PersistenceException;
 import com.comcast.cmb.common.util.ValueAccumulator.AccumulatorName;
 
-
 /**
  * Administrator application.
  * @author bwolf, aseem, baosen, tina, michael
@@ -95,11 +94,7 @@ public class AdminServlet extends AdminServletBase {
 		
 		out.println("<h2>All Users</h2>");
         out.print("<table><tr><td>Username:</td><td>Password:</td><td></td></tr>");
-        out.print("<form action=\"");
-        out.print(response.encodeURL("ADMIN"));
-        out.print("\" ");
-        out.println("method=POST>");
-        out.print("<tr><td><input type='text' name='user' /></td><td><input type='password' name='password'></td><td><input type='submit' value='Create' name='Create' /></td></tr></form></table>");
+        out.print("<tr><form action=\""+response.encodeURL("ADMIN")+"\" method=POST><td><input type='text' name='user'/></td><td><input type='password' name='password'></td><td><input type='submit' value='Create' name='Create' /></td></form></tr></table>");
         List<User> users = new ArrayList<User>();
 		
         try {
@@ -111,7 +106,6 @@ public class AdminServlet extends AdminServletBase {
 	                User u2 = (User) o2;
 	               return u1.getUserName().compareToIgnoreCase(u2.getUserName());
 	            }
-	 
 	        });
 			
         } catch (PersistenceException ex) {
@@ -132,23 +126,21 @@ public class AdminServlet extends AdminServletBase {
         	
         	User user = (User)users.get(i);
         	
-        	out.print("<form action=\"");
-            out.print(response.encodeURL("ADMIN"));
-            out.print("\" ");
-            out.println("method=POST>");
+        	out.println("<form action=\""+response.encodeURL("ADMIN")+"\" method=POST>");
         	out.println("<tr><td>"+user.getUserName() +"<input type='hidden' name='user' value="+user.getUserName()+"></td>");
         	out.println("<td>"+user.getUserId()+"</td>");
         	out.println("<td>"+user.getAccessKey()+"</td>");
         	out.println("<td>"+user.getAccessSecret()+"</td>");
-        	out.println("<td><a href='"+cnsAdminBaseUrl+response.encodeURL("CNSUser") + "?userId="+user.getUserId()+"'>CNS</a></td>");
-        	out.println("<td><a href='"+cqsAdminBaseUrl+response.encodeURL("CQSUser") + "?userId="+user.getUserId()+"'>CQS</a></td>");
+        	out.println("<td><a href='"+response.encodeURL("/CNSUser") + "?userId="+user.getUserId()+"'>CNS</a></td>");
+        	out.println("<td><a href='"+response.encodeURL("/CQSUser") + "?userId="+user.getUserId()+"'>CQS</a></td>");
 		    
-        	out.println("<td><input type='submit' value='Delete' name='Delete' /></td></tr></form>");
+        	out.println("<td><input type='submit' value='Delete' name='Delete'/></td></tr></form>");
         }
         
         out.println("</table></span></body></html>");
         
         logger.info("action=adminServletProcess CassandraTimeMS=" + CMBControllerServlet.valueAccumulator.getCounter(AccumulatorName.CassandraTime));
+        
         CMBControllerServlet.valueAccumulator.deleteAllCounters();
 	}
 	
