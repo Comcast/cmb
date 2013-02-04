@@ -171,7 +171,7 @@ public class CQSUserPageServlet extends AdminServletBase {
         out.println("<td><input type='text' name='queueName' /><input type='hidden' name='userId' value='"+ userId + "'></td><td><input type='submit' value='Create' name='Create' /></td></form></tr>");
 
         out.println("<tr><td>Delete all queues:</td><td></td></tr>");
-        out.println("<tr><form action=\""+ response.encodeURL("CQSUser") + "?userId="+user.getUserId() + "\" " + "method=POST><td><input type='hidden' name='userId' value='"+ userId + "'/><input type='hidden' name='queueName' value='"+ queueName + "'/></td><td><input type='submit' value='DeleteAll' name='DeleteAll'/></td></form></tr>");
+        out.println("<tr><form action=\""+ response.encodeURL("CQSUser") + "?userId="+user.getUserId() + "\" " + "method=POST><td><input type='hidden' name='userId' value='"+ userId + "'/><input type='hidden' name='queueName' value='"+(queueName != null ? queueName : "")+"'/></td><td><input type='submit' value='DeleteAll' name='DeleteAll'/></td></form></tr>");
         
         out.println("</table></p>");
 
