@@ -52,12 +52,6 @@ public abstract class AdminServletBase extends HttpServlet {
 
     private static final long serialVersionUID = 1L;
     
-    public static final String cnsAdminBaseUrl = CMBProperties.getInstance().getCNSAdminUrl().endsWith("/") ? CMBProperties.getInstance().getCNSAdminUrl() : CMBProperties.getInstance().getCNSAdminUrl() + "/";
-	public static final String cqsAdminBaseUrl = CMBProperties.getInstance().getCQSAdminUrl().endsWith("/") ? CMBProperties.getInstance().getCQSAdminUrl() : CMBProperties.getInstance().getCQSAdminUrl() + "/";
-	
-	public static final String cnsAdminUrl = cnsAdminBaseUrl + "ADMIN";
-	public static final String cqsAdminUrl = cqsAdminBaseUrl + "ADMIN";
-	
 	public static final String cnsServiceBaseUrl = CMBProperties.getInstance().getCNSServerUrl();
 	public static final String cqsServiceBaseUrl = CMBProperties.getInstance().getCQSServerUrl();
 	
@@ -218,8 +212,8 @@ public abstract class AdminServletBase extends HttpServlet {
     		
     		if (isAdmin(request)) {
     			out.println("<a href='/ADMIN'>All Users</a>" + " | ");
-    			out.println("<a href='" + cnsAdminBaseUrl + "CNSWorkerState'>CNS Dashboard</a>" + " | ");
-    			out.println("<a href='" + cqsAdminBaseUrl + "CQSAPIState'>CQS Dashboard</a>" + " | ");
+    			out.println("<a href='/CNSWorkerState'>CNS Dashboard</a>" + " | ");
+    			out.println("<a href='/CQSAPIState'>CQS Dashboard</a>" + " | ");
     		}
     		
     		out.println("<a href='/UserLogin?Logout=Logout'>logout</a></td></tr></table>");

@@ -161,8 +161,8 @@ public class CQSQueuePermissionsPage extends AdminServletBase {
 		}
 		
 		out.println("<p><a href='' onclick=\"window.open('" + response.encodeURL("AddPermission") + "?queueName="+ queueName + "&userId="+userId+"', 'AddQueuePermission', 'location=0,menubar=0,scrollbars=0,status=0,titlebar=0,toolbar=0,height=470,width=730')\">Add permission</a></p>");
-		out.println("<h5 style='text-align:center;'><a href='"+ response.encodeRedirectURL(AdminServlet.cqsAdminUrl)+ "'>ADMIN HOME</a>");
-        out.println("<a href='"+AdminServlet.cqsAdminBaseUrl+"CQSUser?userId="+userId+"'>BACK TO QUEUE</a></h5>");
+		out.println("<h5 style='text-align:center;'><a href='/ADMIN'>ADMIN HOME</a>");
+        out.println("<a href='/CQSUser?userId="+userId+"'>BACK TO QUEUE</a></h5>");
 		out.println("</body></html>");
 		
 		CMBControllerServlet.valueAccumulator.deleteAllCounters();

@@ -159,8 +159,8 @@ public class CNSTopicPermissionPage extends AdminServletBase {
 		}
 		
 		out.println("<p><a href='' onclick=\"window.open('" + response.encodeURL("AddPermission") + "?topicArn=" + topicArn + "&topicName=" + Util.getNameFromTopicArn(topicArn) + "&userId=" + userId + "', 'AddTopicPermission', 'location=0,menubar=0,scrollbars=0,status=0,titlebar=0,toolbar=0,height=470,width=730')\">Add permission</a></p>");
-		out.println("<h5 style='text-align:center;'><a href='"+ response.encodeRedirectURL(AdminServlet.cqsAdminUrl)+ "'>ADMIN HOME</a>");
-        out.println("<a href='"+AdminServlet.cnsAdminBaseUrl+"CNSUser?userId="+userId+"&topicArn="+topicArn+"'>BACK TO TOPIC</a></h5>");
+		out.println("<h5 style='text-align:center;'><a href='/ADMIN'>ADMIN HOME</a>");
+        out.println("<a href='/CNSUser?userId="+userId+"&topicArn="+topicArn+"'>BACK TO TOPIC</a></h5>");
 		out.println("</body></html>");
 		
 		CMBControllerServlet.valueAccumulator.deleteAllCounters();

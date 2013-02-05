@@ -232,8 +232,8 @@ public class CQSQueueMessagesPageServlet extends AdminServletBase {
         	out.println("<a style='float:right;' href='" + response.encodeURL("MESSAGE") + "?userId="+user.getUserId()+"&queueName="+queueName+"&prevHandle="+nextHandle+"'>Next</a>");
         }
         
-        out.println("<h5 style='text-align:center;'><a href='"+ response.encodeRedirectURL(AdminServlet.cqsAdminUrl)+ "'>ADMIN HOME</a>");
-        out.println("<a href='"+AdminServlet.cqsAdminBaseUrl+"CQSUser?userId="+userId+"'>BACK TO QUEUE</a></h5>");
+        out.println("<h5 style='text-align:center;'><a href='/ADMIN'>ADMIN HOME</a>");
+        out.println("<a href='/CQSUser?userId="+userId+"'>BACK TO QUEUE</a></h5>");
         
         out.println("</body></html>");
 

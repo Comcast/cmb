@@ -106,21 +106,19 @@ public class UserLoginPageServlet extends AdminServletBase {
 			out.println("<h2>User Login</h2>");
 			
 			if (parameters.containsKey("Login")) {
-				out.print("<p><font color='red'>User doesn't exist or password does not match!</font>");
+				out.println("<p><font color='red'>User doesn't exist or password does not match!</font>");
 			}
 			
-			out.print("<form action=\"");
-	        out.print(response.encodeURL("UserLogin"));
-	        out.print("\" ");
-	        out.println("method=POST>");
-	        out.print("<table><tr><td>Username:</td><td><input type='text' name='user' value='"+ userName + "'></td></tr>");
-	        out.print("<tr><td>Password:</td><td><input type='password' name='passwd'></td></tr>");
-	        out.print("<tr><td>&nbsp;</td></tr>");
-	        out.print("<tr><td><input type='submit' value='Login' name='Login' /></td></tr></table></form></body></html>");
+			out.println("<form action=\"/UserLogin\" method=POST>");
+	        out.println("<table><tr><td>Username:</td><td><input type='text' name='user' value='"+ userName + "'></td></tr>");
+	        out.println("<tr><td>Password:</td><td><input type='password' name='passwd'></td></tr>");
+	        out.println("<tr><td>&nbsp;</td></tr>");
+	        out.println("<tr><td><input type='submit' value='Login' name='Login' /></td></tr></table></form></body></html>");
 	        out.println("</body></html>");
 		}
 		
         logger.info("action=userLoginPageServletProcess CassandraTimeMS=" + CMBControllerServlet.valueAccumulator.getCounter(AccumulatorName.CassandraTime));
+        
         CMBControllerServlet.valueAccumulator.deleteAllCounters();
 	}
 	

@@ -94,7 +94,7 @@ public class AdminServlet extends AdminServletBase {
 		
 		out.println("<h2>All Users</h2>");
         out.print("<table><tr><td>Username:</td><td>Password:</td><td></td></tr>");
-        out.print("<tr><form action=\""+response.encodeURL("ADMIN")+"\" method=POST><td><input type='text' name='user'/></td><td><input type='password' name='password'></td><td><input type='submit' value='Create' name='Create' /></td></form></tr></table>");
+        out.print("<tr><form action=\"/ADMIN\" method=POST><td><input type='text' name='user'/></td><td><input type='password' name='password'></td><td><input type='submit' value='Create' name='Create' /></td></form></tr></table>");
         List<User> users = new ArrayList<User>();
 		
         try {
@@ -131,8 +131,8 @@ public class AdminServlet extends AdminServletBase {
         	out.println("<td>"+user.getUserId()+"</td>");
         	out.println("<td>"+user.getAccessKey()+"</td>");
         	out.println("<td>"+user.getAccessSecret()+"</td>");
-        	out.println("<td><a href='"+response.encodeURL("/CNSUser") + "?userId="+user.getUserId()+"'>CNS</a></td>");
-        	out.println("<td><a href='"+response.encodeURL("/CQSUser") + "?userId="+user.getUserId()+"'>CQS</a></td>");
+        	out.println("<td><a href='/CNSUser?userId="+user.getUserId()+"'>CNS</a></td>");
+        	out.println("<td><a href='/CQSUser?userId="+user.getUserId()+"'>CQS</a></td>");
 		    
         	out.println("<td><input type='submit' value='Delete' name='Delete'/></td></tr></form>");
         }

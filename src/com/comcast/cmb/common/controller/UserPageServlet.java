@@ -73,7 +73,7 @@ public class UserPageServlet extends AdminServletBase {
 			out.println("<tr><td><b>User ID:</b></td><td>"+ user.getUserId()+"</td></tr>");
 			out.println("<tr><td><b>Access Key:</b></td><td>"+user.getAccessKey()+"</td></tr>");
 			out.println("<tr><td><b>Access Secret:</b></td><td>"+user.getAccessSecret()+"</td></tr>");
-			out.println("<tr><td><b>Links:</b></td><td><a href='"+response.encodeURL("/CNSUser")+"?userId="+userId+"'>CNS</a>&nbsp;&nbsp;&nbsp;<a href='"+response.encodeURL("/CQSUser")+"?userId="+userId+"'>CQS</a></td></tr>");
+			out.println("<tr><td><b>Links:</b></td><td><a href='/CNSUser?userId="+userId+"'>CNS</a>&nbsp;&nbsp;&nbsp;<a href='/CQSUser?userId="+userId+"'>CQS</a></td></tr>");
 			out.println("</table></html>");
 		}
 		

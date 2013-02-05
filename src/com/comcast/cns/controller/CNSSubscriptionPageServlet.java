@@ -210,8 +210,8 @@ public class CNSSubscriptionPageServlet extends AdminServletBase {
         }
         
         out.println("</table></span></p>");
-        out.println("<h5 style='text-align:center;'><a href='"+ response.encodeRedirectURL(AdminServlet.cnsAdminUrl)+ "'>ADMIN HOME</a>");
-        out.println("<a href='"+AdminServlet.cnsAdminBaseUrl+"CNSUser?userId="+userId+"&topicArn="+topicArn+"'>BACK TO TOPIC</a></h5>");
+        out.println("<h5 style='text-align:center;'><a href='/ADMIN'>ADMIN HOME</a>");
+        out.println("<a href='/CNSUser?userId="+userId+"&topicArn="+topicArn+"'>BACK TO TOPIC</a></h5>");
         out.println("</body></html>");
         
         CMBControllerServlet.valueAccumulator.deleteAllCounters();
