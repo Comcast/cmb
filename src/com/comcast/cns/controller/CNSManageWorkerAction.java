@@ -44,10 +44,12 @@ import com.comcast.cmb.common.persistence.CassandraPersistence;
 import com.comcast.cmb.common.util.CMBErrorCodes;
 import com.comcast.cmb.common.util.CMBException;
 import com.comcast.cmb.common.util.CMBProperties;
+import com.comcast.cns.io.CNSPopulator;
 import com.comcast.cns.io.CNSWorkerStatsPopulator;
 import com.comcast.cns.model.CNSWorkerStats;
 import com.comcast.cns.tools.CNSWorkerMonitorMBean;
 import com.comcast.cns.util.CNSErrorCodes;
+import com.comcast.cqs.io.CQSPopulator;
 /**
  * Subscribe action
  * @author bwolf
@@ -165,6 +167,8 @@ public class CNSManageWorkerAction extends CNSAction {
 			ColumnFamilyTemplate<String, String> usersTemplate = new ThriftColumnFamilyTemplate<String, String>(cassandraHandler.getKeySpace(HConsistencyLevel.QUORUM), "CNSWorkers", StringSerializer.get(), StringSerializer.get());
 			cassandraHandler.delete(usersTemplate, host, null);
 			
+	    	response.getWriter().println(CNSPopulator.getResponseMetadata());
+			
 			return true;
 			
 		} else if (task.equals("ClearAPIStats")) {
@@ -172,7 +176,9 @@ public class CNSManageWorkerAction extends CNSAction {
             CMBControllerServlet.callStats = new ConcurrentHashMap<String, AtomicLong>();
             CMBControllerServlet.callFailureStats = new ConcurrentHashMap<String, AtomicLong>();
 
-			return true;
+	    	response.getWriter().println(CNSPopulator.getResponseMetadata());
+
+	    	return true;
 
 		} else {
 			logger.error("event=cns_manage_worker status=failure errorType=InvalidParameterValue parameter=Task valid_values=ClearQueues,RemoveRecord");

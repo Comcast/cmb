@@ -28,6 +28,7 @@ import com.comcast.cmb.common.model.CMBPolicy;
 import com.comcast.cmb.common.model.User;
 import com.comcast.cmb.common.util.CMBException;
 import com.comcast.cns.util.CNSErrorCodes;
+import com.comcast.cqs.io.CQSPopulator;
 import com.comcast.cqs.persistence.RedisPayloadCacheCassandraPersistence;
 import com.comcast.cqs.util.CQSErrorCodes;
 
@@ -61,6 +62,7 @@ public class CQSManageServiceAction extends CQSAction {
 		if (task.equals("ClearCache")) {
 
 	    	RedisPayloadCacheCassandraPersistence.flushAll();
+	    	response.getWriter().println(CQSPopulator.getResponseMetadata());
 	        return true;
         
 		} else if (task.equals("ClearAPIStats")) {
@@ -68,7 +70,9 @@ public class CQSManageServiceAction extends CQSAction {
             CMBControllerServlet.callStats = new ConcurrentHashMap<String, AtomicLong>();
             CMBControllerServlet.callFailureStats = new ConcurrentHashMap<String, AtomicLong>();
 
-            return true;
+	    	response.getWriter().println(CQSPopulator.getResponseMetadata());
+
+	    	return true;
 			
 		} else {
 			logger.error("event=cqs_manage_service status=failure errorType=InvalidParameterValue parameter=Task valid_values=ClearCache,ClearAPIStats");

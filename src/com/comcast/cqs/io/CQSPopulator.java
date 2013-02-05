@@ -24,14 +24,13 @@ import com.comcast.cmb.common.model.ReceiptModule;
  */
 public class CQSPopulator {
 
-	protected static String getResponseMetadata() {
-	    return "    <ResponseMetadata>\n" +
-	            "        <RequestId>" + ReceiptModule.getReceiptId() + "</RequestId>\n" +
-	            "    </ResponseMetadata>\n";
+	public static String getResponseMetadata() {
+		return "<ResponseMetadata>\n" +
+				"\t<RequestId>" + ReceiptModule.getReceiptId() + "</RequestId>\n" +
+				"</ResponseMetadata>";
 	}
 
 	public CQSPopulator() {
 		super();
 	}
-
 }
