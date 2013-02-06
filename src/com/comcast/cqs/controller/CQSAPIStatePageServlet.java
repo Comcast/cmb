@@ -99,10 +99,13 @@ public class CQSAPIStatePageServlet extends AdminServletBase {
 		this.header(request, out, "CQS API State");
 		
 		out.println("<body>");
+		
+		String url = null;
 
 		try {
 
-			String apiStateXml = httpGet(cqsServiceBaseUrl + "?Action=GetAPIStats&AWSAccessKeyId=" + cnsAdminUser.getAccessKey());
+			url = cqsServiceBaseUrl + "?Action=GetAPIStats&AWSAccessKeyId=" + cnsAdminUser.getAccessKey();
+			String apiStateXml = httpGet(url);
 			
 			Element root = XmlUtil.buildDoc(apiStateXml);
 			
@@ -121,8 +124,8 @@ public class CQSAPIStatePageServlet extends AdminServletBase {
 				out.println("<tr>");
 				String host = XmlUtil.getCurrentLevelTextValue(stats, "IpAddress");
 				out.println("<td>" + host + "</td>");
-				String url = XmlUtil.getCurrentLevelTextValue(stats, "ServiceUrl");
-				out.println("<td>"+url+"</td>");
+				String serviceUrl = XmlUtil.getCurrentLevelTextValue(stats, "ServiceUrl");
+				out.println("<td>"+serviceUrl+"</td>");
 				out.println("<td>"+XmlUtil.getCurrentLevelTextValue(stats, "JmxPort")+"</td>");
 				out.println("<td>"+XmlUtil.getCurrentLevelTextValue(stats, "LongPollPort")+"</td>");
 				out.println("<td>"+XmlUtil.getCurrentLevelTextValue(stats, "DataCenter")+"</td>");
@@ -131,8 +134,8 @@ public class CQSAPIStatePageServlet extends AdminServletBase {
 				out.println("<td>"+XmlUtil.getCurrentLevelTextValue(stats, "RedisServerList")+"</td>");
 				out.println("<td>"+XmlUtil.getCurrentLevelTextValue(stats, "NumberOfRedisKeys")+"</td>");
 				out.println("<td>"+XmlUtil.getCurrentLevelTextValue(stats, "NumberOfRedisShards")+"</td>");
-				out.println("<td><form action=\"\" method=\"POST\"><input type='hidden' name='Url' value='"+url+"'><input type='submit' value='Clear Cache' name='ClearCache'/></form></td>");
-				out.println("<td><form action=\"\" method=\"POST\"><input type='hidden' name='Url' value='"+url+"'><input type='submit' value='Clear API Stats' name='ClearAPIStats'/></form></td>");
+				out.println("<td><form action=\"\" method=\"POST\"><input type='hidden' name='Url' value='"+serviceUrl+"'><input type='submit' value='Clear Cache' name='ClearCache'/></form></td>");
+				out.println("<td><form action=\"\" method=\"POST\"><input type='hidden' name='Url' value='"+serviceUrl+"'><input type='submit' value='Clear API Stats' name='ClearAPIStats'/></form></td>");
 				out.println("</tr>");
 				
 				Element callStats = XmlUtil.getChildNodes(stats, "CallStats").get(0);
@@ -180,7 +183,7 @@ public class CQSAPIStatePageServlet extends AdminServletBase {
 			
 		} catch (Exception ex) {
 			logger.error("", ex);
-			throw new ServletException(ex);
+			out.println("<p>Unable to reach " + url + ": "+ex.getMessage()+"</p>");
 		}
 		
         out.println("</body></html>");

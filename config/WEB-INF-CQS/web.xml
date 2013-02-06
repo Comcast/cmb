@@ -167,5 +167,14 @@
 		<servlet-name>CQSAPIStatePageServlet</servlet-name>
 		<url-pattern>/CQSAPIState/*</url-pattern>
 	</servlet-mapping>
+	
+	<servlet>
+		<servlet-name>CNSWorkerStatePageServlet</servlet-name>
+		<servlet-class>com.comcast.cns.controller.CNSWorkerStatePageServlet</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>CNSWorkerStatePageServlet</servlet-name>
+		<url-pattern>/CNSWorkerState/*</url-pattern>
+	</servlet-mapping>
     
 </web-app>

@@ -245,7 +245,7 @@ public abstract class AdminServletBase extends HttpServlet {
            br.close();
         
         } catch (Exception ex) {
-           logger.error("event=failed_http_get", ex);
+           logger.error("event=http_get_failed url=" + urlString, ex);
         }
         
         return doc;

@@ -49,7 +49,6 @@ import com.comcast.cns.io.CNSWorkerStatsPopulator;
 import com.comcast.cns.model.CNSWorkerStats;
 import com.comcast.cns.tools.CNSWorkerMonitorMBean;
 import com.comcast.cns.util.CNSErrorCodes;
-import com.comcast.cqs.io.CQSPopulator;
 /**
  * Subscribe action
  * @author bwolf
