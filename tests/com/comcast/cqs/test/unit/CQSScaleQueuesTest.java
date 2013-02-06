@@ -81,11 +81,16 @@ public class CQSScaleQueuesTest {
     	CreateNQueues(1000);
     }
 
-    /*@Test
+    //@Test
     public void Create10000Queues() {
     	CreateNQueues(10000);
-    }*/
+    }
     
+    //@Test
+    public void Create100000Queues() {
+    	CreateNQueues(100000);
+    }
+
     private boolean receiveMessage(String queueUrl) {
 
     	ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest();
@@ -163,28 +168,29 @@ public class CQSScaleQueuesTest {
     		Thread.sleep(1000);
 
     		long readFailures = 0;
+    		long emptyResponses = 0;
     		counter = 0;
     		
     		for (String queueUrl : queueUrls) {
 
     			boolean messageReceived = false;
-    			int attempts = 0;
     			
-    			while (!messageReceived && attempts < 10) {
-    			
-	    			try {
-	    				
-	    				messageReceived = receiveMessage(queueUrl);
-	    				logger.info("received message on queue " + counter + ": " + queueUrl);
-						counter++;
-						
-	    			} catch (Exception ex) {
-	    				
-	    				logger.error("read failure, will retry: " + queueUrl, ex);
-	    				readFailures++;
-	    			}
-	    			
-	    			attempts++;
+    			try {
+    				
+    				messageReceived = receiveMessage(queueUrl);
+    				
+    				if (messageReceived) {
+	    				logger.info("received message on queue " + counter + ":" + queueUrl);
+	    				counter++;
+    				} else {
+	    				logger.info("no message found on queue " + counter + ":"  + queueUrl);
+	    				emptyResponses++;
+    				}
+					
+    			} catch (Exception ex) {
+    				
+    				logger.error("read failure, will retry: " + queueUrl, ex);
+    				readFailures++;
     			}
     		}
 
@@ -204,12 +210,13 @@ public class CQSScaleQueuesTest {
     			}
     		}
     		
-    		logger.info("create failuers: " + createFailures +  " delete failures: " + deleteFailures + " send failures: " + sendFailures + " read failures: " + readFailures);
+    		logger.info("create failuers: " + createFailures +  " delete failures: " + deleteFailures + " send failures: " + sendFailures + " read failures: " + readFailures + " empty reads:" + emptyResponses);
     		
     		assertTrue("Create failures: " + createFailures, createFailures == 0);
     		assertTrue("Delete failures: " + deleteFailures, deleteFailures == 0);
     		assertTrue("Send failures: " + sendFailures, sendFailures == 0);
     		assertTrue("Read failures: " + readFailures, readFailures == 0);
+    		assertTrue("Empty reads: " + emptyResponses, emptyResponses == 0);
 	        
 		} catch (Exception ex) {
 			ex.printStackTrace();
