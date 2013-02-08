@@ -49,10 +49,19 @@ import com.comcast.cmb.common.util.CMBProperties;
 public class CQSLongPollSender {
 	
     private static Logger logger = Logger.getLogger(CQSLongPollSender.class);
+    
     private static ClientBootstrap clientBootstrap;
     private static ChannelFactory clientSocketChannelFactory;
-	private static volatile ConcurrentHashMap<String, Long> activelyLongPollingCQSApiServers;
+	
+    // list of recently active cqs api servers, could be reduced to only list those servers recently
+    // doing long poll receives
+    
+    private static volatile ConcurrentHashMap<String, Long> activeCQSApiServers;
+    
     private static volatile boolean initialized = false;
+    
+    // last minute long poll sender checked for api server heart beats
+    
     public static volatile AtomicLong lastLPPingMinute = new AtomicLong(0);
 
 	private static class CQSLongPollClientHandler extends SimpleChannelHandler {
@@ -63,14 +72,14 @@ public class CQSLongPollSender {
 
 		@Override
 		public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) {
-			logger.error("event=long_poll_sender_error msg=" + e);
+			logger.error("event=long_poll_sender_error remote_address=" + e.getChannel().getRemoteAddress() + " msg=" + e);
 			e.getChannel().close();
 		}
 	}
 
 	public static void init() {
 	
-        activelyLongPollingCQSApiServers = new ConcurrentHashMap<String, Long>();
+        activeCQSApiServers = new ConcurrentHashMap<String, Long>();
 		
 		// launch client side
 		
@@ -107,11 +116,15 @@ public class CQSLongPollSender {
         
         if (lastLPPingMinute.getAndSet(now/(1000*60)) != now/(1000*60)) {
 
+        	logger.info("event=reloading_active_cqs_api_server_list new_minute=" + now/(1000*60));
+        	
         	try {
 
+        		activeCQSApiServers.clear();
+        		
         		CassandraPersistence cassandraHandler = new CassandraPersistence(CMBProperties.getInstance().getCMBCQSKeyspace());
 
-                // read all other pings but ensure we are data-center local and lookign at a cqs service
+                // read all other pings but ensure we are data-center local and looking at a cqs service
                 
         		List<Row<String, String, String>> rows = cassandraHandler.readNextNNonEmptyRows("CQSAPIServers", null, 1000, 10, new StringSerializer(), new StringSerializer(), new StringSerializer(), HConsistencyLevel.QUORUM);
         		
@@ -141,8 +154,8 @@ public class CQSLongPollSender {
         				}
         				
         				if (now-timestamp < 5*60*1000 && dataCenter.equals(CMBProperties.getInstance().getCmbDataCenter())) {
-        					activelyLongPollingCQSApiServers.put(host + ":" + port, new Long(0));
-        					logger.info("event=found_active_api_server host=" + host + " port=" + port + " data_center=" + dataCenter);
+        					activeCQSApiServers.put(host + ":" + port, new Long(0));
+        					logger.info("event=found_active_api_server host=" + host + " port=" + port + " data_center=" + dataCenter + " last_minute=" + (timestamp/1000));
         				}
         			}
         		}                
@@ -154,7 +167,7 @@ public class CQSLongPollSender {
 	
 		final String msg = queueArn;
 
-		for (String endpoint : activelyLongPollingCQSApiServers.keySet()) {
+		for (String endpoint : activeCQSApiServers.keySet()) {
 		
 			String e[] = endpoint.split(":");
 			String host = e[0];
