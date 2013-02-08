@@ -139,19 +139,29 @@ public interface CQSMonitorMBean {
     public void flushRedis();
     
     /**
-     * 
+     * Get call stats for successful api calls
      * @return
      */
     public Map<String, AtomicLong> getCallStats();
     
     /**
-     * 
+     * Get call stats for failed api calls
      * @return
      */
     public Map<String, AtomicLong> getCallFailureStats();
     
     /**
-     * 
+     * Reset all in memory call stats
      */
     public void resetCallStats();
+    
+    /**
+     * Get Cassandra cluster name (should be same for all api servers)
+     */
+    public String getCassandraClusterName();
+    
+    /**
+     * Get Cassandra nodes this api server is aware of
+     */
+    public String getCassandraNodes();
 }

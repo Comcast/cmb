@@ -106,7 +106,7 @@ public class XmlUtil {
 
 	public static String getCurrentLevelTextValue(Element ele, String tagName) {
 		
-		String textVal = null;
+		String textVal = "";
 		
 		List<Element> nl = getCurrentLevelChildNodes(ele, tagName);
 		

@@ -413,4 +413,14 @@ public class CQSMonitor implements CQSMonitorMBean {
 		CMBControllerServlet.callStats = new ConcurrentHashMap<String, AtomicLong>();
 		CMBControllerServlet.callFailureStats = new ConcurrentHashMap<String, AtomicLong>();
 	}
+
+	@Override
+	public String getCassandraClusterName() {
+		return CMBProperties.getInstance().getClusterName();
+	}
+
+	@Override
+	public String getCassandraNodes() {
+		return CMBProperties.getInstance().getClusterUrl();
+	}
 }

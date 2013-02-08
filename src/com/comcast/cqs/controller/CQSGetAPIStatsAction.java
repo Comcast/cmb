@@ -40,6 +40,7 @@ import com.comcast.cmb.common.persistence.CassandraPersistence;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cqs.io.CQSAPIStatsPopulator;
 import com.comcast.cqs.model.CQSAPIStats;
+import com.comcast.cqs.persistence.RedisPayloadCacheCassandraPersistence;
 /**
  * Subscribe action
  * @author bwolf, jorge
@@ -111,7 +112,11 @@ public class CQSGetAPIStatsAction extends CQSAction {
 		
 		for (CQSAPIStats stats : statsList) {
 			
-			if (stats.getJmxPort() > 0 && System.currentTimeMillis() - stats.getTimestamp() < 5*60*1000) {
+			if (System.currentTimeMillis() - stats.getTimestamp() >= 5*60*1000) {
+				
+				stats.addStatus("STALE");
+				
+			} else if (stats.getJmxPort() > 0) {
 			
 				JMXConnector jmxConnector = null;
 				String url = null;
@@ -133,6 +138,12 @@ public class CQSGetAPIStatsAction extends CQSAction {
 					MBeanServerConnection mbeanConn = jmxConnector.getMBeanServerConnection();
 
 					ObjectName cqsAPIMonitor = new ObjectName("com.comcast.cqs.controller:type=CQSMonitorMBean");
+					
+					String cassandraClusterName = (String)mbeanConn.getAttribute(cqsAPIMonitor, "CassandraClusterName");
+					stats.setCassandraClusterName(cassandraClusterName);
+
+					String cassandraNodes = (String)mbeanConn.getAttribute(cqsAPIMonitor, "CassandraNodes");
+					stats.setCassandraNodes(cassandraNodes);
 
 					Long numberOfLongPollReceives = (Long)mbeanConn.getAttribute(cqsAPIMonitor, "NumberOfLongPollReceives");
 					stats.setNumberOfLongPollReceives(numberOfLongPollReceives);
@@ -160,6 +171,7 @@ public class CQSGetAPIStatsAction extends CQSAction {
 				} catch (Exception ex) {
 
 					logger.warn("event=failed_to_connect_to_jmx_server url=" + url, ex);
+					stats.addStatus("JMX UNAVAILABLE");
 
 				} finally {
 
@@ -167,6 +179,30 @@ public class CQSGetAPIStatsAction extends CQSAction {
 						jmxConnector.close();
 					}
 				}
+				
+				try {
+					if (!RedisPayloadCacheCassandraPersistence.isAlive()) {
+						stats.addStatus("REDIS UNAVAILABLE");
+					}
+				} catch (Exception ex) {
+					stats.addStatus("REDIS UNAVAILABLE");
+				}
+				
+	        	try {
+				
+					CassandraPersistence cassandra = new CassandraPersistence(CMBProperties.getInstance().getCMBCommonKeyspace());
+		        	
+		        	if (!cassandra.isAlive()) {
+						stats.addStatus("CASSANDRA UNAVAILABLE");
+		        	}
+
+	        	} catch (Exception ex) {
+					stats.addStatus("CASSANDRA UNAVAILABLE");
+	        	}
+			}
+			
+			if (stats.getStatus() == null) {
+				stats.addStatus("OK");
 			}
 		}
 

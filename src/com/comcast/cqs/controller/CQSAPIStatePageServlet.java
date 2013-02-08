@@ -114,7 +114,7 @@ public class CQSAPIStatePageServlet extends AdminServletBase {
 			out.println("<h2 align='left'>CQS API Stats</h2>");
 			
 			out.println("<span class='simple'><table border='1'>");
-			out.println("<tr><th>Ip Address</th><th>Url</th><th>JMX Port</th><th>Long Poll Port</th><th>Data Center</th><th>Time Stamp</th><th>Num Long Poll Receives</th><th>Redis Servers</th><th>Num Redis Keys</th><th>Num Redis Shards</th><th></th><th></th></tr>");
+			out.println("<tr><th>Ip Address</th><th>Url</th><th>JMX Port</th><th>Long Poll Port</th><th>Data Center</th><th>Time Stamp</th><th>Num Long Poll Receives</th><th>Redis Servers</th><th>Num Redis Keys</th><th>Num Redis Shards</th><th>Cassandra Cluster</th><th>Cassandra Nodes</th><th>Status</th><th></th><th></th></tr>");
 
 			Map<String, Long> aggregateCallStats = new HashMap<String, Long>();
 			Map<String, Long> aggregateCallFailureStats = new HashMap<String, Long>();
@@ -134,6 +134,16 @@ public class CQSAPIStatePageServlet extends AdminServletBase {
 				out.println("<td>"+XmlUtil.getCurrentLevelTextValue(stats, "RedisServerList")+"</td>");
 				out.println("<td>"+XmlUtil.getCurrentLevelTextValue(stats, "NumberOfRedisKeys")+"</td>");
 				out.println("<td>"+XmlUtil.getCurrentLevelTextValue(stats, "NumberOfRedisShards")+"</td>");
+				out.println("<td>"+XmlUtil.getCurrentLevelTextValue(stats, "CassandraClusterName")+"</td>");
+				
+				String cassandraNodes = XmlUtil.getCurrentLevelTextValue(stats, "CassandraNodes");
+				
+				if (cassandraNodes != null) {
+					cassandraNodes = cassandraNodes.replace(",", ", ");
+				}
+				
+				out.println("<td>"+cassandraNodes+"</td>");
+				out.println("<td>"+XmlUtil.getCurrentLevelTextValue(stats, "Status")+"</td>");
 				out.println("<td><form action=\"\" method=\"POST\"><input type='hidden' name='Url' value='"+serviceUrl+"'><input type='submit' value='Clear Cache' name='ClearCache'/></form></td>");
 				out.println("<td><form action=\"\" method=\"POST\"><input type='hidden' name='Url' value='"+serviceUrl+"'><input type='submit' value='Clear API Stats' name='ClearAPIStats'/></form></td>");
 				out.println("</tr>");

@@ -44,6 +44,41 @@ public class CQSAPIStats {
 	
 	private String redisServerList;
 	
+	private String status;
+	
+	private String cassandraClusterName;
+	
+	private String cassandraNodes;
+	
+	public String getCassandraClusterName() {
+		return cassandraClusterName;
+	}
+
+	public void setCassandraClusterName(String cassandraClusterName) {
+		this.cassandraClusterName = cassandraClusterName;
+	}
+
+	public String getCassandraNodes() {
+		return cassandraNodes;
+	}
+
+	public void setCassandraNodes(String cassandraNodes) {
+		this.cassandraNodes = cassandraNodes;
+	}
+
+	public String getStatus() {
+		return status;
+	}
+
+	public void addStatus(String status) {
+		
+		if (this.status == null) {
+			this.status = status;
+		} else {
+			this.status += ", " + status;
+		}
+	}
+
 	public String getRedisServerList() {
 		return redisServerList;
 	}

@@ -40,7 +40,22 @@ public class CQSAPIStatsPopulator {
 			res += "\t\t\t<NumberOfLongPollReceives>"+s.getNumberOfLongPollReceives()+"</NumberOfLongPollReceives>\n";
 			res += "\t\t\t<NumberOfRedisKeys>"+s.getNumberOfRedisKeys()+"</NumberOfRedisKeys>\n";
 			res += "\t\t\t<NumberOfRedisShards>"+s.getNumberOfRedisShards()+"</NumberOfRedisShards>\n";
-			res += "\t\t\t<RedisServerList>"+s.getRedisServerList()+"</RedisServerList>\n";
+			
+			if (s.getRedisServerList() != null) {
+				res += "\t\t\t<RedisServerList>"+s.getRedisServerList()+"</RedisServerList>\n";
+			}
+			
+			if (s.getStatus() != null) {
+				res += "\t\t\t<Status>"+s.getStatus()+"</Status>\n";
+			}
+			
+			if (s.getCassandraClusterName() != null) {
+				res += "\t\t\t<CassandraClusterName>"+s.getCassandraClusterName()+"</CassandraClusterName>\n";
+			}
+			
+			if (s.getCassandraNodes() != null) { 
+				res += "\t\t\t<CassandraNodes>"+s.getCassandraNodes()+"</CassandraNodes>\n";
+			}
 			
 			res += "\t\t\t<CallStats>\n";
 			
