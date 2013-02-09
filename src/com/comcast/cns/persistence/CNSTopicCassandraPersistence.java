@@ -38,7 +38,6 @@ import me.prettyprint.hector.api.HConsistencyLevel;
 import me.prettyprint.hector.api.beans.HColumn;
 import me.prettyprint.hector.api.beans.Row;
 
-
 /**
  * Provide Cassandra persistence for topics
  * @author aseem, bwolf, jorge, vvenkatraman, tina, michael
@@ -46,34 +45,30 @@ import me.prettyprint.hector.api.beans.Row;
  * Class is immutable
  */
 public class CNSTopicCassandraPersistence extends CassandraPersistence implements ICNSTopicPersistence {
-	
-    private static Logger logger = Logger.getLogger(CNSTopicCassandraPersistence.class);
-	
+
+	private static Logger logger = Logger.getLogger(CNSTopicCassandraPersistence.class);
+
 	private final ColumnFamilyTemplate<String, String> topicsTemplate;
 	private final ColumnFamilyTemplate<String, String> topicsByUserIdTemplate;
 	private final ColumnFamilyTemplate<String, String> topicAttributesTemplate;
-	
+
 	private static final String columnFamilyTopics = "CNSTopics";
 	private static final String columnFamilyTopicsByUserId = "CNSTopicsByUserId";
 	private static final String columnFamilyTopicAttributes = "CNSTopicAttributes";
-	
-	/**
-	 * Note: topic actions use QUORUM consistency level
-	 */
-	
+
 	public CNSTopicCassandraPersistence() {
-		
+
 		super(CMBProperties.getInstance().getCMBCNSKeyspace());
-		
+
 		topicsTemplate = new ThriftColumnFamilyTemplate<String, String>(keyspaces.get(HConsistencyLevel.QUORUM), columnFamilyTopics, StringSerializer.get(), StringSerializer.get());
 		topicsByUserIdTemplate = new ThriftColumnFamilyTemplate<String, String>(keyspaces.get(HConsistencyLevel.QUORUM), columnFamilyTopicsByUserId, StringSerializer.get(), StringSerializer.get());
 		topicAttributesTemplate = new ThriftColumnFamilyTemplate<String, String>(keyspaces.get(HConsistencyLevel.QUORUM), columnFamilyTopicAttributes, StringSerializer.get(), StringSerializer.get());
 	}
-	
+
 	private Map<String, String> getColumnValues(CNSTopic t) {
-		
+
 		Map<String, String> columnValues = new HashMap<String, String>();
-		
+
 		if (t.getUserId() != null) {
 			columnValues.put("userId", t.getUserId());
 		}
@@ -81,7 +76,7 @@ public class CNSTopicCassandraPersistence extends CassandraPersistence implement
 		if (t.getName() != null) {
 			columnValues.put("name", t.getName());
 		}
-		
+
 		if (t.getDisplayName() != null) {
 			columnValues.put("displayName", t.getDisplayName());
 		}
@@ -91,112 +86,107 @@ public class CNSTopicCassandraPersistence extends CassandraPersistence implement
 
 	@Override
 	public CNSTopic createTopic(String name, String displayName, String userId) throws Exception {
-		
+
 		String arn = Util.generateCnsTopicArn(name, CMBProperties.getInstance().getRegion(), userId);
-		
+
 		if (!Util.isValidTopicName(name)) {
 			throw new CMBException(CNSErrorCodes.InvalidParameterValue, "Invalid parameter topic name.");
 		}
-		
-		List<CNSTopic> topics = listTopics(userId, null);
-		
+
+		// disable user topic limit for now
+
+		/*List<CNSTopic> topics = listTopics(userId, null);
+
 		if (topics.size() >= Util.CNS_USER_TOPIC_LIMIT) {
 			throw new CMBException(CNSErrorCodes.CNS_TopicLimitExceeded, "Topic limit exceeded.");
-		}
-		
-		for (CNSTopic t : topics) {
-			if (t.getName().equals(name)) {
-				return t;
-				//throw new CNSTopicAlreadyExistsException();
-			}
-		}
-		
-		CNSTopic topic = new CNSTopic(arn, name, displayName, userId);
-		
-		topic.checkIsValid();
-		
-		insertOrUpdateRow(topic.getArn(), columnFamilyTopics, getColumnValues(topic), HConsistencyLevel.QUORUM);
-		
-		update(topicsByUserIdTemplate, userId, topic.getArn(), "", StringSerializer.get(), StringSerializer.get(), StringSerializer.get());
-		
-		CNSTopicAttributes attributes = new CNSTopicAttributes(arn, userId);
-		PersistenceFactory.getCNSAttributePersistence().setTopicAttributes(attributes, arn);
-		
-		logger.debug("event=cns_topic_created " + topic.toString());
+		}*/
 
-		return topic;
+		CNSTopic topic = getTopic(arn);
+
+		if (topic != null) {
+			return topic;
+		} else {
+
+			topic = new CNSTopic(arn, name, displayName, userId);
+			topic.checkIsValid();
+			insertOrUpdateRow(topic.getArn(), columnFamilyTopics, getColumnValues(topic), HConsistencyLevel.QUORUM);
+			update(topicsByUserIdTemplate, userId, topic.getArn(), "", StringSerializer.get(), StringSerializer.get(), StringSerializer.get());
+			CNSTopicAttributes attributes = new CNSTopicAttributes(arn, userId);
+			PersistenceFactory.getCNSAttributePersistence().setTopicAttributes(attributes, arn);
+
+			return topic;
+		}
 	}
 
 	@Override
 	public void deleteTopic(String arn) throws Exception {
-		
+
 		CNSTopic topic = getTopic(arn);
-		
+
 		if (topic == null) {
 			throw new CMBException(CNSErrorCodes.CNS_NotFound, "Topic not found.");
 		}
-		
+
 		// delete all subscriptions first
+
 		PersistenceFactory.getSubscriptionPersistence().unsubscribeAll(topic.getArn());		
-		
+
 		delete(topicsTemplate, arn, null);
 		delete(topicsByUserIdTemplate, topic.getUserId(), arn);
 		delete(topicAttributesTemplate, arn, null);
-		
+
 		logger.debug("event=cns_topic_deleted " + topic.toString());
 	}
 
 	@Override
 	public List<CNSTopic> listTopics(String userId, String nextToken) throws Exception {
-		
+
 		if (nextToken != null) {
 			if (getTopic(nextToken) == null) {
 				nextToken = null;
 				//throw new CMBException(CMBErrorCodes.InvalidParameterValue, "Invalid parameter nextToken");
 			}
 		}
-		
+
 		List<CNSTopic> topics = new ArrayList<CNSTopic>();
 		Row<String, String, String> row = null;
-		
+
 		row = readRow(columnFamilyTopicsByUserId, userId, 100, new StringSerializer(), new StringSerializer(), new StringSerializer(), HConsistencyLevel.QUORUM);
-		
+
 		if (row != null) {
 
 			for (HColumn<String, String> c : row.getColumnSlice().getColumns()) {
-				
+
 				String arn = c.getName();
-				
+
 				row = readRow(columnFamilyTopics, arn, 100, new StringSerializer(), new StringSerializer(), new StringSerializer(), HConsistencyLevel.QUORUM);
-				
+
 				if (row != null) {
-				
+
 					String name = row.getColumnSlice().getColumnByName("name").getValue();
-					
+
 					String displayName = null;
-					
+
 					if (row.getColumnSlice().getColumnByName("displayName") != null) {
 						displayName = row.getColumnSlice().getColumnByName("displayName").getValue();
 					}
-					
+
 					CNSTopic t = new CNSTopic(arn, name, displayName, userId);
-					
+
 					topics.add(t);
-				
-				logger.debug("event=cns_topic_listed " + t.toString());
-				
+
 				} else {
 					delete(topicsByUserIdTemplate, userId, arn);
 				}
 			}
 		}
-		
+
 		return topics;
 	}
 
 	@Override
 	public List<CNSTopic> listAllTopics(String nextToken) throws Exception {
-		
+
 		if (nextToken != null) {
 			if (getTopic(nextToken) == null) {
 				nextToken = null;
@@ -207,62 +197,58 @@ public class CNSTopicCassandraPersistence extends CassandraPersistence implement
 		List<CNSTopic> topics = new ArrayList<CNSTopic>();
 
 		List<Row<String, String, String>> rows = readNextNRows(columnFamilyTopics, nextToken, 100, new StringSerializer(), new StringSerializer(), new StringSerializer(), HConsistencyLevel.QUORUM);
-		
+
 		for (Row<String, String, String> row : rows) {
 
 			String arn = row.getKey();
 			String name = row.getColumnSlice().getColumnByName("name").getValue();
-			
+
 			String displayName = null;
-			
+
 			if (row.getColumnSlice().getColumnByName("displayName") != null) {
 				displayName = row.getColumnSlice().getColumnByName("displayName").getValue();
 			}
-						
+
 			String user = row.getColumnSlice().getColumnByName("userId").getValue();
-			
 			CNSTopic topic = new CNSTopic(arn, name, displayName, user);
-			
+
 			topics.add(topic);
 
-			logger.debug("event=cns_topic_listed " + topic.toString());
 		}
-		
+
 		return topics;
 	}
 
 	@Override
 	public CNSTopic getTopic(String arn) throws Exception {
-		
+
 		CNSTopic topic = null;
 
 		Row<String, String, String> row = readRow(columnFamilyTopics, arn, 10, new StringSerializer(), new StringSerializer(), new StringSerializer(), HConsistencyLevel.QUORUM);
-		
+
 		if (row != null) {
-		
+
 			String name = row.getColumnSlice().getColumnByName("name").getValue();
-			
+
 			String displayName = null;
-			
+
 			if (row.getColumnSlice().getColumnByName("displayName") != null) {
 				displayName = row.getColumnSlice().getColumnByName("displayName").getValue();
 			}
-			
+
 			String user = row.getColumnSlice().getColumnByName("userId").getValue();
-			
+
 			topic = new CNSTopic(arn, name, displayName, user);
-			
-			logger.debug("event=cns_topic_listed " + topic.toString());
 		}
-		
+
 		return topic;
 	}
 
 	@Override
 	public void updateTopicDisplayName(String arn, String displayName) throws Exception {
-		
+
 		CNSTopic topic = getTopic(arn);
-		
+
 		if (topic != null) {
 			topic.setDisplayName(displayName);
 			topic.checkIsValid();

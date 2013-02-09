@@ -185,15 +185,14 @@ public class CQSQueueMessagesPageServlet extends AdminServletBase {
         	String timeSent = "";
         	
         	if (attributes.get("SentTimestamp") != null) {
-        		timeSent = new Date(Long.parseLong(attributes.get("SentTimestamp"))).toString();
+        		try { timeSent = new Date(Long.parseLong(attributes.get("SentTimestamp"))).toString(); } catch (Exception ex) {}
         	}
         	
         	String timeReceived = "";
         	
         	if (attributes.get("ApproximateFirstReceiveTimestamp") != null) {
-        		timeReceived = new Date(Long.parseLong(attributes.get("ApproximateFirstReceiveTimestamp"))).toString();
+        		try { timeReceived = new Date(Long.parseLong(attributes.get("ApproximateFirstReceiveTimestamp"))).toString(); } catch (Exception ex) {}
         	}
-        	
         	
         	if (i == 0) {
         		out.println("<p><hr width='100%' align='left' /><p><span class='content'><table>");
@@ -210,7 +209,7 @@ public class CQSQueueMessagesPageServlet extends AdminServletBase {
         	out.println("<td>"+ timeReceived + "</td>");
         	out.println("<td>"+ attributes.get("ApproximateReceiveCount") + "</td>");
         	out.println("<td>"+ attributes.get("SenderId") + "</td>");
-		    out.println("<td><form action=\""+response.encodeURL("MESSAGE") + "?userId="+user.getUserId()+"&queueName="+queueName+"&receiptHandle="+message.getReceiptHandle()+"\" method=POST><input type='submit' value='Delete' name='Delete' /><input type='hidden' name='queueUrl' value='"+ queueUrl+ "' /></form></td></tr>");
+		    out.println("<td><form action=\"MESSAGE?userId="+user.getUserId()+"&queueName="+queueName+"&receiptHandle="+message.getReceiptHandle()+"\" method=POST><input type='submit' value='Delete' name='Delete'/><input type='hidden' name='queueUrl' value='"+ queueUrl+ "' /></form></td></tr>");
 		    
 		    if (i == messages.size() - 1) {
 		    	nextHandle = message.getReceiptHandle();
