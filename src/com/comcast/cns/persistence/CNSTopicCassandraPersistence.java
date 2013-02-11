@@ -151,12 +151,12 @@ public class CNSTopicCassandraPersistence extends CassandraPersistence implement
 		List<CNSTopic> topics = new ArrayList<CNSTopic>();
 		Row<String, String, String> row = null;
 
-		row = readRow(columnFamilyTopicsByUserId, userId, 100, new StringSerializer(), new StringSerializer(), new StringSerializer(), HConsistencyLevel.QUORUM);
+		row = readRow(columnFamilyTopicsByUserId, userId, nextToken, null, 100, new StringSerializer(), new StringSerializer(), new StringSerializer(), HConsistencyLevel.QUORUM);
 
 		if (row != null) {
-
+			
 			for (HColumn<String, String> c : row.getColumnSlice().getColumns()) {
-
+				
 				String arn = c.getName();
 
 				row = readRow(columnFamilyTopics, arn, 100, new StringSerializer(), new StringSerializer(), new StringSerializer(), HConsistencyLevel.QUORUM);

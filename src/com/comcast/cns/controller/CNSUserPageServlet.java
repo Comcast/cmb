@@ -63,10 +63,12 @@ public class CNSUserPageServlet extends AdminServletBase {
 		PrintWriter out = response.getWriter();
 
 		Map<?, ?> parameters = request.getParameterMap();
+		
 		userId = request.getParameter("userId");
 		String topicName = request.getParameter("topic");
 		String arn = request.getParameter("arn");
 		String displayName = request.getParameter("display");
+		String nextToken = request.getParameter("nextToken");
 		
         List<Topic> topics = new ArrayList<Topic>();
 		
@@ -87,7 +89,7 @@ public class CNSUserPageServlet extends AdminServletBase {
 				logger.debug("event=created_topic topic_name=" + topicName);
 
 			} catch (Exception ex) {
-				logger.error("event=createTopic status=failed userId= " + userId, ex);
+				logger.error("event=create_topic status=failed user_id= " + userId, ex);
 				throw new ServletException(ex);
 			}
 		
@@ -98,7 +100,7 @@ public class CNSUserPageServlet extends AdminServletBase {
 				sns.deleteTopic(deleteTopicRequest);
 				logger.debug("event=deleted_topic topic_name=" + topicName);
 			} catch (Exception ex) {
-				logger.error("event=deletedTopic status=failed userId= " + userId, ex);
+				logger.error("event=delete_topic status=failed user_id= " + userId, ex);
 				throw new ServletException(ex);
 			}
 
@@ -106,11 +108,14 @@ public class CNSUserPageServlet extends AdminServletBase {
 			
 	        try {
 	        	
-				ListTopicsRequest createTopicRequest = new ListTopicsRequest();
-				ListTopicsResult createTopicResult = sns.listTopics(createTopicRequest);
-				topics = createTopicResult.getTopics();
+				ListTopicsRequest listTopicRequest = new ListTopicsRequest();
 				
-				//todo: use next token
+				if (nextToken != null) {
+					listTopicRequest.setNextToken(nextToken);
+				}
+				
+				ListTopicsResult listTopicResult = sns.listTopics(listTopicRequest);
+				topics = listTopicResult.getTopics();
 
 				logger.debug("event=list_topics count=" + topics != null ? topics.size() : 0);
 			} catch (Exception ex) {
@@ -127,7 +132,7 @@ public class CNSUserPageServlet extends AdminServletBase {
 					sns.deleteTopic(deleteTopicRequest);
 					logger.debug("event=deleted_topic topic_name=" + topicName);
 				} catch (Exception ex) {
-					logger.error("event=deletedTopic status=failed userId= " + userId, ex);
+					logger.error("event=delete_topic status=failed user_id= " + userId, ex);
 				}
 			}			
 		}
@@ -156,17 +161,23 @@ public class CNSUserPageServlet extends AdminServletBase {
         out.println("<form action=\"/CNSUser?userId=" + userId + "\" " + "method=POST>");
         out.println("<tr><td><input type='hidden' name='userId' value='"+ userId + "'></td><td><input type='submit' value='DeleteAll' name='DeleteAll'/></td></tr></form></table></p>");
 
+        ListTopicsResult listTopicResult = null;
+        
         try {
         	
-			ListTopicsRequest createTopicRequest = new ListTopicsRequest();
-			ListTopicsResult createTopicResult = sns.listTopics(createTopicRequest);
-			topics = createTopicResult.getTopics();
+			ListTopicsRequest listTopicRequest = new ListTopicsRequest();
 			
-			//todo: use next token
+			if (nextToken != null) {
+				listTopicRequest.setNextToken(nextToken);
+			}
+
+			listTopicResult = sns.listTopics(listTopicRequest);
+			topics = listTopicResult.getTopics();
 
 			logger.debug("event=list_topics count=" + topics != null ? topics.size() : 0);
+			
 		} catch (Exception ex) {
-			logger.error("event=listTopics status=failed userId= " + userId, ex);
+			logger.error("event=list_topics status=failed user_id= " + userId, ex);
 			throw new ServletException(ex);
 		}
         
@@ -205,6 +216,11 @@ public class CNSUserPageServlet extends AdminServletBase {
         }
         
         out.println("</table></span></p>");
+        
+        if (listTopicResult != null && listTopicResult.getNextToken() != null) {
+        	out.println("<p><a href='/CNSUser?userId="+userId+"&nextToken="+response.encodeURL(listTopicResult.getNextToken())+"'>next&nbsp;&gt;</a></p>");
+        }
+        
         out.println("<h5 style='text-align:center;'><a href='/ADMIN'>ADMIN HOME</a></h5>");
         out.println("</body></html>");
         

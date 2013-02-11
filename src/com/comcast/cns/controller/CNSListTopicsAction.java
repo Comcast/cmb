@@ -63,11 +63,11 @@ public class CNSListTopicsAction extends CNSAction {
 		List<CNSTopic> topics = PersistenceFactory.getTopicPersistence().listTopics(userId, nextToken);
 
 		if (topics.size() >= 100) {
-			//Check if there are more
+			
 			nextToken = topics.get(99).getArn();
 			List<CNSTopic> nextTopics = PersistenceFactory.getTopicPersistence().listTopics(userId, nextToken);
 			
-			if (nextTopics.size() ==0) {
+			if (nextTopics.size() == 0) {
 				nextToken = null;
 			} else {
 				logger.debug("event=cns_topic_listed event=next_token_created next_token=" + nextToken + " userid=" + userId);

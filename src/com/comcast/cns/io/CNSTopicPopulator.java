@@ -26,11 +26,6 @@ import com.comcast.cns.model.CNSTopic;
  */
 public class CNSTopicPopulator {
 	
-	private static String printTopic(String arn) {
-	    	String res ="<member><TopicArn>"+arn+"</TopicArn></member>";
-	    	return res;
-	    }
-	
 	public static String getCreateTopicResponse(String arn) {
 		String res = "<CreateTopicResponse xmlns=\"http://sns.amazonaws.com/doc/2010-03-31/\">" +
 				 "<CreateTopicResult>" +
@@ -49,19 +44,26 @@ public class CNSTopicPopulator {
 	}
 	
 	public static String getListTopicsResponse(List<CNSTopic> topics, String nextToken) {
-		String res = "<ListTopicsResponse xmlns=\"http://sns.amazonaws.com/doc/2010-03-31/\">" +
-				"<ListTopicsResult>" +
-				"<Topics>";
-		for(CNSTopic topic:topics) {		
-			res += printTopic(topic.getArn());
+		
+		String res = "<ListTopicsResponse xmlns=\"http://sns.amazonaws.com/doc/2010-03-31/\">\n" +
+				"\t<ListTopicsResult>\n" +
+				"\t\t<Topics>\n";
+		
+		for (CNSTopic topic:topics) {		
+			res += "\t\t\t<member><TopicArn>"+topic.getArn()+"</TopicArn></member>\n";
 		}
-		if(nextToken != null) {
-			res += "<NextToken>" + nextToken + "</NextToken>";
+		
+    	res += "\t\t</Topics>\n";
+
+		if (nextToken != null) {
+			res += "\t\t<NextToken>" + nextToken + "</NextToken>\n";
 		}
-    	res += "</Topics>" +
-		       "</ListTopicsResult>" +
-		       CNSPopulator.getResponseMetadata() +
-				 "</ListTopicsResponse>";
+		
+
+    	res +=	"\t</ListTopicsResult>\n" +
+    			CNSPopulator.getResponseMetadata() +
+    			"</ListTopicsResponse>\n";
+    	
     	return res;
 	}
 }

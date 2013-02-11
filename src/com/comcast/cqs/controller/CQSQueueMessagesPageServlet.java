@@ -128,8 +128,6 @@ public class CQSQueueMessagesPageServlet extends AdminServletBase {
 					peekRequestUrl += "&NextReceiptHandle=" + nextHandle; 
 				}
 
-				logger.info("query=" + peekRequestUrl);
-
 				String peekXml = httpGet(peekRequestUrl);
 				Element root = XmlUtil.buildDoc(peekXml);
 				
