@@ -17,6 +17,7 @@ package com.comcast.cqs.controller;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.net.URL;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -124,8 +125,10 @@ public class CQSAPIStatePageServlet extends AdminServletBase {
 				out.println("<tr>");
 				String host = XmlUtil.getCurrentLevelTextValue(stats, "IpAddress");
 				out.println("<td>" + host + "</td>");
-				String serviceUrl = XmlUtil.getCurrentLevelTextValue(stats, "ServiceUrl");
-				out.println("<td>"+serviceUrl+"</td>");
+				String serviceUrlString = XmlUtil.getCurrentLevelTextValue(stats, "ServiceUrl");
+				URL serviceUrl = new URL(serviceUrlString);
+				String endpoint = serviceUrl.getProtocol() + "://" + host + serviceUrl.getPath();
+				out.println("<td>"+serviceUrlString+"</td>");
 				out.println("<td>"+XmlUtil.getCurrentLevelTextValue(stats, "JmxPort")+"</td>");
 				out.println("<td>"+XmlUtil.getCurrentLevelTextValue(stats, "LongPollPort")+"</td>");
 				out.println("<td>"+XmlUtil.getCurrentLevelTextValue(stats, "DataCenter")+"</td>");
@@ -144,8 +147,8 @@ public class CQSAPIStatePageServlet extends AdminServletBase {
 				
 				out.println("<td>"+cassandraNodes+"</td>");
 				out.println("<td>"+XmlUtil.getCurrentLevelTextValue(stats, "Status")+"</td>");
-				out.println("<td><form action=\"\" method=\"POST\"><input type='hidden' name='Url' value='"+serviceUrl+"'><input type='submit' value='Clear Cache' name='ClearCache'/></form></td>");
-				out.println("<td><form action=\"\" method=\"POST\"><input type='hidden' name='Url' value='"+serviceUrl+"'><input type='submit' value='Clear API Stats' name='ClearAPIStats'/></form></td>");
+				out.println("<td><form action=\"\" method=\"POST\"><input type='hidden' name='Url' value='"+endpoint+"'><input type='submit' value='Clear Cache' name='ClearCache'/></form></td>");
+				out.println("<td><form action=\"\" method=\"POST\"><input type='hidden' name='Url' value='"+endpoint+"'><input type='submit' value='Clear API Stats' name='ClearAPIStats'/></form></td>");
 				out.println("</tr>");
 				
 				Element callStats = XmlUtil.getChildNodes(stats, "CallStats").get(0);

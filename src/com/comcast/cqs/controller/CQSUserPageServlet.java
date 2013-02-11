@@ -36,7 +36,6 @@ import com.amazonaws.services.sqs.model.GetQueueAttributesRequest;
 import com.amazonaws.services.sqs.model.GetQueueAttributesResult;
 import com.amazonaws.services.sqs.model.ListQueuesRequest;
 import com.amazonaws.services.sqs.model.ListQueuesResult;
-import com.comcast.cmb.common.controller.AdminServlet;
 import com.comcast.cmb.common.controller.AdminServletBase;
 import com.comcast.cmb.common.controller.CMBControllerServlet;
 import com.comcast.cmb.common.util.CMBProperties;
@@ -55,10 +54,6 @@ public class CQSUserPageServlet extends AdminServletBase {
 	
 	public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 
-		if (!CMBProperties.getInstance().getCQSServiceEnabled()) {
-			throw new ServletException("CQS service disabled");
-		}
-		
 		if (redirectUnauthenticatedUser(request, response)) {
 			return;
 		}

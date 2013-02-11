@@ -36,10 +36,8 @@ import com.amazonaws.services.sns.model.ListTopicsRequest;
 import com.amazonaws.services.sns.model.ListTopicsResult;
 import com.amazonaws.services.sns.model.SetTopicAttributesRequest;
 import com.amazonaws.services.sns.model.Topic;
-import com.comcast.cmb.common.controller.AdminServlet;
 import com.comcast.cmb.common.controller.AdminServletBase;
 import com.comcast.cmb.common.controller.CMBControllerServlet;
-import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cns.util.Util;
 
 /**
@@ -56,10 +54,6 @@ public class CNSUserPageServlet extends AdminServletBase {
 	@Override
 	public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 	
-		if (!CMBProperties.getInstance().getCNSServiceEnabled()) {
-			throw new ServletException("CNS service disabled");
-		}
-		
 		if (redirectUnauthenticatedUser(request, response)) {
 			return;
 		}

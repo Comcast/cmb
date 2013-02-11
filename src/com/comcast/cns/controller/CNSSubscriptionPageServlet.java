@@ -26,11 +26,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.log4j.Logger;
 
-import com.comcast.cmb.common.controller.AdminServlet;
 import com.comcast.cmb.common.controller.AdminServletBase;
 import com.comcast.cmb.common.controller.CMBControllerServlet;
 import com.comcast.cmb.common.persistence.PersistenceFactory;
-import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cns.model.CNSTopic;
 import com.comcast.cns.persistence.ICNSTopicPersistence;
 
@@ -52,10 +50,6 @@ public class CNSSubscriptionPageServlet extends AdminServletBase {
 	
 	@Override
 	public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		
-		if (!CMBProperties.getInstance().getCNSServiceEnabled()) {
-			throw new ServletException("CNS service disabled");
-		}
 		
 		if (redirectUnauthenticatedUser(request, response)) {
 			return;
