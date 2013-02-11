@@ -60,11 +60,13 @@ public class CNSSubscriptionPageServlet extends AdminServletBase {
 		PrintWriter out = response.getWriter();
 		
 		Map<?, ?> parameters = request.getParameterMap();
+		
 		String userId = request.getParameter("userId");
 		String topicArn = request.getParameter("topicArn");
 		String endPoint = request.getParameter("endPoint");
 		String protocol = request.getParameter("protocol");
 		String arn = request.getParameter("arn");
+		String nextToken = request.getParameter("nextToken");
 		
 		connect(userId);
 		
@@ -92,25 +94,12 @@ public class CNSSubscriptionPageServlet extends AdminServletBase {
 		}
 		
 		List<Subscription> subscriptions = new ArrayList<Subscription>();
-		String nextToken = null;
-		
-		//todo: pagination for subscriptions?
+		ListSubscriptionsByTopicResult listSubscriptionsByTopicResult = null;
 		
 		try {
 			
-			do {
-				
-				ListSubscriptionsByTopicRequest listSubscriptionsByTopicRequest = new ListSubscriptionsByTopicRequest(topicArn, nextToken);
-				ListSubscriptionsByTopicResult listSubscriptionsByTopicResult = sns.listSubscriptionsByTopic(listSubscriptionsByTopicRequest);
-				List<Subscription> chunk = listSubscriptionsByTopicResult.getSubscriptions();
-				
-				if (chunk != null) {
-					subscriptions.addAll(chunk);
-				}
-				
-				nextToken = listSubscriptionsByTopicResult.getNextToken();
-				
-			} while (nextToken != null);
+			listSubscriptionsByTopicResult = sns.listSubscriptionsByTopic(new ListSubscriptionsByTopicRequest(topicArn, nextToken));
+			subscriptions = listSubscriptionsByTopicResult.getSubscriptions();
 			
 		} catch (Exception ex) {
 			logger.error("event=listAllSubscriptionsByTopic status=failed topicArn=" + topicArn, ex);
@@ -165,24 +154,19 @@ public class CNSSubscriptionPageServlet extends AdminServletBase {
         out.println("<td><input type='text' name='endPoint' id = 'endPoint' size='65' placeholder='e.g. http://company.com'><input type='hidden' name='userId' value='"+ userId + "'></td><td><input type='submit' value='Subscribe' name='Subscribe' /></td></tr>");
         out.println("</form></table>");
        
-        for (int i = 0; subscriptions != null && i < subscriptions.size(); i++) {
+		out.println("<p><hr width='100%' align='left' />");
+		out.println("<p><span class='content'><table border='1'>");
+		out.println("<tr><th>Row</th>");
+		out.println("<th>Arn</th>");
+		out.println("<th>Protocol</th>");
+		out.println("<th>End Point</th>");
+		out.println("<th>&nbsp;</th>");
+		out.println("<th>&nbsp;</th></tr>");
+
+		for (int i = 0; subscriptions != null && i < subscriptions.size(); i++) {
         
-        	if (i == 0) {
-        		out.println("<p><hr width='100%' align='left' />");
-        		out.println("<p><span class='content'><table border='1'>");
-        		out.println("<tr><th>Row</th>");
-        		out.println("<th>Arn</th>");
-        		out.println("<th>Protocol</th>");
-        		out.println("<th>End Point</th>");
-        		out.println("<th>&nbsp;</th>");
-        		out.println("<th>&nbsp;</th></tr>");
-        	}
-        	
         	Subscription s = subscriptions.get(i);
-        	out.print("<form action=\"");
-            out.print(response.encodeURL("SUBSCRIPTION") + "?userId="+user.getUserId()+"&arn="+s.getSubscriptionArn()+"&topicArn="+topicArn);
-            out.print("\" ");
-            out.println("method=POST>");
+        	out.println("<form action=\"SUBSCRIPTION?userId="+user.getUserId()+"&arn="+s.getSubscriptionArn()+"&topicArn="+topicArn+"\" method=POST>");
         	out.println("<tr><td>"+i+"</td>");
         	out.println("<td>"+s.getSubscriptionArn() +"<input type='hidden' name='arn' value="+s.getSubscriptionArn()+"></td>");
         	out.println("<td>"+s.getProtocol()+"</td>");
@@ -204,6 +188,12 @@ public class CNSSubscriptionPageServlet extends AdminServletBase {
         }
         
         out.println("</table></span></p>");
+        
+        if (listSubscriptionsByTopicResult != null && listSubscriptionsByTopicResult.getNextToken() != null) {
+        	out.println("<p><a href='SUBSCRIPTION?userId="+userId+"&topicArn="+topicArn+"&nextToken="+response.encodeURL(listSubscriptionsByTopicResult.getNextToken())+"'>next&nbsp;&gt;</a></p>");
+        }
+        
+        
         out.println("<h5 style='text-align:center;'><a href='/ADMIN'>ADMIN HOME</a>");
         out.println("<a href='/CNSUser?userId="+userId+"&topicArn="+topicArn+"'>BACK TO TOPIC</a></h5>");
         out.println("</body></html>");

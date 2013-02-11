@@ -54,23 +54,23 @@ public class CNSSubscriptionPopulator {
 
 	public static String getListSubscriptionResponse(List<CNSSubscription> subscriptions, String nextToken) {
 		
-		String res = "<ListSubscriptionsResponse xmlns=\"http://sns.amazonaws.com/doc/2010-03-31/\">" +
-		"<ListSubscriptionsResult>" +
-		"<Subscriptions>";
+		String res = "<ListSubscriptionsResponse xmlns=\"http://sns.amazonaws.com/doc/2010-03-31/\">\n" +
+		"\t<ListSubscriptionsResult>\n" +
+		"\t\t<Subscriptions>\n";
 		
 		for (CNSSubscription sub: subscriptions) {
-			res += printSubscription(sub);
+			res += "\t\t\t" + printSubscription(sub) + "\n";
 		}
 		
-		res += "</Subscriptions>";
+		res += "\t\t</Subscriptions>\n";
 
 		if (nextToken != null) {
-			res += "<NextToken>" + nextToken + "</NextToken>";
+			res += "\t\t<NextToken>" + nextToken + "</NextToken>\n";
 		}
 		
-		res += "</ListSubscriptionsResult>" +
-		CNSPopulator.getResponseMetadata() +
-		"</ListSubscriptionsResponse>";
+		res += "\t</ListSubscriptionsResult>\n" +
+		CNSPopulator.getResponseMetadata() + "\n" +
+		"</ListSubscriptionsResponse>\n";
 
 		return res;
 	}
@@ -83,23 +83,23 @@ public class CNSSubscriptionPopulator {
 
 	public static String getListSubscriptionByTopicResponse(List<CNSSubscription> subscriptions, String nextToken) {
 		
-		String res = "<ListSubscriptionsByTopicResponse xmlns=\"http://sns.amazonaws.com/doc/2010-03-31/\">" +
-		"<ListSubscriptionsByTopicResult>" +
-		"<Subscriptions>";
+		String res = "<ListSubscriptionsByTopicResponse xmlns=\"http://sns.amazonaws.com/doc/2010-03-31/\">\n" +
+		"\t<ListSubscriptionsByTopicResult>\n" +
+		"\t\t<Subscriptions>\n";
 		
 		for (CNSSubscription sub: subscriptions) {
-			res += printSubscription(sub);
+			res += "\t\t\t" +printSubscription(sub) + "\n"; 
 		}
 		
-		res += "</Subscriptions>";
+		res += "\t\t</Subscriptions>\n";
 
 		if (nextToken != null) {
-			res += "<NextToken>" + nextToken + "</NextToken>";
+			res += "\t\t<NextToken>" + nextToken + "</NextToken>\n";
 		}
 		
-		res += "</ListSubscriptionsByTopicResult>" +
-		CNSPopulator.getResponseMetadata() +
-		"</ListSubscriptionsByTopicResponse>";
+		res += "\t</ListSubscriptionsByTopicResult>\n" +
+		CNSPopulator.getResponseMetadata() + "\n" +
+		"</ListSubscriptionsByTopicResponse>\n";
 
 		return res;
 	}
