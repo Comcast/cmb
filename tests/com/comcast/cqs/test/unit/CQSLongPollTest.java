@@ -55,9 +55,12 @@ public class CQSLongPollTest {
     // alternateSqs is referring to a separate cqs api server using the same redis and cassandra to simulate 
     // random distribution of requests by load ablancer within a single data center
     
-    //todo: put url of alternate cqs service here
+    //todo: put url of primary and alternate cqs service here
     
-    private String alternateCqsServiceUrl = "http://localhost:6059/";
+    private String alternateCqsServiceUrl = "http://sdev44:6059/";
+    private String cqsServiceUrl = "http://localhost:7070/";
+    //private String alternateCqsServiceUrl = "http://localhost:6059/";
+
     private AmazonSQS alternateSqs = null;
     
     private HashMap<String, String> attributeParams = new HashMap<String, String>();
@@ -90,7 +93,7 @@ public class CQSLongPollTest {
             BasicAWSCredentials credentialsUser = new BasicAWSCredentials(user.getAccessKey(), user.getAccessSecret());
 
             sqs = new AmazonSQSClient(credentialsUser);
-            sqs.setEndpoint(CMBProperties.getInstance().getCQSServerUrl());
+            sqs.setEndpoint(cqsServiceUrl);
             
             if (alternateCqsServiceUrl != null) {
             	alternateSqs = new AmazonSQSClient(credentialsUser);

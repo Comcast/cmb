@@ -31,7 +31,7 @@ import com.comcast.cmb.common.util.Util;
 
 public class CQSScaleQueuesTest {
 
-	private static Logger logger = Logger.getLogger(CQSIntegrationTest.class);
+	private static Logger logger = Logger.getLogger(CQSScaleQueuesTest.class);
 
     private AmazonSQS sqs = null;
     
@@ -210,7 +210,7 @@ public class CQSScaleQueuesTest {
     			}
     		}
     		
-    		logger.info("create failuers: " + createFailures +  " delete failures: " + deleteFailures + " send failures: " + sendFailures + " read failures: " + readFailures + " empty reads:" + emptyResponses);
+    		logger.info("create failuers: " + createFailures +  " delete failures: " + deleteFailures + " send failures: " + sendFailures + " read failures: " + readFailures + " empty reads: " + emptyResponses);
     		
     		assertTrue("Create failures: " + createFailures, createFailures == 0);
     		assertTrue("Delete failures: " + deleteFailures, deleteFailures == 0);

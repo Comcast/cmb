@@ -27,7 +27,6 @@ import com.amazonaws.services.sqs.model.DeleteQueueRequest;
 import com.amazonaws.services.sqs.model.Message;
 import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
 import com.amazonaws.services.sqs.model.ReceiveMessageResult;
-import com.amazonaws.services.sqs.model.SendMessageRequest;
 import com.comcast.cmb.common.controller.CMBControllerServlet;
 import com.comcast.cmb.common.model.User;
 import com.comcast.cmb.common.persistence.IUserPersistence;
@@ -36,8 +35,8 @@ import com.comcast.cmb.common.persistence.UserCassandraPersistence;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.Util;
 
-public class CNSScaleTopicsTest {
-
+public class CNSScaleSubscriptionsTest {
+	
 	private static Logger logger = Logger.getLogger(CNSScaleTopicsTest.class);
 
     private AmazonSNS sns = null;
@@ -46,10 +45,9 @@ public class CNSScaleTopicsTest {
     private User user = null;
     private Random randomGenerator = new Random();
     private final static String TOPIC_PREFIX = "TSTT"; 
+    private final static String QUEUE_PREFIX = "TSTQ"; 
     
-    private String queueUrl;
-    
-    private static List<String> topicArns;
+    private static List<String> queueUrls;
 
     @Before
     public void setup() throws Exception {
@@ -58,7 +56,7 @@ public class CNSScaleTopicsTest {
         CMBControllerServlet.valueAccumulator.initializeAllCounters();
         PersistenceFactory.reset();
         
-        topicArns = new ArrayList<String>();
+        queueUrls = new ArrayList<String>();
         
         try {
         	
@@ -78,8 +76,6 @@ public class CNSScaleTopicsTest {
             sqs = new AmazonSQSClient(credentialsUser);
             sqs.setEndpoint(CMBProperties.getInstance().getCQSServerUrl());
             
-            queueUrl = sqs.createQueue(new CreateQueueRequest("MessageSink")).getQueueUrl();
-
         } catch (Exception ex) {
             logger.error("setup failed", ex);
             fail("setup failed: "+ex);
@@ -89,59 +85,56 @@ public class CNSScaleTopicsTest {
     
     @After    
     public void tearDown() {
-    	//sqs.deleteQueue(new DeleteQueueRequest(queueUrl));
     }
     
     @Test
-    public void Create1000Topics() {
-    	CreateNTopics(1000);
+    public void Create250Subscriptions() {
+    	CreateNSubscriptions(250);
     }
 
-    private void CreateNTopics(long n) {
+	
+    private void CreateNSubscriptions(long n) {
 
     	try {
     		
     		long counter = 0;
-    		long createFailures = 0;
     		long totalTime = 0;
+    		
+    		String topicName = TOPIC_PREFIX + randomGenerator.nextLong();
+	        CreateTopicRequest createTopicRequest = new CreateTopicRequest(topicName);
+	        String topicArn = sns.createTopic(createTopicRequest).getTopicArn();
+	        logger.info("created topic " + counter + ": " + topicArn);
     		
     		for (int i=0; i<n; i++) {
     			
-    			try {
-                
-	        		String topicName = TOPIC_PREFIX + randomGenerator.nextLong();
-	    	        CreateTopicRequest createTopicRequest = new CreateTopicRequest(topicName);
-	    	        
-	    	        long start = System.currentTimeMillis();
-	    	        
-	    	        String topicArn = sns.createTopic(createTopicRequest).getTopicArn();
-	    	        
-	    	        long end = System.currentTimeMillis();
-	    	        totalTime += end-start;
-	    	        
-	    	        logger.info("average creation millis: " + (totalTime/(i+1)));
-	    	        
-	    	        topicArns.add(topicArn);
-	
-	    	        logger.info("created topic " + counter + ": " + topicArn);
-	    	        
-	    	        counter++;
+        		String queueName = QUEUE_PREFIX + randomGenerator.nextLong();
+    	        CreateQueueRequest createQueueRequest = new CreateQueueRequest(queueName);
     	        
-    			} catch (Exception ex) {
-    				logger.error("create failure", ex);
-    				createFailures++;
-    	        }
-    		}
+    	        long start = System.currentTimeMillis();
+    	        
+    	        String queueUrl = sqs.createQueue(createQueueRequest).getQueueUrl();
+    	        
+    	        long end = System.currentTimeMillis();
+    	        totalTime += end-start;
+    	        
+    	        logger.info("average creation millis: " + (totalTime/(i+1)));
+    	        
+    	        queueUrls.add(queueUrl);
+
+    	        logger.info("created queue " + counter + ": " + queueUrl);
+    	        
+    	        counter++;
+    		}    	        
     		
     		Thread.sleep(1000);
 
     		long subscribeFailures = 0;
     		counter = 0;
     		
-    		for (String topicArn : topicArns) {
+    		for (int i=0; i<n; i++) {
 	            try {
-	            	sns.subscribe(new SubscribeRequest(topicArn, "cqs", com.comcast.cqs.util.Util.getArnForAbsoluteQueueUrl(queueUrl)));
-	            	logger.info("subscribed queue to topic " + counter + ": " + topicArn);
+	            	sns.subscribe(new SubscribeRequest(topicArn, "cqs", com.comcast.cqs.util.Util.getArnForAbsoluteQueueUrl(queueUrls.get(i))));
+	            	logger.info("subscribed queue to topic " + counter + ": " + queueUrls.get(i));
 	            	counter++;
 	            } catch (Exception ex) {
     				logger.error("subscribe failure", ex);
@@ -151,68 +144,53 @@ public class CNSScaleTopicsTest {
     		
     		Thread.sleep(1000);
 
-    		long publishFailures = 0;
-    		counter = 0;
+            try {
+    			sns.publish(new PublishRequest(topicArn, "test message"));
+            	logger.info("published message on topic " + counter + ": " + topicArn);
+            } catch (Exception ex) {
+				logger.error("publish failure", ex);
+            }
     		
-    		for (String topicArn : topicArns) {
-	            try {
-	    			sns.publish(new PublishRequest(topicArn, "test message"));
-	            	logger.info("published message on topic " + counter + ": " + topicArn);
-	            	counter++;
-	            } catch (Exception ex) {
-    				logger.error("publish failure", ex);
-    				publishFailures++;
-	            }
-    		}
+    		Thread.sleep(5000);
     		
-    		Thread.sleep(1000);
+			try {
+            	sns.deleteTopic(new DeleteTopicRequest(topicArn));
+            	logger.info("deleted topic " + counter + ": " + topicArn);
+			} catch (Exception ex) {
+				logger.error("delete failure", ex);
+			}
+			
+			long messageCount = 0;
     		
-    		long deleteFailures = 0;
-    		counter = 0;
-    		
-    		for (String topicArn : topicArns) {
-    			try {
-	            	sns.deleteTopic(new DeleteTopicRequest(topicArn));
-	            	logger.info("deleted topic " + counter + ": " + topicArn);
-	            	counter++;
-    			} catch (Exception ex) {
-    				logger.error("delete failure", ex);
-    				deleteFailures++;
-    			}
-    		}
-    		
-    		counter = 0;
-    		long totalCount = 0;
-    		
-    		do {
+    		for (String queueUrl : queueUrls) {
     		
 	    		ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest();
 	    		receiveMessageRequest.setQueueUrl(queueUrl);
-	    		receiveMessageRequest.setMaxNumberOfMessages(10);
+	    		receiveMessageRequest.setMaxNumberOfMessages(1);
 	    		
 	    		ReceiveMessageResult receiveMessageResult = sqs.receiveMessage(receiveMessageRequest);
 	    		counter = receiveMessageResult.getMessages().size();
-	    		totalCount += counter;
 	    		
-	    		logger.info("found " + counter + " messages in queue");
+	    		logger.info(messageCount + " found message in queue " + queueUrl);
 	    		
 	    		for (Message message : receiveMessageResult.getMessages()) {
+	    			
+	    			messageCount++;
 	    		
 	    	    	DeleteMessageRequest deleteMessageRequest = new DeleteMessageRequest();
 	    			deleteMessageRequest.setQueueUrl(queueUrl);
 	    			deleteMessageRequest.setReceiptHandle(message.getReceiptHandle());
 	    			sqs.deleteMessage(deleteMessageRequest);
 	    		}
+	    		
+	    		sqs.deleteQueue(new DeleteQueueRequest(queueUrl));
     		
-    		} while (counter > 0);
+    		}
     		
-    		logger.info("create failuers: " + createFailures +  " delete failures: " + deleteFailures + " publish failures: " + publishFailures + " subscribe failures: " + subscribeFailures + " messages found: " + totalCount);
+    		logger.info("subscribe failures: " + subscribeFailures + " messages found: " + messageCount);
     		
-    		assertTrue("Create failures: " + createFailures, createFailures == 0);
-    		assertTrue("Delete failures: " + deleteFailures, deleteFailures == 0);
-    		assertTrue("Send failures: " + publishFailures, publishFailures == 0);
     		assertTrue("Subscribe failures: " + subscribeFailures, subscribeFailures == 0);
-    		assertTrue("Wrong number of messages found: " + totalCount, totalCount == n);
+    		assertTrue("Wrong number of messages found: " + messageCount, messageCount == n);
 	        
 		} catch (Exception ex) {
 			ex.printStackTrace();

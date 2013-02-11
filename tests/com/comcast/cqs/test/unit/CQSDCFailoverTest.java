@@ -40,8 +40,9 @@ public class CQSDCFailoverTest {
     // alternateSqs is referring to a separate cqs api server using a separate redis service but the same
     // cassandra ring to simulate fail-over across data center boundaries
     
-    //todo: put url of alternate cqs service here
+    //todo: put url of primary and alternate cqs service here
     
+    private String cqsServiceUrl = "http://sdev44:6059/";
     private String alternateCqsServiceUrl = "http://localhost:6059/";
     
     private AmazonSQS alternateSqs = null;
@@ -78,7 +79,7 @@ public class CQSDCFailoverTest {
             BasicAWSCredentials credentialsUser = new BasicAWSCredentials(user.getAccessKey(), user.getAccessSecret());
 
             primarySqs = new AmazonSQSClient(credentialsUser);
-            primarySqs.setEndpoint(CMBProperties.getInstance().getCQSServerUrl());
+            primarySqs.setEndpoint(cqsServiceUrl);
             
             if (alternateCqsServiceUrl != null) {
             	alternateSqs = new AmazonSQSClient(credentialsUser);
