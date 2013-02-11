@@ -103,7 +103,11 @@ public class CNSGetAPIStatsAction extends CNSAction {
 		
 		for (CQSAPIStats stats : statsList) {
 			
-			if (stats.getJmxPort() > 0 && System.currentTimeMillis() - stats.getTimestamp() < 5*60*1000) {
+			if (System.currentTimeMillis() - stats.getTimestamp() >= 5*60*1000) {
+				
+				stats.addStatus("STALE");
+				
+			} else if (stats.getJmxPort() > 0) {
 			
 				JMXConnector jmxConnector = null;
 				String url = null;
@@ -137,12 +141,17 @@ public class CNSGetAPIStatsAction extends CNSAction {
 				} catch (Exception ex) {
 
 					logger.warn("event=failed_to_connect_to_jmx_server url=" + url, ex);
+					stats.addStatus("JMX UNAVAILABLE");
 
 				} finally {
 
 					if (jmxConnector != null) {
 						jmxConnector.close();
 					}
+				}
+				
+				if (stats.getStatus() == null) {
+					stats.addStatus("OK");
 				}
 			}
 		}

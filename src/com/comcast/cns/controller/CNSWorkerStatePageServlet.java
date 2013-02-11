@@ -225,7 +225,7 @@ public class CNSWorkerStatePageServlet extends AdminServletBase {
 			out.println("<h2 align='left'>CNS API Stats</h2>");
 			
 			out.println("<span class='simple'><table border='1'>");
-			out.println("<tr><th>Ip Address</th><th>Url</th><th>JMX Port</th><th>Data Center</th><th>Time Stamp</th><th></th></tr>");
+			out.println("<tr><th>Ip Address</th><th>Url</th><th>JMX Port</th><th>Data Center</th><th>Time Stamp</th><th>Status</th><th></th></tr>");
 
 			Map<String, Long> aggregateCallStats = new HashMap<String, Long>();
 			Map<String, Long> aggregateCallFailureStats = new HashMap<String, Long>();
@@ -242,6 +242,7 @@ public class CNSWorkerStatePageServlet extends AdminServletBase {
 				out.println("<td>"+XmlUtil.getCurrentLevelTextValue(stats, "JmxPort")+"</td>");
 				out.println("<td>"+XmlUtil.getCurrentLevelTextValue(stats, "DataCenter")+"</td>");
 				out.println("<td>"+new Date(Long.parseLong(XmlUtil.getCurrentLevelTextValue(stats, "Timestamp")))+"</td>");
+				out.println("<td>"+XmlUtil.getCurrentLevelTextValue(stats, "Status")+"</td>");
 				out.println("<td><form action=\"\" method=\"POST\"><input type='hidden' name='Url' value='"+endpoint+"'><input type='submit' value='Clear API Stats' name='ClearAPIStats'/></form></td>");
 				out.println("</tr>");
 				
