@@ -4,9 +4,14 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
+import java.util.Vector;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
 import org.junit.Before;
@@ -40,16 +45,14 @@ public class CQSScaleQueuesTest {
     private Random randomGenerator = new Random();
     private final static String QUEUE_PREFIX = "TSTQ_"; 
     
-    private static List<String> queueUrls;
-
+    private Vector<String> report = new Vector<String>();
+    
     @Before
     public void setup() throws Exception {
     	
         Util.initLog4jTest();
         CMBControllerServlet.valueAccumulator.initializeAllCounters();
         PersistenceFactory.reset();
-        
-        queueUrls = new ArrayList<String>();
         
         try {
         	
@@ -63,8 +66,14 @@ public class CQSScaleQueuesTest {
 
             BasicAWSCredentials credentialsUser = new BasicAWSCredentials(user.getAccessKey(), user.getAccessSecret());
 
-            sqs = new AmazonSQSClient(credentialsUser);
-            sqs.setEndpoint(CMBProperties.getInstance().getCQSServerUrl());
+        	//BasicAWSCredentials credentialsUser = new BasicAWSCredentials("WOA5HC1GEDQYXF8LZYB1", "FwpY/FvhZvMjrlM45SKpkLowoZm8HV6SVnkkljRf");
+        	
+        	sqs = new AmazonSQSClient(credentialsUser);
+            
+            //sqs.setEndpoint(CMBProperties.getInstance().getCQSServerUrl());
+            sqs.setEndpoint("http://localhost:7070/");
+            //sqs.setEndpoint("http://sdev44:6059/");
+            //sqs.setEndpoint("http://ccpsvb-po-v603-p.po.ccp.cable.comcast.com:10159/");
             
         } catch (Exception ex) {
             logger.error("setup failed", ex);
@@ -77,16 +86,57 @@ public class CQSScaleQueuesTest {
     }
     
     @Test
+    public void Create10Queues() {
+    	CreateNQueues(10);
+    }
+
+    @Test
+    public void Create100Queues() {
+    	CreateNQueues(100);
+    }
+
+    @Test
+    public void CreateQueuesConcurrent() {
+    	
+    	ScheduledThreadPoolExecutor ep = new ScheduledThreadPoolExecutor(10);
+    	
+    	ep.submit((new Runnable() { public void run() { CreateNQueues(100); }}));
+    	ep.submit((new Runnable() { public void run() { CreateNQueues(100); }}));
+    	ep.submit((new Runnable() { public void run() { CreateNQueues(100); }}));
+    	ep.submit((new Runnable() { public void run() { CreateNQueues(100); }}));
+    	//ep.submit((new Runnable() { public void run() { CreateNQueues(100); }}));
+    	//ep.submit((new Runnable() { public void run() { CreateNQueues(100); }}));
+    	//ep.submit((new Runnable() { public void run() { CreateNQueues(100); }}));
+    	//ep.submit((new Runnable() { public void run() { CreateNQueues(100); }}));
+    	
+    	logger.info("ALL TEST LAUNCHED");
+
+    	try {
+			ep.shutdown();
+    		ep.awaitTermination(60, TimeUnit.MINUTES);
+		} catch (InterruptedException ex) {
+			logger.error("fail", ex);
+			fail(ex.getMessage());
+		}
+
+    	logger.info("ALL TEST FINISHED");
+    	
+    	for (String message : report) {
+    		logger.info(message);
+    	}
+   }
+
+    @Test
     public void Create1000Queues() {
     	CreateNQueues(1000);
     }
 
-    //@Test
+    @Test
     public void Create10000Queues() {
     	CreateNQueues(10000);
     }
     
-    //@Test
+    @Test
     public void Create100000Queues() {
     	CreateNQueues(100000);
     }
@@ -113,6 +163,8 @@ public class CQSScaleQueuesTest {
     }
 
     private void CreateNQueues(long n) {
+    	
+        List<String> queueUrls = new ArrayList<String>();
 
     	try {
     		
@@ -127,20 +179,13 @@ public class CQSScaleQueuesTest {
 	        		String queueName = QUEUE_PREFIX + randomGenerator.nextLong();
 	    	        CreateQueueRequest createQueueRequest = new CreateQueueRequest(queueName);
 	    	        createQueueRequest.setAttributes(attributeParams);
-	    	        
 	    	        long start = System.currentTimeMillis();
-	    	        
 	    	        String queueUrl = sqs.createQueue(createQueueRequest).getQueueUrl();
-	    	        
 	    	        long end = System.currentTimeMillis();
 	    	        totalTime += end-start;
-	    	        
-	    	        logger.info("average creation millis: " + (totalTime/(i+1)));
-	    	        
+	    	        logger.info("average creation millis: " + (totalTime/(i+1)) + " last: " + (end-start));
 	    	        queueUrls.add(queueUrl);
-	
 	    	        logger.info("created queue " + counter + ": " + queueUrl);
-	    	        
 	    	        counter++;
     	        
     			} catch (Exception ex) {
@@ -152,56 +197,89 @@ public class CQSScaleQueuesTest {
     		Thread.sleep(1000);
 
     		long sendFailures = 0;
-    		counter = 0;
+    		totalTime = 0;
+    		long totalCounter = 0;
     		
-    		for (String queueUrl : queueUrls) {
-	            try {
-	    			sqs.sendMessage(new SendMessageRequest(queueUrl, "test message"));
-	            	logger.info("sent message on queue " + counter + ": " + queueUrl);
-	            	counter++;
-	            } catch (Exception ex) {
-    				logger.error("send failure", ex);
-    				sendFailures++;
-	            }
+    		for (int i=0; i<10; i++) {
+    			
+        		counter = 0;
+
+        		for (String queueUrl : queueUrls) {
+	    			
+		            try {
+		    	    
+		            	long start = System.currentTimeMillis();
+		    			sqs.sendMessage(new SendMessageRequest(queueUrl, "test message"));
+		    	        long end = System.currentTimeMillis();
+		    	        totalTime += end-start;
+		    	        logger.info("average send millis: " + (totalTime/(totalCounter+1)) + " last: " + (end-start));
+		            	logger.info("sent message on queue " + i + " - " + counter + ": " + queueUrl);
+			            counter++;
+			            totalCounter++;
+
+		            } catch (Exception ex) {
+	    				logger.error("send failure", ex);
+	    				sendFailures++;
+		            }
+	    		}
     		}
     		
     		Thread.sleep(1000);
 
     		long readFailures = 0;
     		long emptyResponses = 0;
-    		counter = 0;
+    		long messagesFound = 0;
+    		totalTime = 0;
+    		totalCounter = 0;
     		
-    		for (String queueUrl : queueUrls) {
-
-    			boolean messageReceived = false;
+    		for (int i=0; i<100; i++) {
     			
-    			try {
-    				
-    				messageReceived = receiveMessage(queueUrl);
-    				
-    				if (messageReceived) {
-	    				logger.info("received message on queue " + counter + ":" + queueUrl);
+    			counter = 0;
+    			
+	    		for (String queueUrl : queueUrls) {
+	
+	    			boolean messageReceived = false;
+	    			
+	    			try {
+	    				
+	    		        long start = System.currentTimeMillis();
+	    				messageReceived = receiveMessage(queueUrl);
+		    	        long end = System.currentTimeMillis();
+		    	        totalTime += end-start;
+		    	        logger.info("average receive millis: " + (totalTime/(totalCounter+1)) + " last: " + (end-start));
+	    				
+	    				if (messageReceived) {
+		    				logger.info("received message on queue " + i + " - " + counter + ":" + queueUrl);
+		    				messagesFound++;
+	    				} else {
+		    				logger.info("no message found on queue " + i + " - " + counter + ":"  + queueUrl);
+		    				emptyResponses++;
+	    				}
+						
 	    				counter++;
-    				} else {
-	    				logger.info("no message found on queue " + counter + ":"  + queueUrl);
-	    				emptyResponses++;
-    				}
-					
-    			} catch (Exception ex) {
-    				
-    				logger.error("read failure, will retry: " + queueUrl, ex);
-    				readFailures++;
-    			}
+	    				totalCounter++;
+
+	    			} catch (Exception ex) {
+	    				
+	    				logger.error("read failure, will retry: " + queueUrl, ex);
+	    				readFailures++;
+	    			}
+	    		}
     		}
 
     		Thread.sleep(1000);
     		
     		long deleteFailures = 0;
     		counter = 0;
+    		totalTime = 0;
     		
     		for (String queueUrl : queueUrls) {
     			try {
+    		        long start = System.currentTimeMillis();
 	            	sqs.deleteQueue(new DeleteQueueRequest(queueUrl));
+	    	        long end = System.currentTimeMillis();
+	    	        totalTime += end-start;
+	    	        logger.info("average delete millis: " + (totalTime/(counter+1)) + " last: " + (end-start));
 	            	logger.info("deleted queue " + counter + ": " + queueUrl);
 	            	counter++;
     			} catch (Exception ex) {
@@ -210,13 +288,15 @@ public class CQSScaleQueuesTest {
     			}
     		}
     		
-    		logger.info("create failuers: " + createFailures +  " delete failures: " + deleteFailures + " send failures: " + sendFailures + " read failures: " + readFailures + " empty reads: " + emptyResponses);
+    		String message = "create failuers: " + createFailures +  " delete failures: " + deleteFailures + " send failures: " + sendFailures + " read failures: " + readFailures + " empty reads: " + emptyResponses + " messages found: " + messagesFound; 
+    		logger.info(message);
+    		report.add(new Date() + ": " + message);
     		
     		assertTrue("Create failures: " + createFailures, createFailures == 0);
     		assertTrue("Delete failures: " + deleteFailures, deleteFailures == 0);
     		assertTrue("Send failures: " + sendFailures, sendFailures == 0);
     		assertTrue("Read failures: " + readFailures, readFailures == 0);
-    		assertTrue("Empty reads: " + emptyResponses, emptyResponses == 0);
+    		//assertTrue("Empty reads: " + emptyResponses, emptyResponses == 0);
 	        
 		} catch (Exception ex) {
 			ex.printStackTrace();
