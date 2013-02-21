@@ -18,6 +18,7 @@ package com.comcast.cqs.controller;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.servlet.AsyncContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -45,9 +46,12 @@ public class CQSCreateQueueAction extends CQSAction {
 	}
 	
 	@Override
-	public boolean doAction(User user, HttpServletRequest request, HttpServletResponse response) throws Exception {
+	public boolean doAction(User user, AsyncContext asyncContext) throws Exception {
 		
-        String queueName = request.getParameter("QueueName");
+        HttpServletRequest request = (HttpServletRequest)asyncContext.getRequest();
+        HttpServletResponse response = (HttpServletResponse)asyncContext.getResponse();
+
+		String queueName = request.getParameter("QueueName");
         
         if (queueName == null) {
             throw new CMBException(CMBErrorCodes.MissingParameter, "This request must contain the parameter QueueName");

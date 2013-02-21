@@ -17,6 +17,7 @@ package com.comcast.cns.controller;
 
 import java.util.List;
 
+import javax.servlet.AsyncContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -44,11 +45,13 @@ public class CNSListTopicsAction extends CNSAction {
     /**
      * Get all the topics for this user and output them in XML to the response 
      * @param user The user for which we are getting the list of topics
-     * @param request the servlet request including all the parameters for the list topics call, notably the NextToken
-     * @param response the response servlet we write to.
+     * @param asyncContext
      */
 	@Override
-	public boolean doAction(User user, HttpServletRequest request,	HttpServletResponse response) throws Exception {
+	public boolean doAction(User user, AsyncContext asyncContext) throws Exception {
+		
+        HttpServletRequest request = (HttpServletRequest)asyncContext.getRequest();
+        HttpServletResponse response = (HttpServletResponse)asyncContext.getResponse();
 
 		String userId = user.getUserId();
 		String nextToken = null;

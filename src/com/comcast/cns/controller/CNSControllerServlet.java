@@ -24,6 +24,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
+import javax.servlet.AsyncContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -176,7 +177,10 @@ public class CNSControllerServlet extends CMBControllerServlet {
     }
 
     @Override
-    protected boolean handleAction(String action, User user, HttpServletRequest request, HttpServletResponse response) throws Exception {
+    protected boolean handleAction(String action, User user, AsyncContext asyncContext) throws Exception {
+    	
+        HttpServletRequest request = (HttpServletRequest)asyncContext.getRequest();
+        HttpServletResponse response = (HttpServletResponse)asyncContext.getResponse();
     	
         long now = System.currentTimeMillis();
     	
@@ -236,10 +240,9 @@ public class CNSControllerServlet extends CMBControllerServlet {
     	}
 
     	if (actionMap.containsKey(action)) {
-    		return actionMap.get(action).doAction(user, request, response);
+    		return actionMap.get(action).doAction(user, asyncContext);
     	}
     	
         throw new CMBException(CMBErrorCodes.InvalidAction, action + " is not a valid action");
     }
-    
 }

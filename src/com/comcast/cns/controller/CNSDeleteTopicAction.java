@@ -15,6 +15,7 @@
  */
 package com.comcast.cns.controller;
 
+import javax.servlet.AsyncContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -42,11 +43,13 @@ public class CNSDeleteTopicAction extends CNSAction {
     /**
      * Delete the topic with the topicArn in the request variable "TopicArn".  Send the response out as XML to response. 
      * @param user The user who owns the topic we are deleting
-     * @param request the servlet request including all the parameters, variable "TopicArn" is expected so we delete this topic
-     * @param response the response servlet we write to.
+     * @param asyncContext
      */
 	@Override
-	public boolean doAction(User user, HttpServletRequest request, HttpServletResponse response) throws Exception {
+	public boolean doAction(User user, AsyncContext asyncContext) throws Exception {
+		
+        HttpServletRequest request = (HttpServletRequest)asyncContext.getRequest();
+        HttpServletResponse response = (HttpServletResponse)asyncContext.getResponse();
 		
     	String arn = request.getParameter("TopicArn");
     	String userId = user.getUserId();

@@ -15,6 +15,7 @@
  */
 package com.comcast.cmb.common.controller;
 
+import javax.servlet.AsyncContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -39,13 +40,12 @@ public abstract class Action {
     /**
      * Perform servlet action for cqs or cns
      * @param user user object for authenticated user
-     * @param request http request object
-     * @param response http response object
+     * @param asyncContext async context for http request and response objects
      * @throws Exception
      * @return true if this action was performed, false otherwise. It is largely dependent
      *  on the sub-classes to override this return value with what makes sense.
      */
-	public abstract boolean doAction(User user, HttpServletRequest request, HttpServletResponse response) throws Exception;
+	public abstract boolean doAction(User user, AsyncContext asyncContext) throws Exception;
 	
 	/**
 	 * check if an action on resource is allowed

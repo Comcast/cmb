@@ -15,6 +15,7 @@
  */
 package com.comcast.cns.controller;
 
+import javax.servlet.AsyncContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -47,7 +48,10 @@ public class CNSRemovePermissionAction extends CNSAction {
 	}
 
 	@Override
-	public boolean doAction(User user, HttpServletRequest request,	HttpServletResponse response) throws Exception {
+	public boolean doAction(User user, AsyncContext asyncContext) throws Exception {
+
+        HttpServletRequest request = (HttpServletRequest)asyncContext.getRequest();
+        HttpServletResponse response = (HttpServletResponse)asyncContext.getResponse();
 
 		String topicArn = request.getParameter("TopicArn");
     	

@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.servlet.AsyncContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -48,8 +49,11 @@ public class CQSSendMessageBatchAction extends CQSAction {
 	}
 		
 	@Override
-	public boolean doAction(User user, HttpServletRequest request, HttpServletResponse response) throws Exception {
+	public boolean doAction(User user, AsyncContext asyncContext) throws Exception {
 		
+        HttpServletRequest request = (HttpServletRequest)asyncContext.getRequest();
+        HttpServletResponse response = (HttpServletResponse)asyncContext.getResponse();
+
 	    CQSQueue queue = CQSControllerServlet.getCachedQueue(user, request);
         List<CQSMessage> msgList = new ArrayList<CQSMessage>();
         List<String> idList = new ArrayList<String>();

@@ -25,6 +25,7 @@ import javax.management.ObjectName;
 import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
+import javax.servlet.AsyncContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -61,11 +62,13 @@ public class CNSGetWorkerStatsAction extends CNSAction {
     /**
      * Get various stats about active cns workers
      * @param user the user for whom we are subscribing.
-     * @param request the servlet request including all the parameters for the doUnsubscribe call
-     * @param response the response servlet we write to.
+     * @param asyncContext
      */
 	@Override
-	public boolean doAction(User user, HttpServletRequest request, HttpServletResponse response) throws Exception {
+	public boolean doAction(User user, AsyncContext asyncContext) throws Exception {
+		
+        HttpServletRequest request = (HttpServletRequest)asyncContext.getRequest();
+        HttpServletResponse response = (HttpServletResponse)asyncContext.getResponse();
 		
 		CassandraPersistence cassandraHandler = new CassandraPersistence(CMBProperties.getInstance().getCMBCNSKeyspace());
 		

@@ -36,6 +36,7 @@ import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.channel.SimpleChannelHandler;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 
+import com.comcast.cmb.common.controller.CMBControllerServlet;
 import com.comcast.cmb.common.persistence.PersistenceFactory;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cqs.io.CQSMessagePopulator;
@@ -127,31 +128,36 @@ public class CQSLongPollReceiver {
 						break;
 					}
 					
-					if (asyncContext.getRequest() == null || !(asyncContext.getRequest() instanceof CQSHttpServletRequest)) {
+					if (asyncContext.getRequest() == null) {
 						logger.info("event=skipping_invalid_context");
 						break;
 					}
 					
-					CQSHttpServletRequest cmbHttpServletRequest = (CQSHttpServletRequest)asyncContext.getRequest();
+					if (!(asyncContext.getRequest() instanceof CQSHttpServletRequest)) {
+						logger.info("event=skipping_invalid_request");
+						break;
+					}
 					
+			        CQSHttpServletRequest request = (CQSHttpServletRequest)asyncContext.getRequest();
+
 					// skip if request is already finished or outdated
 					
-					if (!cmbHttpServletRequest.isActive() || System.currentTimeMillis() - cmbHttpServletRequest.getRequestReceivedTimestamp() > cmbHttpServletRequest.getWaitTime()) {
+					if (!request.isActive() || System.currentTimeMillis() - request.getRequestReceivedTimestamp() > request.getWaitTime()) {
 						logger.info("event=skipping_outdated_context");
 						continue;
 					}
 					
 			        try {
 
-			        	CQSQueue queue = cmbHttpServletRequest.getQueue();
-			        	List<CQSMessage> messageList = PersistenceFactory.getCQSMessagePersistence().receiveMessage(queue, cmbHttpServletRequest.getReceiveAttributes());
+			        	CQSQueue queue = request.getQueue();
+			        	List<CQSMessage> messageList = PersistenceFactory.getCQSMessagePersistence().receiveMessage(queue, request.getReceiveAttributes());
 					
 						if (messageList.size() > 0) {
 							
 							logger.info("event=messages_found action=completing count=" + messageList.size());
 							
 							CQSMonitor.getInstance().addNumberOfMessagesReturned(queue.getRelativeUrl(), messageList.size());
-					        String out = CQSMessagePopulator.getReceiveMessageResponseAfterSerializing(messageList, cmbHttpServletRequest.getFilterAttributes());
+					        String out = CQSMessagePopulator.getReceiveMessageResponseAfterSerializing(messageList, request.getFilterAttributes());
 					        asyncContext.getResponse().getWriter().println(out);
 					        asyncContext.complete();
 						
@@ -159,8 +165,8 @@ public class CQSLongPollReceiver {
 							
 							// if there's poll time left, so put back on queue
 							
-							if (cmbHttpServletRequest.getWaitTime() - System.currentTimeMillis() + cmbHttpServletRequest.getRequestReceivedTimestamp() > 0) {
-								logger.info("event=no_messages_found action=re_queueing time_left_ms=" + (cmbHttpServletRequest.getWaitTime() - System.currentTimeMillis() + cmbHttpServletRequest.getRequestReceivedTimestamp()));
+							if (request.getWaitTime() - System.currentTimeMillis() + request.getRequestReceivedTimestamp() > 0) {
+								logger.info("event=no_messages_found action=re_queueing time_left_ms=" + (request.getWaitTime() - System.currentTimeMillis() + request.getRequestReceivedTimestamp()));
 								contextQueue.offer(asyncContext);
 							}
 						}

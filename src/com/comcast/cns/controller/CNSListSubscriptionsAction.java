@@ -17,6 +17,7 @@ package com.comcast.cns.controller;
 
 import java.util.List;
 
+import javax.servlet.AsyncContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -48,11 +49,13 @@ public class CNSListSubscriptionsAction extends CNSAction {
      * The method simply gets the information from the user and request to call listSubscriptions, then we take
      * response and generate an XML response and put it in the parameter response
      * @param user the user for whom we are listing the subscription
-     * @param request the servlet request including all the parameters for the listSubscriptions call
-     * @param response the response servlet we write to.
+     * @param asyncContext
      */
 	@Override
-	public boolean doAction(User user, HttpServletRequest request,	HttpServletResponse response) throws Exception {
+	public boolean doAction(User user, AsyncContext asyncContext) throws Exception {
+		
+        HttpServletRequest request = (HttpServletRequest)asyncContext.getRequest();
+        HttpServletResponse response = (HttpServletResponse)asyncContext.getResponse();
 		
     	String userId = user.getUserId();
     	String nextToken = null;

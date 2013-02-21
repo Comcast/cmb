@@ -18,6 +18,7 @@ package com.comcast.cqs.controller;
 import java.util.Calendar;
 import java.util.HashMap;
 
+import javax.servlet.AsyncContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -48,7 +49,10 @@ public class CQSSendMessageAction extends CQSAction {
 	}
 	
 	@Override
-	public boolean doAction(User user, HttpServletRequest request, HttpServletResponse response) throws Exception {
+	public boolean doAction(User user, AsyncContext asyncContext) throws Exception {
+		
+        HttpServletRequest request = (HttpServletRequest)asyncContext.getRequest();
+        HttpServletResponse response = (HttpServletResponse)asyncContext.getResponse();
 		
 	    CQSQueue queue = CQSControllerServlet.getCachedQueue(user, request);
 		long ts2 = System.currentTimeMillis();

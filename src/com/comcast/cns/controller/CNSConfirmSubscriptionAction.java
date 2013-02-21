@@ -15,6 +15,7 @@
  */
 package com.comcast.cns.controller;
 
+import javax.servlet.AsyncContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -45,12 +46,14 @@ public class CNSConfirmSubscriptionAction extends CNSAction {
      * The method simply gets the information from the user and request to call confirmSubscription on the persistence layer, then we take
      * response and generate an XML response and put it in the parameter response
      * @param user the user for whom we are confirming the subscription for.
-     * @param request the servlet request including all the parameters for the confirmSubscription call
-     * @param response the response servlet we write to.
+     * @param asyncContext
      */
 	@Override
-	public boolean doAction(User user, HttpServletRequest request, HttpServletResponse response) throws Exception {
+	public boolean doAction(User user, AsyncContext asyncContext) throws Exception {
 		
+        HttpServletRequest request = (HttpServletRequest)asyncContext.getRequest();
+        HttpServletResponse response = (HttpServletResponse)asyncContext.getResponse();
+
     	String authOnUnsubscribeStr = request.getParameter("AuthenticateOnUnsubscribe");
     	String token = request.getParameter("Token");
     	String topicArn = request.getParameter("TopicArn");

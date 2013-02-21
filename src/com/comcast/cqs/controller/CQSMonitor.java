@@ -24,6 +24,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import javax.servlet.AsyncContext;
+import javax.servlet.http.HttpServletRequest;
 
 import org.apache.log4j.Logger;
 
@@ -312,10 +313,10 @@ public class CQSMonitor implements CQSMonitorMBean {
 			
 				AsyncContext asyncContext = iter.next();
 				
-				if (asyncContext.getRequest() != null) {
-
+				if (asyncContext.getRequest() instanceof CQSHttpServletRequest) {
+				
 					CQSHttpServletRequest request = ((CQSHttpServletRequest)(asyncContext.getRequest()));
-					
+					 
 					if (request.isActive() && System.currentTimeMillis()-request.getRequestReceivedTimestamp()<=request.getWaitTime()) {
 						count++;
 					}
@@ -359,8 +360,8 @@ public class CQSMonitor implements CQSMonitorMBean {
 				
 				AsyncContext asyncContext = iter.next();
 				
-				if (asyncContext.getRequest() != null) {
-				
+				if (asyncContext.getRequest() instanceof CQSHttpServletRequest) {
+					
 					CQSHttpServletRequest request = ((CQSHttpServletRequest)(asyncContext.getRequest()));
 					
 					if (!request.isActive() || System.currentTimeMillis()-request.getRequestReceivedTimestamp()>request.getWaitTime()) {

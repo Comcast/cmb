@@ -15,6 +15,7 @@
  */
 package com.comcast.cns.controller;
 
+import javax.servlet.AsyncContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -44,11 +45,13 @@ public class CNSCreateTopicAction extends CNSAction {
      * doCreateTopic creates the topic by calling the CNS Topic Persistence layer to create the queue, and if no Exceptions occur
      * then output the new topics data as XML to the HttpServletResponse response
      * @param user The user that requests this topic
-     * @param request the  request including all the parameters, variable "Name" is expected to create a name for the topic
-     * @param response the response servlet we write the response to.
+     * @param asyncContext
      */
 	@Override
-	public boolean doAction(User user, HttpServletRequest request, HttpServletResponse response) throws Exception {
+	public boolean doAction(User user, AsyncContext asyncContext) throws Exception {
+		
+        HttpServletRequest request = (HttpServletRequest)asyncContext.getRequest();
+        HttpServletResponse response = (HttpServletResponse)asyncContext.getResponse();
     	
 		String displayName = request.getParameter("Name");
 		String name = request.getParameter("Name");

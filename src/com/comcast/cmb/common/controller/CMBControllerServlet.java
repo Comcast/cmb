@@ -109,7 +109,7 @@ abstract public class CMBControllerServlet extends HttpServlet {
      * @return true if this action was performed, false otherwise
      * @throws Exception
      */
-    abstract protected boolean handleAction(String action, User user, HttpServletRequest request, HttpServletResponse response) throws Exception;
+    abstract protected boolean handleAction(String action, User user, AsyncContext asyncContext) throws Exception;
     
     /**
      * 
@@ -128,9 +128,12 @@ abstract public class CMBControllerServlet extends HttpServlet {
         return true;
     }
     
-    private void handleRequest(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {  
+    private void handleRequest(AsyncContext asyncContext) throws ServletException, IOException {  
     	
-        User user = null;
+        HttpServletRequest request = (HttpServletRequest)asyncContext.getRequest();
+        HttpServletResponse response = (HttpServletResponse)asyncContext.getResponse();
+    	
+    	User user = null;
         String action = request.getParameter("Action");
         long ts1 = System.currentTimeMillis();
         
@@ -141,15 +144,22 @@ abstract public class CMBControllerServlet extends HttpServlet {
         	requestInit();
         	
             response.setContentType("text/xml");
+            
+            if (request.getRequestURL() == null) {
+            	logger.error("event=bad_request_found");
+            }
         	
             if (!isValidAction(action)) {
             	
-            	Enumeration<String> keys = request.getParameterNames(); 
+            	Enumeration<String> keys = request.getParameterNames();
+            	String params = "";
+            	
             	while (keys.hasMoreElements()) {
             		String key = keys.nextElement();
-            		logger.info("key=" + key + " value=" + request.getParameter(key));
+            		params += " key=" + key + " value=" + request.getParameter(key);
             	}
-            	
+
+            	logger.warn("event=found_invalid_action action=" + action + params);
                 throw new CMBException(CMBErrorCodes.InvalidAction, action + " is not a valid action");
             }
 
@@ -163,7 +173,8 @@ abstract public class CMBControllerServlet extends HttpServlet {
 
             valueAccumulator.addToCounter(AccumulatorName.CMBControllerPreHandleAction, (ts3 - ts1));
 
-            boolean actionPerformed = handleAction(action, user, request, response);
+            boolean actionPerformed = handleAction(action, user, asyncContext);
+            
             response.setStatus(200);
             long ts2 = System.currentTimeMillis();
             
@@ -174,34 +185,34 @@ abstract public class CMBControllerServlet extends HttpServlet {
             	
             } else {
             
-	            logger.info(
-	            		
-	            		"event=handleRequest status=success client_ip=" + request.getRemoteAddr() + " action=" + action + " responseTimeMS=" + (ts2-ts1) + 
-	                    (request.getParameter("TopicArn") != null ? " topic_arn=" + request.getParameter("TopicArn") : "") +
-	                    (request.getParameter("SubscriptionArn") != null ? " subscription_arn=" + request.getParameter("SubscriptionArn") : "") +
-	                    (request.getParameter("Label") != null ? " label=" + request.getParameter("Label") : "") +
-	                    (request.getParameter("NextToken") != null ? " next_token=" + request.getParameter("NextToken") : "") +
-	                    (request.getParameter("Name") != null ? " name=" + request.getParameter("Name") : "") +
-	                    (request.getParameter("Token") != null ? " token=" + request.getParameter("Token") : "") +
-	                    (request.getParameter("Endpoint") != null ? " endpoint=" + request.getParameter("Endpoint") : "") +
-	                    (request.getParameter("Protocol") != null ? " protocol=" + request.getParameter("Protocol") : "") +
-	                    (request.getParameter("ReceiptHandle") != null ? " receipt_handle=" + request.getParameter("ReceiptHandle") : "") +
-	                    (request.getParameter("VisibilityTimeout") != null ? " visibility_timeout=" + request.getParameter("VisibilityTimeout") : "") +
-	                    (request.getParameter("QueueName") != null ? " queue_name=" + request.getParameter("QueueName") : "") +
-	                    (request.getParameter("QueueNamePrefix") != null ? " queue_name_prefix=" + request.getParameter("QueueNamePrefix") : "") +
-	                    (request.getParameter("DelaySeconds") != null ? " delay_seconds=" + request.getParameter("DelaySeconds") : "") +
-	                    ((this instanceof CQSControllerServlet) ? (" queue_url=" + request.getRequestURL()) : "") +
-	                    
-	            		" CassandraTimeMS=" + valueAccumulator.getCounter(AccumulatorName.CassandraTime) + 
-	                    " CassandraReadNum=" + valueAccumulator.getCounter(AccumulatorName.CassandraRead) + 
-	                    " CassandraWriteNum=" + valueAccumulator.getCounter(AccumulatorName.CassandraWrite) +
-	                    
-	                    ((this instanceof CNSControllerServlet) ? (" CNSCQSTimeMS=" + CMBControllerServlet.valueAccumulator.getCounter(AccumulatorName.CNSCQSTime)) : "") +
-	                    ((this instanceof CQSControllerServlet) ? (" RedisTimeMS=" + valueAccumulator.getCounter(AccumulatorName.RedisTime)) : "") +
-	                    
-	                    (user != null ? " user_name=" + user.getUserName() : "")
-	                    
-	            ); 
+        		StringBuffer logLine = new StringBuffer("");
+        		
+        		logLine.append("event=handleRequest status=success client_ip=").append(request.getRemoteAddr()).append(" action=").append(action).append(" responseTimeMS=").append((ts2-ts1)).
+        		append((request.getParameter("TopicArn") != null ? " topic_arn=" + request.getParameter("TopicArn") : "")).
+        		append((request.getParameter("SubscriptionArn") != null ? " subscription_arn=" + request.getParameter("SubscriptionArn") : "")).
+        		append((request.getParameter("Label") != null ? " label=" + request.getParameter("Label") : "")).
+        		append((request.getParameter("NextToken") != null ? " next_token=" + request.getParameter("NextToken") : "")).
+        		append((request.getParameter("Name") != null ? " name=" + request.getParameter("Name") : "")).
+        		append((request.getParameter("Token") != null ? " token=" + request.getParameter("Token") : "")).
+        		append((request.getParameter("Endpoint") != null ? " endpoint=" + request.getParameter("Endpoint") : "")).
+        		append((request.getParameter("Protocol") != null ? " protocol=" + request.getParameter("Protocol") : "")).
+        		append((request.getParameter("ReceiptHandle") != null ? " receipt_handle=" + request.getParameter("ReceiptHandle") : "")).
+        		append((request.getParameter("VisibilityTimeout") != null ? " visibility_timeout=" + request.getParameter("VisibilityTimeout") : "")).
+        		append((request.getParameter("QueueName") != null ? " queue_name=" + request.getParameter("QueueName") : "")).
+        		append((request.getParameter("QueueNamePrefix") != null ? " queue_name_prefix=" + request.getParameter("QueueNamePrefix") : "")).
+        		append((request.getParameter("DelaySeconds") != null ? " delay_seconds=" + request.getParameter("DelaySeconds") : "")).
+        		append(((this instanceof CQSControllerServlet) ? (" queue_url=" + request.getRequestURL()) : ""));
+                
+        		logLine.append(" CassandraTimeMS=" + valueAccumulator.getCounter(AccumulatorName.CassandraTime));
+        		logLine.append(" CassandraReadNum=" + valueAccumulator.getCounter(AccumulatorName.CassandraRead));
+        		logLine.append(" CassandraWriteNum=" + valueAccumulator.getCounter(AccumulatorName.CassandraWrite));
+                
+        		logLine.append(((this instanceof CNSControllerServlet) ? (" CNSCQSTimeMS=" + CMBControllerServlet.valueAccumulator.getCounter(AccumulatorName.CNSCQSTime)) : ""));
+        		logLine.append(((this instanceof CQSControllerServlet) ? (" RedisTimeMS=" + valueAccumulator.getCounter(AccumulatorName.RedisTime)) : ""));
+                
+        		logLine.append((user != null ? " user_name=" + user.getUserName() : ""));
+        		
+        		logger.info(logLine);
 	            
 	            if (action != null && !action.equals("")) {
 		            
@@ -211,41 +222,40 @@ abstract public class CMBControllerServlet extends HttpServlet {
 			            callStats = new ConcurrentHashMap<String, AtomicLong>();
 		            }
 	            }
-	                    
             }
        
         } catch (Exception ex) {
             
         	long ts2 = System.currentTimeMillis();
         	
-            logger.error(
-            		
-            		"event=handleRequest status=failed client_ip=" + request.getRemoteAddr() + " action=" + action + " responseTimeMS=" + (ts2-ts1) + 
-                    (request.getParameter("TopicArn") != null ? " topic_arn=" + request.getParameter("TopicArn") : "") +
-                    (request.getParameter("SubscriptionArn") != null ? " subscription_arn=" + request.getParameter("SubscriptionArn") : "") +
-                    (request.getParameter("Label") != null ? " label=" + request.getParameter("Label") : "") +
-                    (request.getParameter("NextToken") != null ? " next_token=" + request.getParameter("NextToken") : "") +
-                    (request.getParameter("Name") != null ? " name=" + request.getParameter("Name") : "") +
-                    (request.getParameter("Token") != null ? " token=" + request.getParameter("Token") : "") +
-                    (request.getParameter("Endpoint") != null ? " endpoint=" + request.getParameter("Endpoint") : "") +
-                    (request.getParameter("Protocol") != null ? " protocol=" + request.getParameter("Protocol") : "") +
-                    (request.getParameter("ReceiptHandle") != null ? " receipt_handle=" + request.getParameter("ReceiptHandle") : "") +
-                    (request.getParameter("VisibilityTimeout") != null ? " visibility_timeout=" + request.getParameter("VisibilityTimeout") : "") +
-                    (request.getParameter("QueueName") != null ? " queue_name=" + request.getParameter("QueueName") : "") +
-                    (request.getParameter("QueueNamePrefix") != null ? " queue_name_prefix=" + request.getParameter("QueueNamePrefix") : "") +
-                    (request.getParameter("DelaySeconds") != null ? " delay_seconds=" + request.getParameter("DelaySeconds") : "") +
-                    ((this instanceof CQSControllerServlet) ? (" queue_url=" + request.getRequestURL()) : "") +
-                    
-            		" CassandraTimeMS=" + valueAccumulator.getCounter(AccumulatorName.CassandraTime) + 
-                    " CassandraReadNum=" + valueAccumulator.getCounter(AccumulatorName.CassandraRead) + 
-                    " CassandraWriteNum=" + valueAccumulator.getCounter(AccumulatorName.CassandraWrite) +
-                    
-                    ((this instanceof CNSControllerServlet) ? (" CNSCQSTimeMS=" + CMBControllerServlet.valueAccumulator.getCounter(AccumulatorName.CNSCQSTime)) : "") +
-                    ((this instanceof CQSControllerServlet) ? (" RedisTimeMS=" + valueAccumulator.getCounter(AccumulatorName.RedisTime)) : "") +
-                    
-                    (user != null ? " user_name=" + user.getUserName() : ""), ex
-                    
-            ); 
+    		StringBuffer logLine = new StringBuffer("");
+    		
+    		logLine.append("event=handleRequest status=failed client_ip=").append(request.getRemoteAddr()).append(" action=").append(action).append(" responseTimeMS=").append((ts2-ts1)).
+    		append((request.getParameter("TopicArn") != null ? " topic_arn=" + request.getParameter("TopicArn") : "")).
+    		append((request.getParameter("SubscriptionArn") != null ? " subscription_arn=" + request.getParameter("SubscriptionArn") : "")).
+    		append((request.getParameter("Label") != null ? " label=" + request.getParameter("Label") : "")).
+    		append((request.getParameter("NextToken") != null ? " next_token=" + request.getParameter("NextToken") : "")).
+    		append((request.getParameter("Name") != null ? " name=" + request.getParameter("Name") : "")).
+    		append((request.getParameter("Token") != null ? " token=" + request.getParameter("Token") : "")).
+    		append((request.getParameter("Endpoint") != null ? " endpoint=" + request.getParameter("Endpoint") : "")).
+    		append((request.getParameter("Protocol") != null ? " protocol=" + request.getParameter("Protocol") : "")).
+    		append((request.getParameter("ReceiptHandle") != null ? " receipt_handle=" + request.getParameter("ReceiptHandle") : "")).
+    		append((request.getParameter("VisibilityTimeout") != null ? " visibility_timeout=" + request.getParameter("VisibilityTimeout") : "")).
+    		append((request.getParameter("QueueName") != null ? " queue_name=" + request.getParameter("QueueName") : "")).
+    		append((request.getParameter("QueueNamePrefix") != null ? " queue_name_prefix=" + request.getParameter("QueueNamePrefix") : "")).
+    		append((request.getParameter("DelaySeconds") != null ? " delay_seconds=" + request.getParameter("DelaySeconds") : "")).
+    		append(((this instanceof CQSControllerServlet) ? (" queue_url=" + request.getRequestURL()) : ""));
+            
+    		logLine.append(" CassandraTimeMS=" + valueAccumulator.getCounter(AccumulatorName.CassandraTime));
+    		logLine.append(" CassandraReadNum=" + valueAccumulator.getCounter(AccumulatorName.CassandraRead));
+    		logLine.append(" CassandraWriteNum=" + valueAccumulator.getCounter(AccumulatorName.CassandraWrite));
+            
+    		logLine.append(((this instanceof CNSControllerServlet) ? (" CNSCQSTimeMS=" + CMBControllerServlet.valueAccumulator.getCounter(AccumulatorName.CNSCQSTime)) : ""));
+    		logLine.append(((this instanceof CQSControllerServlet) ? (" RedisTimeMS=" + valueAccumulator.getCounter(AccumulatorName.RedisTime)) : ""));
+            
+    		logLine.append((user != null ? " user_name=" + user.getUserName() : ""));
+    		
+    		logger.error(logLine, ex);
 
             int httpCode = CMBErrorCodes.InternalError.getHttpCode();
             String code = CMBErrorCodes.InternalError.getCMBCode();
@@ -283,61 +293,41 @@ abstract public class CMBControllerServlet extends HttpServlet {
     
     @Override
     public void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-
-    	// create the async context, otherwise getAsyncContext() will be null
+    	
+    	if (!request.isAsyncSupported()) {
+    		throw new ServletException("Servlet container does not support asynchronous calls");
+    	}
 
     	final AsyncContext asyncContext = request.startAsync(new CQSHttpServletRequest(request), response);
     	
-    	if (asyncContext == null) {
+     	workerPool.submit(new Runnable() {
 
-    		// this should only be happening for certain unit tests
-    		
-    		handleRequest(request, response);
-    		
-    	} else {
+     		public void run() {
 
-	    	// should be ok to not use worker pool as we are doing fully asynchronous i/o and would not
-    		// not occupy the http handler threads for an extended period of time
-	    	
-	    	workerPool.submit(new Runnable() {
-	    	
-	    		public void run() {
-	
-	    			try {
-	    				
-	    				ReceiptModule.init();
-	
-	    				if (asyncContext.getRequest() instanceof CQSHttpServletRequest && asyncContext.getResponse() instanceof HttpServletResponse) {
-	    				
-	    					CQSHttpServletRequest request = (CQSHttpServletRequest)asyncContext.getRequest();
-	    					HttpServletResponse response = (HttpServletResponse)asyncContext.getResponse();
-	    					
-	    					handleRequest(request, response);
-	    				}
-	
-	    			} catch (Exception ex) {
-	    				logger.error("event=failure", ex);
-	    			}
-	
-	    			if (!((CQSHttpServletRequest)asyncContext.getRequest()).isQueuedForProcessing()) {
-	    				asyncContext.complete();
-	    			}
-	    			
-	    		}
-	    	});
-    	}
+    	    	try {
+    				ReceiptModule.init();
+    				handleRequest(asyncContext);
+    			} catch (Exception ex) {
+    				logger.error("event=async_api_call_failure", ex);
+    			}
+    			
+    	    	if (!((CQSHttpServletRequest)asyncContext.getRequest()).isQueuedForProcessing()) {
+    	    		asyncContext.complete();
+    	    	}
+    	    }
+     	});
     }
-
+    
     public static String createErrorResponse(String code, String errorMsg) {
-        StringBuffer message = new StringBuffer("<ErrorResponse>")
-                .append("<Error>")
-                .append("<Type>Sender</Type>")
-                .append("<Code>").append(code).append("</Code>")
-                .append("<Message>").append(errorMsg).append("</Message>")
-                .append("<Detail/>")
-                .append("</Error>")
-                .append("<RequestId>").append(ReceiptModule.getReceiptId()).append("</RequestId>")
-                .append("</ErrorResponse>");
+        StringBuffer message = new StringBuffer("<ErrorResponse>\n")
+                .append("\t<Error>\n")
+                .append("\t\t<Type>Sender</Type>\n")
+                .append("\t\t<Code>").append(code).append("</Code>\n")
+                .append("\t\t<Message>").append(errorMsg).append("</Message>\n")
+                .append("\t\t<Detail/>\n")
+                .append("\t</Error>\n")
+                .append("\t<RequestId>").append(ReceiptModule.getReceiptId()).append("</RequestId>\n")
+                .append("</ErrorResponse>\n");
         return message.toString();
     }
 }

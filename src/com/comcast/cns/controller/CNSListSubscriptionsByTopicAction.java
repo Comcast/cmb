@@ -17,6 +17,7 @@ package com.comcast.cns.controller;
 
 import java.util.List;
 
+import javax.servlet.AsyncContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -53,8 +54,11 @@ public class CNSListSubscriptionsByTopicAction extends CNSAction {
 	 * @param response the response servlet we write to.
 	 */
 	@Override
-	public boolean doAction(User user, HttpServletRequest request, HttpServletResponse response) throws Exception {
+	public boolean doAction(User user, AsyncContext asyncContext) throws Exception {
 
+        HttpServletRequest request = (HttpServletRequest)asyncContext.getRequest();
+        HttpServletResponse response = (HttpServletResponse)asyncContext.getResponse();
+		
 		String userId = user.getUserId();
 		String nextToken = null;
 		String topicArn = request.getParameter("TopicArn");

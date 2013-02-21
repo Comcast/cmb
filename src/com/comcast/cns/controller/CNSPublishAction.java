@@ -19,6 +19,7 @@ import java.util.Date;
 import java.util.Random;
 import java.util.concurrent.Callable;
 
+import javax.servlet.AsyncContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -89,11 +90,13 @@ public class CNSPublishAction extends CNSAction {
      * designated by the "TopicArn" field in the request, then take the response and generate an XML response 
      * and put it in the parameter response
      * @param user the user for whom we are listing the subscription
-     * @param request the servlet request including all the parameters for the listSubscriptions call
-     * @param response the response servlet we write to.
+     * @param asyncContext
      */
 	@Override
-	public boolean doAction(User user, HttpServletRequest request,	HttpServletResponse response) throws Exception {
+	public boolean doAction(User user, AsyncContext asyncContext) throws Exception {
+		
+        HttpServletRequest request = (HttpServletRequest)asyncContext.getRequest();
+        HttpServletResponse response = (HttpServletResponse)asyncContext.getResponse();
 		
 		if (cnsInternalUser == null) {
 
