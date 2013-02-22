@@ -264,7 +264,7 @@ public class CMBProperties {
             redisExpireTTLSec = Integer.parseInt(props.getProperty("cmb.redis.expireTTLSec", "1209600"));
             redisPayloadCacheSizePerQueue = Integer.parseInt(props.getProperty("cmb.redis.payloadCacheSizePerQueue", "10000"));
             redisPayloadCacheTTLSec = Integer.parseInt(props.getProperty("cmb.redis.payloadCacheTTLSec", "3600"));
-            redisPayloadCacheEnabled = Boolean.parseBoolean(props.getProperty("cmb.redis.PayloadCacheEnabled", "true"));
+            redisPayloadCacheEnabled = Boolean.parseBoolean(props.getProperty("cmb.redis.payloadCacheEnabled", "true"));
             redisRevisibleFrequencySec = Integer.parseInt(props.getProperty("cmb.redis.revisibleFrequencySec", "10"));
             redisRevisibleSetFrequencySec = Integer.parseInt(props.getProperty("cmb.redis.revisibleSetFrequencySec", "1"));
             
