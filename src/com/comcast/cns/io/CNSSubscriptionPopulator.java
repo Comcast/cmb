@@ -29,97 +29,104 @@ public class CNSSubscriptionPopulator {
 
 	public static String getSubscribeResponse(String subscriptionArn) {
 		
-		String res = "<SubscribeResponse xmlns=\"http://sns.amazonaws.com/doc/2010-03-31/\">" +
-		"<SubscribeResult>" +
-		"<SubscriptionArn>" + subscriptionArn + "</SubscriptionArn>" + 
-		"</SubscribeResult>" +
-		CNSPopulator.getResponseMetadata() +
-		"</SubscribeResponse>";
+		StringBuffer out = new StringBuffer("<SubscribeResponse xmlns=\"http://sns.amazonaws.com/doc/2010-03-31/\">\n");
 		
-		return res;
+		out.append("\t<SubscribeResult>\n");
+		out.append("\t\t<SubscriptionArn>" + subscriptionArn + "</SubscriptionArn>\n");
+		out.append("\t</SubscribeResult>\n");
+		out.append("\t").append(CNSPopulator.getResponseMetadata()).append("\n");
+		out.append("</SubscribeResponse>\n");
+		
+		return out.toString();
 	}
 
 	private static String printSubscription(CNSSubscription subscription) {
 		
-		String res = "<member>" +
-		"<TopicArn>"+ subscription.getTopicArn() +"</TopicArn>" +
-		"<Protocol>"+ subscription.getProtocol() +"</Protocol>" +
-		"<SubscriptionArn>"+ subscription.getArn() +"</SubscriptionArn>" +
-		"<Owner>"+ subscription.getUserId() +"</Owner>" +
-		"<Endpoint>"+ subscription.getEndpoint() +"</Endpoint>" +
-		"</member>";
+		StringBuffer out = new StringBuffer("<member>");
 		
-		return res;
+		out.append("<TopicArn>").append(subscription.getTopicArn()).append("</TopicArn>");
+		out.append("<Protocol>").append(subscription.getProtocol()).append("</Protocol>");
+		out.append("<SubscriptionArn>").append(subscription.getArn()).append("</SubscriptionArn>");
+		out.append("<Owner>").append(subscription.getUserId()).append("</Owner>");
+		out.append("<Endpoint>").append(subscription.getEndpoint()).append("</Endpoint>");
+		out.append("</member>");
+		
+		return out.toString();
 	}
 
 	public static String getListSubscriptionResponse(List<CNSSubscription> subscriptions, String nextToken) {
 		
-		String res = "<ListSubscriptionsResponse xmlns=\"http://sns.amazonaws.com/doc/2010-03-31/\">\n" +
-		"\t<ListSubscriptionsResult>\n" +
-		"\t\t<Subscriptions>\n";
+		StringBuffer out = new StringBuffer("<ListSubscriptionsResponse xmlns=\"http://sns.amazonaws.com/doc/2010-03-31/\">\n");
+		out.append("\t<ListSubscriptionsResult>\n");
+		out.append("\t\t<Subscriptions>\n");
 		
 		for (CNSSubscription sub: subscriptions) {
-			res += "\t\t\t" + printSubscription(sub) + "\n";
+			out.append("\t\t\t").append(printSubscription(sub)).append("\n");
 		}
 		
-		res += "\t\t</Subscriptions>\n";
+		out.append("\t\t</Subscriptions>\n");
 
 		if (nextToken != null) {
-			res += "\t\t<NextToken>" + nextToken + "</NextToken>\n";
+			out.append("\t\t<NextToken>").append(nextToken).append("</NextToken>\n");
 		}
 		
-		res += "\t</ListSubscriptionsResult>\n" +
-		CNSPopulator.getResponseMetadata() + "\n" +
-		"</ListSubscriptionsResponse>\n";
+		out.append("\t</ListSubscriptionsResult>\n");
+		out.append("\t").append(CNSPopulator.getResponseMetadata()).append("\n");
+		out.append("</ListSubscriptionsResponse>\n");
 
-		return res;
+		return out.toString();
 	}
 
 	public static String getUnsubscribeResponse() {
-		return "<UnsubscribeResponse xmlns=\"http://sns.amazonaws.com/doc/2010-03-31/\">" +
+		return "<UnsubscribeResponse xmlns=\"http://sns.amazonaws.com/doc/2010-03-31/\">\n\t" +
 		CNSPopulator.getResponseMetadata() +	
-		"</UnsubscribeResponse>";
+		"\n</UnsubscribeResponse>\n";
 	}
 
 	public static String getListSubscriptionByTopicResponse(List<CNSSubscription> subscriptions, String nextToken) {
 		
-		String res = "<ListSubscriptionsByTopicResponse xmlns=\"http://sns.amazonaws.com/doc/2010-03-31/\">\n" +
-		"\t<ListSubscriptionsByTopicResult>\n" +
-		"\t\t<Subscriptions>\n";
+		StringBuffer out = new StringBuffer("<ListSubscriptionsByTopicResponse xmlns=\"http://sns.amazonaws.com/doc/2010-03-31/\">\n");
+		out.append("\t<ListSubscriptionsByTopicResult>\n");
+		out.append("\t\t<Subscriptions>\n");
 		
 		for (CNSSubscription sub: subscriptions) {
-			res += "\t\t\t" +printSubscription(sub) + "\n"; 
+			out.append("\t\t\t").append(printSubscription(sub)).append("\n");
 		}
 		
-		res += "\t\t</Subscriptions>\n";
+		out.append("\t\t</Subscriptions>\n");
 
 		if (nextToken != null) {
-			res += "\t\t<NextToken>" + nextToken + "</NextToken>\n";
+			out.append("\t\t<NextToken>" + nextToken + "</NextToken>\n");
 		}
 		
-		res += "\t</ListSubscriptionsByTopicResult>\n" +
-		CNSPopulator.getResponseMetadata() + "\n" +
-		"</ListSubscriptionsByTopicResponse>\n";
+		out.append("\t</ListSubscriptionsByTopicResult>\n");
+		out.append("\t").append(CNSPopulator.getResponseMetadata()).append("\n");
+		out.append("</ListSubscriptionsByTopicResponse>\n");
 
-		return res;
+		return out.toString();
 	}
 
 	public static String getConfirmSubscriptionResponse(CNSSubscription subscription) {
 		
-		return "<ConfirmSubscriptionResponse xmlns=\"http://sns.amazonaws.com/doc/2010-03-31/\">" +
-		"<ConfirmSubscriptionResult>" +
-		"<SubscriptionArn>" + subscription.getArn() + "</SubscriptionArn>" +
-		"</ConfirmSubscriptionResult>" +
-		CNSPopulator.getResponseMetadata() +
-		"</ConfirmSubscriptionResponse>";
+		StringBuffer out = new StringBuffer("<ConfirmSubscriptionResponse xmlns=\"http://sns.amazonaws.com/doc/2010-03-31/\">\n");
+		out.append("\t<ConfirmSubscriptionResult>\n");
+		out.append("\t\t<SubscriptionArn>").append(subscription.getArn()).append("</SubscriptionArn>\n");
+		out.append("\t</ConfirmSubscriptionResult>\n");
+		out.append("\t").append(CNSPopulator.getResponseMetadata()).append("\n");
+		out.append("</ConfirmSubscriptionResponse>\n");
+		
+		return out.toString();
 	}
 
-	public static String getPublishResponse(CNSMessage cnsMessage){
-		return "<PublishResponse xmlns=\"http://sns.amazonaws.com/doc/2010-03-31/\">" +
-		"<PublishResult>" +
-		"<MessageId>" + cnsMessage.getMessageId() + "</MessageId>" +
-		"</PublishResult>" +
-		CNSPopulator.getResponseMetadata() +
-		"</PublishResponse>";
+	public static String getPublishResponse(CNSMessage cnsMessage) {
+		
+		StringBuffer out = new StringBuffer("<PublishResponse xmlns=\"http://sns.amazonaws.com/doc/2010-03-31/\">\n");
+		out.append("\t<PublishResult>\n");
+		out.append("\t\t<MessageId>").append(cnsMessage.getMessageId()).append("</MessageId>\n");
+		out.append("\t</PublishResult>\n");
+		out.append("\t").append(CNSPopulator.getResponseMetadata()).append("\n");
+		out.append("</PublishResponse>\n");
+		
+		return out.toString();
 	}
 }

@@ -23,10 +23,8 @@ import com.comcast.cmb.common.model.ReceiptModule;
  *
  */
 public class CNSPopulator {
-	
+
 	public static String getResponseMetadata() {
-		return "<ResponseMetadata>\n" +
-			   "\t<RequestId>" + ReceiptModule.getReceiptId() + "</RequestId>\n" +
-			   "</ResponseMetadata>";
+		return "<ResponseMetadata><RequestId>" + ReceiptModule.getReceiptId() + "</RequestId></ResponseMetadata>";
 	}
 }

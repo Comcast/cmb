@@ -27,43 +27,39 @@ import com.comcast.cns.model.CNSTopic;
 public class CNSTopicPopulator {
 	
 	public static String getCreateTopicResponse(String arn) {
-		String res = "<CreateTopicResponse xmlns=\"http://sns.amazonaws.com/doc/2010-03-31/\">" +
-				 "<CreateTopicResult>" +
-				 "<TopicArn>"+arn+"</TopicArn>" +
-				 "</CreateTopicResult>" +
-				 CNSPopulator.getResponseMetadata() +
-				 "</CreateTopicResponse>";
-		return res;
+		StringBuffer out = new StringBuffer("<CreateTopicResponse xmlns=\"http://sns.amazonaws.com/doc/2010-03-31/\">\n");
+		out.append("\t<CreateTopicResult>\n");
+		out.append("\t\t<TopicArn>").append(arn).append("</TopicArn>\n");
+		out.append("\t</CreateTopicResult>\n");
+		out.append("\t").append(CNSPopulator.getResponseMetadata()).append("\n");
+		out.append("</CreateTopicResponse>\n");
+		return out.toString();
 	}
 	
 	public static String getDeleteTopicResponse() {
-		String res = "<DeleteTopicResponse xmlns=\"http://sns.amazonaws.com/doc/2010-03-31/\">" +
-				CNSPopulator.getResponseMetadata() +
-				 "</DeleteTopicResponse>";
-		return res;
+		return "<DeleteTopicResponse xmlns=\"http://sns.amazonaws.com/doc/2010-03-31/\">\n\n" +	CNSPopulator.getResponseMetadata() + "\n</DeleteTopicResponse>\n";
 	}
 	
 	public static String getListTopicsResponse(List<CNSTopic> topics, String nextToken) {
 		
-		String res = "<ListTopicsResponse xmlns=\"http://sns.amazonaws.com/doc/2010-03-31/\">\n" +
-				"\t<ListTopicsResult>\n" +
-				"\t\t<Topics>\n";
+		StringBuffer out = new StringBuffer("<ListTopicsResponse xmlns=\"http://sns.amazonaws.com/doc/2010-03-31/\">\n");
+		out.append("\t<ListTopicsResult>\n");
+		out.append("\t\t<Topics>\n");
 		
 		for (CNSTopic topic:topics) {		
-			res += "\t\t\t<member><TopicArn>"+topic.getArn()+"</TopicArn></member>\n";
+			out.append("\t\t\t<member><TopicArn>"+topic.getArn()+"</TopicArn></member>\n");
 		}
 		
-    	res += "\t\t</Topics>\n";
+		out.append("\t\t</Topics>\n");
 
 		if (nextToken != null) {
-			res += "\t\t<NextToken>" + nextToken + "</NextToken>\n";
+			out.append("\t\t<NextToken>" + nextToken + "</NextToken>\n");
 		}
 		
-
-    	res +=	"\t</ListTopicsResult>\n" +
-    			CNSPopulator.getResponseMetadata() +
-    			"</ListTopicsResponse>\n";
+		out.append("\t</ListTopicsResult>\n");
+		out.append("\t").append(CNSPopulator.getResponseMetadata()).append("\n");
+		out.append("</ListTopicsResponse>\n");
     	
-    	return res;
+    	return out.toString();
 	}
 }

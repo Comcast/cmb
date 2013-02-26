@@ -21,7 +21,7 @@ import java.util.UUID;
  */
 public class ReceiptModule {
 
-    private static final ThreadLocal<String > receiptId =
+    private static final ThreadLocal<String> receiptId =
         new ThreadLocal<String> () {
             protected String initialValue() {
                 return UUID.randomUUID().toString();

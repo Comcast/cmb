@@ -21,68 +21,68 @@ import com.comcast.cqs.model.CQSAPIStats;
 
 public class CQSAPIStatsPopulator {
 
-	public static String getGetAPIStatsResponse(List<CQSAPIStats> stats) {
+	public static String getGetAPIStatsResponse(List<CQSAPIStats> statsList) {
 
-		String res = "";
-		res += "<GetAPIStatsResponse>\n";
-		res +=  "\t<GetAPIStatsResult>\n";
+		String out = "";
+		out += "<GetAPIStatsResponse>\n";
+		out +=  "\t<GetAPIStatsResult>\n";
 
-		for (CQSAPIStats s : stats) {
+		for (CQSAPIStats stats : statsList) {
 			
-			res += "\t\t<Stats>\n";
+			out += "\t\t<Stats>\n";
 			
-			res += "\t\t\t<IpAddress>"+s.getIpAddress()+"</IpAddress>\n";
-			res += "\t\t\t<JmxPort>"+s.getJmxPort()+"</JmxPort>\n";
-			res += "\t\t\t<LongPollPort>"+s.getLongPollPort()+"</LongPollPort>\n";
-			res += "\t\t\t<DataCenter>"+s.getDataCenter()+"</DataCenter>\n";
-			res += "\t\t\t<ServiceUrl>"+s.getServiceUrl()+"</ServiceUrl>\n";
-			res += "\t\t\t<Timestamp>"+s.getTimestamp()+"</Timestamp>\n";
-			res += "\t\t\t<NumberOfLongPollReceives>"+s.getNumberOfLongPollReceives()+"</NumberOfLongPollReceives>\n";
-			res += "\t\t\t<NumberOfRedisKeys>"+s.getNumberOfRedisKeys()+"</NumberOfRedisKeys>\n";
-			res += "\t\t\t<NumberOfRedisShards>"+s.getNumberOfRedisShards()+"</NumberOfRedisShards>\n";
+			out += "\t\t\t<IpAddress>"+stats.getIpAddress()+"</IpAddress>\n";
+			out += "\t\t\t<JmxPort>"+stats.getJmxPort()+"</JmxPort>\n";
+			out += "\t\t\t<LongPollPort>"+stats.getLongPollPort()+"</LongPollPort>\n";
+			out += "\t\t\t<DataCenter>"+stats.getDataCenter()+"</DataCenter>\n";
+			out += "\t\t\t<ServiceUrl>"+stats.getServiceUrl()+"</ServiceUrl>\n";
+			out += "\t\t\t<Timestamp>"+stats.getTimestamp()+"</Timestamp>\n";
+			out += "\t\t\t<NumberOfLongPollReceives>"+stats.getNumberOfLongPollReceives()+"</NumberOfLongPollReceives>\n";
+			out += "\t\t\t<NumberOfRedisKeys>"+stats.getNumberOfRedisKeys()+"</NumberOfRedisKeys>\n";
+			out += "\t\t\t<NumberOfRedisShards>"+stats.getNumberOfRedisShards()+"</NumberOfRedisShards>\n";
 			
-			if (s.getRedisServerList() != null) {
-				res += "\t\t\t<RedisServerList>"+s.getRedisServerList()+"</RedisServerList>\n";
+			if (stats.getRedisServerList() != null) {
+				out += "\t\t\t<RedisServerList>"+stats.getRedisServerList()+"</RedisServerList>\n";
 			}
 			
-			if (s.getStatus() != null) {
-				res += "\t\t\t<Status>"+s.getStatus()+"</Status>\n";
+			if (stats.getStatus() != null) {
+				out += "\t\t\t<Status>"+stats.getStatus()+"</Status>\n";
 			}
 			
-			if (s.getCassandraClusterName() != null) {
-				res += "\t\t\t<CassandraClusterName>"+s.getCassandraClusterName()+"</CassandraClusterName>\n";
+			if (stats.getCassandraClusterName() != null) {
+				out += "\t\t\t<CassandraClusterName>"+stats.getCassandraClusterName()+"</CassandraClusterName>\n";
 			}
 			
-			if (s.getCassandraNodes() != null) { 
-				res += "\t\t\t<CassandraNodes>"+s.getCassandraNodes()+"</CassandraNodes>\n";
+			if (stats.getCassandraNodes() != null) { 
+				out += "\t\t\t<CassandraNodes>"+stats.getCassandraNodes()+"</CassandraNodes>\n";
 			}
 			
-			res += "\t\t\t<CallStats>\n";
+			out += "\t\t\t<CallStats>\n";
 			
-			if (s.getCallStats() != null) {
-				for (String action : s.getCallStats().keySet()) {
-					res += "\t\t\t\t<"+action+">"+s.getCallStats().get(action)+"</"+action+">\n";
+			if (stats.getCallStats() != null) {
+				for (String action : stats.getCallStats().keySet()) {
+					out += "\t\t\t\t<"+action+">"+stats.getCallStats().get(action)+"</"+action+">\n";
 				}
 			}
 			
-			res += "\t\t\t</CallStats>\n";
+			out += "\t\t\t</CallStats>\n";
 			
-			res += "\t\t\t<CallFailureStats>\n";
+			out += "\t\t\t<CallFailureStats>\n";
 			
-			if (s.getCallFailureStats() != null) {
-				for (String action : s.getCallFailureStats().keySet()) {
-					res += "\t\t\t\t<"+action+">"+s.getCallFailureStats().get(action)+"</"+action+">\n";
+			if (stats.getCallFailureStats() != null) {
+				for (String action : stats.getCallFailureStats().keySet()) {
+					out += "\t\t\t\t<"+action+">"+stats.getCallFailureStats().get(action)+"</"+action+">\n";
 				}
 			}
 			
-			res += "\t\t\t</CallFailureStats>\n";
+			out += "\t\t\t</CallFailureStats>\n";
 			
-			res += "\t\t</Stats>\n";
+			out += "\t\t</Stats>\n";
 		}
 
-		res += "\t</GetAPIStatsResult>\n";
-		res += "</GetAPIStatsResponse>";
+		out += "\t</GetAPIStatsResult>\n";
+		out += "</GetAPIStatsResponse>";
 
-		return res;
+		return out;
 	}
 }

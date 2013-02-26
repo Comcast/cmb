@@ -31,24 +31,38 @@ import com.comcast.cqs.util.CQSConstants;
 public class CQSMessagePopulator extends CQSPopulator {
 
 	public static String getSendMessageResponse(CQSMessage message) {
-        StringBuffer out = new StringBuffer("<SendMessageResponse>\n").append("    <SendMessageResult>\n").append("       <MD5OfMessageBody>").append(message.getMD5OfBody())
-        .append("</MD5OfMessageBody>\n").append("       <MessageId>").append(message.getMessageId()).append("</MessageId>\n") 
-        .append("    </SendMessageResult>\n").append(getResponseMetadata()).append( "</SendMessageResponse>");
+		
+        StringBuffer out = new StringBuffer("<SendMessageResponse>\n");
+        out.append("\t<SendMessageResult>\n");
+        out.append("\t\t<MD5OfMessageBody>").append(message.getMD5OfBody()).append("</MD5OfMessageBody>\n");
+        out.append("\t\t<MessageId>").append(message.getMessageId()).append("</MessageId>\n"); 
+        out.append("\t</SendMessageResult>\n");
+        out.append("\t").append(getResponseMetadata()).append("\n");
+        out.append( "</SendMessageResponse>\n");
 
         return out.toString();
     }
     
     public static String getSendMessageBatchResponse(List<CQSMessage> messages, List<CQSBatchResultErrorEntry> errorList) {
-        StringBuffer out = new StringBuffer("<SendMessageBatchResponse>\n" + "    <SendMessageBatchResult>\n");
+    	
+        StringBuffer out = new StringBuffer("<SendMessageBatchResponse>\n");
+        out.append("\t<SendMessageBatchResult>\n");
+        
         for (CQSMessage message: messages) {
-            out.append("<SendMessageBatchResultEntry>\n<Id>").append(message.getSuppliedMessageId()).append("</Id>");
-            out.append("\n<MessageId>").append(message.getMessageId()).append("</MessageId>"); 
-            out.append("\n<MD5OfMessageBody>").append(message.getMD5OfBody()).append("</MD5OfMessageBody>\n</SendMessageBatchResultEntry>");
+            out.append("\t\t<SendMessageBatchResultEntry>\n");
+            out.append("\t\t\t<Id>").append(message.getSuppliedMessageId()).append("</Id>\n");
+            out.append("\t\t\t<MessageId>").append(message.getMessageId()).append("</MessageId>\n"); 
+            out.append("\t\t\t<MD5OfMessageBody>").append(message.getMD5OfBody()).append("</MD5OfMessageBody>\n");
+            out.append("\t\t</SendMessageBatchResultEntry>\n");
         }
+        
         if (errorList.size() > 0) {
             out.append(getBatchErrorResult(errorList));
         }
-        out.append("\n</SendMessageBatchResult>\n").append(getResponseMetadata()).append("\n</SendMessageBatchResponse>");
+        
+        out.append("\t</SendMessageBatchResult>\n");
+        out.append("\t").append(getResponseMetadata()).append("\n");
+        out.append("</SendMessageBatchResponse>\n");
 
         return out.toString();
     }
@@ -56,106 +70,118 @@ public class CQSMessagePopulator extends CQSPopulator {
     private static String getBatchErrorResult(List<CQSBatchResultErrorEntry> errorList) {
         StringBuffer out = new StringBuffer();
         for (CQSBatchResultErrorEntry error : errorList) {
-            out.append("\n<BatchResultErrorEntry>\n<Id>").append(error.getId()).append("</Id>");
-            out.append("\n<SenderFault>").append(error.getSenderFault()).append("</SenderFault>");
-            out.append("\n<Code>").append(error.getCode()).append("</Code>");
-            out.append("\n<Message>").append(error.getMessage()).append("</Message>\n</BatchResultErrorEntry>");
+            out.append("\t\t<BatchResultErrorEntry>\n");
+            out.append("\t\t\t<Id>").append(error.getId()).append("</Id>\n");
+            out.append("\t\t\t<SenderFault>").append(error.getSenderFault()).append("</SenderFault>\n");
+            out.append("\t\t\t<Code>").append(error.getCode()).append("</Code>\n");
+            out.append("\t\t\t<Message>").append(error.getMessage()).append("</Message>\n");
+            out.append("\t\t</BatchResultErrorEntry>\n");
         }
         return out.toString();
     }
     
     public static String getDeleteMessageBatchResponse(List<String> ids, List<CQSBatchResultErrorEntry> errorList) {
-        StringBuffer out = new StringBuffer("<DeleteMessageBatchResponse>\n<DeleteMessageBatchResult>");
+        
+    	StringBuffer out = new StringBuffer("<DeleteMessageBatchResponse>\n");
+        out.append("\t<DeleteMessageBatchResult>\n");
+        
         for (String id : ids) {
-            out.append("\n<DeleteMessageBatchResultEntry>\n<Id>").append(id).append("</Id>\n</DeleteMessageBatchResultEntry>");            
+            out.append("\t\t<DeleteMessageBatchResultEntry>\n");
+            out.append("\t\t\t<Id>").append(id).append("</Id>\n");
+            out.append("\t\t</DeleteMessageBatchResultEntry>\n");            
         }
+        
         if (errorList.size() > 0) {
             out.append(getBatchErrorResult(errorList));
         }
-        out.append("\n</DeleteMessageBatchResult>");
-        out.append("\n").append(getResponseMetadata()).append("\n</DeleteMessageBatchResponse>");
+        
+        out.append("\t</DeleteMessageBatchResult>\n");
+        out.append("\t").append(getResponseMetadata()).append("\n");
+        out.append("</DeleteMessageBatchResponse>\n");
+        
         return out.toString();
     }
     
     public static String getDeleteMessageResponse() {
-        String out = "\n<DeleteMessageResponse>\n" + getResponseMetadata() + "\n</DeleteMessageResponse>";
-
+        String out = "<DeleteMessageResponse>\n\t" + getResponseMetadata() + "\n</DeleteMessageResponse>\n";
         return out;
     }
 
     public static String getClearQueueResponse() {
-        String out = "\n<ClearQueueResponse>\n" + getResponseMetadata() + "\n</ClearQueueResponse>";
-
+        String out = "<ClearQueueResponse>\n\t" + getResponseMetadata() + "\n</ClearQueueResponse>\n";
         return out;
     }
 
     public static String getChangeMessageVisibilityResponse() {
-        String out = "<ChangeMessageVisibilityResponse>" + getResponseMetadata() + "</ChangeMessageVisibilityResponse>";
+        String out = "<ChangeMessageVisibilityResponse>\n\t" + getResponseMetadata() + "</ChangeMessageVisibilityResponse>\n";
         return out;
     }
     
     public static String getChangeMessageVisibilityBatchResponse(List<String> ids, List<CQSBatchResultErrorEntry> errorList) {
-        StringBuffer out = new StringBuffer("<ChangeMessageVisibilityBatchResponse>\n<ChangeMessageVisibilityBatchResult>");
+        
+    	StringBuffer out = new StringBuffer("<ChangeMessageVisibilityBatchResponse>\n");
+        out.append("\t<ChangeMessageVisibilityBatchResult>\n");
+        
         for (String id : ids) {
-            out.append("\n<ChangeMessageVisibilityBatchResultEntry>\n<Id>").append(id).append("</Id>\n</ChangeMessageVisibilityBatchResultEntry>");                        
+            out.append("\t\t<ChangeMessageVisibilityBatchResultEntry>\n");
+            out.append("\t\t\t<Id>").append(id).append("</Id>\n");
+            out.append("\t\t</ChangeMessageVisibilityBatchResultEntry>\n");                        
         }
+        
         if (errorList.size() > 0) {
             out.append(getBatchErrorResult(errorList));
         }
-        out.append("\n</ChangeMessageVisibilityBatchResult>");
-        out.append("\n").append(getResponseMetadata()).append("\n</ChangeMessageVisibilityBatchResponse>");
+        
+        out.append("\t</ChangeMessageVisibilityBatchResult>\n");
+        out.append("\t").append(getResponseMetadata()).append("\n");
+        out.append("</ChangeMessageVisibilityBatchResponse>\n");
 
         return out.toString();
     }
     
     public static String getReceiveMessageResponseAfterSerializing(List<CQSMessage> messages, List<String> filterAttributs) {
-        String out = "<ReceiveMessageResponse>\n" + "<ReceiveMessageResult>\n";
+        
+    	StringBuffer out = new StringBuffer("<ReceiveMessageResponse>\n");
+    	out.append("\t<ReceiveMessageResult>\n");
 
         for (CQSMessage message : messages) {
-            out += serializeMessage(message, filterAttributs) + "\n";
+            out.append(serializeMessage(message, filterAttributs));
         }
 
-        out += "</ReceiveMessageResult>\n" + getResponseMetadata() + "</ReceiveMessageResponse>";
+        out.append("\t</ReceiveMessageResult>\n");
+        out.append("\t").append(getResponseMetadata()).append("\n");
+        out.append("</ReceiveMessageResponse>\n");
         
-        return out;
+        return out.toString();
     }
 
-//    public static String getReceiveMessageResponse(List<String> serializedMessages) {
-//        String out = "<ReceiveMessageResponse>\n" + "<ReceiveMessageResult>\n";
-//
-//        for (String serializedMessage : serializedMessages) {
-//            out += serializedMessage + "\n";
-//        }
-//
-//        out += "</ReceiveMessageResult>\n" + getResponseMetadata() + "</ReceiveMessageResponse>";
-//        
-//        return out;
-//    }
-    
     public static String serializeMessage(CQSMessage message, List<String> filterAttributes) {
-        StringBuffer attributesXmlFragment = fillAttributesInReturn(message, filterAttributes);
-        StringBuffer messageXml = new StringBuffer("<Message>"); 
 
-        messageXml.append("<MessageId>").append(message.getMessageId()).append("</MessageId>");
-        messageXml.append("<ReceiptHandle>").append(message.getReceiptHandle()).append("</ReceiptHandle>");
-        messageXml.append("<MD5OfBody>").append(message.getMD5OfBody()).append("</MD5OfBody>");
-        messageXml.append("<Body>").append(StringEscapeUtils.escapeXml(message.getBody())).append("</Body>");
+    	StringBuffer attributesXmlFragment = fillAttributesInReturn(message, filterAttributes);
+        StringBuffer messageXml = new StringBuffer("\t\t<Message>\n"); 
+
+        messageXml.append("\t\t\t<MessageId>").append(message.getMessageId()).append("</MessageId>\n");
+        messageXml.append("\t\t\t<ReceiptHandle>").append(message.getReceiptHandle()).append("</ReceiptHandle>\n");
+        messageXml.append("\t\t\t<MD5OfBody>").append(message.getMD5OfBody()).append("</MD5OfBody>\n");
+        messageXml.append("\t\t\t<Body>").append(StringEscapeUtils.escapeXml(message.getBody())).append("</Body>\n");
         messageXml.append(attributesXmlFragment);
-        messageXml.append("</Message>");
+        messageXml.append("\t\t</Message>\n");
         
         return messageXml.toString();
     }
 	
     private static StringBuffer fillAttributesInReturn(CQSMessage message, List<String> filterAttributes) {
+    	
         StringBuffer attributesXmlFragment = new StringBuffer("");
 
         if (message.getAttributes() != null) {
             for (Map.Entry<String, String> entry : message.getAttributes().entrySet()) {
                 if (entry.getKey() != null && entry.getKey().length() > 0 && !entry.getKey().equals(CQSConstants.DELAY_SECONDS) && (filterAttributes.isEmpty() || filterAttributes.contains("All") || filterAttributes.contains(entry.getKey()))) {
-                    attributesXmlFragment.append("<Attribute>").append("<Name>").append(entry.getKey()).append("</Name>").append("<Value>").append(entry.getValue()).append("</Value>").append("</Attribute>");
+                    attributesXmlFragment.append("\t\t\t<Attribute>").append("<Name>").append(entry.getKey()).append("</Name>").append("<Value>").append(entry.getValue()).append("</Value>").append("</Attribute>\n");
                 }
             }
         }
+        
         return attributesXmlFragment;
     }
 }

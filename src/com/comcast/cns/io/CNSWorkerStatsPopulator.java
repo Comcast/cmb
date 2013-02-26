@@ -21,47 +21,47 @@ import com.comcast.cns.model.CNSWorkerStats;
 
 public class CNSWorkerStatsPopulator {
 
-	public static String getGetWorkerStatsResponse(List<CNSWorkerStats> stats) {
+	public static String getGetWorkerStatsResponse(List<CNSWorkerStats> statsList) {
 
-		String res = "";
-		res += "<GetWorkerStatsResponse>\n";
-		res +=  "\t<GetWorkerStatsResult>\n";
+		String out = "";
+		out += "<GetWorkerStatsResponse>\n";
+		out +=  "\t<GetWorkerStatsResult>\n";
 
-		for (CNSWorkerStats s : stats) {
-			res += "\t\t<Stats>\n";
-			res += "\t\t\t<IpAddress>"+s.getIpAddress()+"</IpAddress>\n";
-			res += "\t\t\t<JmxPort>"+s.getJmxPort()+"</JmxPort>\n";
-			res += "\t\t\t<Mode>"+s.getMode()+"</Mode>\n";
-			res += "\t\t\t<DataCenter>"+s.getDataCenter()+"</DataCenter>\n";
-			res += "\t\t\t<NumPublishedMessages>"+s.getNumPublishedMessages()+"</NumPublishedMessages>\n";
-			res += "\t\t\t<ProducerTimestamp>"+s.getProducerTimestamp()+"</ProducerTimestamp>\n";
-			res += "\t\t\t<ActiveProducer>"+s.isProducerActive()+"</ActiveProducer>\n";
-			res += "\t\t\t<ConsumerTimestamp>"+s.getConsumerTimestamp()+"</ConsumerTimestamp>\n";
-			res += "\t\t\t<ActiveConsumer>"+s.isConsumerActive()+"</ActiveConsumer>\n";
-			res += "\t\t\t<DeliveryQueueSize>"+s.getDeliveryQueueSize()+"</DeliveryQueueSize>\n";
-			res += "\t\t\t<RedeliveryQueueSize>"+s.getRedeliveryQueueSize()+"</RedeliveryQueueSize>\n";
-			res += "\t\t\t<ConsumerOverloaded>"+s.isConsumerOverloaded()+"</ConsumerOverloaded>\n";
-			res += "\t\t\t<CqsServiceAvailable>"+s.isCqsServiceAvailable()+"</CqsServiceAvailable>\n";
-			res += "\t\t\t<NumPooledHttpConnections>"+s.getNumPooledHttpConnections()+"</NumPooledHttpConnections>\n";
+		for (CNSWorkerStats stats : statsList) {
+			out += "\t\t<Stats>\n";
+			out += "\t\t\t<IpAddress>"+stats.getIpAddress()+"</IpAddress>\n";
+			out += "\t\t\t<JmxPort>"+stats.getJmxPort()+"</JmxPort>\n";
+			out += "\t\t\t<Mode>"+stats.getMode()+"</Mode>\n";
+			out += "\t\t\t<DataCenter>"+stats.getDataCenter()+"</DataCenter>\n";
+			out += "\t\t\t<NumPublishedMessages>"+stats.getNumPublishedMessages()+"</NumPublishedMessages>\n";
+			out += "\t\t\t<ProducerTimestamp>"+stats.getProducerTimestamp()+"</ProducerTimestamp>\n";
+			out += "\t\t\t<ActiveProducer>"+stats.isProducerActive()+"</ActiveProducer>\n";
+			out += "\t\t\t<ConsumerTimestamp>"+stats.getConsumerTimestamp()+"</ConsumerTimestamp>\n";
+			out += "\t\t\t<ActiveConsumer>"+stats.isConsumerActive()+"</ActiveConsumer>\n";
+			out += "\t\t\t<DeliveryQueueSize>"+stats.getDeliveryQueueSize()+"</DeliveryQueueSize>\n";
+			out += "\t\t\t<RedeliveryQueueSize>"+stats.getRedeliveryQueueSize()+"</RedeliveryQueueSize>\n";
+			out += "\t\t\t<ConsumerOverloaded>"+stats.isConsumerOverloaded()+"</ConsumerOverloaded>\n";
+			out += "\t\t\t<CqsServiceAvailable>"+stats.isCqsServiceAvailable()+"</CqsServiceAvailable>\n";
+			out += "\t\t\t<NumPooledHttpConnections>"+stats.getNumPooledHttpConnections()+"</NumPooledHttpConnections>\n";
 
-			if (s.getErrorCountForEndpoints() != null && s.getErrorCountForEndpoints().size() > 0) {
+			if (stats.getErrorCountForEndpoints() != null && stats.getErrorCountForEndpoints().size() > 0) {
 				
-				res += "\t\t\t<ErrorCountForEndpoints>";
+				out += "\t\t\t<ErrorCountForEndpoints>";
 				
-				for (String endpoint : s.getErrorCountForEndpoints().keySet()) {
-					res += "\t\t\t\t<Error endpoint=\""+endpoint+"\" count=\""+s.getErrorCountForEndpoints().get(endpoint)+"\"/>";
+				for (String endpoint : stats.getErrorCountForEndpoints().keySet()) {
+					out += "\t\t\t\t<Error endpoint=\""+endpoint+"\" count=\""+stats.getErrorCountForEndpoints().get(endpoint)+"\"/>";
 				}
 
-				res += "\t\t\t</ErrorCountForEndpoints>";
+				out += "\t\t\t</ErrorCountForEndpoints>";
 			}
 			
-			res += "\t\t</Stats>\n";
+			out += "\t\t</Stats>\n";
 		}
 
-		res += "\t</GetWorkerStatsResult>\n";
-		res += "</GetWorkerStatsResponse>";
+		out += "\t</GetWorkerStatsResult>\n";
+		out += "</GetWorkerStatsResponse>";
 
-		return res;
+		return out;
 	}
 
 	public static String getGetManageWorkerResponse() {
