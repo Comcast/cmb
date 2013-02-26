@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.Vector;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -26,6 +27,7 @@ import com.amazonaws.services.sqs.model.DeleteQueueRequest;
 import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
 import com.amazonaws.services.sqs.model.ReceiveMessageResult;
 import com.amazonaws.services.sqs.model.SendMessageRequest;
+import com.amazonaws.services.sqs.model.SendMessageResult;
 import com.comcast.cmb.common.controller.CMBControllerServlet;
 import com.comcast.cmb.common.model.User;
 import com.comcast.cmb.common.persistence.IUserPersistence;
@@ -81,10 +83,15 @@ public class CQSScaleQueuesTest {
             return;
         }
         
-        attributeParams.put("MessageRetentionPeriod", "600");
+        //attributeParams.put("MessageRetentionPeriod", "600");
         attributeParams.put("VisibilityTimeout", "30");
     }
     
+    @Test
+    public void Create1Queues() {
+    	CreateNQueues(1);
+    }
+
     @Test
     public void Create10Queues() {
     	CreateNQueues(10);
@@ -96,18 +103,29 @@ public class CQSScaleQueuesTest {
     }
 
     @Test
+    public void Create1000Queues() {
+    	CreateNQueues(1000);
+    }
+
+    @Test
+    public void Create10000Queues() {
+    	CreateNQueues(10000);
+    }
+    
+    @Test
+    public void Create100000Queues() {
+    	CreateNQueues(100000);
+    }
+
+    @Test
     public void CreateQueuesConcurrent() {
     	
     	ScheduledThreadPoolExecutor ep = new ScheduledThreadPoolExecutor(10);
     	
-    	ep.submit((new Runnable() { public void run() { CreateNQueues(100); }}));
-    	ep.submit((new Runnable() { public void run() { CreateNQueues(100); }}));
-    	ep.submit((new Runnable() { public void run() { CreateNQueues(100); }}));
-    	ep.submit((new Runnable() { public void run() { CreateNQueues(100); }}));
-    	//ep.submit((new Runnable() { public void run() { CreateNQueues(100); }}));
-    	//ep.submit((new Runnable() { public void run() { CreateNQueues(100); }}));
-    	//ep.submit((new Runnable() { public void run() { CreateNQueues(100); }}));
-    	//ep.submit((new Runnable() { public void run() { CreateNQueues(100); }}));
+    	ep.submit((new Runnable() { public void run() { CreateNQueues(10); }}));
+    	ep.submit((new Runnable() { public void run() { CreateNQueues(10); }}));
+    	ep.submit((new Runnable() { public void run() { CreateNQueues(10); }}));
+    	ep.submit((new Runnable() { public void run() { CreateNQueues(10); }}));
     	
     	logger.info("ALL TEST LAUNCHED");
 
@@ -126,45 +144,38 @@ public class CQSScaleQueuesTest {
     	}
    }
 
-    @Test
-    public void Create1000Queues() {
-    	CreateNQueues(1000);
-    }
-
-    @Test
-    public void Create10000Queues() {
-    	CreateNQueues(10000);
-    }
-    
-    @Test
-    public void Create100000Queues() {
-    	CreateNQueues(100000);
-    }
-
-    private boolean receiveMessage(String queueUrl) {
+    private String receiveMessage(String queueUrl) {
 
     	ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest();
-		receiveMessageRequest.setQueueUrl(queueUrl);
+		
+    	receiveMessageRequest.setQueueUrl(queueUrl);
 		receiveMessageRequest.setMaxNumberOfMessages(1);
+		
+		// use this to test with long poll
+		
+		//receiveMessageRequest.setWaitTimeSeconds(1);
 
 		ReceiveMessageResult receiveMessageResult = sqs.receiveMessage(receiveMessageRequest);
 		
 		if (receiveMessageResult.getMessages().size() == 1) {
 		
-	    	DeleteMessageRequest deleteMessageRequest = new DeleteMessageRequest();
+	    	String message = receiveMessageResult.getMessages().get(0).getBody();
+			
+			DeleteMessageRequest deleteMessageRequest = new DeleteMessageRequest();
 			deleteMessageRequest.setQueueUrl(queueUrl);
 			deleteMessageRequest.setReceiptHandle(receiveMessageResult.getMessages().get(0).getReceiptHandle());
 			sqs.deleteMessage(deleteMessageRequest);
 		
-			return true;
+			return message;
 		}
 		
-		return false;
+		return null;
     }
 
     private void CreateNQueues(long n) {
     	
         List<String> queueUrls = new ArrayList<String>();
+        Map<String, String> messageMap = new HashMap<String, String>();
 
     	try {
     		
@@ -199,8 +210,9 @@ public class CQSScaleQueuesTest {
     		long sendFailures = 0;
     		totalTime = 0;
     		long totalCounter = 0;
+    		long messagesSent = 0;
     		
-    		for (int i=0; i<10; i++) {
+    		for (int i=0; i<100; i++) {
     			
         		counter = 0;
 
@@ -209,13 +221,14 @@ public class CQSScaleQueuesTest {
 		            try {
 		    	    
 		            	long start = System.currentTimeMillis();
-		    			sqs.sendMessage(new SendMessageRequest(queueUrl, "test message"));
+		    			SendMessageResult result = sqs.sendMessage(new SendMessageRequest(queueUrl, "" + messagesSent));
 		    	        long end = System.currentTimeMillis();
 		    	        totalTime += end-start;
 		    	        logger.info("average send millis: " + (totalTime/(totalCounter+1)) + " last: " + (end-start));
 		            	logger.info("sent message on queue " + i + " - " + counter + ": " + queueUrl);
 			            counter++;
 			            totalCounter++;
+			            messagesSent++;
 
 		            } catch (Exception ex) {
 	    				logger.error("send failure", ex);
@@ -229,30 +242,41 @@ public class CQSScaleQueuesTest {
     		long readFailures = 0;
     		long emptyResponses = 0;
     		long messagesFound = 0;
+    		long outOfOrder = 0;
+    		long duplicates = 0;
     		totalTime = 0;
     		totalCounter = 0;
     		
-    		for (int i=0; i<100; i++) {
+    		for (int i=0; i<110; i++) {
     			
     			counter = 0;
     			
-	    		for (String queueUrl : queueUrls) {
+    			String lastMessage = null;
+    			
+    			for (String queueUrl : queueUrls) {
 	
-	    			boolean messageReceived = false;
-	    			
 	    			try {
 	    				
 	    		        long start = System.currentTimeMillis();
-	    				messageReceived = receiveMessage(queueUrl);
+	    				String messageBody = receiveMessage(queueUrl);
 		    	        long end = System.currentTimeMillis();
 		    	        totalTime += end-start;
 		    	        logger.info("average receive millis: " + (totalTime/(totalCounter+1)) + " last: " + (end-start));
 	    				
-	    				if (messageReceived) {
-		    				logger.info("received message on queue " + i + " - " + counter + ":" + queueUrl);
+	    				if (messageBody != null) {
+		    				logger.info("received message on queue " + i + " - " + counter + " : " + queueUrl + " : " + messageBody);
+		    				if (lastMessage != null && messageBody != null && Long.parseLong(lastMessage) > Long.parseLong(messageBody)) {
+		    					outOfOrder++;
+		    				}
+		    				if (messageMap.containsKey(messageBody)) {
+		    					duplicates++;
+		    				} else {
+		    					messageMap.put(messageBody, null);
+		    				}
 		    				messagesFound++;
+		    				lastMessage = messageBody;
 	    				} else {
-		    				logger.info("no message found on queue " + i + " - " + counter + ":"  + queueUrl);
+		    				logger.info("no message found on queue " + i + " - " + counter + " : "  + queueUrl);
 		    				emptyResponses++;
 	    				}
 						
@@ -288,7 +312,8 @@ public class CQSScaleQueuesTest {
     			}
     		}
     		
-    		String message = "create failuers: " + createFailures +  " delete failures: " + deleteFailures + " send failures: " + sendFailures + " read failures: " + readFailures + " empty reads: " + emptyResponses + " messages found: " + messagesFound; 
+    		String message = "create failuers: " + createFailures +  " delete failures: " + deleteFailures + " send failures: " + sendFailures + " read failures: " + readFailures + " empty reads: " + emptyResponses + " messages found: " + messagesFound + " messages sent: " + messagesSent + " out of order: " + outOfOrder + " duplicates: " + duplicates + " distinct messages: " + messageMap.size(); 
+    		
     		logger.info(message);
     		report.add(new Date() + ": " + message);
     		
@@ -297,6 +322,7 @@ public class CQSScaleQueuesTest {
     		assertTrue("Send failures: " + sendFailures, sendFailures == 0);
     		assertTrue("Read failures: " + readFailures, readFailures == 0);
     		//assertTrue("Empty reads: " + emptyResponses, emptyResponses == 0);
+    		assertTrue("Wrong number of messages found!", messagesFound == messagesSent);
 	        
 		} catch (Exception ex) {
 			ex.printStackTrace();
