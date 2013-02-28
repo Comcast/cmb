@@ -212,7 +212,11 @@ public class CNSEndpointPublisherJobProducer implements CNSPublisherPartitionRun
 	    		logger.error("event=cqs_service_unavailable", ex);
 	    		CNSWorkerMonitor.getInstance().registerCQSServiceAvailable(false);
 	    	} else {
-	    		CQSHandler.ensureQueuesExist(CNS_PRODUCER_QUEUE_NAME_PREFIX, CMBProperties.getInstance().getNumPublishJobQs());
+	    		try {
+	    			CQSHandler.ensureQueuesExist(CNS_PRODUCER_QUEUE_NAME_PREFIX, CMBProperties.getInstance().getNumPublishJobQs());
+	        	} catch (Exception e) {
+	        		logger.error("event=failed_to_check_producer_queue_existence", e);
+	        	}
 	    	}
 	    
 	    } catch (Exception ex) {

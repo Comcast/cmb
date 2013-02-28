@@ -169,7 +169,9 @@ public class UserAuthModule implements IAuthModule {
         }
 
         if (!CMBProperties.getInstance().getEnableSignatureAuth()) {
-            logger.debug("event=authenticate verify_signature=not_required");
+            if (!user.getUserName().equals(CMBProperties.getInstance().getCnsUserName())) {
+            	logger.debug("event=authenticate verify_signature=not_required");
+            }
             return user;
         }
         
