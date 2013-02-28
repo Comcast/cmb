@@ -33,7 +33,6 @@ import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.RollingWindowCapture;
 import com.comcast.cmb.common.util.RollingWindowCapture.PayLoad;
 import com.comcast.cqs.persistence.RedisCachedCassandraPersistence;
-import com.comcast.cqs.persistence.RedisPayloadCacheCassandraPersistence;
 
 /**
  * Implement the monitoring for CQS
@@ -386,17 +385,17 @@ public class CQSMonitor implements CQSMonitorMBean {
 
 	@Override
 	public int getNumberOfRedisShards() {
-		return RedisPayloadCacheCassandraPersistence.getNumberOfShards();
+		return RedisCachedCassandraPersistence.getNumberOfShards();
 	}
 
 	@Override
 	public List<Map<String, String>> getRedisShardInfos() {
-		return RedisPayloadCacheCassandraPersistence.getInfo();
+		return RedisCachedCassandraPersistence.getInfo();
 	}
 
 	@Override
 	public void flushRedis() {
-		RedisPayloadCacheCassandraPersistence.flushAll();
+		RedisCachedCassandraPersistence.flushAll();
 	}
 
 	@Override

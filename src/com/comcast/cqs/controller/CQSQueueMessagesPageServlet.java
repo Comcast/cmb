@@ -32,7 +32,6 @@ import org.w3c.dom.Element;
 
 import com.amazonaws.services.sqs.model.DeleteMessageRequest;
 import com.amazonaws.services.sqs.model.SendMessageRequest;
-import com.comcast.cmb.common.controller.AdminServlet;
 import com.comcast.cmb.common.controller.AdminServletBase;
 import com.comcast.cmb.common.controller.CMBControllerServlet;
 import com.comcast.cmb.common.util.XmlUtil;
@@ -76,9 +75,10 @@ public class CQSQueueMessagesPageServlet extends AdminServletBase {
 			
 				SendMessageRequest sendMessageRequest = new SendMessageRequest(queueUrl, msgStr);
 				sqs.sendMessage(sendMessageRequest);
+				logger.debug("event=send_message queue_url= " + queueUrl + " user_id=" + userId);
 			
 			} catch (Exception ex) {
-				logger.error("event=sendMessage status=failed queue_url= " + queueUrl, ex);
+				logger.error("event=send_message queue_url= " + queueUrl + " user_id=" + userId, ex);
 				throw new ServletException(ex);
 			}
 			
@@ -88,9 +88,10 @@ public class CQSQueueMessagesPageServlet extends AdminServletBase {
 				
 				DeleteMessageRequest deleteMessageRequest = new DeleteMessageRequest(queueUrl, receiptHandle);
 				sqs.deleteMessage(deleteMessageRequest);
+				logger.debug("event=delete_message queue_url= " + queueUrl + " receipt_handle=" + receiptHandle);
 			
 			} catch (Exception ex) {
-				logger.error("event=deleteMessage status=failed queue_url= " + queueUrl + " receipt_handle=" + receiptHandle, ex);
+				logger.error("event=delete_message queue_url= " + queueUrl + " receipt_handle=" + receiptHandle, ex);
 				throw new ServletException(ex);
 			}
 		}
@@ -167,7 +168,7 @@ public class CQSQueueMessagesPageServlet extends AdminServletBase {
 			}
 		
 		} catch (Exception ex) {
-			logger.error("event=peekMessage status=failed queue_url=" + queueUrl, ex);
+			logger.error("event=peek_message queue_url=" + queueUrl, ex);
 			throw new ServletException(ex);
 		}
 

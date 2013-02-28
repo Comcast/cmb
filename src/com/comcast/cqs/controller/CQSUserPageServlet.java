@@ -77,16 +77,12 @@ public class CQSUserPageServlet extends AdminServletBase {
 		if (parameters.containsKey("Create")) {
 			
 			try {
-				
 				CreateQueueRequest createQueueRequest = new CreateQueueRequest(queueName);
 				CreateQueueResult createQueueResult = sqs.createQueue(createQueueRequest);
-				
 				queueUrl = createQueueResult.getQueueUrl();
-				
-				logger.debug("event=created_queue url=" + queueUrl);
-
+				logger.debug("event=create_queue queue_url=" + queueUrl + " user_id= " + userId);
 			} catch (Exception ex) {
-				logger.error("event=createQueue status=failed userId= " + userId, ex);
+				logger.error("event=create_queue queue_url=" + queueUrl + " user_id= " + userId, ex);
 				throw new ServletException(ex);
 			}
 		
@@ -103,9 +99,9 @@ public class CQSUserPageServlet extends AdminServletBase {
 			try {
 				DeleteQueueRequest deleteQueueRequest = new DeleteQueueRequest(queueUrl);
 				sqs.deleteQueue(deleteQueueRequest);
-				logger.debug("event=deleted_queue url=" + queueUrl);
+				logger.debug("event=delete_queue queue_url=" + queueUrl + " user_id= " + userId);
 			} catch (Exception ex) {
-				logger.error("event=deletedQueue status=failed userId= " + userId, ex);
+				logger.error("event=delete_queue queue_url=" + queueUrl + " user_id= " + userId, ex);
 				throw new ServletException(ex);
 			}
 
@@ -121,10 +117,9 @@ public class CQSUserPageServlet extends AdminServletBase {
 				
 	 			ListQueuesResult listQueuesResult = sqs.listQueues(listQueuesRequest);
 				queueUrls = listQueuesResult.getQueueUrls();
-				logger.debug("event=list_queues count=" + queueUrls != null ? queueUrls.size() : 0);
 
 	        } catch (Exception ex) {
-				logger.error("event=list_queues status=failed userId= " + userId, ex);
+				logger.error("event=list_queues user_id= " + userId, ex);
 				throw new ServletException(ex);
 			}
 
@@ -133,9 +128,9 @@ public class CQSUserPageServlet extends AdminServletBase {
 				try {
 					DeleteQueueRequest deleteQueueRequest = new DeleteQueueRequest(queueUrls.get(i));
 					sqs.deleteQueue(deleteQueueRequest);
-					logger.debug("event=deleted_queue url=" + queueUrl);
+					logger.debug("event=delete_queue queue_url=" + queueUrls.get(i) + " user_id= " + userId);
 				} catch (Exception ex) {
-					logger.error("event=deletedQueue status=failed userId= " + userId, ex);
+					logger.error("event=delete_queue queue_url=" + queueUrls.get(i) + " user_id= " + userId, ex);
 				}
 			}			
 		}
@@ -180,10 +175,9 @@ public class CQSUserPageServlet extends AdminServletBase {
  			
 			ListQueuesResult listQueuesResult = sqs.listQueues(listQueuesRequest);
 			queueUrls = listQueuesResult.getQueueUrls();
-			logger.debug("event=list_queues count=" + queueUrls != null ? queueUrls.size() : 0);
 		
         } catch (Exception ex) {
-			logger.error("event=list_queues status=failed userId= " + userId, ex);
+			logger.error("event=list_queues user_id= " + userId, ex);
 			throw new ServletException(ex);
 		}
 

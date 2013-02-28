@@ -41,7 +41,7 @@ import com.comcast.cmb.common.persistence.CassandraPersistence;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cqs.io.CQSAPIStatsPopulator;
 import com.comcast.cqs.model.CQSAPIStats;
-import com.comcast.cqs.persistence.RedisPayloadCacheCassandraPersistence;
+import com.comcast.cqs.persistence.RedisCachedCassandraPersistence;
 /**
  * Subscribe action
  * @author bwolf, jorge
@@ -184,7 +184,7 @@ public class CQSGetAPIStatsAction extends CQSAction {
 				}
 				
 				try {
-					if (!RedisPayloadCacheCassandraPersistence.isAlive()) {
+					if (!RedisCachedCassandraPersistence.isAlive()) {
 						stats.addStatus("REDIS UNAVAILABLE");
 					}
 				} catch (Exception ex) {

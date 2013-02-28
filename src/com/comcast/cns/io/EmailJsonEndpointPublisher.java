@@ -29,11 +29,11 @@ public class EmailJsonEndpointPublisher extends EmailEndpointPublisher {
 	public void send() throws Exception {
 
 		if (!CMBProperties.getInstance().getSmtpEnabled()) {
-			logger.warn("event=sendEmail status=failed reason=smtp_disabled endpoint=" + endpoint);
+			logger.warn("event=send_email error_code=smtp_disabled endpoint=" + endpoint);
 			return;
 		}
 		
-		logger.debug("event=send_email_json endpoint=" + endpoint + " subject=\"" + subject + "\" message=\"" + message + "\"");
+		logger.debug("event=send_email_json endpoint=" + endpoint + " subject=" + subject);
 		
 		MailWrapper mailAgent = new MailWrapper(); 
 		mailAgent.postMail(new String [] { endpoint }, subject, message, CMBProperties.getInstance().getSmtpReplyAddress());

@@ -129,6 +129,7 @@ public abstract class AdminServletBase extends HttpServlet {
 		HttpSession session = request.getSession(true);
 		
 		if (session.getAttribute("USER") != null) {
+			logger.info("event=logout user_name=" + ((User)session.getAttribute("USER")).getUserName() + " user_id=" + ((User)session.getAttribute("USER")).getUserId());
 			session.removeAttribute("USER");
 		}
 
@@ -143,6 +144,7 @@ public abstract class AdminServletBase extends HttpServlet {
     protected void connect(String userId) throws ServletException {
     	
 		IUserPersistence userHandler = PersistenceFactory.getUserPersistence();
+		
 		try {
 			user = userHandler.getUserById(userId);
 		} catch (PersistenceException ex) {
@@ -226,30 +228,30 @@ public abstract class AdminServletBase extends HttpServlet {
     protected String httpGet(String urlString) {
         
     	URL url;
-        HttpURLConnection conn;
-        BufferedReader br;
-        String line;
-        String doc = "";
-        
-        try {
-        	
-           logger.info("event=http_get url=" + urlString);
-        	
-        	url = new URL(urlString);
-           conn = (HttpURLConnection)url.openConnection();
-           conn.setRequestMethod("GET");
-           br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-           
-           while ((line = br.readLine()) != null) {
-              doc += line;
-           }
-           
-           br.close();
-        
-        } catch (Exception ex) {
-           logger.error("event=http_get_failed url=" + urlString, ex);
-        }
-        
-        return doc;
-     }
+    	HttpURLConnection conn;
+    	BufferedReader br;
+    	String line;
+    	String doc = "";
+
+    	try {
+
+    		url = new URL(urlString);
+    		conn = (HttpURLConnection)url.openConnection();
+    		conn.setRequestMethod("GET");
+    		br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+
+    		while ((line = br.readLine()) != null) {
+    			doc += line;
+    		}
+
+    		br.close();
+
+    		logger.info("event=http_get url=" + urlString);
+
+    	} catch (Exception ex) {
+    		logger.error("event=http_get url=" + urlString, ex);
+    	}
+
+    	return doc;
+    }
 }

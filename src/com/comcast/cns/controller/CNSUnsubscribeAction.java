@@ -57,16 +57,15 @@ public class CNSUnsubscribeAction extends CNSAction {
     	String userId = user.getUserId();
     	
     	if ((arn == null) || (userId == null)) {
-    		logger.error("event=cns_unsubscribe status=failure errorType=InvalidParameters arn=" + arn + " userId=" + userId);
+    		logger.error("event=cns_unsubscribe error_code=InvalidParameters arn=" + arn + " user_id=" + userId);
 			throw new CMBException(CNSErrorCodes.CNS_InvalidParameter,"request parameter does not comply with the associated constraints.");
 		}
     	
     	if (!Util.isValidSubscriptionArn(arn)) {
-    		logger.error("event=cns_unsubscribe status=failure errorType=InvalidParameters arn=" + arn + " userId=" + userId);
+    		logger.error("event=cns_unsubscribe error_code=InvalidParameters arn=" + arn + " user_id=" + userId);
 			throw new CMBException(CNSErrorCodes.CNS_InvalidParameter,"request parameter does not comply with the associated constraints.");
     	}
     	
-    	logger.debug("event=cns_unsubscribe subscriptionArn=" + arn + " userId=" + userId);
     	PersistenceFactory.getSubscriptionPersistence().unsubscribe(arn);
         String res = CNSSubscriptionPopulator.getUnsubscribeResponse();
 		response.getWriter().println(res);

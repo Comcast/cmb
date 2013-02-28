@@ -36,7 +36,6 @@ import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.channel.SimpleChannelHandler;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 
-import com.comcast.cmb.common.controller.CMBControllerServlet;
 import com.comcast.cmb.common.persistence.PersistenceFactory;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cqs.io.CQSMessagePopulator;
@@ -116,25 +115,23 @@ public class CQSLongPollReceiver {
 					
 					//Object monitor = queueMonitors.get(queueArn.toString());
 					
-					logger.info("event=notification_received notification=" + queueArn + " source=" + e.getRemoteAddress());
-
 					contextQueues.putIfAbsent(queueArn.toString(), new ConcurrentLinkedQueue<AsyncContext>());
 					ConcurrentLinkedQueue<AsyncContext> contextQueue = contextQueues.get(queueArn.toString());
 					
 					AsyncContext asyncContext = contextQueue.poll();
 					
 					if (asyncContext == null) {
-						logger.info("event=no_pending_receive");
+						logger.debug("event=no_pending_receive queue_arn=" + queueArn + " remote_address=" + e.getRemoteAddress());
 						break;
 					}
 					
 					if (asyncContext.getRequest() == null) {
-						logger.info("event=skipping_invalid_context");
+						logger.debug("event=skipping_invalid_context queue_arn=" + queueArn + " remote_address=" + e.getRemoteAddress());
 						break;
 					}
 					
 					if (!(asyncContext.getRequest() instanceof CQSHttpServletRequest)) {
-						logger.info("event=skipping_invalid_request");
+						logger.info("event=skipping_invalid_request queue_arn=" + queueArn + " remote_address=" + e.getRemoteAddress());
 						break;
 					}
 					
@@ -143,10 +140,12 @@ public class CQSLongPollReceiver {
 					// skip if request is already finished or outdated
 					
 					if (!request.isActive() || System.currentTimeMillis() - request.getRequestReceivedTimestamp() > request.getWaitTime()) {
-						logger.info("event=skipping_outdated_context");
+						logger.info("event=skipping_outdated_context queue_arn=" + queueArn + " remote_address=" + e.getRemoteAddress());
 						continue;
 					}
 					
+					logger.debug("event=notification_received queue_arn=" + queueArn + " remote_address=" + e.getRemoteAddress());
+
 			        try {
 
 			        	CQSQueue queue = request.getQueue();
@@ -154,7 +153,7 @@ public class CQSLongPollReceiver {
 					
 						if (messageList.size() > 0) {
 							
-							logger.info("event=messages_found action=completing count=" + messageList.size());
+							logger.debug("event=messages_found_for_longpoll_receive count=" + messageList.size() + " queue_arn=" + queueArn + " remote_address=" + e.getRemoteAddress());
 							
 							CQSMonitor.getInstance().addNumberOfMessagesReturned(queue.getRelativeUrl(), messageList.size());
 					        String out = CQSMessagePopulator.getReceiveMessageResponseAfterSerializing(messageList, request.getFilterAttributes());
@@ -163,16 +162,16 @@ public class CQSLongPollReceiver {
 						
 						} else {
 							
-							// if there's poll time left, so put back on queue
+							// if there's longpoll time left, put back on queue
 							
 							if (request.getWaitTime() - System.currentTimeMillis() + request.getRequestReceivedTimestamp() > 0) {
-								logger.info("event=no_messages_found action=re_queueing time_left_ms=" + (request.getWaitTime() - System.currentTimeMillis() + request.getRequestReceivedTimestamp()));
+								logger.debug("event=no_messages_found_for_longpoll_receive action=re_queueing time_left_ms=" + (request.getWaitTime() - System.currentTimeMillis() + request.getRequestReceivedTimestamp()) + " queue_arn=" + queueArn + " remote_address=" + e.getRemoteAddress());
 								contextQueue.offer(asyncContext);
 							}
 						}
 			        
 			        } catch (Exception ex) {
-						logger.error("event=queue_poll_error", ex);
+						logger.error("event=longpoll_queue_error queue_arn=" + queueArn, ex);
 					}
 					
 			        // start reading new message
@@ -194,7 +193,7 @@ public class CQSLongPollReceiver {
 
 		@Override
 		public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) {
-			logger.error("event=long_poll_receiver_error msg=" + e);
+			logger.error("event=longpoll_receiver_error", e.getCause());
 			e.getChannel().close();
 		}
 	}
@@ -220,7 +219,7 @@ public class CQSLongPollReceiver {
 		
 		serverBootstrap.bind(new InetSocketAddress(CMBProperties.getInstance().getCqsLongPollPort()));
 
-		logger.info("event=long_poll_server_listening port=" + CMBProperties.getInstance().getCqsLongPollPort());
+		logger.info("event=longpoll_receiver_service_listening port=" + CMBProperties.getInstance().getCqsLongPollPort());
 	}
 	
 	public static void shutdown() {

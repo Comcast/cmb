@@ -86,10 +86,10 @@ public class CNSUserPageServlet extends AdminServletBase {
 				SetTopicAttributesRequest setTopicAttributesRequest = new SetTopicAttributesRequest(arn, "DisplayName", displayName);
 				sns.setTopicAttributes(setTopicAttributesRequest);
 				
-				logger.debug("event=created_topic topic_name=" + topicName);
+				logger.debug("event=create topic_name=" + topicName + " topic_arn=" + arn + " user_id=" + userId);
 
 			} catch (Exception ex) {
-				logger.error("event=create_topic status=failed user_id= " + userId, ex);
+				logger.error("event=create topic_name=" + topicName + " user_id=" + userId);
 				throw new ServletException(ex);
 			}
 		
@@ -98,9 +98,9 @@ public class CNSUserPageServlet extends AdminServletBase {
 			try {
 				DeleteTopicRequest deleteTopicRequest = new DeleteTopicRequest(arn);
 				sns.deleteTopic(deleteTopicRequest);
-				logger.debug("event=deleted_topic topic_name=" + topicName);
+				logger.debug("event=delete_topic topic_arn="+arn+" user_id= " + userId);
 			} catch (Exception ex) {
-				logger.error("event=delete_topic status=failed user_id= " + userId, ex);
+				logger.error("event=delete_topic topic_arn="+arn+" user_id= " + userId, ex);
 				throw new ServletException(ex);
 			}
 
@@ -117,9 +117,8 @@ public class CNSUserPageServlet extends AdminServletBase {
 				ListTopicsResult listTopicResult = sns.listTopics(listTopicRequest);
 				topics = listTopicResult.getTopics();
 
-				logger.debug("event=list_topics count=" + topics != null ? topics.size() : 0);
 			} catch (Exception ex) {
-				logger.error("event=listTopics status=failed userId= " + userId, ex);
+				logger.error("event=list_topics user_id= " + userId, ex);
 				throw new ServletException(ex);
 			}
 			
@@ -130,9 +129,9 @@ public class CNSUserPageServlet extends AdminServletBase {
 	        	try {
 					DeleteTopicRequest deleteTopicRequest = new DeleteTopicRequest(t.getTopicArn());
 					sns.deleteTopic(deleteTopicRequest);
-					logger.debug("event=deleted_topic topic_name=" + topicName);
+					logger.debug("event=delete_topic topic_arn=" + (t != null ? t.getTopicArn() : "null") + " user_id= " + userId);
 				} catch (Exception ex) {
-					logger.error("event=delete_topic status=failed user_id= " + userId, ex);
+					logger.error("event=delete_topic topic_arn=" + (t != null ? t.getTopicArn() : "null") + " user_id= " + userId, ex);
 				}
 			}			
 		}
@@ -174,10 +173,8 @@ public class CNSUserPageServlet extends AdminServletBase {
 			listTopicResult = sns.listTopics(listTopicRequest);
 			topics = listTopicResult.getTopics();
 
-			logger.debug("event=list_topics count=" + topics != null ? topics.size() : 0);
-			
 		} catch (Exception ex) {
-			logger.error("event=list_topics status=failed user_id= " + userId, ex);
+			logger.error("event=list_topics user_id= " + userId, ex);
 			throw new ServletException(ex);
 		}
         

@@ -56,14 +56,14 @@ public class CNSRemovePermissionAction extends CNSAction {
 		String topicArn = request.getParameter("TopicArn");
     	
     	if ((topicArn == null) ) {
-    		logger.error("action=cns_add_permission status=failure event=missing_parameter_topic_arn");
+    		logger.error("event=cns_add_permission error_code=missing_parameter_topic_arn");
 			throw new CMBException(CNSErrorCodes.CNS_InvalidParameter,"Missing parameter TopicArn");
     	}
     	
     	CNSTopic topic = PersistenceFactory.getTopicPersistence().getTopic(topicArn);
     	
     	if (topic == null) {
-    		logger.error("action=cns_add_permission status=failure event=invalid_parameter_topic_arn");
+    		logger.error("event=cns_add_permission error_code=invalid_parameter_topic_arn topic_arn=" + topicArn);
 			throw new CMBException(CNSErrorCodes.CNS_NotFound,"Resource not found.");
     	}
     	

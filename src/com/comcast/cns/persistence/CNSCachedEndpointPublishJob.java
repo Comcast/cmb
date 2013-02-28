@@ -111,6 +111,7 @@ public class CNSCachedEndpointPublishJob extends CNSEndpointPublishJob {
                 } catch(IllegalStateException e) {
                     if ((e.getCause() instanceof ExecutionException) && 
                         (e.getCause().getCause() instanceof TopicNotFoundException)) {
+                    	logger.warn("event=topic_not_found topic_arn=" + topicArn);
                         throw new TopicNotFoundException("Topic Not Found:" + topicArn);
                     } else {
                         throw e;
@@ -121,7 +122,7 @@ public class CNSCachedEndpointPublishJob extends CNSEndpointPublishJob {
                     String subArn = arr[i];
                     CNSCachedEndpointSubscriptionInfo subInfo = arnToSubInfo.get(subArn);
                     if (subInfo == null) {
-                        logger.info("event=parseInstances info=subinfo_not_found arn=" + subArn);
+                        logger.warn("event=subscription_info_not_found arn=" + subArn + " topic_arn=" + topicArn);
                     } else {
                         infos.add(subInfo);
                     }
@@ -133,7 +134,7 @@ public class CNSCachedEndpointPublishJob extends CNSEndpointPublishJob {
                     String subArn = arr[i];
                     CNSSubscription sub = pers.getSubscription(subArn);
                     if (sub == null) {
-                        logger.info("event=parseInstances info=subinfo_not_found arn=" + subArn);
+                        logger.warn("event=subscription_info_not_found arn=" + subArn + " topic_arn=" + topicArn);
                     } else {
                         infos.add(new CNSCachedEndpointSubscriptionInfo(sub.getProtocol(), sub.getEndpoint(), sub.getArn()));
                     }
@@ -168,7 +169,7 @@ public class CNSCachedEndpointPublishJob extends CNSEndpointPublishJob {
                 }
             }
             long ts2 = System.currentTimeMillis();
-            logger.info("event=CachePopulator topicArn=" + topicArn + " responseTimeMS=" + (ts2 - ts1));
+            logger.debug("event=populated_subscription_cache topic_arn=" + topicArn + " res_ts=" + (ts2 - ts1));
             return val;
         }        
     }
@@ -198,11 +199,11 @@ public class CNSCachedEndpointPublishJob extends CNSEndpointPublishJob {
         List<CNSCachedEndpointSubscriptionInfo> subInfos;
         try {
             subInfos = CNSCachedEndpointSubscriptionInfo.parseInstances(topicArn, arr, idx, numSubInfos, useCache);
-        } catch(TopicNotFoundException e) {
-            logger.error("event=parseInstance status=TopicNotFound topicArn=" + topicArn);
+        } catch (TopicNotFoundException e) {
+            logger.error("event=parse_publish_job error_code=topic_not_found topic_arn=" + topicArn, e);
             throw e;
         } catch (Exception e) {
-            logger.error("event=parseInstance status=exception", e);
+            logger.error("event=parse_publish_job", e);
             throw new CMBException(CMBErrorCodes.InternalError, e.getMessage());
         }
 
@@ -220,12 +221,11 @@ public class CNSCachedEndpointPublishJob extends CNSEndpointPublishJob {
         try {
             message = CNSMessage.parseInstance(sb.toString());
         } catch(Exception e) {
-            logger.error("event=parseInstance status=failed cnsmessage-serialized=" + sb.toString(), e);
+            logger.error("event=parse_publish_job cnsmessage_serialized=" + sb.toString(), e);
             throw new CMBException(CMBErrorCodes.InternalError, e.getMessage());
         }
         message.processMessageToProtocols();
         
         return new CNSCachedEndpointPublishJob(message, subInfos);
     }
-
 }

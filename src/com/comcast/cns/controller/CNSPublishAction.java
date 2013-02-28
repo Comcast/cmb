@@ -121,7 +121,7 @@ public class CNSPublishAction extends CNSAction {
     	String message = request.getParameter("Message");
     	String topicArn = request.getParameter("TopicArn");
 
-    	logger.debug("event=cns_publish message=" + message + " topicArn=" + topicArn + " userId=" + userId );
+    	logger.debug("event=cns_publish message=" + message + " topic_arn=" + topicArn + " user_id=" + userId );
     	
     	String messageStructure = null;
     	String subject = null;
@@ -137,7 +137,7 @@ public class CNSPublishAction extends CNSAction {
     		messageStructure = request.getParameter("MessageStructure");   	
     		
     		if (!messageStructure.equals("json")) {
-    			logger.error("event=cns_publish status=failure errorType=InvalidParameters message=" + message + " messageStructure=" + messageStructure + " topicArn=" + topicArn + " userId=" + userId);
+    			logger.error("event=cns_publish error_code=InvalidParameters message=" + message + " message_structure=" + messageStructure + " topic_arn=" + topicArn + " user_id=" + userId);
     			throw new CMBException(CNSErrorCodes.CNS_InvalidParameter,"Invalid parameter: Invalid Message Structure parameter: " + messageStructure);
     		}
     		
@@ -152,25 +152,25 @@ public class CNSPublishAction extends CNSAction {
 		} 
     	
     	if ((userId == null) || (message == null)) {
-    		logger.error("event=cns_publish_ng status=failure errorType=InvalidParameters message=" + message + " topicArn=" + topicArn + " userId=" + userId);
+    		logger.error("event=cns_publish error_code=InvalidParameters message=" + message + " topic_arn=" + topicArn + " user_id=" + userId);
 			throw new CMBException(CNSErrorCodes.CNS_ValidationError,"1 validation error detected: Value null at 'message' failed to satisfy constraint: Member must not be null");
     	}
     	
 		if ((topicArn == null) || !Util.isValidTopicArn(topicArn)) {
-			logger.error("event=cns_publish_ng status=failure errorType=InvalidParameters message=" + message + " topicArn=" + topicArn + " userId=" + userId);
+			logger.error("event=cns_publish error_code=InvalidParameters message=" + message + " topic_arn=" + topicArn + " user_id=" + userId);
 			throw new CMBException(CNSErrorCodes.CNS_InvalidParameter,"TopicArn");
     	}
 		
 		CNSTopic topic = topicCache.getAndSetIfNotPresent(topicArn, new CNSTopicCallable(topicArn), CMBProperties.getInstance().getCnsCacheExpiring() * 1000); 
 		
     	if (topic == null) {
-    		logger.error("event=cns_publish_ng status=failure errorType=NotFound message=" + message + " topicArn=" + topicArn + " userId=" + userId);
+    		logger.error("event=cns_publish error_code=NotFound message=" + message + " topic_arn=" + topicArn + " user_id=" + userId);
 			throw new CMBException(CNSErrorCodes.CNS_NotFound,"Resource not found.");
     	}
 		
     	cnsMessage.setUserId(topic.getUserId());
     	cnsMessage.setTopicArn(topicArn);
-    	logger.debug("event=cns_publish_ng message=" + message + " topicArn=" + topicArn + " userId=" + userId  + log);
+    	logger.debug("event=cns_publish message=" + message + " topic_arn=" + topicArn + " user_id=" + userId  + log);
     	
     	cnsMessage.checkIsValid();
     	
@@ -210,7 +210,7 @@ public class CNSPublishAction extends CNSAction {
     	SendMessageResult sendMessageResult = sqs.sendMessage(new SendMessageRequest(queueUrl, cnsMessage.serialize()));
     	long ts2 = System.currentTimeMillis();
     	CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CNSCQSTime, ts2 - ts1);
-    	logger.debug("event=cns_publish status=success message=" + message + " topicArn=" + topicArn + " userId=" + userId + " messageId=" + sendMessageResult.getMessageId() + log);
+    	logger.debug("event=cns_publish message=" + message + " topic_arn=" + topicArn + " user_id=" + userId + " message_id=" + sendMessageResult.getMessageId() + log);
     	String res = CNSSubscriptionPopulator.getPublishResponse(cnsMessage);
     	response.getWriter().println(res);
     	return true;

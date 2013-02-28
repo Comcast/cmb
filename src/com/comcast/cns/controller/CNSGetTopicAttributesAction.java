@@ -51,14 +51,14 @@ public class CNSGetTopicAttributesAction extends CNSAction {
     	String topicArn = request.getParameter("TopicArn");
     	
     	if ((userId == null) || (topicArn == null) ) {
-    		logger.error("event=cns_get_topic_attributes status=failure errorType=InvalidParameters topicArn=" + topicArn + " userId=" + userId);
+    		logger.error("event=cns_get_topic_attributes error_code=InvalidParameters topic_arn=" + topicArn + " user_id=" + userId);
 			throw new CMBException(CNSErrorCodes.CNS_InvalidParameter,"missing parameters");
     	}
     	
     	CNSTopicAttributes attr = PersistenceFactory.getCNSAttributePersistence().getTopicAttributes(topicArn);
     	String res = CNSAttributePopulator.getGetTopicAttributesResponse(attr);
     	
-    	logger.info("event=cns_get_topic_attributes status=success topicArn=" + topicArn + " userId=" + userId);
+    	logger.debug("event=cns_get_topic_attributes topic_arn=" + topicArn + " user_id=" + userId);
     	response.getWriter().println(res);
     	return true;
     }

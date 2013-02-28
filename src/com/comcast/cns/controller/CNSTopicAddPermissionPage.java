@@ -105,8 +105,9 @@ public class CNSTopicAddPermissionPage extends AdminServletBase {
 				try {
 					AddPermissionRequest addPermissionRequest = new AddPermissionRequest(topicArn, sid, usersList, actionsList);
 					sns.addPermission(addPermissionRequest);
+					logger.debug("event=add_permission topic_arn=" + topicArn + " label=" + sid + " user_id= " + userId);
 				} catch (Exception ex) {
-					logger.error("event_failed_to_add_permission arn=" + topicArn + " label=" + sid, ex);
+					logger.error("event=add_permission topic_arn=" + topicArn + " label=" + sid + " user_id= " + userId, ex);
 					throw new ServletException(ex);
 				}
 			} 

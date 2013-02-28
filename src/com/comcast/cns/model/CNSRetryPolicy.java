@@ -162,12 +162,12 @@ public class CNSRetryPolicy {
 			}
 			
 		} catch (JSONException e) {
-			logger.error("event=construct_cns_retry_policy status=failed", e);
+			logger.error("event=construct_cns_retry_policy", e);
 			throw new CNSModelConstructionException("JSON parameter format error");
 		}
 		
 		if (error) {
-			logger.error("event=construct_cns_retry_policy status=failed message=" + message);
+			logger.error("event=construct_cns_retry_policy message=" + message);
 			throw new CNSModelConstructionException(message);
 		}
 	}
@@ -285,12 +285,12 @@ public class CNSRetryPolicy {
 		
 		} catch (Exception e) {
 
-			logger.error("event=update_cns_retry_policy status=failed", e);
+			logger.error("event=update_cns_retry_policy", e);
 			throw new CNSModelConstructionException("JSON parameter format error");
 		}
 		
 		if (error) {
-			logger.error("event=update_cns_retry_policy status=failed message=" + message);
+			logger.error("event=update_cns_retry_policy message=" + message);
 			throw new CNSModelConstructionException(message);
 		}
 	}
@@ -351,7 +351,7 @@ public class CNSRetryPolicy {
 	    	return json;
 		
 		} catch (Exception e) {
-			logger.error("event=cns_retry_policy_to_json status=failed", e);
+			logger.error("event=cns_retry_policy_to_json", e);
 		}
 		
 		return null;

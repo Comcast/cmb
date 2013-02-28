@@ -64,17 +64,17 @@ public class UserCassandraPersistence extends CassandraPersistence implements IU
 		User user = null;
 		
 		if (userName == null || userName.length() < 0 || userName.length() > 25) {
-			logger.error("event=createUser status=failed reason=invalid_user_name user_name=" + userName);
+			logger.error("event=create_user error_code=invalid_user_name user_name=" + userName);
 			throw new PersistenceException(CQSErrorCodes.InvalidRequest, "Invalid user name " + userName);
 		}
 		
 		if (password == null || password.length() < 0 || password.length() > 25) {
-			logger.error("event=createUser status=failed reason=invalid_password");
+			logger.error("event=create_user error_code=invalid_password");
 			throw new PersistenceException(CQSErrorCodes.InvalidRequest, "Invalid password");
 		}
 
 		if (getUserByName(userName) != null) {
-			logger.error("event=createUser status=failed reason=user_already_exists user_name=" + userName);
+			logger.error("event=create_user error_code=user_already_exists user_name=" + userName);
 			throw new PersistenceException(CQSErrorCodes.InvalidRequest, "User with user name " + userName + " already exists");
 		}
 		
@@ -98,7 +98,7 @@ public class UserCassandraPersistence extends CassandraPersistence implements IU
 			insertOrUpdateRow(user.getAccessKey(), COLUMN_FAMILY_USERS, userDataMap, HConsistencyLevel.QUORUM);
 			
 		} catch (Exception e) {
-			logger.error("event=createUser status=exception", e);
+			logger.error("event=create_user", e);
 			throw new PersistenceException(CQSErrorCodes.InvalidRequest, e.getMessage());
 		}
 		
@@ -111,7 +111,7 @@ public class UserCassandraPersistence extends CassandraPersistence implements IU
 		User user = getUserByName(userName);
 		
 		if (user == null) {
-			logger.error("event=deleteUser status=failed reason=user_does_not_exist user_name=" + userName);
+			logger.error("event=delete_user error_code=user_does_not_exist user_name=" + userName);
 			throw new PersistenceException (CQSErrorCodes.InvalidRequest, "No user with the user name " + userName + " exists");
 		}
 		
@@ -149,7 +149,7 @@ public class UserCassandraPersistence extends CassandraPersistence implements IU
 		if (rows == null || rows.getCount() == 0) {
 			return null;
 		} else if (rows.getCount() > 1) {
-			logger.error("event=read_user status=failed query=" + query);
+			logger.error("event=read_user query=" + query);
 			throw new PersistenceException(CQSErrorCodes.InvalidQueryParameter, "Failed to read user");
 		}
 

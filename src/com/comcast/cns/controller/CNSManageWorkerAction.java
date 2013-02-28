@@ -82,14 +82,14 @@ public class CNSManageWorkerAction extends CNSAction {
 		String task = request.getParameter("Task");
 
 		if (task == null || task.equals("")) {
-			logger.error("event=cns_manage_worker status=failure errorType=InvalidParameters details=missing_parameter_task");
+			logger.error("event=cns_manage_worker error_code=missing_parameter_task");
 			throw new CMBException(CNSErrorCodes.MissingParameter,"Request parameter Task missing.");
 		}
 
 		String host = request.getParameter("Host");
 
 		if (!task.equals("ClearAPIStats") && (host == null || host.equals(""))) {
-			logger.error("event=cns_manage_worker status=failure errorType=InvalidParameters details=missing_parameter_host");
+			logger.error("event=cns_manage_worker error_code=missing_parameter_host");
 			throw new CMBException(CNSErrorCodes.MissingParameter,"Request parameter Host missing.");
 		}
 
@@ -183,7 +183,7 @@ public class CNSManageWorkerAction extends CNSAction {
 	    	return true;
 
 		} else {
-			logger.error("event=cns_manage_worker status=failure errorType=InvalidParameterValue parameter=Task valid_values=ClearQueues,RemoveRecord");
+			logger.error("event=cns_manage_worker error_code=invalid_task_parameter valid_values=ClearQueues,RemoveRecord");
 			throw new CMBException(CNSErrorCodes.InvalidParameterValue,"Request parameter Task missing is invalid. Valid values are ClearQueues and RemoveRecord.");
 		}
 	}

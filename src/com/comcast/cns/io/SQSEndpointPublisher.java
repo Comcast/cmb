@@ -73,7 +73,7 @@ public class SQSEndpointPublisher implements IEndpointPublisher {
 		try {
 			sqs.sendMessage(new SendMessageRequest(url, message));			
 		} catch(Exception ex) {
-			logger.warn("event=send_sqs_message status=failure endpoint=" + endpoint + "\" message=\"" + message, ex);
+			logger.warn("event=send_sqs_message endpoint=" + endpoint + "\" message=\"" + message, ex);
 			throw new CMBException(CNSErrorCodes.InternalError, "internal service error");
 		}
 

@@ -112,8 +112,9 @@ public class CQSAddQueuePermissionPage extends AdminServletBase {
 					try {
 						AddPermissionRequest addPermissionRequest = new AddPermissionRequest(queueUrl, sid, usersList, actionsList);
 						sqs.addPermission(addPermissionRequest);
+						logger.debug("event=add_permission queue_url=" + queueUrl + " label=" + sid + " user_id=" + userId);
 					} catch (Exception ex) {
-						logger.error("event_failed_to_add_permission queue_url=" + queueUrl + " label=" + sid, ex);
+						logger.error("event=add_permission queue_url=" + queueUrl + " label=" + sid + " user_id=" + userId, ex);
 						throw new ServletException(ex);
 					}
 				} 

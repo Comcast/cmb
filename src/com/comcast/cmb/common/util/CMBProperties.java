@@ -291,7 +291,7 @@ public class CMBProperties {
             fileStream.close();
 
 		} catch (Exception e) {
-            log.error("event=load_cmb_properties status=failed file="+System.getProperty("CMB.propertyFile"), e);
+            log.error("event=load_cmb_properties error_code=unable_to_load_file file="+System.getProperty("CMB.propertyFile"), e);
             throw new RuntimeException("Unable to load CMB.propertyFile");
 		}
 	}

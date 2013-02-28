@@ -30,7 +30,7 @@ import com.comcast.cmb.common.model.User;
 import com.comcast.cmb.common.util.CMBException;
 import com.comcast.cns.util.CNSErrorCodes;
 import com.comcast.cqs.io.CQSPopulator;
-import com.comcast.cqs.persistence.RedisPayloadCacheCassandraPersistence;
+import com.comcast.cqs.persistence.RedisCachedCassandraPersistence;
 import com.comcast.cqs.util.CQSErrorCodes;
 
 /**
@@ -58,13 +58,13 @@ public class CQSManageServiceAction extends CQSAction {
 		String task = request.getParameter("Task");
 
 		if (task == null || task.equals("")) {
-			logger.error("event=cqs_manage_service status=failure errorType=InvalidParameters details=missing_parameter_task");
+			logger.error("event=cqs_manage_service error_code=missing_parameter_task");
 			throw new CMBException(CQSErrorCodes.MissingParameter,"Request parameter Task missing.");
 		}
 		
 		if (task.equals("ClearCache")) {
 
-	    	RedisPayloadCacheCassandraPersistence.flushAll();
+	    	RedisCachedCassandraPersistence.flushAll();
 	    	response.getWriter().println(CQSPopulator.getResponseMetadata());
 	        return true;
         
@@ -78,7 +78,7 @@ public class CQSManageServiceAction extends CQSAction {
 	    	return true;
 			
 		} else {
-			logger.error("event=cqs_manage_service status=failure errorType=InvalidParameterValue parameter=Task valid_values=ClearCache,ClearAPIStats");
+			logger.error("event=cqs_manage_service error_code=invalid_task_parameter valid_values=ClearCache,ClearAPIStats");
 			throw new CMBException(CNSErrorCodes.InvalidParameterValue,"Request parameter Task missing is invalid. Valid values are ClearQueues and RemoveRecord.");
 		}
     }

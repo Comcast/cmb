@@ -163,7 +163,7 @@ public class CNSEndpointPublisherJobConsumer implements CNSPublisherPartitionRun
 
     	CQSHandler.ensureQueuesExist(CNS_CONSUMER_QUEUE_NAME_PREFIX, CMBProperties.getInstance().getNumEPPublishJobQs());
 
-    	logger.info("event=initialize status=success");
+    	logger.info("event=initialize");
     	initialized = true;
     }
     
@@ -175,7 +175,7 @@ public class CNSEndpointPublisherJobConsumer implements CNSPublisherPartitionRun
         reDeliveryHandlers.shutdownNow();
         initialized = false;
         CQSHandler.shutdown();
-        logger.info("event=shutdown status=success");
+        logger.info("event=shutdown");
     }
     
     /**
@@ -255,7 +255,7 @@ public class CNSEndpointPublisherJobConsumer implements CNSPublisherPartitionRun
                 try {
                     Thread.sleep(100);                
                 } catch (InterruptedException e) {
-                    logger.error("event=run status=error", e);
+                    logger.error("event=run", e);
                 }
 
                 CMBControllerServlet.valueAccumulator.deleteAllCounters();
@@ -319,7 +319,7 @@ public class CNSEndpointPublisherJobConsumer implements CNSPublisherPartitionRun
 	    	}
 
         } catch (Exception ex) {
-            logger.error("event=run status=exception", ex);
+            logger.error("event=run", ex);
         }
         
         CMBControllerServlet.valueAccumulator.deleteAllCounters();

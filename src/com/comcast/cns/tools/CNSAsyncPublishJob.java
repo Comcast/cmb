@@ -171,7 +171,7 @@ public class CNSAsyncPublishJob implements Runnable, IPublisherCallback {
             letMessageDieForEndpoint();
             
         } catch (SubscriberNotFoundException e) {
-            logger.error("event=retry_error status=subscriber_not_found sub_arn=" + subArn);                
+            logger.error("event=retry_error error_code=subscriber_not_found sub_arn=" + subArn);                
         } catch (Exception e) {
             logger.error("event=retry_error endpoint=" + endpoint + " protocol=" + protocol + " message_length=" + message.getMessage().length() + (user == null ?"":" " + user), e);
         }            

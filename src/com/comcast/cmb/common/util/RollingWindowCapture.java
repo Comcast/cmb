@@ -128,7 +128,7 @@ public final class RollingWindowCapture<T extends RollingWindowCapture.PayLoad> 
             PayLoadNode node = it.next();
             if (node._captureTime + (_windowSizeSec*1000) < now) {
                 if (!_queue.remove(node)) {
-                    logger.debug("event=cleanupWindow status=queue_did_not_change info=Node may node have been deleted");
+                    logger.debug("event=cleanup_window status=queue_did_not_change info=node_may_have_been_deleted");
                 }
             } else {
                 //found the first node in the capture window. we are done

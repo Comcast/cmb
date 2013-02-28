@@ -31,7 +31,6 @@ import com.comcast.cmb.common.persistence.IUserPersistence;
 import com.comcast.cmb.common.persistence.PersistenceFactory;
 import com.comcast.cmb.common.util.AuthUtil;
 import com.comcast.cmb.common.util.CMBProperties;
-import com.comcast.cmb.common.util.ValueAccumulator.AccumulatorName;
 
 /**
  * Admin page for user login
@@ -64,20 +63,21 @@ public class UserLoginPageServlet extends AdminServletBase {
 				HttpSession session = request.getSession(true);
 
 				if (user!=null && AuthUtil.verifyPassword(password, user.getHashPassword())) {
+					logger.info("event=login_admin_ui user_name=" + userName + " user_id=" + user.getUserId());
 					session.setAttribute("USER", user);
 				} else if (user==null && CMBProperties.getInstance().getCnsUserName().equals(userName) && CMBProperties.getInstance().getCnsUserPassword().equals(password)) {
+					logger.warn("event=login_admin_ui action=created_missing_admin_user user_name=" + userName);
 					userHandler.createUser(userName, password);
 					user = userHandler.getUserByName(userName);
 					session.setAttribute("USER", user);
-					logger.error("event=login status=created_missing_admin_user user_name=" + userName);
 				} else {
+					logger.warn("event=login_admin_ui user_name=" + userName);
 					user = null;
 					session.removeAttribute("USER");
-					logger.error("event=login status=failed user_name=" + userName);
 				}
 				
 			} catch (Exception ex) {
-				logger.error("event=login status=failed user_name=" + userName, ex);
+				logger.error("event=login_admin_ui user_name=" + userName, ex);
 				throw new ServletException(ex);
 			}
 			
@@ -86,8 +86,6 @@ public class UserLoginPageServlet extends AdminServletBase {
 		}
 		
 		if (user != null) {
-			
-			logger.debug("event=login status=success user_name=" + userName + " user_id=" + user.getUserId());
 			
 			if (isAdmin(request)) {
 				response.sendRedirect(response.encodeURL("/ADMIN?userId="+ user.getUserId()));
@@ -117,8 +115,6 @@ public class UserLoginPageServlet extends AdminServletBase {
 	        out.println("</body></html>");
 		}
 		
-        logger.info("action=userLoginPageServletProcess CassandraTimeMS=" + CMBControllerServlet.valueAccumulator.getCounter(AccumulatorName.CassandraTime));
-        
         CMBControllerServlet.valueAccumulator.deleteAllCounters();
 	}
 	

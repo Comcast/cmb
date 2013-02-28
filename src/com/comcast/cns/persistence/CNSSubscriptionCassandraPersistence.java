@@ -318,7 +318,6 @@ public class CNSSubscriptionCassandraPersistence extends CassandraPersistence im
 		    if (superCol != null) {
 		        CNSSubscription s = extractSubscriptionFromSuperColumn(superCol, Util.getCnsTopicArn(arn));
 		        s.checkIsValid();
-	            logger.debug("event=cns_get_subscription " + s.toString());
 	            return s;
 		    }		    
 		}
@@ -357,7 +356,7 @@ public class CNSSubscriptionCassandraPersistence extends CassandraPersistence im
 		
         if (nextToken != null) {
             if (getSubscription(nextToken) == null) {
-                throw new SubscriberNotFoundException("Subscriber Not Found. arn=" + nextToken);
+                throw new SubscriberNotFoundException("Subscriber not found for arn " + nextToken);
             }
         }  
         
@@ -459,7 +458,7 @@ public class CNSSubscriptionCassandraPersistence extends CassandraPersistence im
 
 	    if (nextToken != null) {
             if (getSubscription(nextToken) == null) {
-                throw new SubscriberNotFoundException("Subscriber Not Found. arn=" + nextToken);
+                throw new SubscriberNotFoundException("Subscriber not found for arn " + nextToken);
             }
         }
 	    
@@ -469,7 +468,7 @@ public class CNSSubscriptionCassandraPersistence extends CassandraPersistence im
 		if (nextToken != null) {
 		    Row<String, String, String> row = readRow(columnFamilySubscriptionsIndex, nextToken, 1, new StringSerializer(), new StringSerializer(), new StringSerializer(), HConsistencyLevel.QUORUM);
 		    if (row == null) {
-		    	throw new IllegalArgumentException("Could not find any subscription with arn:" + nextToken);
+		    	throw new IllegalArgumentException("Could not find any subscription with arn " + nextToken);
 		    }
 		    //get Column from main table
 		    String colName = row.getColumnSlice().getColumns().get(0).getName();
@@ -529,8 +528,6 @@ public class CNSSubscriptionCassandraPersistence extends CassandraPersistence im
 		            l.add(sub);
 		        }
 		        
-	            logger.debug("event=list_subscriptions " + sub.toString());
-		        
 		        if (l.size() == pageSize) {
 		            return l;
 		        }
@@ -558,10 +555,7 @@ public class CNSSubscriptionCassandraPersistence extends CassandraPersistence im
 	public CNSSubscription confirmSubscription(boolean authenticateOnUnsubscribe, String token, String topicArn) throws Exception {
 		
 	    //get Sub-arn given token
-	    Row<String, String, String> row = readRow(columnFamilySubscriptionsTokenIndex, token,
-                1,
-                StringSerializer.get(), StringSerializer.get(),
-                StringSerializer.get(), HConsistencyLevel.QUORUM);
+	    Row<String, String, String> row = readRow(columnFamilySubscriptionsTokenIndex, token, 1, StringSerializer.get(), StringSerializer.get(), StringSerializer.get(), HConsistencyLevel.QUORUM);
 	    
 	    if (row == null) {
 	        throw new CMBException(CMBErrorCodes.NotFound, "Resource not found.");
@@ -574,7 +568,7 @@ public class CNSSubscriptionCassandraPersistence extends CassandraPersistence im
 		final CNSSubscription s = getSubscription(subArn);	
 		
 		if (s == null) {
-			throw new SubscriberNotFoundException("Could not find subscription given subArn:" + subArn);
+			throw new SubscriberNotFoundException("Could not find subscription given subscription arn " + subArn);
 		}
 		
 		s.setAuthenticateOnUnsubscribe(authenticateOnUnsubscribe);
@@ -600,16 +594,11 @@ public class CNSSubscriptionCassandraPersistence extends CassandraPersistence im
 		
 		if (s != null) {
 
-			logger.info("event=delete_subscription " + s.toString());
-
 			deleteIndexes(arn, s.getUserId(), s.getToken());
 			Composite superColumnName = new Composite(s.getEndpoint(), s.getProtocol().name());
 			deleteSuperColumn(subscriptionsTemplate, Util.getCnsTopicArn(arn), superColumnName);
 
 			incrementCounter(columnFamilyTopicStats, s.getTopicArn(), "subscriptionDeleted", 1, new StringSerializer(), new StringSerializer(), HConsistencyLevel.QUORUM);
-
-		} else {
-			logger.info("event=no_subscription_to_delete arn=" + arn);
 		}
 	}
 	
@@ -629,7 +618,6 @@ public class CNSSubscriptionCassandraPersistence extends CassandraPersistence im
 
 			for (int i = 0; i < subs.size() - 1; i++) {
 				CNSSubscription sub = subs.get(i);
-				logger.info("event=delete_subscription " + sub.toString());
 				deleteIndexes(sub.getArn(), sub.getUserId(), sub.getToken());
 			}
 

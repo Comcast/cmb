@@ -18,6 +18,8 @@ package com.comcast.cqs.persistence;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -93,12 +95,12 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
     private static void initializeInstance() {
         CQSMessagePartitionedCassandraPersistence cassandraPersistence = new CQSMessagePartitionedCassandraPersistence();
         if (CMBProperties.getInstance().isRedisPayloadCacheEnabled()) {
-            log.info("event=initializeInstance payloadCacheEnabled=true");
-            RedisPayloadCacheCassandraPersistence pCache = new RedisPayloadCacheCassandraPersistence(cassandraPersistence);
-            Inst = new RedisCachedCassandraPersistence(pCache);
-            pCache.setMessagePersistenceIdSequence(Inst);
+            log.info("event=initialize_redis payload_cache_enabled=true");
+            RedisPayloadCacheCassandraPersistence redis = new RedisPayloadCacheCassandraPersistence(cassandraPersistence);
+            Inst = new RedisCachedCassandraPersistence(redis);
+            redis.setMessagePersistenceIdSequence(Inst);
         } else {
-            log.info("event=initializeInstance payloadCacheEnabled=false");
+            log.info("event=initialize_redis payload_cache_enabled=false");
             Inst = new RedisCachedCassandraPersistence(cassandraPersistence);            
         }        
     }
@@ -112,26 +114,35 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
      * Initialize the redis connection pool
      */
     private static void initializePool() {
+    	
         cfg.maxActive = CMBProperties.getInstance().getRedisConnectionsMaxActive();
         cfg.maxIdle = -1;
         List<JedisShardInfo> shardInfos = new LinkedList<JedisShardInfo>();
         String serverList = CMBProperties.getInstance().getRedisServerList();
+        
         if (serverList == null) {
-            throw new RuntimeException("Redis server list not specified. Please specify");
+            throw new RuntimeException("Redis server list not specified");
         }
+        
         String []arr = serverList.split(",");
+        
         for (int i = 0; i < arr.length; i++) {
-            String []hostPort = arr[i].trim().split(":");
-            if (hostPort.length != 2) {
-                throw new RuntimeException("Each entry in server-list must be host:port. Instead got:" + serverList);
+            
+        	String []hostPort = arr[i].trim().split(":");
+            
+        	if (hostPort.length != 2) {
+                throw new RuntimeException("Invalid redis server list: " + serverList);
             }
-            JedisShardInfo shardInfo = new JedisShardInfo(hostPort[0].trim(), Integer.parseInt(hostPort[1].trim()), 4000);
+            
+        	JedisShardInfo shardInfo = new JedisShardInfo(hostPort[0].trim(), Integer.parseInt(hostPort[1].trim()), 4000);
             shardInfos.add(shardInfo);
         }
+        
         pool = new ShardedJedisPool(cfg, shardInfos);
         executor = Executors.newFixedThreadPool(CMBProperties.getInstance().getRedisFillerThreads());
         revisibilityExecutor = Executors.newFixedThreadPool(CMBProperties.getInstance().getRedisRevisibleThreads());
-        log.info("event=redisInitializePool status=succesfull poolSize=" + shardInfos.size() + " maxActive=" + cfg.maxActive);
+        
+        log.info("event=initialize pools_size=" + shardInfos.size() + " max_active=" + cfg.maxActive);
     }
     
     /**
@@ -295,8 +306,6 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
                     }
                 }
             }
-            
-            
             Transaction tr = j.multi();
             if (state == null) {
                 tr.hdel(queueUrl + "-STATE", "STATE");
@@ -345,7 +354,9 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
     }
     
     private static boolean checkAndSetFlag(String queueUrl, String suffix, int exp) throws SetFailedException {
-        if (exp <= 0) throw new IllegalArgumentException("Exp cannot be less than 0");
+        if (exp <= 0) {
+        	throw new IllegalArgumentException("Redis expiration cannot be less than 0");
+        }
         long ts1 = System.currentTimeMillis();
         boolean brokenJedis = false;
         ShardedJedis jedis = getResource();
@@ -401,7 +412,7 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
      * @param exp
      * @return true if Revisible set processing was done. false otherwise
      */
-    private static boolean chechAndProcessRevisibleSet(String queueUrl, int exp) throws SetFailedException {
+    private static boolean checkAndProcessRevisibleSet(String queueUrl, int exp) throws SetFailedException {
         if (checkAndSetFlag(queueUrl, "-VR", exp)) {
             //perform re-visible set processing. Get all memIds whose score (visibilityTO) is <= now
             long ts1 = System.currentTimeMillis();
@@ -417,8 +428,10 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
                     jedis.zrem(queueUrl + "-V", revisibleMemId);
                 }
                 ts2 = System.currentTimeMillis();
-                log.debug("event=chechAndProcessRevisibleSet numMadeRevisible=" + revisibleSet.size() + " responseTimeMS=" + (ts2 - ts1));
-            } catch(JedisException e) {
+                if (revisibleSet.size() > 0) {
+                	log.debug("event=redis_revisibility num_made_revisible=" + revisibleSet.size() + " res_ts=" + (ts2 - ts1));
+                }
+            } catch (JedisException e) {
                 brokenJedis = true;
                 throw e;
             } finally {
@@ -434,15 +447,12 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
     
     private static boolean tryCheckAndProcessRevisibleSet(String queueUrl, int exp) {
         try {
-            if (chechAndProcessRevisibleSet(queueUrl, exp)) {                                                
-                log.debug("event=tryChechAndProcessRevisibleSet info=revisibility_set_processor status=success");
+            if (checkAndProcessRevisibleSet(queueUrl, exp)) {                                                
                 return true;
             } else {
-                log.debug("event=tryChechAndProcessRevisibleSet info=revisibility_set_processor status=not_time_yet");
                 return false;
             }
         } catch (SetFailedException e) {
-            log.debug("event=receiveMessage info=revisibility_set_processor status=not_time_yet");
             return false;
         }
     }
@@ -462,7 +472,6 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
             long ts2 = System.currentTimeMillis();
             CQSControllerServlet.valueAccumulator.addToCounter(AccumulatorName.RedisTime, (ts2 - ts1));
         }        
-        
     }
     
     //------below are helper methods for encoding Cassandra-message-id into in-memory message-id
@@ -473,13 +482,15 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
      * @return The in-memory message-id
      */
     private static String getMemQueueMessage(String messageId, long ts, int initialDelay) {
-        if (ts <= 0L) 
-            throw new IllegalArgumentException("ts cannot be 0 or negative");
-        if (initialDelay < 0)
-            throw new IllegalArgumentException("initialDelay cannot be 0 or negative");
-        if (messageId.length() == 0) 
-            throw new IllegalArgumentException("messgeId cannot be an empty string");
-        
+        if (ts <= 0L) {
+            throw new IllegalArgumentException("Timestamp cannot be 0 or negative");
+        }
+        if (initialDelay < 0) {
+            throw new IllegalArgumentException("Initial delay cannot be 0 or negative");
+        }
+        if (messageId.length() == 0) {
+            throw new IllegalArgumentException("Messge Id cannot be an empty string");
+        }
         StringBuffer sb = new StringBuffer();
         sb.append(ts).append(':').append(initialDelay).append(':').append(messageId);
         return sb.toString();
@@ -527,7 +538,6 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
         return sb.toString();
     }
     
-    
     /**
      * Class clears and then fills the cache for a given queue
      * When its done, it updates the following cache keys are available:
@@ -574,17 +584,16 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
                 setCacheState(queueUrl, QCacheState.OK, null, false);
                 setCacheFillerProcessing(queueUrl, 0);
                 long ts3 = System.currentTimeMillis();
-                log.info("event=cacheFiller status=success jedisTime=" + CQSControllerServlet.valueAccumulator.getCounter(AccumulatorName.RedisTime) + " numCached=" + totalCached + " responseTimeMS=" + (ts3 - ts1));
+                log.info("event=filled_cache num_cached=" + totalCached + " res_ms=" + (ts3 - ts1) + " redis_ms=" + CQSControllerServlet.valueAccumulator.getCounter(AccumulatorName.RedisTime));
             } catch (Exception e) {
                 if (e instanceof JedisException) brokenJedis = true;
-                log.error("event=cacheFiller status=failure queueState=Unavailable exception=" + e.getMessage() + " numConnectionsOpen=" + numRedisConnections.get(), e);
+                log.error("event=cache_filler", e);
                 trySettingCacheState(queueUrl, QCacheState.Unavailable);
             } finally {
                 returnResource(jedis, brokenJedis);
                 CQSControllerServlet.valueAccumulator.deleteAllCounters();
             }
         }
-        
     }
     
     /**
@@ -608,7 +617,7 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
             long ts0 = System.currentTimeMillis();
             QCacheState state = getCacheState(queueUrl);
             if (state == null || state != QCacheState.OK) {
-                log.debug("event=RevisibleProcessor QCacheState=" + (state==null?"null":state.name()) + " status=NotProcessing");
+                log.debug("event=revisibility_check queue_cache_state=" + (state==null?"null":state.name()) + " action=do_nothing");
                 return;
             }
             boolean brokenJedis = false;
@@ -616,26 +625,25 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
             List<String> memIds = new LinkedList<String>();
             try {
                 jedis = getResource();
-
                 updateExpire(queueUrl, jedis);
-
                 long ts1 = System.currentTimeMillis();
                 Set<String> keys = jedis.hkeys(queueUrl + "-H");
                 long ts2 = System.currentTimeMillis();
                 CQSControllerServlet.valueAccumulator.addToCounter(AccumulatorName.RedisTime, (ts2 - ts1));
-                log.debug("total size of H for Q=" + keys.size());
+                log.debug("event=revisibility_check queue_url=" + queueUrl + " invisible_set_size=" + keys.size());
                 for (String key : keys) {
                     long ts3 = System.currentTimeMillis();
                     String val = jedis.hget(queueUrl + "-H", key);
                     long ts4 = System.currentTimeMillis();
                     CQSControllerServlet.valueAccumulator.addToCounter(AccumulatorName.RedisTime, (ts4 - ts3));
-                    if (val == null) continue;                    
+                    if (val == null) {
+                    	continue;                    
+                    }
                     long visibilityTo = Long.parseLong(val);
                     if (visibilityTo < System.currentTimeMillis()) {
                         memIds.add(key);
                     }
                 }
-                
                 //process memIds that should be revisible
                 for (String memId : memIds) {
                     String messageId = getMemQueueMessageMessageId(memId);
@@ -644,10 +652,12 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
                     jedis.hdel(queueUrl + "-H", memId);
                 }
                 long ts3 = System.currentTimeMillis();
-                log.debug("event=RevisibleProcessor status=success numMadeRevisible=" + memIds.size() + " redisTime=" + CQSControllerServlet.valueAccumulator.getCounter(AccumulatorName.RedisTime) + " responseTimeMS=" + (ts3 - ts0) + " hiddenSetSize=" + keys.size());
+                log.debug("event=revisibility_check numMadeRevisible=" + memIds.size() + " redisTime=" + CQSControllerServlet.valueAccumulator.getCounter(AccumulatorName.RedisTime) + " responseTimeMS=" + (ts3 - ts0) + " hiddenSetSize=" + keys.size());
             } catch(Exception e) {
-                if (e instanceof JedisException) brokenJedis = true;
-                log.error("event=RevisibleProcessor satus=failure reason=" + e.getMessage());
+                if (e instanceof JedisException) {
+                	brokenJedis = true;
+                }
+                log.error("event=revisibility_check", e);
             } finally {
                 if (jedis != null) {
                     returnResource(jedis, brokenJedis);
@@ -677,10 +687,10 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
                     setCacheState(queueUrl, QCacheState.Filling, state, true);
                     //we successfully set the stae to filling. queueup filling job
                     executor.submit(new CacheFiller(queueUrl));
-                    log.info("event=checkCacheConsistency status=" + (state == null ? "null" : state.name()) + " CacheServerStatus=ok desc=initializing for queue=" + queueUrl);                        
+                    log.debug("event=initialize_queue_cache cache_state=" + (state == null ? "null" : state.name()) + " queue_url=" + queueUrl);                        
                 } catch (SetFailedException e) {
                     //someone beat us to it. return false for now and check again next time
-                    log.info("event=checkCacheConsistency status=inconsistent CacheServerStatus=ok desc=someone_else_initializing for queue=" + queueUrl);
+                    log.debug("event=initialize_queue_cache cache_state=" + (state == null ? "null" : state.name()) + " queue_url=" + queueUrl);
                     state = getCacheState(queueUrl);
                     if (state != null && state == QCacheState.Filling && trueOnFiller) {
                         return true; //otherwise continue and return false
@@ -692,13 +702,11 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
                 if (!getProcessingState(queueUrl, false)) {
                     try {
                         setCacheState(queueUrl, null, null, false);
-                        log.info("event=checkCacheConsistency desc=clearing_stale_filler status=ok queueUrl=" + queueUrl);
+                        log.debug("event=clear_stale_cache_filler cache_state=" + (state == null ? "null" : state.name()) + " queue_url=" + queueUrl);
                     } catch (SetFailedException e) {
-                        log.error("event=checkCacheConsistency status=error desc=cold_not_clear_stale_cache_filler desc=someone_else_setting_cache_state");
+                        log.debug("event=clear_stale_cache_filler cache_state=" + (state == null ? "null" : state.name()) + " queue_url=" + queueUrl);
                     }
                 }
-                
-                log.info("event=checkCacheConsistency status=" + state.name() + " CacheServerStatus=ok state=" + state.name() + " for queue=" + queueUrl);                               
                 if (trueOnFiller && state == QCacheState.Filling) {
                     return true;
                 }
@@ -706,7 +714,7 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
             }
             return true;
         } catch (JedisConnectionException e) {
-            log.warn("event=checkCacheConsistency status=error CacheServerStatus=failure desc=The Redis Cache instance is down. NumConnectionsOpen=" + numRedisConnections.get(), e);
+            log.warn("event=check_cache_consistency error_code=redis_unavailable num_connections=" + numRedisConnections.get(), e);
             return false;
         }
     }
@@ -734,9 +742,8 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
     private void trySettingCacheState(String queueUrl, QCacheState state) {
         try {
             setCacheState(queueUrl, state, null, false);
-            log.info("event=trySettingCacheState status=success");
-        } catch(Exception e) {
-            log.error("event=trySettingCacheState status=failed exception=" + e.getMessage());
+        } catch (Exception e) {
+            log.error("event=try_setting_cache_state", e);
         }
     }
     
@@ -751,15 +758,15 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
         long ts1 = System.currentTimeMillis();
         Long ret = jedis.expire(queueUrl + "-Q", seconds);
         if (ret == 0) {
-            log.debug("could not update expire for Q. It may not exist or may be empty for queue=" + queueUrl);
+            log.debug("event=could_not_update_expire queue_url=" + queueUrl);
         }
         ret = jedis.expire(queueUrl + "-H", seconds);
         if (ret == 0) {
-            log.debug("could not update expire for Hidden set. It may not exist for queue=" + queueUrl);
+            log.debug("event=could_not_update_expire_for_hidden_set queue_url=" + queueUrl);
         }
         ret = jedis.expire(queueUrl + "-STATE", seconds);
         if (ret == 0) {
-            throw new IllegalStateException("could not update expire for queue=" + queueUrl);
+            throw new IllegalStateException("event=could_not_update_expire_for_state queue_url=" + queueUrl);
         }
         long ts2 = System.currentTimeMillis();
         CQSControllerServlet.valueAccumulator.addToCounter(AccumulatorName.RedisTime, (ts2 - ts1));
@@ -774,10 +781,10 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
     public String sendMessage(CQSQueue queue, CQSMessage message) throws PersistenceException, IOException, InterruptedException, NoSuchAlgorithmException {
         //first persist to Cassandra and get message-id to put into cache        
         String messageId = persistenceStorage.sendMessage(queue, message);        
-        if (messageId == null) throw new IllegalStateException("Could not get id from underlying storage");
-        log.debug("Got message-body=" + message.getBody() + " messageId=" + messageId);
+        if (messageId == null) {
+        	throw new IllegalStateException("Could not get id from underlying storage");
+        }
         boolean cacheAvailable = checkCacheConsistency(queue.getRelativeUrl(), true); //set in cache even if its filling
-        
         String memId = getMemQueueMessage(messageId, System.currentTimeMillis(), 0); //TODO: currently initialDelay is 0
         boolean brokenJedis = false;
         ShardedJedis jedis = null;
@@ -786,21 +793,21 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
             if (cacheAvailable) {
                 jedis = getResource();
                 jedis.rpush(queue.getRelativeUrl() + "-Q", memId);
-                log.info("event=sendMessage status=ok cacheAvailable=true");
+                log.debug("event=send_message cache_available=true msg_id= " + messageId + " queue_url=" + queue.getAbsoluteUrl());
             } else {
-                log.info("event=sendMessage status=ok cacheAvailable=false");
+                log.debug("event=send_message cache_available=false msg_id= " + messageId + " queue_url=" + queue.getAbsoluteUrl());
             }
         } catch (JedisConnectionException e) {
-            log.info("event=sendMessage status=ok cacheAvailable=false trySettingCacheState=true");
+            log.warn("event=send_message error_code=redis_unavailable num_connections=" + numRedisConnections.get(), e);
             brokenJedis = true;
             trySettingCacheState(queue.getRelativeUrl(), QCacheState.Unavailable);
         } finally {
-            if (jedis != null)
+            if (jedis != null) {
                 returnResource(jedis, brokenJedis);
+            }
             long ts2 = System.currentTimeMillis();
             CQSControllerServlet.valueAccumulator.addToCounter(AccumulatorName.RedisTime, (ts2 - ts1));
         }
-        
         return memId;
     }
 
@@ -816,7 +823,6 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
             try {
                 jedis = getResource();
             } catch (JedisConnectionException e) {
-                log.info("event=sendMessageBatch caught JedisConnectionException implying redis unavailable");
                 cacheAvailable = false;
                 trySettingCacheState(queue.getRelativeUrl(), QCacheState.Unavailable);
             }
@@ -832,13 +838,14 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
                     try {
                         jedis.rpush(queue.getRelativeUrl() + "-Q", memId);
                     } catch (JedisConnectionException e) {
-                        log.info("event=sendMessageBatch setting message in cache failed. Continuing...");
                         trySettingCacheState(queue.getRelativeUrl(), QCacheState.Unavailable);
                     }
+                    log.debug("event=send_message_batch cache_available=true msg_id= " + messageId + " queue_url=" + queue.getAbsoluteUrl());
+                } else {
+                    log.debug("event=send_message_batch cache_available=false msg_id= " + messageId + " queue_url=" + queue.getAbsoluteUrl());
                 }
                 memIds.put(clientId, memId);            
             }
-            log.info("event=sendMessageBatch status=ok cacheAvailable=" + cacheAvailable);
         } catch (JedisException e) {
             brokenJedis = true;
             throw e;
@@ -847,55 +854,41 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
                 returnResource(jedis, brokenJedis);
             }
         }
-        
         return memIds;        
     }
 
     @Override
     public void deleteMessage(String queueUrl, String receiptHandle) throws PersistenceException {
-    	
         //receiptHandle is memId
-        
     	String messageId = getMemQueueMessageMessageId(receiptHandle);
         boolean cacheAvailable = checkCacheConsistency(queueUrl, false);
-        
         if (cacheAvailable) {
-        	
             ShardedJedis jedis = null;
             boolean brokenJedis = false;
             try {
-            	
                 jedis = getResource();
                 long ts1 = System.currentTimeMillis();
                 long numDeleted = jedis.hdel(queueUrl + "-H", receiptHandle);
-                
                 if (numDeleted != 1) {
-                    log.info("event=deleteMessage status=not_in_hidden_set memId=" + receiptHandle);
+                    log.warn("event=delete_message error_code=could_not_delelete_hidden_set queue_url=" + queueUrl + " mem_id=" + receiptHandle);
                 }
-                
                 if (jedis.del(queueUrl + "-A-" + receiptHandle) == 0) {
-                    log.error("event=deleteMessage status=error desc=could_not_del_attrs. Continuing");
+                    log.warn("event=delete_message error_code=could_not_delete_attributes queue_url=" + queueUrl + " mem_id=" + receiptHandle);
                 }
-                
                 long ts2 = System.currentTimeMillis();
                 CQSControllerServlet.valueAccumulator.addToCounter(AccumulatorName.RedisTime, (ts2 - ts1));
-                
             } catch (JedisConnectionException e) {
+                log.warn("event=delete_message error_code=redis_unavailable num_connections=" + numRedisConnections.get(), e);
                 brokenJedis = true;
-            	log.info("event=sendMessageBatch caught JedisConnectionException implying redis unavailable");
                 cacheAvailable = false;
                 trySettingCacheState(queueUrl, QCacheState.Unavailable);
-            
             } finally {
-            
             	if (jedis != null) {
                     returnResource(jedis, brokenJedis);
                 }
             }
         }
-        
         //delete from underlying persistence layer
-        
         persistenceStorage.deleteMessage(queueUrl, messageId);
     }
     
@@ -914,20 +907,16 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
     }
 
     @Override
-    public List<CQSMessage> receiveMessage(CQSQueue queue,
-            Map<String, String> receiveAttributes) throws PersistenceException,
-            IOException, NoSuchAlgorithmException, InterruptedException {
+    public List<CQSMessage> receiveMessage(CQSQueue queue, Map<String, String> receiveAttributes) throws PersistenceException, IOException, NoSuchAlgorithmException, InterruptedException {
 
         int maxNumberOfMessages = 1;
         int visibilityTO = queue.getVisibilityTO();
         if (receiveAttributes != null && receiveAttributes.size() > 0) {
             if (receiveAttributes.containsKey(CQSConstants.MAX_NUMBER_OF_MESSAGES)) {
-                maxNumberOfMessages = Integer.parseInt(receiveAttributes
-                        .get(CQSConstants.MAX_NUMBER_OF_MESSAGES));
+                maxNumberOfMessages = Integer.parseInt(receiveAttributes.get(CQSConstants.MAX_NUMBER_OF_MESSAGES));
             }
             if (receiveAttributes.containsKey(CQSConstants.VISIBILITY_TIMEOUT)) {
-                visibilityTO = Integer.parseInt(receiveAttributes
-                        .get(CQSConstants.VISIBILITY_TIMEOUT));
+                visibilityTO = Integer.parseInt(receiveAttributes.get(CQSConstants.VISIBILITY_TIMEOUT));
             }
         }
     
@@ -938,17 +927,14 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
             boolean brokenJedis = false;
             try {
                 jedis = getResource();
-                //process revisible-set before getting form queue.
+                //process revisible-set before getting from queue
                 tryCheckAndProcessRevisibleSet(queue.getRelativeUrl(), CMBProperties.getInstance().getRedisRevisibleSetFrequencySec());
 
                 try {
                     if (checkAndSetVisibilityProcessing(queue.getRelativeUrl(), CMBProperties.getInstance().getRedisRevisibleFrequencySec())) {                                                
-                        log.debug("event=receiveMessage info=revisibility_processor status=scheduled");
-                    } else {
-                        log.debug("event=receiveMessage info=revisibility_processor status=not_time_yet");
+                        log.debug("event=scheduled_revisibility_processor");
                     }
                 } catch (SetFailedException e) {
-                    log.debug("event=receiveMessage info=revisibility_processor status=not_time_yet");
                 }
 
                 boolean done = false;
@@ -983,24 +969,30 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
                     //get messages from underlying layer. The total returned may not be what was
                     //in mem cache since master-master replication to Cassandra could mean other
                     //colo deleted the message form underlying storage. 
-                    log.debug("event=receiveMessage numMemIds=" + messageIds.size());
+                    log.debug("event=found_msg_ids_in_redis num_mem_ids=" + messageIds.size());
                     try {
                         Map<String, CQSMessage> persisMap = persistenceStorage.getMessages(queue.getRelativeUrl(), messageIds);
                         for (Entry<String, CQSMessage> messageIdToMessage : persisMap.entrySet()) {
                             String memId = messageIdToMemId.get(messageIdToMessage.getKey());
-                            if (memId == null) throw new IllegalStateException("Underlying storage layer returned a messge that was not requested");
+                            if (memId == null) {
+                            	throw new IllegalStateException("Underlying storage layer returned a message that was not requested");
+                            }
                             CQSMessage message = messageIdToMessage.getValue();
-                            if (message == null) continue;
+                            if (message == null) {
+                            	log.warn("event=message_is_null msg_id=" + messageIdToMessage.getKey());
+                            	continue;
+                            }
                             
                             //check if message returned is expired. This will only happen if payload coming from payload-cache. Cassandra
                             //expires old messages just fine. If expired, skip over and continue. 
                             if (isMessageExpired(queue, memId)) {
                                 try {
-                                    persistenceStorage.deleteMessage(queue.getRelativeUrl(), message.getMessageId());
-                                } catch(Exception e) {
+                                    log.info("event=message_expired message_id=" + memId);
+                                	persistenceStorage.deleteMessage(queue.getRelativeUrl(), message.getMessageId());
+                                } catch (Exception e) {
                                     //its fine to ignore this exception since message must have been auto-deleted from Cassandra
                                     //but we need to do this to clean up payloadcache
-                                    log.debug("event=receive_message status=skip_deleting_exception messageid=" + message.getMessageId());
+                                    log.debug("event=message_already_deleted_in_cassandra msg_id=" + message.getMessageId());
                                 }
                                 continue;
                             }
@@ -1043,13 +1035,12 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
                             //returned. We should skip over those memIds and continue till we find at least one valid memId
                             done = true;
                         } else {
-                            log.debug("event=receiveMessage info=bad_memid_found size=" + messageIds.size() + " desc=will_skip_over");
                             for (String messageId : messageIds) {
-                                log.debug("event=receiveMessage skipped_message_id=" + messageId);
+                                log.debug("event=bad_mem_id_found msg_id=" + messageId + " action=skip_message");
                             }
                         }
                     } catch (HTimedOutException e1) { //If Hector timedout, push messages back
-                        log.error("event=receiveMessage status=exception reason=hector_timeout numMessages=" + messageIds.size());
+                        log.error("event=hector_timeout num_messages=" + messageIds.size() + " action=pushing_messages_back_to_redis");
                         if (visibilityTO > 0) {
                             for (String messageId : messageIds) {
                                 String memId = messageIdToMemId.get(messageId);
@@ -1059,10 +1050,8 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
                         throw e1;
                     }
                 } 
-                                
-                
             } catch (JedisConnectionException e) {
-                log.debug("event=receiveMessage status=NotGettingFromCache cacheAvailable=false");
+                log.warn("event=receive_message error_code=redis_unavailable num_connections=" + numRedisConnections.get(), e);
                 brokenJedis = true;
                 trySettingCacheState(queue.getRelativeUrl(), QCacheState.Unavailable);            
                 cacheAvailable = false;
@@ -1072,12 +1061,8 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
                 }
             }
             CQSMonitor.getInstance().registerCacheHit(queue.getRelativeUrl(), ret.size(), ret.size(), CacheType.QCache); //all ids from cache
-            log.debug("event=receive_message cache_available=true num_messages_ret=" + ret.size());
-            for (CQSMessage msg : ret) {
-                log.debug("event=receive_message message_body=" + msg.getBody());
-            }
+            log.debug("event=messages_found cache=available num_messages=" + ret.size());
         } else { //get form underlying layer
-            log.debug("event=receiveMessage cacheAvailable=false");
             List<CQSMessage> messages = persistenceStorage.peekQueueRandom(queue.getRelativeUrl(), maxNumberOfMessages);
             for (CQSMessage msg : messages) {
                 String memId = getMemQueueMessage(msg.getMessageId(), System.currentTimeMillis(), 0); //TODO: initialDelay is 0
@@ -1090,13 +1075,8 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
                 ret.add(msg);
             }
             //Note: In this case there is no message hiding.            
-
             CQSMonitor.getInstance().registerCacheHit(queue.getRelativeUrl(), 0, ret.size(), CacheType.QCache); //all ids missed cache
-            log.debug("event=receive_message cache_available=false numMessagesRet=" + ret.size());
-            
-            for (CQSMessage msg : ret) {
-                log.debug("event=receive_message message_body=" + msg.getBody());
-            }            
+            log.debug("event=messages_found cache=unavailable num_messages=" + ret.size());
         }
         
         if (ret.size() == 0) {
@@ -1113,8 +1093,7 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
      * If the new visibilityTO is 0 we shortcut and make the method immediately visible
      * @return true if visibility was changed. false otherwise
      */
-    public boolean changeMessageVisibility(CQSQueue queue, String receiptHandle, int visibilityTO)
-            throws PersistenceException, IOException, NoSuchAlgorithmException, InterruptedException {
+    public boolean changeMessageVisibility(CQSQueue queue, String receiptHandle, int visibilityTO) throws PersistenceException, IOException, NoSuchAlgorithmException, InterruptedException {
         
         boolean cacheAvailable = checkCacheConsistency(queue.getRelativeUrl(), false);
         if (cacheAvailable) {
@@ -1128,8 +1107,8 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
                     //doesn't exist in Hidden set. Check in the RevisibilitySet
                     Long rank = jedis.zrank(queue.getRelativeUrl() + "-V", receiptHandle);
                     if (rank == null) {
-                        log.error("event=changeMessageVisibility status=failure reason=MessageNotFound receiptHandle=" + receiptHandle);
-                        throw new RuntimeException("Could not find hidden message with receiptHandle:" + receiptHandle);
+                        log.error("event=change_message_visibility error_code=message_not_found_in_hidden_set_or_revisibility_set receipt_handle=" + receiptHandle);
+                        throw new RuntimeException("Could not find hidden message with receipt handle " + receiptHandle);
                     }                    
                 } else {
                     jedis.hdel(queue.getRelativeUrl() + "-H", receiptHandle);
@@ -1148,10 +1127,8 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
                 CQSControllerServlet.valueAccumulator.addToCounter(AccumulatorName.RedisTime, (ts2 - ts1));
                 return true;                
             } catch (JedisConnectionException e) {
-                log.info("event=changeMessageVisibility status=failure cacheAvailable=false");
+                log.warn("event=change_message_visibility reason=redis_unavailable num_connections=" + numRedisConnections.get(), e);
                 brokenJedis = true;
-                //Queue is not in Unavailable state since underlying state of message has not changed
-                //Redis is unavailable.
                 cacheAvailable = false;
                 return false;
             } finally {
@@ -1173,21 +1150,20 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
     public List<CQSMessage> peekQueue(String queueUrl, String previousReceiptHandle, String nextReceiptHandle, int length) throws PersistenceException, IOException, NoSuchAlgorithmException {
         boolean cacheAvailable = checkCacheConsistency(queueUrl, false);
         if (cacheAvailable) {
-            log.info("event=peekQueue cacheAvailable=true queue_url=" + queueUrl);
             List<String> memIdsRet = getIdsFromHead(queueUrl, previousReceiptHandle, length);                
             //by here memIdsRet should have memIds to return messages for
             Map<String, CQSMessage> ret = getMessages(queueUrl, memIdsRet);
-
             //return list in the same order as memIdsRet
             List<CQSMessage> messages = new LinkedList<CQSMessage>();
             for (String memId : memIdsRet) {
                 CQSMessage msg = ret.get(memId);
-                if (msg != null) messages.add(msg);
+                if (msg != null) {
+                	messages.add(msg);
+                }
             }
+            log.debug("event=peek_queue cache=available queue_url=" + queueUrl + " num_messages=" + messages.size());
             return messages;
-
         } else { //get from underlying storage
-            log.info("event=peekQueue cacheAvailable=false queue_url=" + queueUrl);
             if (previousReceiptHandle != null) { //strip out this layer's id
                 previousReceiptHandle = getMemQueueMessageMessageId(previousReceiptHandle);
             }
@@ -1200,6 +1176,7 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
                 message.setMessageId(memId);
                 message.setReceiptHandle(memId);
             }
+            log.debug("event=peek_queue cache=unavailable queue_url=" + queueUrl + " num_messages=" + messages.size());
             return messages;
         }
     }
@@ -1229,8 +1206,9 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
                 log.debug("num removed=" + num);
                 long ts2 = System.currentTimeMillis();
                 CQSControllerServlet.valueAccumulator.addToCounter(AccumulatorName.RedisTime, (ts2 - ts1));
+                log.debug("event=cleared_queue queue_url=" + queueUrl);
             } catch (JedisConnectionException e) {
-                log.info("event=changeMessageVisibility status=failure cacheAvailable=false");
+                log.warn("event=clear_queue error_code=redis_unavailable num_connections=" + numRedisConnections.get(), e);
                 brokenJedis = true;
                 trySettingCacheState(queueUrl, QCacheState.Unavailable);
                 cacheAvailable = false;
@@ -1253,8 +1231,6 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
             messageIds.add(messageId);
             messageIdToMemId.put(messageId, id);
         }
-        
-        
         Map<String, CQSMessage> persisMap = persistenceStorage.getMessages(queueUrl, messageIds);
         Map<String, CQSMessage> ret = new HashMap<String, CQSMessage>();
         for (Entry<String, CQSMessage> idToMessage : persisMap.entrySet()) {
@@ -1305,7 +1281,6 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
                     }
                 }
             }
-            
             //by here memIdsRet should have memIds to return messages for
         } catch (JedisException e) {
             brokenJedis = true;
@@ -1359,4 +1334,121 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
     public List<CQSMessage> peekQueueRandom(String queueUrl, int length) throws PersistenceException, IOException, NoSuchAlgorithmException {
         return persistenceStorage.peekQueueRandom(queueUrl, length);
     }
+	/**
+	 * Get all redis shard infos
+	 * @return list of hash maps, one for each shard
+	 */
+	public static List<Map<String, String>> getInfo() {
+	    
+		boolean brokenJedis = false;
+	    ShardedJedis jedis = getResource();
+	    List<Map<String, String>> shardInfos = new ArrayList<Map<String, String>>();
+	    
+	    try {
+	    
+	    	Collection<Jedis> shards = jedis.getAllShards();
+	
+	        for (Jedis shard : shards) {
+	    		
+	        	String info = shard.info();
+	    		String lines[] = info.split("\n");
+	    		Map<String, String> entries = new HashMap<String, String>();
+	    		
+	    		for (String line : lines) {
+	    			
+	    			if (line != null && line.length() > 0) {
+	        			
+	    				String keyValue[] = line.split(":");
+	        			
+	    				if (keyValue.length == 2) {
+	        				entries.put(keyValue[0], keyValue[1]);
+	        			}
+	    			}
+	    			
+	    		}
+	    		
+	    		shardInfos.add(entries);
+	    	}
+	        
+	        return shardInfos;
+	
+	    } catch (JedisException ex) {
+	    
+	    	brokenJedis = true;
+	        throw ex;
+	    
+	    } finally {
+	        returnResource(jedis, brokenJedis);
+	    }
+	}
+	/**
+	 * Get number of redis shards
+	 * @return number of redis shards
+	 */
+	public static int getNumberOfShards() {
+	    
+		boolean brokenJedis = false;
+	    ShardedJedis jedis = getResource();
+	    
+	    try {
+	    	return jedis.getAllShards().size();
+	    } catch (JedisException ex) {
+	    	brokenJedis = true;
+	        throw ex;
+	    } finally {
+	        returnResource(jedis, brokenJedis);
+	    }
+	}
+	/**
+	 * Clear cache across all shards. Useful for data center fail-over scenarios.
+	 */
+	public static void flushAll() {
+	    
+		boolean brokenJedis = false;
+	    ShardedJedis jedis = getResource();
+	    
+	    try {
+	    
+	    	Collection<Jedis> shards = jedis.getAllShards();
+	    	
+	    	for (Jedis shard : shards) {
+	    		shard.flushAll();
+	    	}
+	    	
+	    } catch (JedisException ex) {
+	    
+	    	brokenJedis = true;
+	        throw ex;
+	    
+	    } finally {
+	        returnResource(jedis, brokenJedis);
+	    }
+	}
+	public static boolean isAlive() {
+	    
+		boolean brokenJedis = false;
+	    ShardedJedis jedis = getResource();
+	    
+	    try {
+	    
+	    	Collection<Jedis> shards = jedis.getAllShards();
+	    	
+	    	boolean allShardsActive = true;
+	    	
+	    	for (Jedis shard : shards) {
+	    		shard.set("test", "test");
+	    		allShardsActive &= shard.get("test").equals("test");
+	    	}
+	    	
+	    	return allShardsActive;
+	    	
+	    } catch (JedisException ex) {
+	    
+	    	brokenJedis = true;
+	        throw ex;
+	    
+	    } finally {
+	        returnResource(jedis, brokenJedis);
+	    }
+	}
 }

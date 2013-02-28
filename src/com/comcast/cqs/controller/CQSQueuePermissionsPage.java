@@ -30,7 +30,6 @@ import org.apache.log4j.Logger;
 import com.amazonaws.services.sqs.model.GetQueueAttributesRequest;
 import com.amazonaws.services.sqs.model.GetQueueAttributesResult;
 import com.amazonaws.services.sqs.model.RemovePermissionRequest;
-import com.comcast.cmb.common.controller.AdminServlet;
 import com.comcast.cmb.common.controller.AdminServletBase;
 import com.comcast.cmb.common.controller.CMBControllerServlet;
 import com.comcast.cmb.common.model.CMBPolicy;
@@ -70,8 +69,9 @@ public class CQSQueuePermissionsPage extends AdminServletBase {
 			try {
 				RemovePermissionRequest removePermissionRequest = new RemovePermissionRequest(queueUrl, labelSid);
 				sqs.removePermission(removePermissionRequest);
+				logger.debug("event=remove_permission queue_url=" + queueUrl + " label=" + labelSid + " user_id=" + userId);
 			} catch (Exception ex) {
-				logger.error("event_failed_to_remove_policy queue_url=" + queueUrl + " label=" + labelSid, ex);
+				logger.error("event=remove_permission queue_url=" + queueUrl + " label=" + labelSid + " user_id=" + userId, ex);
 				throw new ServletException(ex);
 	        } 
 		}

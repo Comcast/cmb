@@ -65,18 +65,18 @@ public class CNSListSubscriptionsByTopicAction extends CNSAction {
 
 		if (request.getParameter("NextToken") != null) {
 			nextToken = request.getParameter("NextToken");
-			logger.debug("event=cns_list_topics_by_subscription next_token=" + nextToken + " topicArn=" + topicArn + " userId=" + userId);
+			logger.debug("event=cns_list_topics_by_subscription next_token=" + nextToken + " topic_arn=" + topicArn + " user_id=" + userId);
 		} else {
-			logger.debug("event=cns_list_topics_by_subscription topicArn=" + topicArn + " userId=" + userId);
+			logger.debug("event=cns_list_topics_by_subscription topic_arn=" + topicArn + " userId=" + userId);
 		}
 
 		if ((topicArn == null) || (userId == null)) {
-			logger.error("event=cns_list_topics_by_subscription status=failure errorType=InvalidParameters  topicArn=" + topicArn + " userId=" + userId);
+			logger.error("event=cns_list_topics_by_subscription error_code=InvalidParameters  topic_arn=" + topicArn + " user_id=" + userId);
 			throw new CMBException(CNSErrorCodes.CNS_InvalidParameter,"request parameter does not comply with the associated constraints.");
 		}
 
 		if (!Util.isValidTopicArn(topicArn)) {
-			logger.error("event=cns_list_topics_by_subscription status=failure errorType=InvalidParameters  topicArn=" + topicArn + " userId=" + userId);
+			logger.error("event=cns_list_topics_by_subscription error_code=InvalidParameters  topic_arn=" + topicArn + " user_id=" + userId);
 			throw new CMBException(CNSErrorCodes.CNS_InvalidParameter,"request parameter does not comply with the associated constraints.");
 		}
 
@@ -88,8 +88,6 @@ public class CNSListSubscriptionsByTopicAction extends CNSAction {
 			throw new CMBException(CMBErrorCodes.InvalidParameterValue, "Invalid parameter nextToken");
 		}
 		
-		logger.debug("num_subscriptions=" + subscriptions.size());
-
 		if (subscriptions.size() >= 100) {
 			//Check if there are more
 			nextToken = subscriptions.get(99).getArn();

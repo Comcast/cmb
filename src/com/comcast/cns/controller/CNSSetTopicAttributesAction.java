@@ -76,7 +76,7 @@ public class CNSSetTopicAttributesAction extends CNSAction {
     	String topicArn = request.getParameter("TopicArn");
     	
     	if ((userId == null) || (topicArn == null) || (attributeName == null) || (attributeValue == null)) {
-    		logger.error("event=cns_set_topic_attributes status=failure errorType=InvalidParameters attributeName=" + attributeName + " attributeValue=" + attributeValue + " topicArn=" + topicArn + " userId=" + userId);
+    		logger.error("event=cns_set_topic_attributes error_code=InvalidParameters attribute_name=" + attributeName + " attribute_value=" + attributeValue + " topic_arn=" + topicArn + " user_id=" + userId);
 			throw new CMBException(CNSErrorCodes.CNS_InvalidParameter,"missing parameters");
     	}    
     	
@@ -101,7 +101,7 @@ public class CNSSetTopicAttributesAction extends CNSAction {
     		}
 
 			topicAttributes.setPolicy(attributeValue);
-    		logger.debug("event=cns_set_topic_policy topic_arn=" + topicArn + "  value=" + topicAttributes.getPolicy()); //?
+    		logger.debug("event=cns_set_topic_policy topic_arn=" + topicArn + "  value=" + topicAttributes.getPolicy());
     	
     	} else if (attributeName.equals("DisplayName")) {  	
     		
@@ -113,13 +113,13 @@ public class CNSSetTopicAttributesAction extends CNSAction {
     		}
     		
     	} else {
-    		logger.error("event=cns_set_topic_attributes status=failure errorType=InvalidParameters attributeName=" + attributeName + " attributeValue=" + attributeValue + " topicArn=" + topicArn + " userId=" + userId);
+    		logger.error("event=cns_set_topic_attributes error_code=InvalidParameters attribute_name=" + attributeName + " attribute_value=" + attributeValue + " topic_arn=" + topicArn + " user_id=" + userId);
 			throw new CMBException(CNSErrorCodes.CNS_InvalidParameter,"AttributeName: " + attributeName + " is not a valid value");
     	}
     	
     	PersistenceFactory.getCNSAttributePersistence().setTopicAttributes(topicAttributes, topicArn);
     	String res = CNSAttributePopulator.getSetTopicAttributesResponse();
-    	logger.error("event=cns_set_topic_attributes status=success attributeName=" + attributeName + " attributeValue=" + attributeValue + " topicArn=" + topicArn + " userId=" + userId);
+    	logger.error("event=cns_set_topic_attributes attribute_name=" + attributeName + " attribute_value=" + attributeValue + " topic_arn=" + topicArn + " user_id=" + userId);
     	response.getWriter().println(res);
     	return true;
     }

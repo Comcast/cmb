@@ -120,10 +120,10 @@ public class CNSEditTopicDeliveryPolicyPage extends AdminServletBase {
 				SetTopicAttributesRequest setTopicAttributesRequest = new SetTopicAttributesRequest(topicArn, "DeliveryPolicy", deliveryPolicy.toString());
 				sns.setTopicAttributes(setTopicAttributesRequest);
 				
-				logger.debug("event=set_delivery_policy topic_arn=" + topicArn);
+				logger.debug("event=set_delivery_policy topic_arn=" + topicArn + " userId= " + userId);
 
 			} catch (Exception ex) {
-				logger.error("event=createTopic status=failed userId= " + userId, ex);
+				logger.error("event=set_delivery_policy user_id= " + userId, ex);
 				throw new ServletException(ex);
 			}
 			

@@ -56,7 +56,7 @@ public class UserPageServlet extends AdminServletBase {
 		try {
 			user = userHandler.getUserById(userId);
 		} catch (PersistenceException ex) {
-			logger.error("event=get_user status=failed user_id=" + userId, ex);
+			logger.error("event=get_user user_id=" + userId, ex);
 			throw new ServletException(ex);
 		}
 		

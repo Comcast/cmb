@@ -49,17 +49,17 @@ public class CNSGetSubscriptionAttributesAction extends CNSAction {
 		
 		String userId = user.getUserId();
     	String subscriptionArn = request.getParameter("SubscriptionArn");
-    	logger.debug("event=cns_get_subscription_attributes  subscriptionArn=" + subscriptionArn + " userId=" + userId);
     	
     	if ((userId == null) || (subscriptionArn == null) ) {
-    		logger.error("event=cns_get_subscription_attributes status=failure errorType=InvalidParameters subscriptionArn=" + subscriptionArn + " userId=" + userId);
+    		logger.error("event=cns_get_subscription_attributes error_code=InvalidParameters subscription_arn=" + subscriptionArn + " user_id=" + userId);
 			throw new CMBException(CNSErrorCodes.CNS_InvalidParameter,"missing parameters");
     	}	
     	
     	CNSSubscriptionAttributes attr = PersistenceFactory.getCNSAttributePersistence().getSubscriptionAttributes(subscriptionArn);
-
     	String res = CNSAttributePopulator.getGetSubscriptionAttributesResponse(attr);
-    	logger.info("event=cns_get_subscription_attributes status=success subscriptionArn=" + subscriptionArn + " userId=" + userId);
+
+    	logger.debug("event=cns_get_subscription_attributes subscription_arn=" + subscriptionArn + " user_id=" + userId);
+    	
     	response.getWriter().println(res);
     	return true;
 	}

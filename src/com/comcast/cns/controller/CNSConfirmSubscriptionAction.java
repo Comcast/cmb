@@ -59,12 +59,12 @@ public class CNSConfirmSubscriptionAction extends CNSAction {
     	String topicArn = request.getParameter("TopicArn");
     	
     	if ((topicArn == null) || (token == null)) {
-    		logger.error("event=cns_confirmsubscription status=failure errorType=InvalidParameters token=" + token + " topicArn=" + topicArn + " authenticateOnUnsubscribe=" + authOnUnsubscribeStr);
+    		logger.error("event=cns_confirmsubscription error_code=InvalidParameters token=" + token + " topic_arn=" + topicArn + " authenticate_on_unsubscribe=" + authOnUnsubscribeStr);
 			throw new CMBException(CNSErrorCodes.CNS_InvalidParameter,"request parameter does not comply with the associated constraints.");
     	}
     	
     	if (!Util.isValidTopicArn(topicArn)) {
-    		logger.error("event=cns_confirmsubscription status=failure errorType=InvalidParameters token=" + token + " topicArn=" + topicArn + " authenticateOnUnsubscribe=" + authOnUnsubscribeStr);
+    		logger.error("event=cns_confirmsubscription error_code=InvalidParameters token=" + token + " topic_arn=" + topicArn + " authenticate_on_unsubscribe=" + authOnUnsubscribeStr);
 			throw new CMBException(CNSErrorCodes.CNS_InvalidParameter,"request parameter does not comply with the associated constraints.");
     	}
     	
@@ -72,7 +72,7 @@ public class CNSConfirmSubscriptionAction extends CNSAction {
 		
     	if (authOnUnsubscribeStr != null) {
 			if (!(authOnUnsubscribeStr.equals("true") || (authOnUnsubscribeStr.equals("false")))) {
-				logger.error("event=cns_confirmsubscription status=failure errorType=InvalidParameters token=" + token + " topicArn=" + topicArn + " authenticateOnUnsubscribe=" + authOnUnsubscribeStr);
+				logger.error("event=cns_confirmsubscription error_code=InvalidParameters token=" + token + " topic_arn=" + topicArn + " authenticate_on_unsubscribe=" + authOnUnsubscribeStr);
 				throw new CMBException(CNSErrorCodes.CNS_InvalidParameter,"request parameter does not comply with the associated constraints.");
 			} else {	
 				authenticateOnUnsubscribe = (authOnUnsubscribeStr.equals("true"));

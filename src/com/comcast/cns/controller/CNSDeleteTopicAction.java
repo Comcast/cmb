@@ -56,7 +56,7 @@ public class CNSDeleteTopicAction extends CNSAction {
     	logger.debug("event=cns_topic_delete arn=" + arn + " userid=" + userId);
     	
 		if ((arn == null) || (userId == null)) {
-			logger.error("event=cns_topic_delete status=failure errorType=InvalidParameters arn=" + arn + " userid=" + userId);
+			logger.error("event=cns_topic_delete errro_code=InvalidParameters topic_arn=" + arn + " user_id=" + userId);
 			throw new CMBException(CNSErrorCodes.CNS_InvalidParameter,"request parameter does not comply with the associated constraints.");
 		}
 		

@@ -72,7 +72,7 @@ public class CQSLongPollSender {
 
 		@Override
 		public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) {
-			logger.error("event=long_poll_sender_error remote_address=" + e.getChannel().getRemoteAddress() + " msg=" + e);
+			logger.error("event=longpoll_sender_error remote_address=" + e.getChannel().getRemoteAddress(), e.getCause());
 			e.getChannel().close();
 		}
 	}
@@ -116,7 +116,7 @@ public class CQSLongPollSender {
         
         if (lastLPPingMinute.getAndSet(now/(1000*60)) != now/(1000*60)) {
 
-        	logger.info("event=reloading_active_cqs_api_server_list new_minute=" + now/(1000*60));
+        	logger.debug("event=reloading_active_cqs_api_server_list new_minute=" + now/(1000*60));
         	
         	try {
 
@@ -155,7 +155,7 @@ public class CQSLongPollSender {
         				
         				if (now-timestamp < 5*60*1000 && dataCenter.equals(CMBProperties.getInstance().getCmbDataCenter())) {
         					activeCQSApiServers.put(host + ":" + port, new Long(0));
-        					logger.info("event=found_active_api_server host=" + host + " port=" + port + " data_center=" + dataCenter + " last_minute=" + (timestamp/1000));
+        					logger.debug("event=found_active_api_server host=" + host + " port=" + port + " data_center=" + dataCenter + " last_minute=" + (timestamp/1000));
         				}
         			}
         		}                
@@ -187,7 +187,7 @@ public class CQSLongPollSender {
 	
 						final Channel clientChannel = cf.getChannel();
 	
-						logger.info("event=notification_sent host=" + h + " port=" + p + " notification=" + msg);
+						logger.debug("event=longpoll_notification_sent host=" + h + " port=" + p + " queue_arn=" + msg);
 						
 						if (clientChannel.isWritable()) {
 							

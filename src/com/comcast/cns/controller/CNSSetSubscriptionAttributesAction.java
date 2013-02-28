@@ -61,10 +61,10 @@ public class CNSSetSubscriptionAttributesAction extends CNSAction {
     	String attributeValue = request.getParameter("AttributeValue");
     	String subscriptionArn = request.getParameter("SubscriptionArn");
     	
-    	logger.debug("event=cns_set_subscription_attributes attributeName=" + attributeName + " attributeValue=" + attributeValue + " subscriptionArn=" + subscriptionArn + " userId=" + userId);
+    	logger.debug("event=cns_set_subscription_attributes attribute_name=" + attributeName + " attribute_value=" + attributeValue + " subscription_arn=" + subscriptionArn + " user_id=" + userId);
 			
     	if ((userId == null) || (subscriptionArn == null) || (attributeName == null) || (attributeValue == null)) {
-    		logger.error("event=cns_set_subscription_attributes status=failure errorType=InvalidParameters attributeName=" + attributeName + " attributeValue=" + attributeValue + " subscriptionArn=" + subscriptionArn + " userId=" + userId);
+    		logger.error("event=cns_set_subscription_attributes error_code=InvalidParameters attribute_name=" + attributeName + " attribute_value=" + attributeValue + " subscription_arn=" + subscriptionArn + " user_id=" + userId);
 			throw new CMBException(CNSErrorCodes.CNS_InvalidParameter,"missing parameters");
     	}	
     	
@@ -73,18 +73,16 @@ public class CNSSetSubscriptionAttributesAction extends CNSAction {
     	if (attributeName.equals("DeliveryPolicy")) {  		
     		JSONObject json = new JSONObject(attributeValue);   		
     		CNSSubscriptionDeliveryPolicy deliveryPolicy = new CNSSubscriptionDeliveryPolicy(json);
-    		logger.debug("subscription_arn=" + subscriptionArn + " new_delivery_policy=" + deliveryPolicy.toString());
     		subscriptionAttributes.setDeliveryPolicy(deliveryPolicy);
-    		logger.debug("subscription_arn=" + subscriptionArn + " delivery_policy=" + subscriptionAttributes.getDeliveryPolicy());
     	} else {
-    		logger.error("event=cns_set_subscription_attributes status=failure errorType=InvalidParameters attributeName=" + attributeName + " attributeValue=" + attributeValue + " subscriptionArn=" + subscriptionArn + " userId=" + userId);
+    		logger.error("event=cns_set_subscription_attributes error_code=InvalidParameters attribute_name=" + attributeName + " attribute_value=" + attributeValue + " subscription_arn=" + subscriptionArn + " user_id=" + userId);
 			throw new CMBException(CNSErrorCodes.CNS_InvalidParameter,"AttributeName: " + attributeName + " is not a valid value");
     	}
     	
     	PersistenceFactory.getCNSAttributePersistence().setSubscriptionAttributes(subscriptionAttributes, subscriptionArn);
     	
     	String res = CNSAttributePopulator.getSetSubscriptionAttributesResponse();
-    	logger.info("event=cns_set_subscription_attributes status=success attributeName=" + attributeName + " attributeValue=" + attributeValue + " subscriptionArn=" + subscriptionArn + " userId=" + userId);
+    	logger.info("event=cns_set_subscription_attributes attribute_name=" + attributeName + " attribute_value=" + attributeValue + " subscription_arn=" + subscriptionArn + " user_id=" + userId);
     	response.getWriter().println(res);
     	return true;
     }

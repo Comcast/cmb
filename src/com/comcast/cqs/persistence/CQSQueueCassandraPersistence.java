@@ -92,9 +92,8 @@ public class CQSQueueCassandraPersistence extends CassandraPersistence implement
 	public void deleteQueue(String queueUrl) throws PersistenceException {
 
 		if (getQueueByUrl(queueUrl) == null) {
-			String message = "No queue with the url " + queueUrl + " exists";
-			logger.error("event=deleteQueue status=failed message=" + message);
-			throw new PersistenceException (CQSErrorCodes.InvalidRequest, message);
+			logger.error("event=delete_queue error_code=queue_does_not_exist queue_url=" + queueUrl);
+			throw new PersistenceException (CQSErrorCodes.InvalidRequest, "No queue with the url " + queueUrl + " exists");
 		}
 		
 		delete(queuesTemplateString, queueUrl, null);
@@ -105,7 +104,7 @@ public class CQSQueueCassandraPersistence extends CassandraPersistence implement
 	public List<CQSQueue> listQueues(String userId, String queueName_prefix) throws PersistenceException {
 		
 		if (userId == null || userId.trim().length() == 0) {
-			logger.error("event=listQueues status=failed message=invalid_user user_id=" + userId);
+			logger.error("event=list_queues error_code=invalid_user user_id=" + userId);
 			throw new PersistenceException(CQSErrorCodes.InvalidParameterValue, "Invalid userId " + userId);
 		}
 			

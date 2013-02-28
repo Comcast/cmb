@@ -128,7 +128,7 @@ public class HTTPEndpointSyncPublisher implements IEndpointPublisher {
 		logger.debug("event=send_http_request endpoint=" + endpoint + "\" message=\"" + message + "\"");
 
 		if ((message == null) || (endpoint == null)) {
-			logger.debug("event=send_http_request status=failure errorType=MissingParameters endpoint=" + endpoint + "\" message=\"" + message + "\"");
+			logger.debug("event=send_http_request error_code=MissingParameters endpoint=" + endpoint + "\" message=\"" + message + "\"");
 			throw new Exception("Message and Endpoint must both be set");
 		}
 

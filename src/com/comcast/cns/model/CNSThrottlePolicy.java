@@ -53,20 +53,18 @@ public class CNSThrottlePolicy {
 			} else if (json.keys().hasNext() && !json.has("maxReceivesPerSecond")) {
 				error = true;
 				errorMessage = "Unexpected JSON member";
-				logger.error("event=construct_cns_throttle_policy status=failed message=" + errorMessage);
+				logger.error("event=construct_cns_throttle_policy message=" + errorMessage);
 			}
 			
 		} catch (Exception e) {
-			logger.error("event=construct_cns_throttle_policy status=failed", e);
+			logger.error("event=construct_cns_throttle_policy", e);
 			throw new CNSModelConstructionException("unable to create Throttle Policy");
 		}
 
 		if (error) {
-			logger.error("event=construct_cns_throttle_policy status=failed message=" + errorMessage);
+			logger.error("event=construct_cns_throttle_policy message=" + errorMessage);
 			throw new CNSModelConstructionException("throttlePolicy." + errorMessage);
 		}
-		
-		logger.debug("event=construct_cns_throttle_policy status=success");
 	}
 	
 	/**
@@ -87,24 +85,21 @@ public class CNSThrottlePolicy {
 			} else if (json.keys().hasNext() && !json.has("maxReceivesPerSecond")) {
 				error = true;
 				errorMessage = "Unexpected JSON member";
-				logger.error("event=update_cns_throttle_policy status=failed reason=error: \"" + errorMessage + "\"");
+				logger.error("event=update_cns_throttle_policy message=" + errorMessage );
 			} else {
 				maxReceivesPerSecond = null;
 			}
 			
 		} catch (JSONException e) {
-			logger.error("event=update_cns_throttle_policy status=failed reason=exception: \"" + e + "\"");
+			logger.error("event=update_cns_throttle_policy", e);
 			throw new CNSModelConstructionException("unable to create Throttle Policy");
 		}		
 
 		if (error) {
-			logger.error("event=update_cns_throttle_policy status=failed reason=error: \"" + errorMessage + "\"");
+			logger.error("event=update_cns_throttle_policy message=" + errorMessage);
 			throw new CNSModelConstructionException("throttlePolicy." + errorMessage);
 		}
-		
-		logger.info("event=update_cns_throttle_policy status=success");
 	} 
-	
 	
 	public JSONObject toJSON() {
 
@@ -121,7 +116,7 @@ public class CNSThrottlePolicy {
 	    	return json;
 		
 		} catch (Exception e) {
-			logger.error("event=cns_throttle_policy_to_json status=failed reason=exception: \"" + e + "\"");
+			logger.error("event=cns_throttle_policy_to_json", e);
 		}
 
 		return null;
@@ -141,7 +136,7 @@ public class CNSThrottlePolicy {
 			return null;
 		
 		} catch (Exception e) {
-			logger.error("event=cns_throttle_policy_to_string status=failed reason=exception: \"" + e + "\"");
+			logger.error("event=cns_throttle_policy_to_string", e);
 			return null;
 		}
 	}

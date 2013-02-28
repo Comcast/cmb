@@ -89,9 +89,10 @@ public class CNSPublishToTopicPageServlet extends AdminServletBase {
 				
 				PublishRequest publishRequest = new PublishRequest(topicArn, message, subject);
 				sns.publish(publishRequest);
+				logger.debug("event=publish topic_arn=" + topicArn + " user_id= " + userId);
 
 			} catch (Exception ex) {
-				logger.error("event=publish_failed topic_arn=" + topicArn);
+				logger.error("event=publish topic_arn=" + topicArn + " user_id= " + userId);
 				throw new ServletException(ex);
 			}
 			

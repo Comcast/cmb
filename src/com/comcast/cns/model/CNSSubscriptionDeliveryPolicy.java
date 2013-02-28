@@ -103,7 +103,7 @@ public class CNSSubscriptionDeliveryPolicy {
 					
 					if (e instanceof CNSModelConstructionException) {
 						String message = ((CNSModelConstructionException) e).getErrormessage();
-						logger.error("event=construct_cns_subscription_delivery_policy status=failed", e);
+						logger.error("event=construct_cns_subscription_delivery_policy", e);
 						throw new CMBException(CNSErrorCodes.CNS_InvalidParameter,"DeliveryPolicy: healthyRetryPolicy." + message);
 					}
 				}
@@ -186,7 +186,7 @@ public class CNSSubscriptionDeliveryPolicy {
 	    	return json;
 	    	
 		} catch (Exception e) {
-			logger.error("event=cns_subscription_delivery_policy_to_json status=failed", e);
+			logger.error("event=cns_subscription_delivery_policy_to_json", e);
 		}
 		
 		return null;
@@ -205,7 +205,7 @@ public class CNSSubscriptionDeliveryPolicy {
 			return null;
 		
 		} catch (Exception e) {
-			logger.error("event=cns_subscription_delivery_policy_to_string status=failed", e);
+			logger.error("event=cns_subscription_delivery_policy_to_string", e);
 			return null;
 		}
 	}
@@ -287,12 +287,12 @@ public class CNSSubscriptionDeliveryPolicy {
 			}
 			
 		} catch (Exception e) {
-			logger.error("event=cns_update_subscription_delivery_policy status=failed", e);
+			logger.error("event=cns_update_subscription_delivery_policy", e);
 			throw new CMBException(CNSErrorCodes.CNS_InvalidParameter,"DeliveryPolicy: JSON exception");
 		}
 		
 		if (error) {
-			logger.error("event=cns_update_subscription_delivery_policy status=failed message=" + errorMessage);
+			logger.error("event=cns_update_subscription_delivery_policy message=" + errorMessage);
 			throw new CMBException(CNSErrorCodes.CNS_InvalidParameter,errorMessage);
 		}
 	}

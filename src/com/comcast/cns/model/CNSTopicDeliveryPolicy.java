@@ -106,7 +106,7 @@ public class CNSTopicDeliveryPolicy {
 	    	return json;
 		
 		} catch (Exception e) {
-			logger.error("event=cns_topic_delivery_policy_to_json status=failed reason=exception: \"" + e + "\"");
+			logger.error("event=cns_topic_delivery_policy_to_json", e);
 		}
 
 		return null;
@@ -118,7 +118,7 @@ public class CNSTopicDeliveryPolicy {
 		boolean error = false;
 		if (!json.has("http")) {
 			errorMessage = "Topic Delivery Policy missing policy for http";
-			logger.error("event=construct_cns_topic_delivery_policy status=failed reason=error: \"" + errorMessage + "\"");
+			logger.error("event=construct_cns_topic_delivery_policy message=" + errorMessage);
 			throw new CMBException(CNSErrorCodes.CNS_InvalidParameter, errorMessage);
 		}
 		try{	
@@ -184,11 +184,11 @@ public class CNSTopicDeliveryPolicy {
 				
 			
 		} catch (Exception e) {
-			logger.error("event=construct_cns_topic_delivery_policy status=failed reason=exception: \"" + e + "\"");
+			logger.error("event=construct_cns_topic_delivery_policy", e);
 			throw new CMBException(CNSErrorCodes.CNS_InvalidParameter,e.getMessage());
 		}
 		if (error) {
-			logger.error("event=update_cns_topic_delivery_policy status=failed reason=error: \"" + errorMessage + "\"");
+			logger.error("event=update_cns_topic_delivery_policy message=" + errorMessage);
 			throw new CMBException(CNSErrorCodes.CNS_InvalidParameter, errorMessage);
 		}
 	}
@@ -202,7 +202,7 @@ public class CNSTopicDeliveryPolicy {
 	public void update(JSONObject json) throws CNSModelConstructionException, CMBException {
 		if (!json.has("http")) {
 			String errorMessage = "Topic Delivery Policy missing policy for http";
-			logger.error("event=update_cns_topic_delivery_policy status=failed reason=error: \"" + errorMessage + "\"");
+			logger.error("event=update_cns_topic_delivery_policy message=" + errorMessage);
 			throw new CMBException(CNSErrorCodes.CNS_InvalidParameter, errorMessage);
 		}
 		String errorMessage = "";
@@ -275,11 +275,11 @@ public class CNSTopicDeliveryPolicy {
 			}
 			
 		} catch (Exception e) {
-			logger.error("event=update_cns_topic_delivery_policy status=failed", e);
+			logger.error("event=update_cns_topic_delivery_policy", e);
 			throw new CMBException(CNSErrorCodes.CNS_InvalidParameter,"DeliveryPolicy: JSON exception");
 		}
 		if (error) {
-			logger.error("event=update_cns_topic_delivery_policy status=failed reason=error: \"" + errorMessage + "\"");
+			logger.error("event=update_cns_topic_delivery_policy message=" + errorMessage);
 			throw new CMBException(CNSErrorCodes.CNS_InvalidParameter, errorMessage);
 		}
 	}
@@ -291,7 +291,7 @@ public class CNSTopicDeliveryPolicy {
 	    	json.put("http", httpJson);
 	    	return json;
 		} catch (Exception e) {
-			logger.error("event=cns_topic_delivery_policy_to_json status=failed", e);
+			logger.error("event=cns_topic_delivery_policy_to_json", e);
 		}
 		return null;
 	}
@@ -304,7 +304,7 @@ public class CNSTopicDeliveryPolicy {
 	    	}
 	    	return null;
 		} catch (Exception e) {
-			logger.error("event=cns_topic_delivery_policy_to_string status=failed", e);
+			logger.error("event=cns_topic_delivery_policy_to_string", e);
 			return null;
 		}
 	}

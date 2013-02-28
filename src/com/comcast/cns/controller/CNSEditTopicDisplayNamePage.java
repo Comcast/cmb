@@ -67,9 +67,9 @@ public class CNSEditTopicDisplayNamePage extends AdminServletBase {
 			try {
 				SetTopicAttributesRequest setTopicAttributesRequest = new SetTopicAttributesRequest(topicArn, "DisplayName", displayName);
 				sns.setTopicAttributes(setTopicAttributesRequest);
-				logger.debug("event=update_display_name status=success topic_arn=" + topicArn);
+				logger.debug("event=update_display_name topic_arn=" + topicArn + " user_id= " + userId);
 			} catch (Exception ex) {
-				logger.error("event=update_display_name status=failed topic_arn= " + topicArn, ex);
+				logger.error("event=update_display_name topic_arn= " + topicArn + " user_id= " + userId, ex);
 				throw new ServletException(ex);
 			}
 			
@@ -84,7 +84,7 @@ public class CNSEditTopicDisplayNamePage extends AdminServletBase {
 				GetTopicAttributesResult getTopicAttributesResult = sns.getTopicAttributes(getTopicAttributesRequest);
 				attributes = getTopicAttributesResult.getAttributes();
 			} catch (Exception ex) {
-				logger.error("event=update_display_name status=failed topic_arn= " + topicArn, ex);
+				logger.error("event=get_topic_attributes topic_arn= " + topicArn + " user_id= " + userId, ex);
 				throw new ServletException(ex);
 			}
 

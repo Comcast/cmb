@@ -67,6 +67,7 @@ import me.prettyprint.hector.api.query.SuperSliceQuery;
 import org.apache.log4j.Logger;
 
 import com.comcast.cmb.common.controller.CMBControllerServlet;
+import com.comcast.cmb.common.model.ReceiptModule;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.ValueAccumulator.AccumulatorName;
 
@@ -200,13 +201,13 @@ public class CassandraPersistence {
 	 *            column value
 	 * @throws HectorException
 	 */
-	public <K, N, V> void update(ColumnFamilyTemplate<K, N> template, K key,
-			N column, V value, Serializer<K> keySerializer,
-			Serializer<N> nameSerializer, Serializer<V> valueSerializer)
-			throws HectorException {
-        long ts1 = System.currentTimeMillis();	    
+	public <K, N, V> void update(ColumnFamilyTemplate<K, N> template, K key, N column, V value, Serializer<K> keySerializer, Serializer<N> nameSerializer, Serializer<V> valueSerializer) throws HectorException {
+        
+		long ts1 = System.currentTimeMillis();	    
 		
-        ColumnFamilyUpdater<K, N> updater = template.createUpdater(key);
+        logger.debug("event=update column_family=" + template.getColumnFamily() + " key=" + key + " column=" + column + " value=" + value);
+		
+		ColumnFamilyUpdater<K, N> updater = template.createUpdater(key);
 		updater.setValue(column, value, valueSerializer);
 		template.update(updater);
 		
@@ -240,29 +241,30 @@ public class CassandraPersistence {
 	 *            of column value
 	 * @throws HectorException
 	 */
-	public <K, SN, N, V> MutationResult insertSuperColumn(String columnFamily,
-			K key, Serializer<K> keySerializer, SN superName, Integer ttl,
-			Serializer<SN> superNameSerializer, Map<N, V> subColumnNameValues,
-			Serializer<N> columnSerializer, Serializer<V> valueSerializer,
+	public <K, SN, N, V> MutationResult insertSuperColumn(String columnFamily, K key, Serializer<K> keySerializer, SN superName, Integer ttl, 
+			Serializer<SN> superNameSerializer, Map<N, V> subColumnNameValues, Serializer<N> columnSerializer, Serializer<V> valueSerializer,
 			HConsistencyLevel level) throws HectorException {
-	    long ts1 = System.currentTimeMillis();
-	    logger.debug("event=insertSuperColumn key=" + key + " cf=" + columnFamily + " superName=" + superName + " ttl=" + (ttl == null ? "null" : ttl) + " subColumnValues=" + subColumnNameValues);
+	    
+		long ts1 = System.currentTimeMillis();
+	    
+	    logger.debug("event=insert_super_column key=" + key + " cf=" + columnFamily + " super_name=" + superName + " ttl=" + (ttl == null ? "null" : ttl) + " sub_column_values=" + subColumnNameValues);
 
 		List<HColumn<N, V>> subColumns = new ArrayList<HColumn<N, V>>();
-		Mutator<K> mutator = HFactory.createMutator(keyspaces.get(level),
-				keySerializer);
+		Mutator<K> mutator = HFactory.createMutator(keyspaces.get(level), keySerializer);
+		
 		for (N name : subColumnNameValues.keySet()) {
+			
 			V value = subColumnNameValues.get(name);
-			HColumn<N, V> subColumn = HFactory.createColumn(name, value,
-					columnSerializer, valueSerializer);
-			if (ttl != null)
+			HColumn<N, V> subColumn = HFactory.createColumn(name, value, columnSerializer, valueSerializer);
+			
+			if (ttl != null) {
 			    subColumn.setTtl(ttl);
+			}
+			
 			subColumns.add(subColumn);
 		}
-		HSuperColumn<SN, N, V> superColumn = HFactory.createSuperColumn(
-				superName, subColumns,
-				Calendar.getInstance().getTimeInMillis(), superNameSerializer,
-				columnSerializer, valueSerializer);
+		
+		HSuperColumn<SN, N, V> superColumn = HFactory.createSuperColumn(superName, subColumns, Calendar.getInstance().getTimeInMillis(), superNameSerializer, columnSerializer, valueSerializer);
 		MutationResult result = mutator.insert(key, columnFamily, superColumn);
 		
 		long ts2 = System.currentTimeMillis();
@@ -304,31 +306,35 @@ public class CassandraPersistence {
 			Serializer<SN> superNameSerializer, Serializer<N> columnSerializer,
 			Serializer<V> valueSerializer, HConsistencyLevel level)
 			throws HectorException {
+		
 	    long ts1 = System.currentTimeMillis();
 	    
+	    logger.debug("event=insert_super_columns cf=" + columnFamily + " columns=" + superNameSubColumnsMap);
+	    
 		List<HColumn<N, V>> subColumns = new ArrayList<HColumn<N, V>>();
-		Mutator<K> mutator = HFactory.createMutator(keyspaces.get(level),
-				keySerializer);
+		Mutator<K> mutator = HFactory.createMutator(keyspaces.get(level), keySerializer);
+		
 		for (SN superName : superNameSubColumnsMap.keySet()) {
+			
 			Map<N, V> subColumnsMap = superNameSubColumnsMap.get(superName);
+			
 			if (subColumnsMap != null) {
+				
 				subColumns.clear();
+				
 				for (N name : subColumnsMap.keySet()) {
 					V value = subColumnsMap.get(name);
-					HColumn<N, V> subColumn = HFactory.createColumn(name,
-							value, columnSerializer, valueSerializer);
+					HColumn<N, V> subColumn = HFactory.createColumn(name, value, columnSerializer, valueSerializer);
 					subColumn.setTtl(ttl);
 					subColumns.add(subColumn);
 				}
-				HSuperColumn<SN, N, V> superColumn = HFactory
-						.createSuperColumn(superName, subColumns, Calendar
-								.getInstance().getTimeInMillis(),
-								superNameSerializer, columnSerializer,
-								valueSerializer);
+				
+				HSuperColumn<SN, N, V> superColumn = HFactory.createSuperColumn(superName, subColumns, Calendar.getInstance().getTimeInMillis(), superNameSerializer, columnSerializer,	valueSerializer);
 				mutator.addInsertion(key, columnFamily, superColumn);
 				superColumn = null;
 			}
 		}
+		
 		MutationResult result = mutator.execute();
 		
         long ts2 = System.currentTimeMillis();
@@ -353,12 +359,17 @@ public class CassandraPersistence {
 	 * 
 	 */
 	@SuppressWarnings("unchecked")
-	public <N, V> V read(ColumnFamilyTemplate<String, N> template, String key,
-			N column, V returnType) throws HectorException {
+	public <N, V> V read(ColumnFamilyTemplate<String, N> template, String key, N column, V returnType) throws HectorException {
+		
         long ts1 = System.currentTimeMillis();
+        
+        logger.debug("event=read cf=" + template.getColumnFamily() + " key=" + key + " column=" + column);
+        
         try {
-            ColumnFamilyResult<String, N> res = template.queryColumns(key);
-            if (returnType instanceof String) {
+
+        	ColumnFamilyResult<String, N> res = template.queryColumns(key);
+            
+        	if (returnType instanceof String) {
                 return (V) res.getString(column);
             } else if (returnType instanceof Date) {
                 return (V) res.getDate(column);
@@ -373,26 +384,33 @@ public class CassandraPersistence {
             } else if (returnType instanceof UUID) {
                 return (V) res.getUUID(column);
             } else if (returnType instanceof Composite) {
+            
             	HColumn<N, java.nio.ByteBuffer> col = res.getColumn(column);
+            	
             	if (col == null) {
             		return (V) null;
             	}
+            	
             	return (V) Composite.fromByteBuffer(col.getValue());
+            
             } else if (returnType instanceof DynamicComposite) {
+            
             	HColumn<N, java.nio.ByteBuffer> col = res.getColumn(column);
+            	
             	if (col == null) {
             		return (V) null;
             	}
+            	
             	return (V) DynamicComposite.fromByteBuffer(col.getValue());
+            
             } else {
-                throw new IllegalArgumentException(
-                        "Unsupported type of return type:" + returnType);
+                throw new IllegalArgumentException("Unsupported type of return type: " + returnType);
             }
+        	
         } finally {
             long ts2 = System.currentTimeMillis();
             CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CassandraTime, (ts2 - ts1));      
         }
-
 	}
 
 	/**
@@ -413,11 +431,9 @@ public class CassandraPersistence {
 	 *         of column value
 	 */
 	public <K, N, V> List<Row<K, N, V>> readNextNRows(String columnFamily,
-			K lastKey, int numRows, Serializer<K> keySerializer,
-			Serializer<N> columnNameSerializer, Serializer<V> valueSerializer,
+			K lastKey, int numRows, Serializer<K> keySerializer, Serializer<N> columnNameSerializer, Serializer<V> valueSerializer,
 			HConsistencyLevel level) {
-		return readNextNRows(columnFamily, lastKey, numRows, 100,
-				keySerializer, columnNameSerializer, valueSerializer, level);
+		return readNextNRows(columnFamily, lastKey, numRows, 100, keySerializer, columnNameSerializer, valueSerializer, level);
 	}
 
 	/**
@@ -440,18 +456,17 @@ public class CassandraPersistence {
 	 *         of column value
 	 */
 	public <K, N, V> List<Row<K, N, V>> readNextNRows(String columnFamily,
-			K lastKey, int numRows, int numCols, Serializer<K> keySerializer,
-			Serializer<N> columnNameSerializer, Serializer<V> valueSerializer,
+			K lastKey, int numRows, int numCols, Serializer<K> keySerializer, Serializer<N> columnNameSerializer, Serializer<V> valueSerializer,
 			HConsistencyLevel level) {
 
 	    long ts1 = System.currentTimeMillis();
 	    
+	    logger.debug("event=read_nextn_rows cf=" + columnFamily + " last_key=" + lastKey + " num_rows=" + numRows + " num_cols=" + numCols);
+	    
 		List<Row<K, N, V>> rows = new ArrayList<Row<K, N, V>>();
 		Keyspace keyspace = keyspaces.get(level);
 
-		RangeSlicesQuery<K, N, V> rangeSlicesQuery = HFactory
-				.createRangeSlicesQuery(keyspace, keySerializer,
-						columnNameSerializer, valueSerializer)
+		RangeSlicesQuery<K, N, V> rangeSlicesQuery = HFactory.createRangeSlicesQuery(keyspace, keySerializer, columnNameSerializer, valueSerializer)
 				.setColumnFamily(columnFamily)
 				.setRange(null, null, false, numCols).setRowCount(numRows)
 				.setKeys(lastKey, null);
@@ -503,13 +518,15 @@ public class CassandraPersistence {
 	 * @return list of rows K - type of row-key N - type of column name V - type
 	 *         of column value
 	 */
-	public <K, N, V> List<Row<K, N, V>> readNextNNonEmptyRows(
-			String columnFamily, K lastKey, int numRows, int numCols,
-			Serializer<K> keySerializer, Serializer<N> columnNameSerializer,
-			Serializer<V> valueSerializer, HConsistencyLevel level) {
+	public <K, N, V> List<Row<K, N, V>> readNextNNonEmptyRows(String columnFamily, K lastKey, int numRows, int numCols,
+			Serializer<K> keySerializer, Serializer<N> columnNameSerializer, Serializer<V> valueSerializer, HConsistencyLevel level) {
 	    
 	    long ts1 = System.currentTimeMillis();
+	    
+	    logger.debug("event=read_nextn_nonempty_rows cf=" + columnFamily + " last_key=" + lastKey + " num_rows=" + numRows + " num_cols" + numCols);
+	    
 	    try {
+	    	
 	        int pageSize = 100;
 
 	        List<Row<K, N, V>> rows = new ArrayList<Row<K, N, V>>();
@@ -521,8 +538,7 @@ public class CassandraPersistence {
 
 	        while (true) {
 
-	            rangeSlicesQuery = HFactory
-	            .createRangeSlicesQuery(keyspace, keySerializer,
+	            rangeSlicesQuery = HFactory.createRangeSlicesQuery(keyspace, keySerializer,
 	                    columnNameSerializer, valueSerializer)
 	                    .setColumnFamily(columnFamily)
 	                    .setRange(null, null, false, numCols).setRowCount(pageSize)
@@ -566,6 +582,7 @@ public class CassandraPersistence {
 	                }
 	            }
 	        }
+	        
 	    } finally {
 	        long ts2 = System.currentTimeMillis();
 	        CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CassandraTime, (ts2 - ts1));      
@@ -595,17 +612,13 @@ public class CassandraPersistence {
 	 * @return list of rows K - type of row-key N - type of column name V - type
 	 *         of column value
 	 */
-	public <K, N, V> List<Row<K, N, V>> readNextNRows(String columnFamily,
-			K lastKey, N whereColumn, V whereValue, int numRows, int numCols,
-			Serializer<K> keySerializer, Serializer<N> columnNameSerializer,
-			Serializer<V> valueSerializer, HConsistencyLevel level) {
+	public <K, N, V> List<Row<K, N, V>> readNextNRows(String columnFamily, K lastKey, N whereColumn, V whereValue, int numRows, int numCols,
+			Serializer<K> keySerializer, Serializer<N> columnNameSerializer, Serializer<V> valueSerializer, HConsistencyLevel level) {
 
 		Map<N, V> columnValues = new HashMap<N, V>();
 		columnValues.put(whereColumn, whereValue);
 
-		return readNextNRows(columnFamily, lastKey, columnValues, numRows,
-				numCols, keySerializer, columnNameSerializer, valueSerializer,
-				level);
+		return readNextNRows(columnFamily, lastKey, columnValues, numRows, numCols, keySerializer, columnNameSerializer, valueSerializer, level);
 	}
 
 	/**
@@ -626,22 +639,20 @@ public class CassandraPersistence {
 	 * @param valueSerializer
 	 * @param level
 	 *            consistency level
-	 * @return lsit of rows K - type of row-key N - type of column name V - type
+	 * @return list of rows K - type of row-key N - type of column name V - type
 	 *         of column value
 	 */
-	public <K, N, V> List<Row<K, N, V>> readNextNRows(String columnFamily,
-			K lastKey, Map<N, V> columnValues, int numRows, int numCols,
-			Serializer<K> keySerializer, Serializer<N> columnNameSerializer,
-			Serializer<V> valueSerializer, HConsistencyLevel level) {
+	public <K, N, V> List<Row<K, N, V>> readNextNRows(String columnFamily, K lastKey, Map<N, V> columnValues, int numRows, int numCols,
+			Serializer<K> keySerializer, Serializer<N> columnNameSerializer, Serializer<V> valueSerializer, HConsistencyLevel level) {
 
         long ts1 = System.currentTimeMillis();
+        
+        logger.debug("event=read_nextn_rows cf=" + columnFamily + " last_key=" + lastKey + " num_rows=" + numRows + " num_cols=" + numCols + " values=" + columnValues);
 
 		List<Row<K, N, V>> rows = new ArrayList<Row<K, N, V>>();
 		Keyspace keyspace = keyspaces.get(level);
 
-		IndexedSlicesQuery<K, N, V> indexedSlicesQuery = HFactory
-				.createIndexedSlicesQuery(keyspace, keySerializer,
-						columnNameSerializer, valueSerializer)
+		IndexedSlicesQuery<K, N, V> indexedSlicesQuery = HFactory.createIndexedSlicesQuery(keyspace, keySerializer,	columnNameSerializer, valueSerializer)
 				.setColumnFamily(columnFamily)
 				.setRange(null, null, false, numCols).setRowCount(numRows)
 				.setStartKey(lastKey);
@@ -692,16 +703,14 @@ public class CassandraPersistence {
 	 * @param valueSerializer
 	 * @param level
 	 *            consistency level
-	 * @return lsit of rows K - type of row-key N - type of column name V - type
+	 * @return list of rows K - type of row-key N - type of column name V - type
 	 *         of column value
 	 * @return row Will get row starting from the beginning
 	 */
-	public <K, N, V> Row<K, N, V> readRow(String columnFamily, K key,
-			int numCols, Serializer<K> keySerializer,
-			Serializer<N> columnNameSerializer, Serializer<V> valueSerializer,
+	public <K, N, V> Row<K, N, V> readRow(String columnFamily, K key, int numCols, 
+			Serializer<K> keySerializer, Serializer<N> columnNameSerializer, Serializer<V> valueSerializer,
 			HConsistencyLevel level) {
-		return readRow(columnFamily, key, null, null, numCols, keySerializer,
-				columnNameSerializer, valueSerializer, level);
+		return readRow(columnFamily, key, null, null, numCols, keySerializer, columnNameSerializer, valueSerializer, level);
 	}
 
 	/**
@@ -722,22 +731,21 @@ public class CassandraPersistence {
 	 * @param valueSerializer
 	 * @param level
 	 *            consistency level
-	 * @return lsit of rows K - type of row-key N - type of column name V - type
+	 * @return list of rows K - type of row-key N - type of column name V - type
 	 *         of column value
 	 * @return row
 	 */
-	public <K, N, V> Row<K, N, V> readRow(String columnFamily, K key,
-			N firstColumnName, N lastColumnName, int numCols,
-			Serializer<K> keySerializer, Serializer<N> columnNameSerializer,
-			Serializer<V> valueSerializer, HConsistencyLevel level) {
-        long ts1 = System.currentTimeMillis();
+	public <K, N, V> Row<K, N, V> readRow(String columnFamily, K key, N firstColumnName, N lastColumnName, int numCols,
+			Serializer<K> keySerializer, Serializer<N> columnNameSerializer, Serializer<V> valueSerializer, HConsistencyLevel level) {
+        
+		long ts1 = System.currentTimeMillis();
+		
+		logger.debug("event=read_row cf=" + columnFamily + " key=" + key + " first_col=" + firstColumnName + " last_col=" + lastColumnName + " num_cols=" + numCols);
 
 		Row<K, N, V> row = null;
 		Keyspace keyspace = keyspaces.get(level);
 
-		RangeSlicesQuery<K, N, V> rangeSlicesQuery = HFactory
-				.createRangeSlicesQuery(keyspace, keySerializer,
-						columnNameSerializer, valueSerializer)
+		RangeSlicesQuery<K, N, V> rangeSlicesQuery = HFactory.createRangeSlicesQuery(keyspace, keySerializer, columnNameSerializer, valueSerializer)
 				.setColumnFamily(columnFamily)
 				.setRange(firstColumnName, lastColumnName, false, numCols)
 				.setRowCount(1).setKeys(key, key);
@@ -758,6 +766,7 @@ public class CassandraPersistence {
 				row = null;
 			}
 		}
+		
         long ts2 = System.currentTimeMillis();
         CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CassandraTime, (ts2 - ts1));      
 
@@ -782,27 +791,24 @@ public class CassandraPersistence {
 	 * @param valueSerializer
 	 * @param level
 	 *            consistency level
-	 * @return lsit of rows K - type of row-key N - type of column name V - type
+	 * @return list of rows K - type of row-key N - type of column name V - type
 	 *         of column value
 	 * @return row
 	 */
-	public <K, SN, N, V> SuperSlice<SN, N, V> readRowFromSuperColumnFamily(
-			String columnFamily, K key, SN firstColumnName, SN lastColumnName,
-			int numCols, Serializer<K> keySerializer,
-			Serializer<SN> superNameSerializer,
-			Serializer<N> columnNameSerializer, Serializer<V> valueSerializer,
+	public <K, SN, N, V> SuperSlice<SN, N, V> readRowFromSuperColumnFamily(String columnFamily, K key, SN firstColumnName, SN lastColumnName, int numCols, 
+			Serializer<K> keySerializer, Serializer<SN> superNameSerializer, Serializer<N> columnNameSerializer, Serializer<V> valueSerializer,
 			HConsistencyLevel level) {
 
 	    long ts1 = System.currentTimeMillis();
-	    try {
-	        Keyspace keyspace = keyspaces.get(level);
-	        
-	        logger.debug("Action=readRowFromSuperColumnFamily cf=" + columnFamily + "key=" + key  +" firstColumn=" + firstColumnName + " lastColumnName=" + lastColumnName + " numCols=" + numCols);
+	    
+        logger.debug("event=read_row_from_super_column_family cf=" + columnFamily + "key=" + key  +" first_column=" + firstColumnName + " last_column_name=" + lastColumnName + " num_cols=" + numCols);
 
-	        SuperSliceQuery<K, SN, N, V> rangeSlicesQuery = HFactory
-	        .createSuperSliceQuery(keyspace, keySerializer,
-	                superNameSerializer, columnNameSerializer,
-	                valueSerializer).setColumnFamily(columnFamily)
+	    try {
+	        
+	    	Keyspace keyspace = keyspaces.get(level);
+	        
+	        SuperSliceQuery<K, SN, N, V> rangeSlicesQuery = HFactory.createSuperSliceQuery(keyspace, keySerializer, superNameSerializer, columnNameSerializer, valueSerializer)
+	        		.setColumnFamily(columnFamily)
 	                .setRange(firstColumnName, lastColumnName, false, numCols)
 	                .setKey(key);
 
@@ -811,11 +817,13 @@ public class CassandraPersistence {
 	        CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CassandraRead, 1L);
 	        
 	        SuperSlice<SN, N, V> superSlice = result.get();
-	        if (superSlice.getSuperColumns() == null
-	                || superSlice.getSuperColumns().size() == 0) {
+	        
+	        if (superSlice.getSuperColumns() == null || superSlice.getSuperColumns().size() == 0) {
 	            return null;
 	        }
+	        
 	        return superSlice;
+	        
 	    } finally {
 	        long ts2 = System.currentTimeMillis();
 	        CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CassandraTime, (ts2 - ts1));      
@@ -840,23 +848,20 @@ public class CassandraPersistence {
 	 *         of column value
 	 * @return row
 	 */
-	public <K, SN, N, V> HSuperColumn<SN, N, V> readColumnFromSuperColumnFamily(
-			String columnFamily, K key, SN columnName, 
-			Serializer<K> keySerializer,
-			Serializer<SN> superNameSerializer,
-			Serializer<N> columnNameSerializer, Serializer<V> valueSerializer,
+	public <K, SN, N, V> HSuperColumn<SN, N, V> readColumnFromSuperColumnFamily(String columnFamily, K key, SN columnName, 
+			Serializer<K> keySerializer, Serializer<SN> superNameSerializer, Serializer<N> columnNameSerializer, Serializer<V> valueSerializer,
 			HConsistencyLevel level) {
 
 	    long ts1 = System.currentTimeMillis();
-	    try {
-	        Keyspace keyspace = keyspaces.get(level);
-	        
-	        logger.debug("Action=readRowFromSuperColumnFamily cf=" + columnFamily + " key=" + key + "column_name=" + columnName);
+	    
+        logger.debug("event=read_column_from_super_column_family cf=" + columnFamily + " key=" + key + "column_name=" + columnName);
 
-	        SuperColumnQuery<K, SN, N, V> superColumnQuery = HFactory
-	        .createSuperColumnQuery(keyspace, keySerializer,
-	                superNameSerializer, columnNameSerializer,
-	                valueSerializer).setColumnFamily(columnFamily)
+        try {
+	       
+	    	Keyspace keyspace = keyspaces.get(level);
+
+	        SuperColumnQuery<K, SN, N, V> superColumnQuery = HFactory.createSuperColumnQuery(keyspace, keySerializer, superNameSerializer, columnNameSerializer, valueSerializer)
+	        		.setColumnFamily(columnFamily)
 	                .setSuperName(columnName)
 	                .setKey(key);
 
@@ -865,10 +870,13 @@ public class CassandraPersistence {
 	        CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CassandraRead, 1L);
 	        
 	        HSuperColumn<SN, N, V> superColumn = result.get();
+	        
 	        if (superColumn == null) {
 	            return null;
 	        }
+	        
 	        return superColumn;
+	        
 	    } finally {
 	        long ts2 = System.currentTimeMillis();
 	        CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CassandraTime, (ts2 - ts1));      
@@ -892,17 +900,18 @@ public class CassandraPersistence {
 	 * @param numCol the number of columns to read
 	 * @return
 	 */
-	public 	<K, SN, N, V> List<HSuperColumn<SN, N, V>> readColumnsFromSuperColumnFamily(
-	        String columnFamily, K key, 
-	        Serializer<K> keySerializer,
-	        Serializer<SN> superNameSerializer,
-	        Serializer<N> columnNameSerializer, Serializer<V> valueSerializer,
+	public 	<K, SN, N, V> List<HSuperColumn<SN, N, V>> readColumnsFromSuperColumnFamily(String columnFamily, K key, 
+			Serializer<K> keySerializer, Serializer<SN> superNameSerializer, Serializer<N> columnNameSerializer, Serializer<V> valueSerializer,
 	        HConsistencyLevel level, SN firstCol, SN lastCol, int numCol) {
+		
 	    long ts1 = System.currentTimeMillis();
-	    try {
+	    
+        logger.debug("event=read_columns_from_super_column_family cf=" + columnFamily + " key=" + key);
+
+        try {
+	    	
 	        Keyspace keyspace = keyspaces.get(level);
 
-	        logger.debug("Action=readColumnsFromSuperColumnFamily cf=" + columnFamily + " key=" + key);
 	        SuperSliceQuery<K, SN, N, V> superSliceQuery = HFactory.createSuperSliceQuery(keyspace, keySerializer, superNameSerializer, columnNameSerializer, valueSerializer)
 	        .setColumnFamily(columnFamily)
 	        .setKey(key)
@@ -937,17 +946,15 @@ public class CassandraPersistence {
 	 * @return null if no row found. Else return appt column slice K - type of
 	 *         row-key N - type of column name V - type of column value
 	 */
-	public <K, N, V> ColumnSlice<N, V> readTimeUUIDRow(String columnFamily,
-			K key, N firstColumn, N lastColumn, int numCols,
-			Serializer<K> keySerializer, Serializer<N> columnNameSerializer,
-			Serializer<V> valueSerializer, HConsistencyLevel level) {
+	public <K, N, V> ColumnSlice<N, V> readTimeUUIDRow(String columnFamily, K key, N firstColumn, N lastColumn, int numCols, 
+			Serializer<K> keySerializer, Serializer<N> columnNameSerializer, Serializer<V> valueSerializer, HConsistencyLevel level) {
 
-		Row<K, N, V> row = readRow(columnFamily, key, firstColumn, lastColumn,
-				numCols, keySerializer, columnNameSerializer, valueSerializer,
-				level);
+		Row<K, N, V> row = readRow(columnFamily, key, firstColumn, lastColumn, numCols, keySerializer, columnNameSerializer, valueSerializer, level);
 
-		if (row == null)
+		if (row == null) {
 			return null;
+		}
+
 		return row.getColumnSlice();
 	}
 
@@ -965,8 +972,7 @@ public class CassandraPersistence {
 	 *            consistency level
 	 * @return Note: This method assumes a String for key, column-name & value
 	 */
-	public MutationResult insertOrUpdateRow(String rowKey, String columnFamily,
-			Map<String, String> columnValues, HConsistencyLevel level) {
+	public MutationResult insertOrUpdateRow(String rowKey, String columnFamily,	Map<String, String> columnValues, HConsistencyLevel level) {
 		return insertRow(rowKey, columnFamily, columnValues, level, null);
 	}
 
@@ -986,13 +992,8 @@ public class CassandraPersistence {
 	 *            time to live
 	 * @return Note: This method assumes a String for key, column-name & value
 	 */
-	public MutationResult insertRow(String rowKey, String columnFamily,
-			Map<String, String> columnValues, HConsistencyLevel level,
-			Integer ttl) {
-
-		return this.insertRow(rowKey, columnFamily, columnValues,
-				StringSerializer.get(), StringSerializer.get(),
-				StringSerializer.get(), level, ttl);
+	public MutationResult insertRow(String rowKey, String columnFamily,	Map<String, String> columnValues, HConsistencyLevel level, Integer ttl) {
+		return this.insertRow(rowKey, columnFamily, columnValues, StringSerializer.get(), StringSerializer.get(), StringSerializer.get(), level, ttl);
 	}
 
 	/**
@@ -1012,23 +1013,24 @@ public class CassandraPersistence {
 	 *            time to live
 	 * @return Note: This method assumes a String for key, column-name & value
 	 */
-	public <K, N, V> MutationResult insertRow(K rowKey, String columnFamily,
-			Map<N, V> columnValues, Serializer<K> keySerializer,
-			Serializer<N> nameSerializer, Serializer<V> valueSerializer,
+	public <K, N, V> MutationResult insertRow(K rowKey, String columnFamily, Map<N, V> columnValues, 
+			Serializer<K> keySerializer, Serializer<N> nameSerializer, Serializer<V> valueSerializer,
 			HConsistencyLevel level, Integer ttl) {
 
 	    long ts1 = System.currentTimeMillis();
-        logger.debug("event=insertRow key=" + rowKey + " cf=" + columnFamily + " ttl=" + (ttl == null ? "null" : ttl));
 	    
-		Mutator<K> mutator = HFactory.createMutator(keyspaces.get(level),
-				keySerializer);
+        logger.debug("event=insert_row key=" + rowKey + " cf=" + columnFamily + " ttl=" + (ttl == null ? "null" : ttl));
+	    
+		Mutator<K> mutator = HFactory.createMutator(keyspaces.get(level), keySerializer);
 
 		for (N key : columnValues.keySet()) {
-			HColumn<N, V> col = HFactory.createColumn(key,
-					columnValues.get(key), nameSerializer, valueSerializer);
+			
+			HColumn<N, V> col = HFactory.createColumn(key, columnValues.get(key), nameSerializer, valueSerializer);
+			
 			if (ttl != null) {
 				col.setTtl(ttl);
 			}
+			
 			mutator.addInsertion(rowKey, columnFamily, col);
 		}
 
@@ -1057,25 +1059,27 @@ public class CassandraPersistence {
 	 *            time to live
 	 * @return Note: This method assumes a String for key, column-name & value
 	 */
-	public <K, N, V> MutationResult insertRows(
-			Map<K, Map<N, V>> rowColumnValues, String columnFamily,
-			Serializer<K> keySerializer, Serializer<N> nameSerializer,
-			Serializer<V> valueSerializer, HConsistencyLevel level, Integer ttl) {
+	public <K, N, V> MutationResult insertRows(Map<K, Map<N, V>> rowColumnValues, String columnFamily,
+			Serializer<K> keySerializer, Serializer<N> nameSerializer, Serializer<V> valueSerializer, HConsistencyLevel level, Integer ttl) {
 
 	    long ts1 = System.currentTimeMillis();
-	    logger.debug("event=insertRows rowColumnValues=" + rowColumnValues + " cf=" + columnFamily + " ttl=" + (ttl == null ? "null" : ttl));
+	    
+	    logger.debug("event=insert_rows row_column_values=" + rowColumnValues + " cf=" + columnFamily + " ttl=" + (ttl == null ? "null" : ttl));
 
-		Mutator<K> mutator = HFactory.createMutator(keyspaces.get(level),
-				keySerializer);
+		Mutator<K> mutator = HFactory.createMutator(keyspaces.get(level), keySerializer);
 
 		for (K rowKey : rowColumnValues.keySet()) {
+			
 			Map<N, V> columnValues = rowColumnValues.get(rowKey);
+			
 			for (N key : columnValues.keySet()) {
-				HColumn<N, V> col = HFactory.createColumn(key,
-						columnValues.get(key), nameSerializer, valueSerializer);
+				
+				HColumn<N, V> col = HFactory.createColumn(key, columnValues.get(key), nameSerializer, valueSerializer);
+				
 				if (ttl != null) {
 					col.setTtl(ttl);
 				}
+				
 				mutator.addInsertion(rowKey, columnFamily, col);
 			}
 		}
@@ -1099,18 +1103,14 @@ public class CassandraPersistence {
 	 *            consistency level
 	 * @return query result
 	 */
-	public QueryResult<CqlRows<String, String, String>> readRows(
-			String queryString, HConsistencyLevel level) {
+	public QueryResult<CqlRows<String, String, String>> readRows(String queryString, HConsistencyLevel level) {
 	    long ts1 = System.currentTimeMillis();
+	    logger.debug("event=read_rows query=" + queryString);
 		Keyspace keyspace = keyspaces.get(level);
-		CqlQuery<String, String, String> query = new CqlQuery<String, String, String>(
-				keyspace, new StringSerializer(), new StringSerializer(),
-				new StringSerializer());
+		CqlQuery<String, String, String> query = new CqlQuery<String, String, String>(keyspace, new StringSerializer(), new StringSerializer(),	new StringSerializer());
 		query.setQuery(queryString);
 		QueryResult<CqlRows<String, String, String>> res = query.execute();
 		CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CassandraWrite, 1L);
-
-
 		long ts2 = System.currentTimeMillis();
         CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CassandraTime, (ts2 - ts1));      
 		return res;
@@ -1127,10 +1127,12 @@ public class CassandraPersistence {
 	 *            column name. If column is null, the entire row is deleted
 	 * @throws HectorException
 	 */
-	public <K, N> void delete(ColumnFamilyTemplate<K, N> template, K key,
-			N column) throws HectorException {
+	public <K, N> void delete(ColumnFamilyTemplate<K, N> template, K key, N column) throws HectorException {
+		
         long ts1 = System.currentTimeMillis();
+        
         logger.debug("event=delete key=" + key + " cf=" + template.getColumnFamily() + " column=" + (column == null ? "null" : column));
+        
 		if (column != null) {
 			template.deleteColumn(key, column);
 		} else {
@@ -1153,25 +1155,23 @@ public class CassandraPersistence {
 	 *            column name. If column is null, the entire row is deleted
 	 * @throws HectorException
 	 */
-	public <K, SN, N> void deleteSuperColumn(
-			SuperCfTemplate<K, SN, N> template, K key, SN superColumn)
-			throws HectorException {
+	public <K, SN, N> void deleteSuperColumn(SuperCfTemplate<K, SN, N> template, K key, SN superColumn)	throws HectorException {
+		
         long ts1 = System.currentTimeMillis();
         
-        logger.debug("event=deleteSuperColumn key=" + key + " cf=" + template.getColumnFamily() + " superColumn=" + (superColumn == null ? "null" : superColumn));
+        logger.debug("event=delete_super_column key=" + key + " cf=" + template.getColumnFamily() + " super_column=" + (superColumn == null ? "null" : superColumn));
 
 		if (superColumn != null) {
 			template.deleteColumn(key, superColumn);
 		} else {
 			template.deleteRow(key);
 		}
+		
 		CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CassandraWrite, 1L);
 
         long ts2 = System.currentTimeMillis();
         CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CassandraTime, (ts2 - ts1));      
-
 	}
-	
 	
 	/**
 	 * Create a unique time based UUID
@@ -1180,10 +1180,8 @@ public class CassandraPersistence {
 	 *            Time in milli seconds since Jan 1, 1970
 	 * @throws InterruptedException
 	 */
-	public java.util.UUID getTimeUUID(long timeMillis)
-			throws InterruptedException {
-		return new java.util.UUID(newTime(timeMillis, false),
-				com.eaio.uuid.UUIDGen.getClockSeqAndNode());
+	public java.util.UUID getTimeUUID(long timeMillis) throws InterruptedException {
+		return new java.util.UUID(newTime(timeMillis, false), com.eaio.uuid.UUIDGen.getClockSeqAndNode());
 	}
 
 	/**
@@ -1193,8 +1191,7 @@ public class CassandraPersistence {
 	 *            time
 	 */
 	public java.util.UUID getUniqueTimeUUID(long millis) {
-		return new java.util.UUID(com.eaio.uuid.UUIDGen.createTime(millis),
-				com.eaio.uuid.UUIDGen.getClockSeqAndNode());
+		return new java.util.UUID(com.eaio.uuid.UUIDGen.createTime(millis),	com.eaio.uuid.UUIDGen.getClockSeqAndNode());
 	}
 
 	/**
@@ -1219,29 +1216,32 @@ public class CassandraPersistence {
 	 * @param level
 	 *            The consistency level of the keyspace.
 	 */
-	public <K, N> int getCount(String columnFamily, K key,
-			Serializer<K> keySerializer, Serializer<N> columnNameSerializer,
-			HConsistencyLevel level) throws HectorException {
-        long ts1 = System.currentTimeMillis();
+	public <K, N> int getCount(String columnFamily, K key, Serializer<K> keySerializer, Serializer<N> columnNameSerializer,	HConsistencyLevel level) throws HectorException {
+        
+		long ts1 = System.currentTimeMillis();
+		
+		logger.debug("event=get_count cf=" + columnFamily + " key=" + key);
 
 		@SuppressWarnings("unchecked")
-		MultigetCountQuery<K, N> query = new MultigetCountQuery<K, N>(
-				keyspaces.get(level), keySerializer, columnNameSerializer)
+		MultigetCountQuery<K, N> query = new MultigetCountQuery<K, N>(keyspaces.get(level), keySerializer, columnNameSerializer)
 				.setColumnFamily(columnFamily).setKeys(key)
 				.setRange(null, null, 2000000000);
+		
 		QueryResult<Map<K, Integer>> result = query.execute();
 
 		CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CassandraRead, 1L);
 		
 		Map<K, Integer> resultRow = result.get();
+		
 		if (resultRow.containsKey(key)) {
+			
 			int count = resultRow.get(key);
 	        long ts2 = System.currentTimeMillis();
 	        CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CassandraTime, (ts2 - ts1));      
 			return count;
 		}
 
-		throw new HectorException("Key not found:  Check your code");
+		throw new HectorException("Count not found for key " + key);
 	}
 	
 	/**
@@ -1258,6 +1258,8 @@ public class CassandraPersistence {
 	 */
 	public <K, N> void incrementCounter(String columnFamily, K rowKey, String columnName, int incrementBy, Serializer<K> keySerializer, Serializer<N> columnNameSerializer, HConsistencyLevel level) {
 
+		logger.debug("event=increment_counter cf=" + columnFamily + " key=" + rowKey + " column=" + columnName + " inc=" + incrementBy);
+		
 		Mutator<K> mutator = HFactory.createMutator(keyspaces.get(level), keySerializer);
 		mutator.incrementCounter(rowKey, columnFamily, columnName, incrementBy);
 		mutator.execute();
@@ -1279,7 +1281,10 @@ public class CassandraPersistence {
 	 * @param level
 	 */
 	public <K, N> void decrementCounter(String columnFamily, K rowKey, String columnName, int decrementBy, Serializer<K> keySerializer, Serializer<N> columnNameSerializer, HConsistencyLevel level) {
-        long ts1 = System.currentTimeMillis();
+        
+		long ts1 = System.currentTimeMillis();
+
+		logger.debug("event=decrement_counter cf=" + columnFamily + " key=" + rowKey + " column=" + columnName + " dec=" + decrementBy);
 
 		Mutator<K> mutator = HFactory.createMutator(keyspaces.get(level), keySerializer);
 		mutator.decrementCounter(rowKey, columnFamily, columnName, decrementBy);
@@ -1305,8 +1310,12 @@ public class CassandraPersistence {
 	 * @return
 	 */
 	public <K, N> long getCounter(String columnFamily, K rowKey, N columnName, Serializer<K> keySerializer, Serializer<N> columnNameSerializer, HConsistencyLevel level) {
+		
         long ts1 = System.currentTimeMillis();
-	    try {
+	    logger.debug("event=get_counter cf=" + columnFamily + " key=" + rowKey + " column=" + columnName);
+        
+        try {
+	    	
 	        CounterQuery<K, N> countQuery = HFactory.createCounterColumnQuery(keyspaces.get(level), keySerializer, columnNameSerializer);
 	        countQuery.setColumnFamily(columnFamily).setKey(rowKey).setName(columnName);
 	        QueryResult<HCounterColumn<N>> result = countQuery.execute();
@@ -1318,6 +1327,7 @@ public class CassandraPersistence {
 	        }
 
 	        return result.get().getValue();
+	        
 	    } finally {
 	        long ts2 = System.currentTimeMillis();
 	        CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CassandraTime, (ts2 - ts1));      

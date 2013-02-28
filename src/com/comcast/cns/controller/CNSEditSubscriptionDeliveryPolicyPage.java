@@ -118,10 +118,10 @@ public class CNSEditSubscriptionDeliveryPolicyPage extends AdminServletBase {
 				SetSubscriptionAttributesRequest setSubscriptionAttributesRequest = new SetSubscriptionAttributesRequest(subArn, "DeliveryPolicy", effectiveDeliveryPolicy.toString());
 				sns.setSubscriptionAttributes(setSubscriptionAttributesRequest);
 				
-				logger.debug("event=set_delivery_policy sub_arn=" + subArn);
+				logger.debug("event=set_delivery_policy sub_arn=" + subArn + " user_id= " + userId);
 
 			} catch (Exception ex) {
-				logger.error("event=createTopic status=failed userId= " + userId, ex);
+				logger.error("event=set_subscription_attribute sub_arn=" + subArn + " user_id= " + userId, ex);
 				throw new ServletException(ex);
 			}
 			
@@ -143,7 +143,7 @@ public class CNSEditSubscriptionDeliveryPolicyPage extends AdminServletBase {
 					attributes = getSubscriptionAttributesResult.getAttributes();
 					deliveryPolicy = new CNSSubscriptionDeliveryPolicy(new JSONObject(attributes.get("DeliveryPolicy")));
 				} catch (Exception ex) {
-					logger.error("event=failed_to_get_attributes arn=" + subArn, ex);
+					logger.error("event=get_subscription_attributes sub_arn=" + subArn + " user_id= " + userId, ex);
 					throw new ServletException(ex);
 				}
 

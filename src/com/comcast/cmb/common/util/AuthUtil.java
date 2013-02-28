@@ -133,7 +133,7 @@ public class AuthUtil {
         try {
             timeStamp = dateFormat.parse(ts);
         } catch (ParseException ex) {
-            logger.error("event=checking_timestamp status=failed timestamp="+ts+" message=invalid_format", ex);
+            logger.error("event=checking_timestamp timestamp="+ts+" error_code=invalid_format", ex);
             throw new AuthenticationException(CMBErrorCodes.InvalidParameterValue, "Timestamp="+ts+" is not valid");
         }
 
@@ -143,8 +143,8 @@ public class AuthUtil {
             return;
         }
 
-        logger.error("event=checking_timestamp status=failed timestamp="+ts+" serverTime="+dateFormat.format(now)+" message=timestamp_out_of_range");
-        throw new AuthenticationException(CMBErrorCodes.RequestExpired, "Request timestamp="+ts+" must be within 900 seconds of the server time");
+        logger.error("event=checking_timestamp timestamp=" + ts + " serverTime=" + dateFormat.format(now) + " error_code=timestamp_out_of_range");
+        throw new AuthenticationException(CMBErrorCodes.RequestExpired, "Request timestamp " + ts + " must be within 900 seconds of the server time");
     }
 
     public static void checkExpiration(String expiration) throws AuthenticationException {
@@ -157,8 +157,8 @@ public class AuthUtil {
         try {
             timeStamp = dateFormat.parse(expiration);
         } catch (ParseException e) {
-            logger.error("event=checking_expiration status=failed expiration="+expiration+" message=invalid_format", e);
-            throw new AuthenticationException(CMBErrorCodes.InvalidParameterValue, "Expiration="+expiration+" is not valid");
+            logger.error("event=checking_expiration expiration=" + expiration + " error_code=invalid_format", e);
+            throw new AuthenticationException(CMBErrorCodes.InvalidParameterValue, "Expiration " + expiration +" is not valid");
         }
 
         Date now = new Date();
@@ -167,8 +167,8 @@ public class AuthUtil {
             return;
         }
 
-        logger.error("event=checking_timestamp status=failed expiration="+expiration+" serverTime="+dateFormat.format(now)+" message=request_expired");
-        throw new AuthenticationException(CMBErrorCodes.RequestExpired, "Request expiration="+expiration+" already expired");
+        logger.error("event=checking_timestamp expiration=" + expiration + " server_time=" + dateFormat.format(now) + " error_code=request_expired");
+        throw new AuthenticationException(CMBErrorCodes.RequestExpired, "Request with expiration " + expiration + " already expired");
     }
 
     public static String generateSignature(URL url, Map<String, String> parameters, String version, String algorithm, String accessSecret) throws Exception {

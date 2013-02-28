@@ -73,7 +73,7 @@ public class CNSListTopicsAction extends CNSAction {
 			if (nextTopics.size() == 0) {
 				nextToken = null;
 			} else {
-				logger.debug("event=cns_topic_listed event=next_token_created next_token=" + nextToken + " userid=" + userId);
+				logger.debug("event=cns_topic_listed event=next_token_created next_token=" + nextToken + " user_id=" + userId);
 			}
 		}
 		

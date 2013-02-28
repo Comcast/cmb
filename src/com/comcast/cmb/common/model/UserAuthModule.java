@@ -88,7 +88,6 @@ public class UserAuthModule implements IAuthModule {
         while (enumeration.hasMoreElements()) {
             String name = enumeration.nextElement();
             headers.put(name.toLowerCase(), requestUrl.getHeader(name));
-            logger.debug("event=found_header key=" + name + " value=" + requestUrl.getHeader(name) + " storing_as=" + name.toLowerCase());
         }
 
         return headers;
@@ -126,14 +125,15 @@ public class UserAuthModule implements IAuthModule {
         		accessKey = authorization.substring(authorization.indexOf("Credential=") + "Credential=".length(), authorization.indexOf("/"));
         		
         		if (CMBProperties.getInstance().getEnableSignatureAuth()) {
-                    throw new AuthenticationException(CMBErrorCodes.InvalidAccessKeyId, "AWS4 signatures currently not supported.");
+                    logger.error("event=authenticate error_code=aws4_not_supported");
+        			throw new AuthenticationException(CMBErrorCodes.InvalidAccessKeyId, "AWS4 signatures currently not supported");
         		}
         	}
         }
         
         if (accessKey == null) {
-            logger.error("event=authentication status=failed request="+request+" message=missing_access_key");
-            throw new AuthenticationException(CMBErrorCodes.InvalidAccessKeyId, "No Access Key provided");   
+            logger.error("event=authenticate error_code=missing_access_key");
+            throw new AuthenticationException(CMBErrorCodes.InvalidAccessKeyId, "No access key provided");   
         }
         
         User user = null;
@@ -147,35 +147,43 @@ public class UserAuthModule implements IAuthModule {
             }
             
             if (user == null) {
-                logger.error("event=authentication status=failed request="+request+" access_key="+accessKey+" message=invalid_accesskey");
-                throw new AuthenticationException(CMBErrorCodes.InvalidAccessKeyId, "AccessKey="+accessKey+" is not valid");
+                logger.error("event=authenticate access_key=" + accessKey + " error_code=invalid_accesskey");
+                throw new AuthenticationException(CMBErrorCodes.InvalidAccessKeyId, "AccessKey " + accessKey + " is not valid");
             }
             
         } catch (Exception ex) {
-            logger.error("event=authentication status=failed request="+request+" message=exception", ex);
-            throw new AuthenticationException(CMBErrorCodes.InvalidAccessKeyId, "AccessKey="+accessKey+" is not valid");
+            logger.error("event=authenticate", ex);
+            throw new AuthenticationException(CMBErrorCodes.InvalidAccessKeyId, "AccessKey " + accessKey + " is not valid");
         }
         
         // admin actions do not require signatures but can only be performed by admin user
         
         if (ADMIN_ACTIONS.contains(parameters.get("Action"))) {
         	if (CMBProperties.getInstance().getCnsUserName().equals(user.getUserName())) {
-                logger.debug("event=authentication status=success action=admin_action");
+                logger.debug("event=authenticate action=admin_action");
         		return user;
         	} else {
-                throw new AuthenticationException(CMBErrorCodes.InvalidAccessKeyId, "User not authorized to perform admin actions.");
+                logger.error("event=authenticate error_code=regular_user_attempted_admin_op");
+        		throw new AuthenticationException(CMBErrorCodes.InvalidAccessKeyId, "User not authorized to perform admin actions");
         	}
         }
 
         if (!CMBProperties.getInstance().getEnableSignatureAuth()) {
-            logger.debug("event=authentication status=success EnableSignatureAuth=false");
+            logger.debug("event=authenticate verify_signature=not_required");
             return user;
         }
         
+        String version = parameters.get("SignatureVersion");
+        
+        if (!version.equals("1") && !version.equals("2")) {
+        	logger.error("event=authenticate signature_version="+version+" error_code=unsupported_signature_version");
+            throw new AuthenticationException(CMBErrorCodes.NoSuchVersion, "SignatureVersion="+version+" is not valid");
+        }
+
         String signatureToCheck = parameters.get("Signature");
         
         if (signatureToCheck == null) {
-            logger.error("event=authentication status=failed request="+request+" message=cannot_find_signature");
+            logger.error("event=authenticate error_code=no_signature_provided");
             throw new AuthenticationException(CMBErrorCodes.MissingParameter, "Signature not found");
         }
 
@@ -187,22 +195,15 @@ public class UserAuthModule implements IAuthModule {
         } else if (expiration != null) {
             AuthUtil.checkExpiration(expiration);
         } else {
-            logger.error("event=authentication status=failed request="+request+" message=no_time_stamp_or_expiration");
+            logger.error("event=authenticate error_code=no_time_stamp_or_expiration");
             throw new AuthenticationException(CMBErrorCodes.MissingParameter, "Request must provide either Timestamp or Expires parameter");
-        }
-
-        String version = parameters.get("SignatureVersion");
-        
-        if (!version.equals("1") && !version.equals("2")) {
-        	logger.error("event=authentication status=failed request="+request+" signature_version="+version+" message=invalid_signature_version");
-            throw new AuthenticationException(CMBErrorCodes.NoSuchVersion, "SignatureVersion="+version+" is not valid");
         }
 
         String signatureMethod = parameters.get("SignatureMethod");
         
         if (!signatureMethod.equals("HmacSHA256") && !signatureMethod.equals("HmacSHA1")) {	
-            logger.error("event=authentication status=failed request="+request+" signature_method="+signatureMethod+" message=invalid_signature_method");
-            throw new AuthenticationException(CMBErrorCodes.InvalidParameterValue, "SignatureMethod="+signatureMethod+" is not valid");
+            logger.error("event=authenticate signature_method=" + signatureMethod + " error_code=unsupported_signature_method");
+            throw new AuthenticationException(CMBErrorCodes.InvalidParameterValue, "Signature method " + signatureMethod + " is not supported");
         }
        
         URL url = null;
@@ -213,16 +214,16 @@ public class UserAuthModule implements IAuthModule {
             parameters.remove("Signature");
         	signature = AuthUtil.generateSignature(url, parameters, version, signatureMethod, user.getAccessSecret());
         } catch (Exception ex) {
-            logger.error("event=authentication status=failed request="+request+" url="+url+" message=invalid_url");
-            throw new AuthenticationException(CMBErrorCodes.InternalError, "Invalid Url="+url);
+            logger.error("event=authenticate url="+url+" error_code=invalid_url");
+            throw new AuthenticationException(CMBErrorCodes.InternalError, "Invalid Url " + url);
         }
 
         if (signature == null || !signature.equals(signatureToCheck)) {
-            logger.error("event=authentication status=failed request="+request+" signature="+signature+" signature_given="+signatureToCheck+" message=signature_mismatch");
+            logger.error("event=authenticate signature_calculated=" + signature + " signature_given=" + signatureToCheck + " error_code=signature_mismatch");
             throw new AuthenticationException(CMBErrorCodes.InvalidSignature, "Invalid signature");
         }
 
-        logger.debug("event=authentication status=success");
+        logger.debug("event=authenticated_by_signature username=" + user.getUserName());
 
         return user;
     }
@@ -231,23 +232,26 @@ public class UserAuthModule implements IAuthModule {
     public User authenticateByPassword(String username, String password) throws CMBException {
         
     	try {
+    		
 	        User user = userPersistence.getUserByName(username);
             
 	        if (user == null) {
-                logger.error("event=authentication status=failed username="+username+" message=user_not_found");
-	            throw new AuthenticationException(CMBErrorCodes.AuthFailure, "User="+username+" not found");
+                logger.error("event=authenticate_by_password user=" + username + " error_code=user_not_found");
+	            throw new AuthenticationException(CMBErrorCodes.AuthFailure, "User " + username + " not found");
 	        }
 	        
 	        if (!AuthUtil.verifyPassword(password, user.getHashPassword())) {
-                logger.error("event=authentication status=failed username="+username+" password="+password+" message=invalid_password");
-	            throw new AuthenticationException(CMBErrorCodes.AuthFailure, "User="+username+" invalid password");
+                logger.error("event=authenticate_by_password user=" + username + " error_code=invalid_password");
+	            throw new AuthenticationException(CMBErrorCodes.AuthFailure, "Invalid password for user " + username);
 	        }
 	        
-	        return user;
+            logger.debug("event=authenticated_by_password username=" + username);
+
+            return user;
 	        
         } catch (Exception ex) {
-            logger.error("event=authentication status=failed username="+username+" message=exception", ex);
-            throw new AuthenticationException(CMBErrorCodes.AuthFailure, "User="+username+" not found");
+            logger.error("event=authenticate_by_password username=" + username, ex);
+            throw new AuthenticationException(CMBErrorCodes.AuthFailure, "User " + username + " not found");
         }
     }
 }

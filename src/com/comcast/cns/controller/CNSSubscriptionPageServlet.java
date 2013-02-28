@@ -78,7 +78,7 @@ public class CNSSubscriptionPageServlet extends AdminServletBase {
 				sns.subscribe(subscribeRequest);
 				
 			} catch (Exception ex) {
-				logger.error("event=subscribe status=failed", ex);
+				logger.error("event=subscribe", ex);
 				throw new ServletException(ex);
 			}
 
@@ -88,7 +88,7 @@ public class CNSSubscriptionPageServlet extends AdminServletBase {
 				UnsubscribeRequest unsubscribeRequest = new UnsubscribeRequest(arn);
 				sns.unsubscribe(unsubscribeRequest);
 			} catch (Exception ex) {
-				logger.error("event=unsubscribe status=failed arn=" + arn , ex);
+				logger.error("event=unsubscribe arn=" + arn , ex);
 				throw new ServletException(ex);
 			}
 		}
@@ -102,7 +102,7 @@ public class CNSSubscriptionPageServlet extends AdminServletBase {
 			subscriptions = listSubscriptionsByTopicResult.getSubscriptions();
 			
 		} catch (Exception ex) {
-			logger.error("event=listAllSubscriptionsByTopic status=failed topicArn=" + topicArn, ex);
+			logger.error("event=listAllSubscriptionsByTopic topic_arn=" + topicArn, ex);
 			throw new ServletException(ex);
 		}
 		
@@ -112,7 +112,7 @@ public class CNSSubscriptionPageServlet extends AdminServletBase {
 		try {
 			topic = topicHandler.getTopic(topicArn);
 		} catch (Exception ex) {
-			logger.error("event=getTopic status=failed topicArn=" + topicArn, ex);
+			logger.error("event=getTopic topic_arn=" + topicArn, ex);
 			throw new ServletException(ex);
 		}
 		

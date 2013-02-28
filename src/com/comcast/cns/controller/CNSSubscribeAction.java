@@ -60,12 +60,12 @@ public class CNSSubscribeAction extends CNSAction {
     	String topicArn = request.getParameter("TopicArn");
     	
     	if ((endPoint == null) || (protocol == null) || (userId == null) || (topicArn == null)) {
-    		logger.error("event=cns_subscribe status=failure errorType=InvalidParameters userId="+userId+ " topicArn=" + topicArn +" endpoint=" + endPoint + " protocol=" + protocol);
+    		logger.error("event=cns_subscribe error_code=InvalidParameters user_id="+userId+ " topic_arn=" + topicArn +" endpoint=" + endPoint + " protocol=" + protocol);
 			throw new CMBException(CNSErrorCodes.CNS_InvalidParameter,"request parameter does not comply with the associated constraints.");
 		}
     	
     	if (!Util.isValidTopicArn(topicArn)) {
-    		logger.error("event=cns_subscribe status=failure errorType=InvalidParametersBadARN userId="+userId+ " topicArn=" + topicArn +" endpoint=" + endPoint + " protocol=" + protocol);
+    		logger.error("event=cns_subscribe error_code=InvalidParameters user_id="+userId+ " topic_arn=" + topicArn +" endpoint=" + endPoint + " protocol=" + protocol);
     		throw new CMBException(CNSErrorCodes.CNS_InvalidParameter,"request parameter does not comply with the associated constraints.");
     	}
     	
@@ -76,17 +76,17 @@ public class CNSSubscribeAction extends CNSAction {
     	} else if(protocol.equals("email") || protocol.equals("sqs") || protocol.equals("cqs") || protocol.equals("http") || protocol.equals("https")) {
     		subProtocol = CNSSubscription.CnsSubscriptionProtocol.valueOf(protocol);
     	} else {
-    		logger.error("event=cns_subscribe status=failure errorType=InvalidParametersBadProtocol userId="+userId+ " topicArn=" + topicArn +" endpoint=" + endPoint + " protocol=" + protocol);
+    		logger.error("event=cns_subscribe error_code=InvalidParameters user_id="+userId+ " topic_arn=" + topicArn +" endpoint=" + endPoint + " protocol=" + protocol);
     		throw new CMBException(CNSErrorCodes.CNS_InvalidParameter,"request parameter does not comply with the associated constraints.");
     	}
 
-    	logger.info("event=cns_subscribe endpoint=" + endPoint + " protocol=" + protocol + " userId=" + userId + " topicArn=" + topicArn);
+    	logger.info("event=cns_subscribe endpoint=" + endPoint + " protocol=" + protocol + " user_id=" + userId + " topic_arn=" + topicArn);
 		
     	boolean inputError = false;
     	inputError = !subProtocol.isValidEnpoint(endPoint);
     	
     	if (inputError) {
-    		logger.error("event=cns_subscribe status=failure errorType=InvalidParameters userId="+userId+ " topicArn=" + topicArn +" endpoint=" + endPoint + " protocol=" + protocol);
+    		logger.error("event=cns_subscribe error_code=InvalidParameters user_id="+userId+ " topic_arn=" + topicArn +" endpoint=" + endPoint + " protocol=" + protocol);
 			throw new CMBException(CNSErrorCodes.CNS_InvalidParameter,"request parameter does not comply with the associated constraints.");
     	}
     	
@@ -108,7 +108,7 @@ public class CNSSubscribeAction extends CNSAction {
     			throw new CMBException(CNSErrorCodes.CNS_InvalidParameter, "Invalid parameter: Unreachable endpoint");
     		}
     		
-    		logger.info("event=cns_subscribe_confirmation_request_sent endpoint=" + endPoint + " protocol=" + protocol + " userId=" + userId + " topicArn=" + topicArn + " token=" + sub.getToken());
+    		logger.info("event=cns_subscribe_confirmation_request_sent endpoint=" + endPoint + " protocol=" + protocol + " user_id=" + userId + " topic_arn=" + topicArn + " token=" + sub.getToken());
     	}
     	
     	String res = CNSSubscriptionPopulator.getSubscribeResponse(subscriptionArn);			

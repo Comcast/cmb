@@ -57,10 +57,10 @@ public class CNSCreateTopicAction extends CNSAction {
 		String name = request.getParameter("Name");
 	
 		String userId = user.getUserId();
-		logger.debug("event=cns_topic_create name=" + name + " display_name=" + displayName + " userid=" + userId);
+		logger.debug("event=cns_topic_create name=" + name + " display_name=" + displayName + " user_id=" + userId);
 
 		if (name == null || userId == null) {
-			logger.error("event=cns_topic_create status=failure errorType=InvalidParameters name=" + name + " userid=" + userId);
+			logger.error("event=cns_topic_create error_code=InvalidParameters name=" + name + " user_id=" + userId);
 			throw new CMBException(CNSErrorCodes.CNS_InvalidParameter,"request parameter does not comply with the associated constraints.");
 		}
 		

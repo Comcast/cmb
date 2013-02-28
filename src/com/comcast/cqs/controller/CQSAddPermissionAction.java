@@ -120,5 +120,4 @@ public class CQSAddPermissionAction extends CQSAction {
         
         return true;
     }
-
 }

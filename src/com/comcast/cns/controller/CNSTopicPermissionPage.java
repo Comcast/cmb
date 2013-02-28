@@ -28,7 +28,6 @@ import org.apache.log4j.Logger;
 import com.amazonaws.services.sns.model.GetTopicAttributesRequest;
 import com.amazonaws.services.sns.model.GetTopicAttributesResult;
 import com.amazonaws.services.sns.model.RemovePermissionRequest;
-import com.comcast.cmb.common.controller.AdminServlet;
 import com.comcast.cmb.common.controller.AdminServletBase;
 import com.comcast.cmb.common.controller.CMBControllerServlet;
 import com.comcast.cmb.common.model.CMBPolicy;
@@ -67,8 +66,9 @@ public class CNSTopicPermissionPage extends AdminServletBase {
 			try {
 				RemovePermissionRequest removePermissionRequest = new RemovePermissionRequest(topicArn, labelSid);
 				sns.removePermission(removePermissionRequest);
+				logger.debug("event=remove_permission topic_arn=" + topicArn + " label=" + labelSid + " user_id=" + userId);
 			} catch (Exception ex) {
-				logger.error("event_failed_to_remove_policy arn=" + topicArn + " label=" + labelSid, ex);
+				logger.error("event=remove_permission topic_arn=" + topicArn + " label=" + labelSid + " user_id=" + userId, ex);
 				throw new ServletException(ex);
 	        } 
 		}
@@ -80,7 +80,7 @@ public class CNSTopicPermissionPage extends AdminServletBase {
 			GetTopicAttributesResult getTopicAttributesResult = sns.getTopicAttributes(getTopicAttributesRequest);
 			attributes = getTopicAttributesResult.getAttributes();
 		} catch (Exception ex) {
-			logger.error("event_failed_to_get_attributes arn=" + topicArn, ex);
+			logger.error("event=get_topic_attributes topic_arn=" + topicArn + " user_id=" + userId, ex);
 			throw new ServletException(ex);
 		}
 		

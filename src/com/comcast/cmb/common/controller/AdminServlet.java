@@ -68,10 +68,10 @@ public class AdminServlet extends AdminServletBase {
 					logger.debug("event=user_already_exists user_name=" + userName);
 				} else {
 					userHandler.createUser(userName, passwd);
-					logger.debug("event=create_user status=success user_name=" + userName);
+					logger.debug("event=create_user user_name=" + userName);
 				}
 			} catch (PersistenceException ex) {
-				logger.error("event=create_user status=failed user_name=" + userName, ex);
+				logger.error("event=create_user user_name=" + userName, ex);
 				throw new ServletException(ex);
 			}
 			
@@ -79,9 +79,9 @@ public class AdminServlet extends AdminServletBase {
 			
 			try {
 				userHandler.deleteUser(userName);
-				logger.debug("event=delete_user status=success user_name=" + userName);
+				logger.debug("event=delete_user user_name=" + userName);
 			} catch (PersistenceException ex) {
-				logger.error("event=delete_user status=failed user_name=" + userName, ex);
+				logger.error("event=delete_user user_name=" + userName, ex);
 				throw new ServletException(ex);
 			}
 		}
@@ -109,7 +109,7 @@ public class AdminServlet extends AdminServletBase {
 	        });
 			
         } catch (PersistenceException ex) {
-			logger.error("event=get_all_users status=failed", ex);
+			logger.error("event=get_all_users", ex);
 			throw new ServletException(ex);
 		}
 

@@ -100,14 +100,14 @@ public class CNSEndpointPublisherJobProducer implements CNSPublisherPartitionRun
 
 	   CQSHandler.ensureQueuesExist(CNS_PRODUCER_QUEUE_NAME_PREFIX, CMBProperties.getInstance().getNumPublishJobQs());
 		
-	   logger.info("event=initialize status=success");
+	   logger.info("event=initialize");
 	   initialized = true;
    }
 
    public static void shutdown() {
        initialized = false;
        CQSHandler.shutdown();
-       logger.info("event=shutdown status=success");
+       logger.info("event=shutdown");
    }
    
     @Override

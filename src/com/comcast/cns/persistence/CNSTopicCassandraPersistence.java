@@ -134,8 +134,6 @@ public class CNSTopicCassandraPersistence extends CassandraPersistence implement
 		delete(topicsTemplate, arn, null);
 		delete(topicsByUserIdTemplate, topic.getUserId(), arn);
 		delete(topicAttributesTemplate, arn, null);
-
-		logger.debug("event=cns_topic_deleted " + topic.toString());
 	}
 
 	@Override
