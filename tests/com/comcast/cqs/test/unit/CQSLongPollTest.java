@@ -252,7 +252,7 @@ public class CQSLongPollTest {
 			
 			long end = System.currentTimeMillis();
 			
-			assertTrue("Message received: " + receiveMessageResult.getMessages().get(0).getBody(), receiveMessageResult.getMessages().size() == 0);
+			assertTrue("Unexpected message received", receiveMessageResult.getMessages().size() == 0);
 			
 			assertTrue("Receive came back too fast: " + (end-start) + " ms", end-start >= timeoutSecs*1000-100);
 			
@@ -331,12 +331,15 @@ public class CQSLongPollTest {
 				
 				ReceiveMessageResult receiveMessageResult = sqs.receiveMessage(receiveMessageRequest);
 				messageCounter += receiveMessageResult.getMessages().size();
-				messageMap.put(receiveMessageResult.getMessages().get(0).getBody(), "");
 				
-				DeleteMessageRequest deleteMessageRequest = new DeleteMessageRequest();
-				deleteMessageRequest.setQueueUrl(queueUrl);
-				deleteMessageRequest.setReceiptHandle(receiveMessageResult.getMessages().get(0).getReceiptHandle());
-				sqs.deleteMessage(deleteMessageRequest);
+				if (receiveMessageResult.getMessages().size() == 1) {
+					messageMap.put(receiveMessageResult.getMessages().get(0).getBody(), "");
+					
+					DeleteMessageRequest deleteMessageRequest = new DeleteMessageRequest();
+					deleteMessageRequest.setQueueUrl(queueUrl);
+					deleteMessageRequest.setReceiptHandle(receiveMessageResult.getMessages().get(0).getReceiptHandle());
+					sqs.deleteMessage(deleteMessageRequest);
+				}
 	        }
 	        
 	        long end = System.currentTimeMillis();

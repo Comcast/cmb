@@ -97,6 +97,11 @@ public class CNSScaleTopicsTest {
     	CreateNTopics(1000);
     }
 
+    @Test
+    public void Create100Topics() {
+    	CreateNTopics(100);
+    }
+
     private void CreateNTopics(long n) {
 
     	try {
