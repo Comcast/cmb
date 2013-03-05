@@ -69,7 +69,7 @@ abstract public class CMBControllerServlet extends HttpServlet {
      */
     public final static ValueAccumulator valueAccumulator = new ValueAccumulator();
     
-    public final static String VERSION = "2.2.19";
+    public final static String VERSION = "2.2.20";
 
     public volatile static ConcurrentHashMap<String, AtomicLong> callStats;
     public volatile static ConcurrentHashMap<String, AtomicLong> callFailureStats;
