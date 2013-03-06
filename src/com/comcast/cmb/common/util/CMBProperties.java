@@ -80,10 +80,12 @@ public class CMBProperties {
     private final int pingDelayMS;
     private final int workStealerDelayMS;
     
+    private final int cnsMaxMsgSize;
+
     private final int visibilityTO;
     private final int maxMsgCountBatch;
-    private final int maxMsgSize;
-    private final int maxMsgSizeBatch;
+    private final int cqsMaxMsgSize;
+    private final int cqsMaxMsgSizeBatch;
     private final int msgRetentionPeriod;
     private final int maxMsgRetentionPeriod;
     private final int minMsgRetentionPeriod;
@@ -219,10 +221,12 @@ public class CMBProperties {
             cnsServiceEnabled = Boolean.parseBoolean(props.getProperty("cmb.cns.serviceEnabled", "true"));
             cqsServiceEnabled = Boolean.parseBoolean(props.getProperty("cmb.cqs.serviceEnabled", "true"));
             
+            cnsMaxMsgSize = Integer.parseInt(props.getProperty("cmb.cns.maxMsgSize", "65536"));
+            
             visibilityTO = Integer.parseInt(props.getProperty("cmb.cqs.visibilityTO", "30"));
             maxMsgCountBatch = Integer.parseInt(props.getProperty("cmb.cqs.maxMsgCountBatch", "10"));
-            maxMsgSize = Integer.parseInt(props.getProperty("cmb.cqs.maxMsgSize", "65536"));
-            maxMsgSizeBatch = Integer.parseInt(props.getProperty("cmb.cqs.maxMsgSizeBatch", "65536"));
+            cqsMaxMsgSize = Integer.parseInt(props.getProperty("cmb.cqs.maxMsgSize", "65536"));
+            cqsMaxMsgSizeBatch = Integer.parseInt(props.getProperty("cmb.cqs.maxMsgSizeBatch", "65536"));
             msgRetentionPeriod = Integer.parseInt(props.getProperty("cmb.cqs.msgRetentionPeriod", "345600"));
             maxMsgRetentionPeriod = Integer.parseInt(props.getProperty("cmb.cqs.maxMsgRetentionPeriod", "1209600"));
             minMsgRetentionPeriod = Integer.parseInt(props.getProperty("cmb.cqs.minMsgRetentionPeriod", "60"));
@@ -348,11 +352,11 @@ public class CMBProperties {
 		return smtpPassword;
 	}
 	
-	public int getPublisherThreadPoolSize() {
+	public int getCNSPublisherThreadPoolSize() {
 	    return publisherThreadPoolSize;
 	}
 	
-	public int getPublishJobQueueSizeLimit() {
+	public int getCNSPublishJobQueueSizeLimit() {
 	    return publishJobQueueSizeLimit;
 	}
 	
@@ -368,7 +372,7 @@ public class CMBProperties {
         return enableSignatureAuth;
     }
 
-    public boolean getRequireSubscriptionConfirmation() {
+    public boolean getCNSRequireSubscriptionConfirmation() {
         return requireSubscriptionConfirmation;
     }
 
@@ -380,59 +384,59 @@ public class CMBProperties {
         return cqsServiceEnabled;
     }
 
-    public int getVisibilityTO() {
+    public int getCQSVisibilityTimeOut() {
 		return visibilityTO;
 	}
 
-	public int getMaxMsgSize() {
-		return maxMsgSize;
+	public int getCQSMaxMessageSize() {
+		return cqsMaxMsgSize;
 	}
 	
-	public int getMaxMsgCountBatch() {
+	public int getCQSMaxMessageCountBatch() {
 		return maxMsgCountBatch;
 	}
 
-	public int getMaxMsgSizeBatch() {
-		return maxMsgSizeBatch;
+	public int getCQSMaxMessageSizeBatch() {
+		return cqsMaxMsgSizeBatch;
 	}
 
-    public int getMsgRetentionPeriod() {
+    public int getCQSMessageRetentionPeriod() {
         return msgRetentionPeriod;
     }
 
-    public int getMaxMsgRetentionPeriod() {
+    public int getCQSMaxMessageRetentionPeriod() {
         return maxMsgRetentionPeriod;
     }
 
-    public int getMinMsgRetentionPeriod() {
+    public int getCQSMinMessageRetentionPeriod() {
         return minMsgRetentionPeriod;
     }
 
-    public int getDelaySeconds() {
+    public int getCQSMessageDelaySeconds() {
         return delaySeconds;
     }
 
-    public int getMaxDelaySeconds() {
+    public int getCQSMaxMessageDelaySeconds() {
         return maxDelaySeconds;
     }
 
-	public int getMaxQueueNameLength() {
+	public int getCQSMaxNameLength() {
 		return maxQueueNameLength;
 	}
 
-	public int getMaxMessageSuppliedIdLength() {
+	public int getCQSMaxMessageSuppliedIdLength() {
 		return maxMessageSuppliedIdLength;
 	}
 
-	public int getMaxBatchEntries() {
+	public int getCQSMaxBatchEntries() {
 		return maxBatchEntries;
 	}
 
-	public int getMaxReceiveMessageCount() {
+	public int getCQSMaxReceiveMessageCount() {
 		return maxReceiveMessageCount;
 	}
 
-	public int getMaxVisibilityTO() {
+	public int getCQSMaxVisibilityTimeOut() {
 		return maxVisibilityTO;
 	}
 	
@@ -440,15 +444,15 @@ public class CMBProperties {
 	    return userCacheExpiring;
 	}
 
-	public String getCMBCommonKeyspace() {
+	public String getCMBKeyspace() {
 		return cmbCommonKeyspace;
 	}
 
-	public String getCMBCQSKeyspace() {
+	public String getCQSKeyspace() {
 		return cmbCQSKeyspace;
 	}
 
-	public String getCMBCNSKeyspace() {
+	public String getCNSKeyspace() {
 		return cmbCNSKeyspace;
 	}
 
@@ -460,11 +464,11 @@ public class CMBProperties {
 		return smtpReplyAddress;
 	}
 
-	public int getCnsCacheExpiring() {
+	public int getCNSCacheExpiring() {
 	    return cnsCacheExpiring;
 	}
 
-	public int getCnsCacheSizeLimit() {
+	public int getCNSCacheSizeLimit() {
         return cnsCacheSizeLimit;
     }
 
@@ -472,11 +476,11 @@ public class CMBProperties {
 		return hectorPoolSize;
 	}
 
-	public int getCqsCacheExpiring() {
+	public int getCQSCacheExpiring() {
 		return cqsCacheExpiring;
 	}
 
-	public int getCqsCacheSizeLimit() {
+	public int getCQSCacheSizeLimit() {
 		return cqsCacheSizeLimit;
 	}
 	
@@ -484,7 +488,7 @@ public class CMBProperties {
 		return hectorBalancingPolicy;
 	}
 
-	public int getCqsNumberOfQueuePartitions() {
+	public int getCQSNumberOfQueuePartitions() {
 		return cqsNumberOfQueuePartitions;
 	}
 	
@@ -496,31 +500,31 @@ public class CMBProperties {
         return cassandraThriftSocketTimeOutMS;
     }
 
-    public int getNumPublishJobQs() {
+    public int getCNSNumPublishJobQueues() {
         return numPublishJobQs;
     }
 
-    public int getNumEPPublishJobQs() {
+    public int getCNSNumEndpointPublishJobQueues() {
         return numEPPublishJobQs;
     }
 
-    public int getDeliveryHandlerJobQueueLimit() {
+    public int getCNSDeliveryHandlerJobQueueLimit() {
         return deliveryHandlerJobQueueLimit;
     }
 
-    public String getCnsUserName() {
+    public String getCNSUserName() {
         return cnsUserName;
     }
 
-    public String getCnsUserPassword() {
+    public String getCNSUserPassword() {
         return cnsUserPassword;
     }
     
-    public String getCnsPublishQueueNamePrefix() {
+    public String getCNSPublishQueueNamePrefix() {
     	return cnsPublishQueueNamePrefix;
     }
 
-    public String getCnsEndpointPublishQueueNamePrefix() {
+    public String getCNSEndpointPublishQueueNamePrefix() {
     	return cnsEndpointPublishQueueNamePrefix;
     }
     
@@ -532,55 +536,55 @@ public class CMBProperties {
 		return awsAccessKey;
 	}
 	
-    public void setUseSubInfoCache(boolean useSubInfoCache) {
+    public void setCNSUseSubInfoCache(boolean useSubInfoCache) {
         this.useSubInfoCache = useSubInfoCache;
     }
 
-    public boolean isUseSubInfoCache() {
+    public boolean isCNSUseSubInfoCache() {
         return useSubInfoCache;
     }
 
-    public int getConsumerProcessingMaxDelay() {
+    public int getCNSConsumerProcessingMaxDelay() {
         return consumerProcessingMaxDelay;
     }
 
-    public int getProducerProcessingMaxDelay() {
+    public int getCNSProducerProcessingMaxDelay() {
         return producerProcessingMaxDelay;
     }
 
-    public int getPublishJobVTO() {
+    public int getCNSPublishJobVisibilityTimeout() {
 		return publishJobVTO;
 	}
 
-	public int getEPPublishJobVTO() {
+	public int getCNSEndpointPublishJobVisibilityTimeout() {
         return EPPublishJobVTO;
     }
 
-	public int getMaxSubscriptionsPerEPPublishJob() {
+	public int getCNSMaxSubscriptionsPerEndpointPublishJob() {
 		return maxSubscriptionsPerEPPublishJob;
 	}
 
-	public int getReDeliveryHandlerJobQueueLimit() {
+	public int getCNSReDeliveryHandlerJobQueueLimit() {
         return reDeliveryHandlerJobQueueLimit;
     }
 
-    public void setPublishJobQueueSizeLimit(int publishJobQueueSizeLimit) {
+    public void setCNSPublishJobQueueSizeLimit(int publishJobQueueSizeLimit) {
         this.publishJobQueueSizeLimit = publishJobQueueSizeLimit;
     }
 
-    public int getNumDeliveryHandlers() {
+    public int getCNSNumPublisherDeliveryHandlers() {
         return numDeliveryHandlers;
     }
 
-    public int getNumReDeliveryHandlers() {
+    public int getCNSNumPublisherReDeliveryHandlers() {
         return numReDeliveryHandlers;
     }
 
-    public int getNumEPPubJobProducers() {
+    public int getCNSNumEndpointPublisherJobProducers() {
         return numEPPubJobProducers;
     }
 
-    public int getNumEPPubJobConsumers() {
+    public int getCNSNumEndpointPublisherJobConsumers() {
         return numEPPubJobConsumers;
     }
 
@@ -632,39 +636,43 @@ public class CMBProperties {
         return rollingWindowTimeSec;
     }
 
-    public int getHttpPublisherEndpointConnectionPoolSize() {
+    public int getCNSPublisherHttpEndpointConnectionPoolSize() {
         return httpPublisherEndpointConnectionPoolSize;
     }
 
-    public int getHttpPublisherEndpointConnectionsPerRouteSize() {
+    public int getCNSPublisherHttpEndpointConnectionsPerRouteSize() {
         return httpPublisherEndpointConnectionsPerRouteSize;
     }
     
-	public int getHttpTimeoutSeconds() {
+	public int getCNSPublisherHttpTimeoutSeconds() {
 		return httpTimeoutSeconds;
 	}
 	
-	public List<String> getAcceptableHttpStatusCodes() {
+	public List<String> getCNSPublisherAcceptableHttpStatusCodes() {
 		return acceptableHttpStatusCodes;
 	}
 	
-	public int getCnsMessageExpirationSeconds() {
+	public int getCNSMessageExpirationSeconds() {
 		return cnsMessageExpirationSeconds;
 	}
 
-	public IO_MODE getCnsIOMode() {
+	public IO_MODE getCNSIOMode() {
 		return cnsIOMode;
 	}
 
-	public int getCqsLongPollPort() {
+	public int getCQSLongPollPort() {
 		return cqsLongPollPort;
 	}
 
-	public boolean isCqsLongPollEnabled() {
+	public boolean isCQSLongPollEnabled() {
 		return cqsLongPollEnabled;
 	}
 
-	public String getCmbDataCenter() {
+	public String getCMBDataCenter() {
 		return cmbDataCenter;
+	}
+	
+	public int getCNSMaxMessageSize() {
+		return cnsMaxMsgSize;
 	}
 }

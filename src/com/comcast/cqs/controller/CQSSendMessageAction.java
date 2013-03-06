@@ -63,8 +63,8 @@ public class CQSSendMessageAction extends CQSAction {
             throw new CMBException(CMBErrorCodes.MissingParameter, "MessageBody not found");
         }
 
-        if (messageBody.length() > CMBProperties.getInstance().getMaxMsgSize()) {
-            throw new CMBException(CMBErrorCodes.InvalidParameterValue, "Value for parameter MessageBody is invalid. Reason: Message body must be shorter than " + CMBProperties.getInstance().getMaxMsgSize() + " bytes");
+        if (messageBody.length() > CMBProperties.getInstance().getCQSMaxMessageSize()) {
+            throw new CMBException(CMBErrorCodes.InvalidParameterValue, "Value for parameter MessageBody is invalid. Reason: Message body must be shorter than " + CMBProperties.getInstance().getCQSMaxMessageSize() + " bytes");
         }
         
         if (!Util.isValidUnicode(messageBody)) {
@@ -81,8 +81,8 @@ public class CQSSendMessageAction extends CQSAction {
             
         		int delaySeconds = Integer.parseInt(delaySecondsReq);
                 
-        		if (delaySeconds < 0 || delaySeconds > CMBProperties.getInstance().getMaxDelaySeconds()) {
-                    throw new CMBException(CMBErrorCodes.InvalidParameterValue, "DelaySeconds should be from 0 to " + CMBProperties.getInstance().getMaxDelaySeconds());
+        		if (delaySeconds < 0 || delaySeconds > CMBProperties.getInstance().getCQSMaxMessageDelaySeconds()) {
+                    throw new CMBException(CMBErrorCodes.InvalidParameterValue, "DelaySeconds should be from 0 to " + CMBProperties.getInstance().getCQSMaxMessageDelaySeconds());
                 } else {
                     attributes.put(CQSConstants.DELAY_SECONDS, "" + delaySeconds);
                 }

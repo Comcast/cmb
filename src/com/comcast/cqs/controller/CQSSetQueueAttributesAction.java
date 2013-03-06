@@ -84,7 +84,7 @@ public class CQSSetQueueAttributesAction extends CQSAction {
                 
             	int v = Integer.parseInt(value);
                 
-            	if (v < 0 || v > CMBProperties.getInstance().getMaxVisibilityTO()) {
+            	if (v < 0 || v > CMBProperties.getInstance().getCQSMaxVisibilityTimeOut()) {
                     throw new CMBException(CMBErrorCodes.InvalidAttributeValue, "VisibilityTimeout must be from 0 to 12 hours");
                 }
                 
@@ -116,8 +116,8 @@ public class CQSSetQueueAttributesAction extends CQSAction {
                 
             	int v = Integer.parseInt(value);
                 
-            	if (v > CMBProperties.getInstance().getMaxMsgSize()) {
-                    throw new CMBException(CMBErrorCodes.InvalidAttributeValue, "MaximumMessageSize cannot be over " + CMBProperties.getInstance().getMaxMsgSize());
+            	if (v > CMBProperties.getInstance().getCQSMaxMessageSize()) {
+                    throw new CMBException(CMBErrorCodes.InvalidAttributeValue, "MaximumMessageSize cannot be over " + CMBProperties.getInstance().getCQSMaxMessageSize());
                 }
                 
             	queue.setMaxMsgSize(v);
@@ -131,7 +131,7 @@ public class CQSSetQueueAttributesAction extends CQSAction {
                 
             	int v = Integer.parseInt(value);
                 
-            	if (v < CMBProperties.getInstance().getMinMsgRetentionPeriod() || v > CMBProperties.getInstance().getMaxMsgRetentionPeriod()) {
+            	if (v < CMBProperties.getInstance().getCQSMinMessageRetentionPeriod() || v > CMBProperties.getInstance().getCQSMaxMessageRetentionPeriod()) {
                     throw new CMBException(CMBErrorCodes.InvalidAttributeValue, "MessageRetentionPeriod must be from 1 minute to 14 days");
                 }
             	
@@ -146,7 +146,7 @@ public class CQSSetQueueAttributesAction extends CQSAction {
                 
             	int v = Integer.parseInt(value);
                 
-            	if (v < 0 || v > CMBProperties.getInstance().getMaxDelaySeconds()) {
+            	if (v < 0 || v > CMBProperties.getInstance().getCQSMaxMessageDelaySeconds()) {
                     throw new CMBException(CMBErrorCodes.InvalidAttributeValue, "DelaySeconds must be less than 15 minutes");
                 }
                 

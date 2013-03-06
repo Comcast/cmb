@@ -92,7 +92,7 @@ public abstract class AdminServletBase extends HttpServlet {
 		
 		User user = (User)request.getSession(true).getAttribute("USER");
 		
-		if (!CMBProperties.getInstance().getCnsUserName().equals(user.getUserName())) {
+		if (!CMBProperties.getInstance().getCNSUserName().equals(user.getUserName())) {
 			return false;
 		}
 		

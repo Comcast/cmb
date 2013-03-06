@@ -122,7 +122,7 @@ public class CQSLongPollSender {
 
         		activeCQSApiServers.clear();
         		
-        		CassandraPersistence cassandraHandler = new CassandraPersistence(CMBProperties.getInstance().getCMBCQSKeyspace());
+        		CassandraPersistence cassandraHandler = new CassandraPersistence(CMBProperties.getInstance().getCQSKeyspace());
 
                 // read all other pings but ensure we are data-center local and looking at a cqs service
                 
@@ -138,7 +138,7 @@ public class CQSLongPollSender {
     						host = host.substring(0, host.indexOf(":"));
     					}
         				
-        				String dataCenter = CMBProperties.getInstance().getCmbDataCenter();
+        				String dataCenter = CMBProperties.getInstance().getCMBDataCenter();
         				long timestamp = 0, port = 0;
         				
         				if (row.getColumnSlice().getColumnByName("timestamp") != null) {
@@ -153,7 +153,7 @@ public class CQSLongPollSender {
         					dataCenter = row.getColumnSlice().getColumnByName("dataCenter").getValue();
         				}
         				
-        				if (now-timestamp < 5*60*1000 && dataCenter.equals(CMBProperties.getInstance().getCmbDataCenter())) {
+        				if (now-timestamp < 5*60*1000 && dataCenter.equals(CMBProperties.getInstance().getCMBDataCenter())) {
         					activeCQSApiServers.put(host + ":" + port, new Long(0));
         					logger.debug("event=found_active_api_server host=" + host + " port=" + port + " data_center=" + dataCenter + " last_minute=" + (timestamp/1000));
         				}

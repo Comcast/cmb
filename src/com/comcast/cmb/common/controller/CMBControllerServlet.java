@@ -83,7 +83,7 @@ abstract public class CMBControllerServlet extends HttpServlet {
 	        	
             	Util.initLog4j();
 	            CMBProperties.getInstance();
-	            workerPool = new ScheduledThreadPoolExecutor(CMBProperties.getInstance().getNumDeliveryHandlers());
+	            workerPool = new ScheduledThreadPoolExecutor(CMBProperties.getInstance().getCNSNumPublisherDeliveryHandlers());
 	            callStats = new ConcurrentHashMap<String, AtomicLong>();
 	            callFailureStats = new ConcurrentHashMap<String, AtomicLong>();
 	            initialized = true;
@@ -179,7 +179,7 @@ abstract public class CMBControllerServlet extends HttpServlet {
             response.setStatus(200);
             long ts2 = System.currentTimeMillis();
             
-            if (action != null && action.equals("ReceiveMessage") && !actionPerformed && user != null && user.getUserName().equals(CMBProperties.getInstance().getCnsUserName())) {
+            if (action != null && action.equals("ReceiveMessage") && !actionPerformed && user != null && user.getUserName().equals(CMBProperties.getInstance().getCNSUserName())) {
 
             	// Return code for ReceiveMessage() is number of messages received. If it is zero, do not write a log line to dial 
             	// down logging for CNS polling of producer and consumer queues.

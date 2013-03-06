@@ -188,7 +188,7 @@ public class CNSControllerServlet extends CMBControllerServlet {
 
         	try {
 
-        		CassandraPersistence cassandraHandler = new CassandraPersistence(CMBProperties.getInstance().getCMBCNSKeyspace());
+        		CassandraPersistence cassandraHandler = new CassandraPersistence(CMBProperties.getInstance().getCNSKeyspace());
 
         		// write ping
         		
@@ -209,7 +209,7 @@ public class CNSControllerServlet extends CMBControllerServlet {
         		
 	        	values.put("timestamp", now + "");
 	        	values.put("jmxport", System.getProperty("com.sun.management.jmxremote.port", "0"));
-	        	values.put("dataCenter", CMBProperties.getInstance().getCmbDataCenter());
+	        	values.put("dataCenter", CMBProperties.getInstance().getCMBDataCenter());
 	        	values.put("serviceUrl", serviceUrl);
 	        	
                 cassandraHandler.insertOrUpdateRow(hostAddress + ":" + servicePort, "CNSAPIServers", values, HConsistencyLevel.QUORUM);

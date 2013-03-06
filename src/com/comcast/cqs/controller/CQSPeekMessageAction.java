@@ -77,14 +77,14 @@ public class CQSPeekMessageAction extends CQSAction {
 		String previousReceiptHandle = request.getParameter("PreviousReceiptHandle");
 		String nextReceiptHandle = request.getParameter("NextReceiptHandle");
 		
-		int maxNumberOfMessages = CMBProperties.getInstance().getMaxReceiveMessageCount();
+		int maxNumberOfMessages = CMBProperties.getInstance().getCQSMaxReceiveMessageCount();
 		        
         if (useParams && request.getParameter(CQSConstants.MAX_NUMBER_OF_MESSAGES) != null) {
             
         	maxNumberOfMessages = Integer.parseInt(request.getParameter(CQSConstants.MAX_NUMBER_OF_MESSAGES));
             
-        	if (maxNumberOfMessages < 1 || maxNumberOfMessages > CMBProperties.getInstance().getMaxReceiveMessageCount()) {
-                throw new CMBException(CMBErrorCodes.InvalidParameterValue, "The value for MaxNumberOfMessages is not valid (must be from 1 to " + CMBProperties.getInstance().getMaxReceiveMessageCount() + ").");
+        	if (maxNumberOfMessages < 1 || maxNumberOfMessages > CMBProperties.getInstance().getCQSMaxReceiveMessageCount()) {
+                throw new CMBException(CMBErrorCodes.InvalidParameterValue, "The value for MaxNumberOfMessages is not valid (must be from 1 to " + CMBProperties.getInstance().getCQSMaxReceiveMessageCount() + ").");
             }
         	
         }

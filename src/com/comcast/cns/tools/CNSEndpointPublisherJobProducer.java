@@ -55,7 +55,7 @@ public class CNSEndpointPublisherJobProducer implements CNSPublisherPartitionRun
 	
     private static Logger logger = Logger.getLogger(CNSEndpointPublisherJobProducer.class);
     
-    private static final String CNS_PRODUCER_QUEUE_NAME_PREFIX = CMBProperties.getInstance().getCnsPublishQueueNamePrefix();
+    private static final String CNS_PRODUCER_QUEUE_NAME_PREFIX = CMBProperties.getInstance().getCNSPublishQueueNamePrefix();
     
     private static volatile boolean initialized = false; 
     
@@ -141,7 +141,7 @@ public class CNSEndpointPublisherJobProducer implements CNSPublisherPartitionRun
 		        	values.put("producerTimestamp", System.currentTimeMillis() + "");
 		        	values.put("jmxport", System.getProperty("com.sun.management.jmxremote.port", "0"));
 		        	values.put("mode", CNSPublisher.getModeString());
-		        	values.put("dataCenter", CMBProperties.getInstance().getCmbDataCenter());
+		        	values.put("dataCenter", CMBProperties.getInstance().getCMBDataCenter());
 	                CNSPublisher.cassandraHandler.insertOrUpdateRow(hostAddress, "CNSWorkers", values, HConsistencyLevel.QUORUM);
 	        	} catch (Exception ex) {
 	        		logger.warn("event=ping_glitch", ex);
@@ -157,7 +157,7 @@ public class CNSEndpointPublisherJobProducer implements CNSPublisherPartitionRun
 	        	
 	            CNSMessage publishMessage = CNSMessage.parseInstance(message.getBody());
 	            
-	            int messageExpirationSeconds = CMBProperties.getInstance().getCnsMessageExpirationSeconds();
+	            int messageExpirationSeconds = CMBProperties.getInstance().getCNSMessageExpirationSeconds();
 	            
 	            if (messageExpirationSeconds != 0 && System.currentTimeMillis() - publishMessage.getTimestamp().getTime() > messageExpirationSeconds*1000) {
 	                logger.error("event=deleting_publish_job reason=message_too_old topic_arn=" + publishMessage.getTopicArn());
@@ -192,7 +192,7 @@ public class CNSEndpointPublisherJobProducer implements CNSPublisherPartitionRun
 	                
 	                for (CNSEndpointPublishJob epPublishJob: epPublishJobs) {
 	                	
-	                	String epQueueName =  CMBProperties.getInstance().getCnsEndpointPublishQueueNamePrefix() + ((new Random()).nextInt(CMBProperties.getInstance().getNumEPPublishJobQs()));
+	                	String epQueueName =  CMBProperties.getInstance().getCNSEndpointPublishQueueNamePrefix() + ((new Random()).nextInt(CMBProperties.getInstance().getCNSNumEndpointPublishJobQueues()));
 	                    String epQueueUrl = CQSHandler.getQueueUrl(epQueueName);
 	                    CQSHandler.sendMessage(epQueueUrl, epPublishJob.serialize());
 	                }
@@ -211,7 +211,7 @@ public class CNSEndpointPublisherJobProducer implements CNSPublisherPartitionRun
 	    		CNSWorkerMonitor.getInstance().registerCQSServiceAvailable(false);
 	    	} else {
 	    		try {
-	    			CQSHandler.ensureQueuesExist(CNS_PRODUCER_QUEUE_NAME_PREFIX, CMBProperties.getInstance().getNumPublishJobQs());
+	    			CQSHandler.ensureQueuesExist(CNS_PRODUCER_QUEUE_NAME_PREFIX, CMBProperties.getInstance().getCNSNumPublishJobQueues());
 	        	} catch (Exception e) {
 	        		logger.error("event=failed_to_check_producer_queue_existence", e);
 	        	}
@@ -231,7 +231,7 @@ public class CNSEndpointPublisherJobProducer implements CNSPublisherPartitionRun
     	
     	List<CNSEndpointPublishJob.CNSEndpointSubscriptionInfo> subInfoList = new ArrayList<CNSEndpointPublishJob.CNSEndpointSubscriptionInfo>();
     	
-    	if (CMBProperties.getInstance().isUseSubInfoCache()) {
+    	if (CMBProperties.getInstance().isCNSUseSubInfoCache()) {
     	    subInfoList.addAll(CNSCachedEndpointPublishJob.getSubInfos(topicArn));
     	} else {
     	
@@ -271,7 +271,7 @@ public class CNSEndpointPublisherJobProducer implements CNSPublisherPartitionRun
     	
     	if (subscriptions != null) {
 	    
-    		int maxSubsPerEPPublishJob = CMBProperties.getInstance().getMaxSubscriptionsPerEPPublishJob();
+    		int maxSubsPerEPPublishJob = CMBProperties.getInstance().getCNSMaxSubscriptionsPerEndpointPublishJob();
 	    	int numEPPublishJobs = (int)Math.ceil(subscriptions.size()/(float)maxSubsPerEPPublishJob);
 	    	int subIndex = 0;
 	    	
@@ -283,7 +283,7 @@ public class CNSEndpointPublisherJobProducer implements CNSPublisherPartitionRun
 	    		    
 	    			CNSEndpointSubscriptionInfo subInfo;
 	    		    
-	    			if (CMBProperties.getInstance().isUseSubInfoCache()) {
+	    			if (CMBProperties.getInstance().isCNSUseSubInfoCache()) {
 	    		        subInfo = new CNSCachedEndpointPublishJob.CNSCachedEndpointSubscriptionInfo(subscriptions.get(subIndex).protocol, subscriptions.get(subIndex).endpoint, subscriptions.get(subIndex).subArn);
 	    		    } else {
 	    		        subInfo = new CNSEndpointSubscriptionInfo(subscriptions.get(subIndex).protocol, subscriptions.get(subIndex).endpoint, subscriptions.get(subIndex).subArn);
@@ -298,7 +298,7 @@ public class CNSEndpointPublisherJobProducer implements CNSPublisherPartitionRun
 	    		
 	    		CNSEndpointPublishJob job;
 	    		
-	    		if (CMBProperties.getInstance().isUseSubInfoCache()) {
+	    		if (CMBProperties.getInstance().isCNSUseSubInfoCache()) {
 	    		    job = new CNSCachedEndpointPublishJob(message, epPublishJobSubscriptions);
 	    		} else {
 	    		    job = new CNSEndpointPublishJob(message, epPublishJobSubscriptions);

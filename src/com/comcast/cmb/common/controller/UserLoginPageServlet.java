@@ -65,7 +65,7 @@ public class UserLoginPageServlet extends AdminServletBase {
 				if (user!=null && AuthUtil.verifyPassword(password, user.getHashPassword())) {
 					logger.info("event=login_admin_ui user_name=" + userName + " user_id=" + user.getUserId());
 					session.setAttribute("USER", user);
-				} else if (user==null && CMBProperties.getInstance().getCnsUserName().equals(userName) && CMBProperties.getInstance().getCnsUserPassword().equals(password)) {
+				} else if (user==null && CMBProperties.getInstance().getCNSUserName().equals(userName) && CMBProperties.getInstance().getCNSUserPassword().equals(password)) {
 					logger.warn("event=login_admin_ui action=created_missing_admin_user user_name=" + userName);
 					userHandler.createUser(userName, password);
 					user = userHandler.getUserByName(userName);

@@ -54,7 +54,7 @@ public class HTTPEndpointSyncPublisher implements IEndpointPublisher {
 
 	static {
 		
-		int timeoutMillis = CMBProperties.getInstance().getHttpTimeoutSeconds() * 1000;
+		int timeoutMillis = CMBProperties.getInstance().getCNSPublisherHttpTimeoutSeconds() * 1000;
 
 		HttpParams params = new BasicHttpParams();
 		HttpProtocolParams.setVersion(params, HttpVersion.HTTP_1_1); 
@@ -67,9 +67,9 @@ public class HTTPEndpointSyncPublisher implements IEndpointPublisher {
 
 		cm = new PoolingClientConnectionManager(schemeRegistry);
 		// increase max total connection to 250
-		cm.setMaxTotal(CMBProperties.getInstance().getHttpPublisherEndpointConnectionPoolSize());
+		cm.setMaxTotal(CMBProperties.getInstance().getCNSPublisherHttpEndpointConnectionPoolSize());
 		// increase default max connection per route to 20
-		cm.setDefaultMaxPerRoute(CMBProperties.getInstance().getHttpPublisherEndpointConnectionsPerRouteSize());
+		cm.setDefaultMaxPerRoute(CMBProperties.getInstance().getCNSPublisherHttpEndpointConnectionsPerRouteSize());
 
 		httpClient = new DefaultHttpClient(cm, params);
 	}

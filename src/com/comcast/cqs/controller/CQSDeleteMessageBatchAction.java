@@ -65,7 +65,7 @@ public class CQSDeleteMessageBatchAction extends CQSAction {
         while (suppliedId != null && receiptHandle != null) {
             
         	if (!Util.isValidId(suppliedId)) {
-                throw new CMBException(CQSErrorCodes.InvalidBatchEntryId, "Id " + suppliedId + " is invalid. Only alphanumeric, hyphen, and underscore are allowed. It can be at most " + CMBProperties.getInstance().getMaxMessageSuppliedIdLength() + " letters long.");
+                throw new CMBException(CQSErrorCodes.InvalidBatchEntryId, "Id " + suppliedId + " is invalid. Only alphanumeric, hyphen, and underscore are allowed. It can be at most " + CMBProperties.getInstance().getCQSMaxMessageSuppliedIdLength() + " letters long.");
             }
             
         	if (idList.contains(suppliedId)) {

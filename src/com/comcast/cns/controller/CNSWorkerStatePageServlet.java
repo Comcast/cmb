@@ -67,7 +67,7 @@ public class CNSWorkerStatePageServlet extends AdminServletBase {
 		IUserPersistence userHandler = PersistenceFactory.getUserPersistence();
 		User cnsAdminUser;
 		try {
-			cnsAdminUser = userHandler.getUserByName(CMBProperties.getInstance().getCnsUserName());
+			cnsAdminUser = userHandler.getUserByName(CMBProperties.getInstance().getCNSUserName());
 		} catch (PersistenceException ex) {
 			throw new ServletException(ex);
 		}
@@ -130,8 +130,8 @@ public class CNSWorkerStatePageServlet extends AdminServletBase {
 			String alarmColor = " bgcolor='#C00000'";
 			String okColor = " bgcolor='#00C000'";
 					
-			int deliveryQueueMaxSize = CMBProperties.getInstance().getDeliveryHandlerJobQueueLimit();
-			int redeliveryQueueMaxSize = CMBProperties.getInstance().getReDeliveryHandlerJobQueueLimit();
+			int deliveryQueueMaxSize = CMBProperties.getInstance().getCNSDeliveryHandlerJobQueueLimit();
+			int redeliveryQueueMaxSize = CMBProperties.getInstance().getCNSReDeliveryHandlerJobQueueLimit();
 			
 			Map<String, Integer> endpointErrorCounts = new HashMap<String, Integer>();
 

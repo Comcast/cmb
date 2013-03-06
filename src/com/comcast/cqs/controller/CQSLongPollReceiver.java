@@ -217,9 +217,9 @@ public class CQSLongPollReceiver {
 		serverBootstrap.setOption("child.tcpNoDelay", true);
 		serverBootstrap.setOption("child.keepAlive", true);
 		
-		serverBootstrap.bind(new InetSocketAddress(CMBProperties.getInstance().getCqsLongPollPort()));
+		serverBootstrap.bind(new InetSocketAddress(CMBProperties.getInstance().getCQSLongPollPort()));
 
-		logger.info("event=longpoll_receiver_service_listening port=" + CMBProperties.getInstance().getCqsLongPollPort());
+		logger.info("event=longpoll_receiver_service_listening port=" + CMBProperties.getInstance().getCQSLongPollPort());
 	}
 	
 	public static void shutdown() {

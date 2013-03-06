@@ -159,7 +159,7 @@ public class UserAuthModule implements IAuthModule {
         // admin actions do not require signatures but can only be performed by admin user
         
         if (ADMIN_ACTIONS.contains(parameters.get("Action"))) {
-        	if (CMBProperties.getInstance().getCnsUserName().equals(user.getUserName())) {
+        	if (CMBProperties.getInstance().getCNSUserName().equals(user.getUserName())) {
                 logger.debug("event=authenticate action=admin_action");
         		return user;
         	} else {
@@ -169,7 +169,7 @@ public class UserAuthModule implements IAuthModule {
         }
 
         if (!CMBProperties.getInstance().getEnableSignatureAuth()) {
-            if (!user.getUserName().equals(CMBProperties.getInstance().getCnsUserName())) {
+            if (!user.getUserName().equals(CMBProperties.getInstance().getCNSUserName())) {
             	logger.debug("event=authenticate verify_signature=not_required");
             }
             return user;

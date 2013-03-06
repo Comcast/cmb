@@ -57,10 +57,10 @@ public class CQSQueue {
         this.setServiceEndpoint(serviceUrl);
         this.setRelativeUrl(ownerId + "/" + name);
         
-        this.visibilityTO = CMBProperties.getInstance().getVisibilityTO();
-        this.maxMsgSize = CMBProperties.getInstance().getMaxMsgSize();
-        this.msgRetentionPeriod = CMBProperties.getInstance().getMsgRetentionPeriod();
-        this.delaySeconds = CMBProperties.getInstance().getDelaySeconds();
+        this.visibilityTO = CMBProperties.getInstance().getCQSVisibilityTimeOut();
+        this.maxMsgSize = CMBProperties.getInstance().getCQSMaxMessageSize();
+        this.msgRetentionPeriod = CMBProperties.getInstance().getCQSMessageRetentionPeriod();
+        this.delaySeconds = CMBProperties.getInstance().getCQSMessageDelaySeconds();
     }
 
     public int getNumMessages() {

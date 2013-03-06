@@ -29,7 +29,7 @@ public class EndpointAsyncPublisherWrapper implements IEndpointPublisher {
 	private final IPublisherCallback callback;
     private final IEndpointPublisher publisher;
 	
-    private static volatile ScheduledThreadPoolExecutor deliveryHandlers = new ScheduledThreadPoolExecutor(CMBProperties.getInstance().getNumDeliveryHandlers());
+    private static volatile ScheduledThreadPoolExecutor deliveryHandlers = new ScheduledThreadPoolExecutor(CMBProperties.getInstance().getCNSNumPublisherDeliveryHandlers());
 
 	public EndpointAsyncPublisherWrapper(IPublisherCallback callback, IEndpointPublisher publisher) {
 		this.callback = callback;

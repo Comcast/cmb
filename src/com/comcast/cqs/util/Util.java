@@ -259,7 +259,7 @@ public class Util {
 	 */
     public static boolean isValidId(String str) {
         
-    	if (str.length() > CMBProperties.getInstance().getMaxMessageSuppliedIdLength()) {
+    	if (str.length() > CMBProperties.getInstance().getCQSMaxMessageSuppliedIdLength()) {
             return false;
         }
         
@@ -518,8 +518,8 @@ public class Util {
 	
 	public static long getQueueCount(String queueUrl) throws NoSuchAlgorithmException, UnsupportedEncodingException {
 		
-		int numberOfPartitions = CMBProperties.getInstance().getCqsNumberOfQueuePartitions();
-		CassandraPersistence persistence = new CassandraPersistence(CMBProperties.getInstance().getCMBCQSKeyspace());
+		int numberOfPartitions = CMBProperties.getInstance().getCQSNumberOfQueuePartitions();
+		CassandraPersistence persistence = new CassandraPersistence(CMBProperties.getInstance().getCQSKeyspace());
 		String queueHash = Util.hashQueueUrl(queueUrl);
 		long messageCount = 0;
 		

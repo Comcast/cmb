@@ -71,7 +71,7 @@ public class CNSSubscriptionCassandraPersistence extends CassandraPersistence im
 	private static final String columnFamilyTopicStats = "CNSTopicStats";
 	
 	public CNSSubscriptionCassandraPersistence() {
-		super(CMBProperties.getInstance().getCMBCNSKeyspace());
+		super(CMBProperties.getInstance().getCNSKeyspace());
 		subscriptionsIndexTemplate = new ThriftColumnFamilyTemplate<String, String>(keyspaces.get(HConsistencyLevel.QUORUM), columnFamilySubscriptionsIndex, StringSerializer.get(), StringSerializer.get());
 		subscriptionsUserIndexTemplate = new ThriftColumnFamilyTemplate<String, String>(keyspaces.get(HConsistencyLevel.QUORUM), columnFamilySubscriptionsUserIndex, StringSerializer.get(), StringSerializer.get());
 		subscriptionsTokenIndexTemplate = new ThriftColumnFamilyTemplate<String, String>(keyspaces.get(HConsistencyLevel.QUORUM), columnFamilySubscriptionsTokenIndex, StringSerializer.get(), StringSerializer.get());
@@ -252,7 +252,7 @@ public class CNSSubscriptionCassandraPersistence extends CassandraPersistence im
 		
 		// then set confirmation stuff and update cassandra
 
-		if (!CMBProperties.getInstance().getRequireSubscriptionConfirmation()) {
+		if (!CMBProperties.getInstance().getCNSRequireSubscriptionConfirmation()) {
 
 			subscription.setConfirmed(true);
 			subscription.setConfirmDate(new Date());

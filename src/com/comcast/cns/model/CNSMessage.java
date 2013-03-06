@@ -26,6 +26,7 @@ import org.json.JSONObject;
 
 import com.comcast.cmb.common.util.CMBErrorCodes;
 import com.comcast.cmb.common.util.CMBException;
+import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.Util;
 import com.comcast.cns.model.CNSSubscription.CnsSubscriptionProtocol;
 
@@ -208,8 +209,8 @@ public final class CNSMessage {
             throw new CMBException(CMBErrorCodes.InvalidQueryParameter, "Message not UTF-8 characters");
         }
         
-        if (message.getBytes().length > 8192) {
-            throw new CMBException(CMBErrorCodes.InvalidQueryParameter, "Message greater than 8192 bytes");
+        if (message.getBytes().length > CMBProperties.getInstance().getCNSMaxMessageSize()) {
+            throw new CMBException(CMBErrorCodes.InvalidQueryParameter, "Message greater than " + CMBProperties.getInstance().getCNSMaxMessageSize() + " bytes");
         }
         
         if (messageStructure == CNSMessageStructure.json) {

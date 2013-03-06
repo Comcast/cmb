@@ -58,14 +58,14 @@ public class CNSEndpointPublisherJobConsumer implements CNSPublisherPartitionRun
 	
     private static Logger logger = Logger.getLogger(CNSEndpointPublisherJobConsumer.class);
     
-    private static final String CNS_CONSUMER_QUEUE_NAME_PREFIX = CMBProperties.getInstance().getCnsEndpointPublishQueueNamePrefix();
+    private static final String CNS_CONSUMER_QUEUE_NAME_PREFIX = CMBProperties.getInstance().getCNSEndpointPublishQueueNamePrefix();
 
     private static volatile ScheduledThreadPoolExecutor deliveryHandlers = null;
     private static volatile ScheduledThreadPoolExecutor reDeliveryHandlers = null;
     
     private static final RollingWindowCapture<BadEndpointEvent> badEndpointCounterWindow = new RollingWindowCapture<BadEndpointEvent>(60, 10000);
     
-    public static final List<String> acceptableHttpResponseCodes = CMBProperties.getInstance().getAcceptableHttpStatusCodes();
+    public static final List<String> acceptableHttpResponseCodes = CMBProperties.getInstance().getCNSPublisherAcceptableHttpStatusCodes();
     
     public static class BadEndpointEvent extends RollingWindowCapture.PayLoad {
     	public final String endpointUrl;
@@ -156,8 +156,8 @@ public class CNSEndpointPublisherJobConsumer implements CNSPublisherPartitionRun
     		return;
     	}
 
-    	deliveryHandlers = new ScheduledThreadPoolExecutor(CMBProperties.getInstance().getNumDeliveryHandlers());
-    	reDeliveryHandlers = new ScheduledThreadPoolExecutor(CMBProperties.getInstance().getNumReDeliveryHandlers());
+    	deliveryHandlers = new ScheduledThreadPoolExecutor(CMBProperties.getInstance().getCNSNumPublisherDeliveryHandlers());
+    	reDeliveryHandlers = new ScheduledThreadPoolExecutor(CMBProperties.getInstance().getCNSNumPublisherReDeliveryHandlers());
 
     	CQSHandler.initialize();
 
@@ -186,8 +186,8 @@ public class CNSEndpointPublisherJobConsumer implements CNSPublisherPartitionRun
 
     	if (testQueueLimit == null) {
         
-    		if (deliveryHandlers.getQueue().size() >= CMBProperties.getInstance().getDeliveryHandlerJobQueueLimit() ||
-                    reDeliveryHandlers.getQueue().size() >= CMBProperties.getInstance().getReDeliveryHandlerJobQueueLimit()) {
+    		if (deliveryHandlers.getQueue().size() >= CMBProperties.getInstance().getCNSDeliveryHandlerJobQueueLimit() ||
+                    reDeliveryHandlers.getQueue().size() >= CMBProperties.getInstance().getCNSReDeliveryHandlerJobQueueLimit()) {
                 return true;
             }
             
@@ -239,7 +239,7 @@ public class CNSEndpointPublisherJobConsumer implements CNSPublisherPartitionRun
 		        	values.put("consumerTimestamp", System.currentTimeMillis() + "");
 		        	values.put("jmxport", System.getProperty("com.sun.management.jmxremote.port", "0"));
 		        	values.put("mode", CNSPublisher.getModeString());
-		        	values.put("dataCenter", CMBProperties.getInstance().getCmbDataCenter());
+		        	values.put("dataCenter", CMBProperties.getInstance().getCMBDataCenter());
 	                CNSPublisher.cassandraHandler.insertOrUpdateRow(hostAddress, "CNSWorkers", values, HConsistencyLevel.QUORUM);
 	        	} catch (Exception ex) {
 	        		logger.warn("event=ping_glitch", ex);
@@ -271,7 +271,7 @@ public class CNSEndpointPublisherJobConsumer implements CNSPublisherPartitionRun
                 
                 try {
                 	
-                    CNSEndpointPublishJob endpointPublishJob = (CMBProperties.getInstance().isUseSubInfoCache()) ? CNSCachedEndpointPublishJob.parseInstance(msg.getBody()) : CNSEndpointPublishJob.parseInstance(msg.getBody());
+                    CNSEndpointPublishJob endpointPublishJob = (CMBProperties.getInstance().isCNSUseSubInfoCache()) ? CNSCachedEndpointPublishJob.parseInstance(msg.getBody()) : CNSEndpointPublishJob.parseInstance(msg.getBody());
                     logger.debug("endpoint_publish_job=" + endpointPublishJob.toString());
                     User pubUser = PersistenceFactory.getUserPersistence().getUserById(endpointPublishJob.getMessage().getUserId());
                     List<? extends CNSEndpointSubscriptionInfo> subs = endpointPublishJob.getSubInfos();
@@ -284,7 +284,7 @@ public class CNSEndpointPublisherJobConsumer implements CNSPublisherPartitionRun
                         
                     	Runnable publishJob = null;
                         
-                        if (CMBProperties.getInstance().getCnsIOMode() == IO_MODE.SYNC) {
+                        if (CMBProperties.getInstance().getCNSIOMode() == IO_MODE.SYNC) {
                         	publishJob = new CNSPublishJob(endpointPublishJob.getMessage(), pubUser, sub.protocol, sub.endpoint, sub.subArn, queueUrl, msg.getReceiptHandle(), endpointPublishJobCount);
                         } else {
                         	publishJob = new CNSAsyncPublishJob(endpointPublishJob.getMessage(), pubUser, sub.protocol, sub.endpoint, sub.subArn, queueUrl, msg.getReceiptHandle(), endpointPublishJobCount);
@@ -314,7 +314,7 @@ public class CNSEndpointPublisherJobConsumer implements CNSPublisherPartitionRun
 	    		CNSWorkerMonitor.getInstance().registerCQSServiceAvailable(false);
 	    	} else {
 	        	try {
-	        		CQSHandler.ensureQueuesExist(CNS_CONSUMER_QUEUE_NAME_PREFIX, CMBProperties.getInstance().getNumEPPublishJobQs());
+	        		CQSHandler.ensureQueuesExist(CNS_CONSUMER_QUEUE_NAME_PREFIX, CMBProperties.getInstance().getCNSNumEndpointPublishJobQueues());
 	        	} catch (Exception e) {
 	        		logger.error("event=failed_to_check_consumer_queue_existence", e);
 	        	}

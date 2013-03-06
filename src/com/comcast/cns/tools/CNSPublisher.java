@@ -55,7 +55,7 @@ public class CNSPublisher {
     public static volatile AtomicLong lastProducerMinute = new AtomicLong(0); 
     public static volatile AtomicLong lastConsumerMinute = new AtomicLong(0); 
     
-	public static volatile CassandraPersistence cassandraHandler = new CassandraPersistence(CMBProperties.getInstance().getCMBCNSKeyspace());
+	public static volatile CassandraPersistence cassandraHandler = new CassandraPersistence(CMBProperties.getInstance().getCNSKeyspace());
     
     private static void printUsage() {
         System.out.println("java <opts> com.comcast.cns.tools.CNSPublisher -role=<comma separated list of roles>");
@@ -114,7 +114,7 @@ public class CNSPublisher {
     	
         Util.initLog4jTest();
 
-    	logger.info("event=startup version=" + CMBControllerServlet.VERSION + " ip=" + InetAddress.getLocalHost().getHostAddress() + " io_mode=" + CMBProperties.getInstance().getCnsIOMode());
+    	logger.info("event=startup version=" + CMBControllerServlet.VERSION + " ip=" + InetAddress.getLocalHost().getHostAddress() + " io_mode=" + CMBProperties.getInstance().getCNSIOMode());
         
     	modes = parseMode(argv[0]);
         logger.info("modes=" + modes);        
@@ -122,10 +122,10 @@ public class CNSPublisher {
         if (modes.contains(Mode.Producer)) {
         	
         	CNSEndpointPublisherJobProducer.initialize(); 
-        	jobProducers = new CNSPublisherJobThread[CMBProperties.getInstance().getNumEPPubJobProducers()]; 
+        	jobProducers = new CNSPublisherJobThread[CMBProperties.getInstance().getCNSNumEndpointPublisherJobProducers()]; 
         	
             for (int i = 0; i < jobProducers.length; i++) {
-                jobProducers[i] = new CNSPublisherJobThread("CNSEPJobProducer-" + i, new CNSEndpointPublisherJobProducer(), CMBProperties.getInstance().getNumPublishJobQs(), CMBProperties.getInstance().getProducerProcessingMaxDelay());
+                jobProducers[i] = new CNSPublisherJobThread("CNSEPJobProducer-" + i, new CNSEndpointPublisherJobProducer(), CMBProperties.getInstance().getCNSNumPublishJobQueues(), CMBProperties.getInstance().getCNSProducerProcessingMaxDelay());
                 jobProducers[i].start();
             }
         } 
@@ -133,10 +133,10 @@ public class CNSPublisher {
         if (modes.contains(Mode.Consumer)) {
         	
             CNSEndpointPublisherJobConsumer.initialize();
-            consumers = new CNSPublisherJobThread[CMBProperties.getInstance().getNumEPPubJobConsumers()];
+            consumers = new CNSPublisherJobThread[CMBProperties.getInstance().getCNSNumEndpointPublisherJobConsumers()];
             
             for (int i = 0; i < consumers.length; i++) {
-                consumers[i] = new CNSPublisherJobThread("CNSEPJobConsumer-" + i, new CNSEndpointPublisherJobConsumer(), CMBProperties.getInstance().getNumEPPublishJobQs(), CMBProperties.getInstance().getConsumerProcessingMaxDelay());
+                consumers[i] = new CNSPublisherJobThread("CNSEPJobConsumer-" + i, new CNSEndpointPublisherJobConsumer(), CMBProperties.getInstance().getCNSNumEndpointPublishJobQueues(), CMBProperties.getInstance().getCNSConsumerProcessingMaxDelay());
                 consumers[i].start();
             }
 

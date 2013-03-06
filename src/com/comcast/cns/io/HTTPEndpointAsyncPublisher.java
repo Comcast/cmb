@@ -80,8 +80,8 @@ public class HTTPEndpointAsyncPublisher implements IEndpointPublisher {
 			
 	        httpParams = new SyncBasicHttpParams();
 	        httpParams
-	            .setIntParameter(CoreConnectionPNames.SO_TIMEOUT, CMBProperties.getInstance().getHttpTimeoutSeconds() * 1000)
-	            .setIntParameter(CoreConnectionPNames.CONNECTION_TIMEOUT, CMBProperties.getInstance().getHttpTimeoutSeconds() * 1000)
+	            .setIntParameter(CoreConnectionPNames.SO_TIMEOUT, CMBProperties.getInstance().getCNSPublisherHttpTimeoutSeconds() * 1000)
+	            .setIntParameter(CoreConnectionPNames.CONNECTION_TIMEOUT, CMBProperties.getInstance().getCNSPublisherHttpTimeoutSeconds() * 1000)
 	            .setIntParameter(CoreConnectionPNames.SOCKET_BUFFER_SIZE, 8 * 1024)
 	            .setParameter(CoreProtocolPNames.USER_AGENT, "CNS/" + CMBControllerServlet.VERSION);
 

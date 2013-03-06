@@ -58,12 +58,12 @@ public class CNSPublishAction extends CNSAction {
 
 	private static Logger logger = Logger.getLogger(CNSPublishAction.class);
 	
-    private static ExpiringCache<String, CNSTopic> topicCache = new ExpiringCache<String, CNSTopic>(CMBProperties.getInstance().getCnsCacheSizeLimit());
+    private static ExpiringCache<String, CNSTopic> topicCache = new ExpiringCache<String, CNSTopic>(CMBProperties.getInstance().getCNSCacheSizeLimit());
     private static volatile User cnsInternalUser = null;
     private static volatile BasicAWSCredentials awsCredentials = null;
     private static volatile AmazonSQS sqs = null;
     
-    public static final String CNS_PUBLISH_QUEUE_NAME_PREFIX = CMBProperties.getInstance().getCnsPublishQueueNamePrefix();
+    public static final String CNS_PUBLISH_QUEUE_NAME_PREFIX = CMBProperties.getInstance().getCNSPublishQueueNamePrefix();
     
     private class CNSTopicCallable implements Callable<CNSTopic> {
     	
@@ -101,10 +101,10 @@ public class CNSPublishAction extends CNSAction {
 		if (cnsInternalUser == null) {
 
 			IUserPersistence userHandler = PersistenceFactory.getUserPersistence();
-	        cnsInternalUser = userHandler.getUserByName(CMBProperties.getInstance().getCnsUserName());
+	        cnsInternalUser = userHandler.getUserByName(CMBProperties.getInstance().getCNSUserName());
 
 	        if (cnsInternalUser == null) {	          
-	        	cnsInternalUser =  userHandler.createUser(CMBProperties.getInstance().getCnsUserName(), CMBProperties.getInstance().getCnsUserPassword());
+	        	cnsInternalUser =  userHandler.createUser(CMBProperties.getInstance().getCNSUserName(), CMBProperties.getInstance().getCNSUserPassword());
 	        }
 		}
 		
@@ -161,7 +161,7 @@ public class CNSPublishAction extends CNSAction {
 			throw new CMBException(CNSErrorCodes.CNS_InvalidParameter,"TopicArn");
     	}
 		
-		CNSTopic topic = topicCache.getAndSetIfNotPresent(topicArn, new CNSTopicCallable(topicArn), CMBProperties.getInstance().getCnsCacheExpiring() * 1000); 
+		CNSTopic topic = topicCache.getAndSetIfNotPresent(topicArn, new CNSTopicCallable(topicArn), CMBProperties.getInstance().getCNSCacheExpiring() * 1000); 
 		
     	if (topic == null) {
     		logger.error("event=cns_publish error_code=NotFound message=" + message + " topic_arn=" + topicArn + " user_id=" + userId);
@@ -176,7 +176,7 @@ public class CNSPublishAction extends CNSAction {
     	
     	// pick random queue, create if not exists (in expiring cache implementation)
     	
-    	String queueName =  CNS_PUBLISH_QUEUE_NAME_PREFIX + (new Random()).nextInt(CMBProperties.getInstance().getNumPublishJobQs());
+    	String queueName =  CNS_PUBLISH_QUEUE_NAME_PREFIX + (new Random()).nextInt(CMBProperties.getInstance().getCNSNumPublishJobQueues());
 
     	GetQueueUrlRequest getQueueUrlRequest = new GetQueueUrlRequest(queueName);
     	String queueUrl = null;

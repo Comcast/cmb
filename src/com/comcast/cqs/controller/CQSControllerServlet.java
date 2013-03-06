@@ -69,7 +69,7 @@ public class CQSControllerServlet extends CMBControllerServlet {
     
     public static volatile AtomicLong lastCQSPingMinute = new AtomicLong(0);
     
-    static ExpiringCache<String, CQSQueue> queueCache = new ExpiringCache<String, CQSQueue>(CMBProperties.getInstance().getCqsCacheSizeLimit());
+    static ExpiringCache<String, CQSQueue> queueCache = new ExpiringCache<String, CQSQueue>(CMBProperties.getInstance().getCQSCacheSizeLimit());
     
     public static class QueueCallable implements Callable<CQSQueue> {
         
@@ -99,7 +99,7 @@ public class CQSControllerServlet extends CMBControllerServlet {
     		super.init();
     		
             try {
-	    		if (CMBProperties.getInstance().isCqsLongPollEnabled()) {
+	    		if (CMBProperties.getInstance().isCQSLongPollEnabled()) {
 		    		CQSLongPollReceiver.listen();
 		            CQSLongPollSender.init();
 	            }
@@ -182,7 +182,7 @@ public class CQSControllerServlet extends CMBControllerServlet {
      */
     public static CQSQueue getCachedQueue(String queueUrl) throws Exception {
         try {
-            return queueCache.getAndSetIfNotPresent(queueUrl, new QueueCallable(queueUrl), CMBProperties.getInstance().getCqsCacheExpiring() * 1000);
+            return queueCache.getAndSetIfNotPresent(queueUrl, new QueueCallable(queueUrl), CMBProperties.getInstance().getCQSCacheExpiring() * 1000);
         } catch (CacheFullException e) {
             return new QueueCallable(queueUrl).call();
         } 
@@ -257,7 +257,7 @@ public class CQSControllerServlet extends CMBControllerServlet {
 
         	try {
 
-        		CassandraPersistence cassandraHandler = new CassandraPersistence(CMBProperties.getInstance().getCMBCQSKeyspace());
+        		CassandraPersistence cassandraHandler = new CassandraPersistence(CMBProperties.getInstance().getCQSKeyspace());
 
         		// write ping
         		
@@ -277,9 +277,9 @@ public class CQSControllerServlet extends CMBControllerServlet {
         		Map<String, String> values = new HashMap<String, String>();
 	        	
         		values.put("timestamp", now + "");
-	        	values.put("port", CMBProperties.getInstance().getCqsLongPollPort() + "");
+	        	values.put("port", CMBProperties.getInstance().getCQSLongPollPort() + "");
 	        	values.put("jmxport", System.getProperty("com.sun.management.jmxremote.port", "0"));
-	        	values.put("dataCenter", CMBProperties.getInstance().getCmbDataCenter());
+	        	values.put("dataCenter", CMBProperties.getInstance().getCMBDataCenter());
 	        	values.put("serviceUrl", serviceUrl);
 	        	values.put("redisServerList", CMBProperties.getInstance().getRedisServerList());
 	        	

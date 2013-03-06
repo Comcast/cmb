@@ -54,7 +54,7 @@ public class CQSQueueCassandraPersistence extends CassandraPersistence implement
 	public static final Logger logger = Logger.getLogger(CQSQueueCassandraPersistence.class);
 
 	public CQSQueueCassandraPersistence() {
-		super(CMBProperties.getInstance().getCMBCQSKeyspace());
+		super(CMBProperties.getInstance().getCQSKeyspace());
 		queuesTemplateString = new ThriftColumnFamilyTemplate<String, String>(keyspaces.get(HConsistencyLevel.QUORUM), COLUMN_FAMILY_QUEUES, StringSerializer.get(), StringSerializer.get());
 		queuesByUserTemplateString = new ThriftColumnFamilyTemplate<String, String>(keyspaces.get(HConsistencyLevel.QUORUM), COLUMN_FAMILY_QUEUES_BY_USER, StringSerializer.get(), StringSerializer.get());
 	}

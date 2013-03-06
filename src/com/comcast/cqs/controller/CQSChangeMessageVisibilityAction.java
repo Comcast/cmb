@@ -60,8 +60,8 @@ public class CQSChangeMessageVisibilityAction extends CQSAction {
 
         int visibilityTO = Integer.parseInt(visibilityTimeout);
 
-        if (visibilityTO < 0 || visibilityTO > CMBProperties.getInstance().getMaxVisibilityTO()) {
-            throw new CMBException(CMBErrorCodes.InvalidParameterValue, "VisibilityTimeout is limited from 0 to " + CMBProperties.getInstance().getMaxVisibilityTO() + " seconds");
+        if (visibilityTO < 0 || visibilityTO > CMBProperties.getInstance().getCQSMaxVisibilityTimeOut()) {
+            throw new CMBException(CMBErrorCodes.InvalidParameterValue, "VisibilityTimeout is limited from 0 to " + CMBProperties.getInstance().getCQSMaxVisibilityTimeOut() + " seconds");
         }
         
         @SuppressWarnings("unused")

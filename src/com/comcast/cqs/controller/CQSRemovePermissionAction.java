@@ -50,7 +50,7 @@ public class CQSRemovePermissionAction extends CQSAction {
         String label = request.getParameter(CQSConstants.LABEL);
 
         if (!Util.isValidId(label)) {
-            throw new CMBException(CQSErrorCodes.InvalidBatchEntryId, "Label " + label + " is invalid. Only alphanumeric, hyphen, and underscore are allowed. It can be at most " + CMBProperties.getInstance().getMaxMessageSuppliedIdLength() + " letters long.");
+            throw new CMBException(CQSErrorCodes.InvalidBatchEntryId, "Label " + label + " is invalid. Only alphanumeric, hyphen, and underscore are allowed. It can be at most " + CMBProperties.getInstance().getCQSMaxMessageSuppliedIdLength() + " letters long.");
         }
         
         CMBPolicy policy = new CMBPolicy(queue.getPolicy());

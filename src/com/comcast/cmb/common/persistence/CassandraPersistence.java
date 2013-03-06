@@ -89,7 +89,7 @@ public class CassandraPersistence {
 	private static final int hectorPoolSize = CMBProperties.getInstance().getHectorPoolSize();
 	private static final String hectorBalancingPolicy = CMBProperties.getInstance().getHectorBalancingPolicy();
 	
-	protected String keyspaceName = CMBProperties.getInstance().getCMBCommonKeyspace();
+	protected String keyspaceName = CMBProperties.getInstance().getCMBKeyspace();
 
 	protected Cluster cluster;
 	protected Map<HConsistencyLevel, Keyspace> keyspaces;
@@ -176,9 +176,9 @@ public class CassandraPersistence {
 			names.add(k.getName());
 		}
 		
-		alive &= names.contains(CMBProperties.getInstance().getCMBCQSKeyspace());
-		alive &= names.contains(CMBProperties.getInstance().getCMBCNSKeyspace());
-		alive &= names.contains(CMBProperties.getInstance().getCMBCommonKeyspace());
+		alive &= names.contains(CMBProperties.getInstance().getCQSKeyspace());
+		alive &= names.contains(CMBProperties.getInstance().getCNSKeyspace());
+		alive &= names.contains(CMBProperties.getInstance().getCMBKeyspace());
 		
 		return alive;
 	}

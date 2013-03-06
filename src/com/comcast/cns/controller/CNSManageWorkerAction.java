@@ -93,7 +93,7 @@ public class CNSManageWorkerAction extends CNSAction {
 			throw new CMBException(CNSErrorCodes.MissingParameter,"Request parameter Host missing.");
 		}
 
-		CassandraPersistence cassandraHandler = new CassandraPersistence(CMBProperties.getInstance().getCMBCNSKeyspace());
+		CassandraPersistence cassandraHandler = new CassandraPersistence(CMBProperties.getInstance().getCNSKeyspace());
 
 		if (task.equals("ClearQueues")) {
 

@@ -67,7 +67,7 @@ public class CQSAPIStatePageServlet extends AdminServletBase {
 		IUserPersistence userHandler = PersistenceFactory.getUserPersistence();
 		User cnsAdminUser;
 		try {
-			cnsAdminUser = userHandler.getUserByName(CMBProperties.getInstance().getCnsUserName());
+			cnsAdminUser = userHandler.getUserByName(CMBProperties.getInstance().getCNSUserName());
 		} catch (PersistenceException ex) {
 			throw new ServletException(ex);
 		}

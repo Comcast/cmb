@@ -70,7 +70,7 @@ public class CNSGetWorkerStatsAction extends CNSAction {
         HttpServletRequest request = (HttpServletRequest)asyncContext.getRequest();
         HttpServletResponse response = (HttpServletResponse)asyncContext.getResponse();
 		
-		CassandraPersistence cassandraHandler = new CassandraPersistence(CMBProperties.getInstance().getCMBCNSKeyspace());
+		CassandraPersistence cassandraHandler = new CassandraPersistence(CMBProperties.getInstance().getCNSKeyspace());
 		
 		List<Row<String, String, String>> rows = cassandraHandler.readNextNNonEmptyRows("CNSWorkers", null, 1000, 10, new StringSerializer(), new StringSerializer(), new StringSerializer(), HConsistencyLevel.QUORUM);
 		List<CNSWorkerStats> statsList = new ArrayList<CNSWorkerStats>();
@@ -102,7 +102,7 @@ public class CNSGetWorkerStatsAction extends CNSAction {
 					stats.setDataCenter(row.getColumnSlice().getColumnByName("dataCenter").getValue());
 				}
 
-				if (stats.getDataCenter() != null && stats.getDataCenter().equals(CMBProperties.getInstance().getCmbDataCenter())) {
+				if (stats.getDataCenter() != null && stats.getDataCenter().equals(CMBProperties.getInstance().getCMBDataCenter())) {
 					statsList.add(stats);
 				}
 			}

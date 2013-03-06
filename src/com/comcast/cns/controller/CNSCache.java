@@ -34,10 +34,10 @@ import com.comcast.cns.persistence.ICNSSubscriptionPersistence;
  */
 public class CNSCache {
 	
-    private static volatile ExpiringCache<String, CNSTopicAttributes> attributeCache = new ExpiringCache<String, CNSTopicAttributes>(CMBProperties.getInstance().getCnsCacheSizeLimit());
+    private static volatile ExpiringCache<String, CNSTopicAttributes> attributeCache = new ExpiringCache<String, CNSTopicAttributes>(CMBProperties.getInstance().getCNSCacheSizeLimit());
 	private static volatile ICNSAttributesPersistence attributeHandler = PersistenceFactory.getCNSAttributePersistence();
 
-    private static volatile ExpiringCache<String, List<CNSSubscription>> confirmedSubscriptionsCache = new ExpiringCache<String, List<CNSSubscription>>(CMBProperties.getInstance().getCnsCacheSizeLimit());
+    private static volatile ExpiringCache<String, List<CNSSubscription>> confirmedSubscriptionsCache = new ExpiringCache<String, List<CNSSubscription>>(CMBProperties.getInstance().getCNSCacheSizeLimit());
 	private static volatile ICNSSubscriptionPersistence subscriptionHandler = PersistenceFactory.getSubscriptionPersistence();
 
 	private static class TopicAttributesCallable implements Callable<CNSTopicAttributes> {
@@ -63,7 +63,7 @@ public class CNSCache {
 	 */
     public static CNSTopicAttributes getTopicAttributes(String topicArn) throws Exception {
         if (topicArn == null) return null;
-    	return attributeCache.getAndSetIfNotPresent(topicArn, new TopicAttributesCallable(topicArn), CMBProperties.getInstance().getCnsCacheExpiring() * 1000);        
+    	return attributeCache.getAndSetIfNotPresent(topicArn, new TopicAttributesCallable(topicArn), CMBProperties.getInstance().getCNSCacheExpiring() * 1000);        
     }
 
 	private static class SubscriptionCallable implements Callable<List<CNSSubscription>> {
@@ -110,7 +110,7 @@ public class CNSCache {
     	List<CNSSubscription> subscriptions = null;
 
 		try {
-			subscriptions = confirmedSubscriptionsCache.getAndSetIfNotPresent(topicArn, new SubscriptionCallable(topicArn), CMBProperties.getInstance().getCnsCacheExpiring() * 1000);
+			subscriptions = confirmedSubscriptionsCache.getAndSetIfNotPresent(topicArn, new SubscriptionCallable(topicArn), CMBProperties.getInstance().getCNSCacheExpiring() * 1000);
         } catch (CacheFullException ex1) {
         	subscriptions = new SubscriptionCallable(topicArn).call();
         } catch (Exception ex2) {

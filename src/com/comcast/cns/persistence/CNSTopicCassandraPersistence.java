@@ -58,7 +58,7 @@ public class CNSTopicCassandraPersistence extends CassandraPersistence implement
 
 	public CNSTopicCassandraPersistence() {
 
-		super(CMBProperties.getInstance().getCMBCNSKeyspace());
+		super(CMBProperties.getInstance().getCNSKeyspace());
 
 		topicsTemplate = new ThriftColumnFamilyTemplate<String, String>(keyspaces.get(HConsistencyLevel.QUORUM), columnFamilyTopics, StringSerializer.get(), StringSerializer.get());
 		topicsByUserIdTemplate = new ThriftColumnFamilyTemplate<String, String>(keyspaces.get(HConsistencyLevel.QUORUM), columnFamilyTopicsByUserId, StringSerializer.get(), StringSerializer.get());

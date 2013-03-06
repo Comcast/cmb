@@ -70,7 +70,7 @@ public class CNSGetAPIStatsAction extends CNSAction {
         HttpServletRequest request = (HttpServletRequest)asyncContext.getRequest();
         HttpServletResponse response = (HttpServletResponse)asyncContext.getResponse();
 		
-		CassandraPersistence cassandraHandler = new CassandraPersistence(CMBProperties.getInstance().getCMBCNSKeyspace());
+		CassandraPersistence cassandraHandler = new CassandraPersistence(CMBProperties.getInstance().getCNSKeyspace());
 		
 		List<Row<String, String, String>> rows = cassandraHandler.readNextNNonEmptyRows("CNSAPIServers", null, 1000, 10, new StringSerializer(), new StringSerializer(), new StringSerializer(), HConsistencyLevel.QUORUM);
 		List<CQSAPIStats> statsList = new ArrayList<CQSAPIStats>();

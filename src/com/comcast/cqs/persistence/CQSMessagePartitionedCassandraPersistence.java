@@ -68,7 +68,7 @@ public class CQSMessagePartitionedCassandraPersistence extends CassandraPersiste
 	}
 
 	public CQSMessagePartitionedCassandraPersistence() {
-		super(CMBProperties.getInstance().getCMBCQSKeyspace());
+		super(CMBProperties.getInstance().getCQSKeyspace());
 	}
 
 	@Override
@@ -88,7 +88,7 @@ public class CQSMessagePartitionedCassandraPersistence extends CassandraPersiste
 		
 		int ttl = queue.getMsgRetentionPeriod();
 		
-		String key = Util.hashQueueUrl(queue.getRelativeUrl()) + "_" + randomPartition.nextInt(CMBProperties.getInstance().getCqsNumberOfQueuePartitions());
+		String key = Util.hashQueueUrl(queue.getRelativeUrl()) + "_" + randomPartition.nextInt(CMBProperties.getInstance().getCQSNumberOfQueuePartitions());
 		
 		// String compressedMessage = Util.compress(message);
 
@@ -119,7 +119,7 @@ public class CQSMessagePartitionedCassandraPersistence extends CassandraPersiste
 		Map<Composite, Map<String, String>> messageDataMap = new HashMap<Composite, Map<String, String>>();
 		Map<String, String> ret = new HashMap<String, String>();
 		int ttl = queue.getMsgRetentionPeriod();
-		String key = Util.hashQueueUrl(queue.getRelativeUrl()) + "_" + randomPartition.nextInt(CMBProperties.getInstance().getCqsNumberOfQueuePartitions());
+		String key = Util.hashQueueUrl(queue.getRelativeUrl()) + "_" + randomPartition.nextInt(CMBProperties.getInstance().getCQSNumberOfQueuePartitions());
 		
 		for (CQSMessage message : messages) {
 
@@ -232,12 +232,12 @@ public class CQSMessagePartitionedCassandraPersistence extends CassandraPersiste
 		
 		int partitionNumber = Integer.parseInt(queueParts[1]);
 		
-		if (partitionNumber < 0 || partitionNumber > CMBProperties.getInstance().getCqsNumberOfQueuePartitions()-1) {
+		if (partitionNumber < 0 || partitionNumber > CMBProperties.getInstance().getCQSNumberOfQueuePartitions()-1) {
 			logger.error("event=peek_queue error_code=invalid_partition_number partition_number=" + partitionNumber);
 			throw new IllegalArgumentException("Invalid queue partition number " + partitionNumber);			
 		}
 		
-		while (messageList.size() < length && -1 < partitionNumber && partitionNumber < CMBProperties.getInstance().getCqsNumberOfQueuePartitions()) {
+		while (messageList.size() < length && -1 < partitionNumber && partitionNumber < CMBProperties.getInstance().getCQSNumberOfQueuePartitions()) {
 			
 			queuePartition = queueHash + "_" + partitionNumber;
 			
@@ -249,7 +249,7 @@ public class CQSMessagePartitionedCassandraPersistence extends CassandraPersiste
 			
 			messageList.addAll(Util.readMessagesFromSuperColumns(length-messageList.size(), previousHandle, nextHandle, superSlice, true));
 			
-			if (messageList.size() < length && -1 < partitionNumber && partitionNumber < CMBProperties.getInstance().getCqsNumberOfQueuePartitions()) {
+			if (messageList.size() < length && -1 < partitionNumber && partitionNumber < CMBProperties.getInstance().getCQSNumberOfQueuePartitions()) {
 				
 				if (previousHandle != null) {
 					
@@ -263,7 +263,7 @@ public class CQSMessagePartitionedCassandraPersistence extends CassandraPersiste
 					
 					partitionNumber--;
 					
-					if (partitionNumber < CMBProperties.getInstance().getCqsNumberOfQueuePartitions()) {
+					if (partitionNumber < CMBProperties.getInstance().getCQSNumberOfQueuePartitions()) {
 						nextHandle = new Composite(Arrays.asList(newTime(System.currentTimeMillis()+1209600000, false), UUIDGen.getClockSeqAndNode()));
 					}
 					
@@ -283,7 +283,7 @@ public class CQSMessagePartitionedCassandraPersistence extends CassandraPersiste
 		
 		logger.debug("event=clear_queue queue_url=" + queueUrl);
 		
-		for (int i=0; i<CMBProperties.getInstance().getCqsNumberOfQueuePartitions(); i++) {
+		for (int i=0; i<CMBProperties.getInstance().getCQSNumberOfQueuePartitions(); i++) {
 			String key = Util.hashQueueUrl(queueUrl) + "_" + i;
 			deleteSuperColumn(queueMessagesTemplate, key, null);
 		}
@@ -419,7 +419,7 @@ public class CQSMessagePartitionedCassandraPersistence extends CassandraPersiste
     	
     	List<CQSMessage> messageList = new ArrayList<CQSMessage>();
         
-        if (length > CMBProperties.getInstance().getCqsNumberOfQueuePartitions()) {
+        if (length > CMBProperties.getInstance().getCQSNumberOfQueuePartitions()) {
             
         	//no randomness. Get from all rows. Subsequent calls will return the same result
             return peekQueue(queueUrl, null, null, length);
@@ -430,10 +430,10 @@ public class CQSMessagePartitionedCassandraPersistence extends CassandraPersiste
             //Note: as a simplification we may return less messages than length if not all rows
             //contain messages.
             
-        	RandomNumberCollection rc = new RandomNumberCollection(CMBProperties.getInstance().getCqsNumberOfQueuePartitions());
+        	RandomNumberCollection rc = new RandomNumberCollection(CMBProperties.getInstance().getCQSNumberOfQueuePartitions());
             int numFound = 0;
             
-            for (int i = 0; i < CMBProperties.getInstance().getCqsNumberOfQueuePartitions() && numFound < length; i++) {
+            for (int i = 0; i < CMBProperties.getInstance().getCQSNumberOfQueuePartitions() && numFound < length; i++) {
                 
             	int partition = rc.getNext();
                 String queuePartition = queueHash + "_" + partition;

@@ -164,8 +164,8 @@ public class CQSReceiveMessageAction extends CQSAction {
             
         	int maxNumberOfMessages = Integer.parseInt(request.getParameter(CQSConstants.MAX_NUMBER_OF_MESSAGES));
             
-        	if (maxNumberOfMessages < 1 || maxNumberOfMessages > CMBProperties.getInstance().getMaxReceiveMessageCount()) {
-                throw new CMBException(CMBErrorCodes.InvalidParameterValue, "The value for MaxNumberOfMessages is not valid (must be from 1 to " + CMBProperties.getInstance().getMaxReceiveMessageCount() + ").");
+        	if (maxNumberOfMessages < 1 || maxNumberOfMessages > CMBProperties.getInstance().getCQSMaxReceiveMessageCount()) {
+                throw new CMBException(CMBErrorCodes.InvalidParameterValue, "The value for MaxNumberOfMessages is not valid (must be from 1 to " + CMBProperties.getInstance().getCQSMaxReceiveMessageCount() + ").");
             }
         	
             msgParam.put(CQSConstants.MAX_NUMBER_OF_MESSAGES, "" + maxNumberOfMessages);
@@ -179,7 +179,7 @@ public class CQSReceiveMessageAction extends CQSAction {
         
         if (request.getParameter(CQSConstants.WAIT_TIME_SECONDS) != null) {
         	
-        	if (!CMBProperties.getInstance().isCqsLongPollEnabled()) {
+        	if (!CMBProperties.getInstance().isCQSLongPollEnabled()) {
                 throw new CMBException(CMBErrorCodes.InvalidParameterValue, "Long polling not enabled.");
         	}
         	

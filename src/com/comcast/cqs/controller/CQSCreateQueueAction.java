@@ -65,8 +65,8 @@ public class CQSCreateQueueAction extends CQSAction {
             throw new CMBException(CMBErrorCodes.MissingParameter, "QueueName not found");
         }
 
-        if (queueName.length() > CMBProperties.getInstance().getMaxQueueNameLength()) {
-            throw new CMBException(CMBErrorCodes.InvalidParameterValue, "QueueName " + queueName + " is too long. Maximum is " + CMBProperties.getInstance().getMaxQueueNameLength());
+        if (queueName.length() > CMBProperties.getInstance().getCQSMaxNameLength()) {
+            throw new CMBException(CMBErrorCodes.InvalidParameterValue, "QueueName " + queueName + " is too long. Maximum is " + CMBProperties.getInstance().getCQSMaxNameLength());
         }
 
         Matcher m = p.matcher(queueName);

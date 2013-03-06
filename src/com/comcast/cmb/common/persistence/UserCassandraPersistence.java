@@ -54,7 +54,7 @@ public class UserCassandraPersistence extends CassandraPersistence implements IU
 	private static final Logger logger = Logger.getLogger(UserCassandraPersistence.class);
 	
 	public UserCassandraPersistence() {
-		super(CMBProperties.getInstance().getCMBCommonKeyspace());		
+		super(CMBProperties.getInstance().getCMBKeyspace());		
 		usersTemplate = new ThriftColumnFamilyTemplate<String, String>(keyspaces.get(HConsistencyLevel.QUORUM), COLUMN_FAMILY_USERS, StringSerializer.get(), StringSerializer.get());
 	}
 

@@ -66,7 +66,7 @@ public class CQSChangeMessageVisibilityBatchAction extends CQSAction {
         while (suppliedId != null && receiptHandle != null) {
         
         	if (!Util.isValidId(suppliedId)) {
-                throw new CMBException(CQSErrorCodes.InvalidBatchEntryId, "Id " + suppliedId + " is invalid. Only alphanumeric, hyphen, and underscore are allowed. It can be at most " + CMBProperties.getInstance().getMaxMessageSuppliedIdLength() + " letters long.");
+                throw new CMBException(CQSErrorCodes.InvalidBatchEntryId, "Id " + suppliedId + " is invalid. Only alphanumeric, hyphen, and underscore are allowed. It can be at most " + CMBProperties.getInstance().getCQSMaxMessageSuppliedIdLength() + " letters long.");
             }
             
         	if (idList.contains(suppliedId)) {
@@ -83,8 +83,8 @@ public class CQSChangeMessageVisibilityBatchAction extends CQSAction {
                 
             		Integer visibilityTimeout = Integer.parseInt(visibilityTimeoutStr);
                     
-            		if (visibilityTimeout < 0 || visibilityTimeout > CMBProperties.getInstance().getMaxVisibilityTO()) {
-                        throw new CMBException(CMBErrorCodes.InvalidParameterValue, "VisibilityTimeout is limited from 0 to " + CMBProperties.getInstance().getMaxVisibilityTO() + " seconds");
+            		if (visibilityTimeout < 0 || visibilityTimeout > CMBProperties.getInstance().getCQSMaxVisibilityTimeOut()) {
+                        throw new CMBException(CMBErrorCodes.InvalidParameterValue, "VisibilityTimeout is limited from 0 to " + CMBProperties.getInstance().getCQSMaxVisibilityTimeOut() + " seconds");
                     }
                 }
                 idMap.put(suppliedId, Arrays.asList(receiptHandle, visibilityTimeoutStr));

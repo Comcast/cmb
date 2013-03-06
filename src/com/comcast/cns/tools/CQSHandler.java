@@ -45,10 +45,10 @@ public class CQSHandler {
     	}
     	
 		IUserPersistence userHandler = PersistenceFactory.getUserPersistence();
-        cnsInternalUser = userHandler.getUserByName(CMBProperties.getInstance().getCnsUserName());
+        cnsInternalUser = userHandler.getUserByName(CMBProperties.getInstance().getCNSUserName());
 
         if (cnsInternalUser == null) {	          
-        	cnsInternalUser =  userHandler.createUser(CMBProperties.getInstance().getCnsUserName(), CMBProperties.getInstance().getCnsUserPassword());
+        	cnsInternalUser =  userHandler.createUser(CMBProperties.getInstance().getCNSUserName(), CMBProperties.getInstance().getCNSUserPassword());
         }
 
         awsCredentials = new BasicAWSCredentials(cnsInternalUser.getAccessKey(), cnsInternalUser.getAccessSecret());
@@ -98,7 +98,7 @@ public class CQSHandler {
         long ts1 = System.currentTimeMillis();
         ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest(queueUrl);
         receiveMessageRequest.setMaxNumberOfMessages(1);
-        receiveMessageRequest.setVisibilityTimeout(CMBProperties.getInstance().getPublishJobVTO());
+        receiveMessageRequest.setVisibilityTimeout(CMBProperties.getInstance().getCNSPublishJobVisibilityTimeout());
         ReceiveMessageResult receiveMessageResult = sqs.receiveMessage(receiveMessageRequest);
         List<Message> msgs = receiveMessageResult.getMessages();
         long ts2 = System.currentTimeMillis();

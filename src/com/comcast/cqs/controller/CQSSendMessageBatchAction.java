@@ -68,7 +68,7 @@ public class CQSSendMessageBatchAction extends CQSAction {
         while (suppliedId != null) {
             
         	if (!Util.isValidId(suppliedId)) {
-                throw new CMBException(CQSErrorCodes.InvalidBatchEntryId, "Id " + suppliedId + " is invalid. Only alphanumeric, hyphen, and underscore are allowed. It can be at most " + CMBProperties.getInstance().getMaxMessageSuppliedIdLength() + " letters long.");
+                throw new CMBException(CQSErrorCodes.InvalidBatchEntryId, "Id " + suppliedId + " is invalid. Only alphanumeric, hyphen, and underscore are allowed. It can be at most " + CMBProperties.getInstance().getCQSMaxMessageSuppliedIdLength() + " letters long.");
             }
             
         	if (idList.contains(suppliedId)) {
@@ -90,8 +90,8 @@ public class CQSSendMessageBatchAction extends CQSAction {
                 
                 	Integer delaySeconds = Integer.parseInt(delaySecondsStr);
                     
-                    if(delaySeconds < 0 || delaySeconds > CMBProperties.getInstance().getMaxDelaySeconds()) {
-                        throw new CMBException(CMBErrorCodes.InvalidParameterValue, "DelaySeconds should be from 0 to " + CMBProperties.getInstance().getMaxDelaySeconds());
+                    if(delaySeconds < 0 || delaySeconds > CMBProperties.getInstance().getCQSMaxMessageDelaySeconds()) {
+                        throw new CMBException(CMBErrorCodes.InvalidParameterValue, "DelaySeconds should be from 0 to " + CMBProperties.getInstance().getCQSMaxMessageDelaySeconds());
                     } else {
                         attributes.put(CQSConstants.DELAY_SECONDS, "" + delaySeconds);
                     }
@@ -108,14 +108,14 @@ public class CQSSendMessageBatchAction extends CQSAction {
                 msgList.add(msg);
             }
             
-            if (msgList.size() > CMBProperties.getInstance().getMaxMsgCountBatch()) {
-                throw new CMBException(CQSErrorCodes.TooManyEntriesInBatchRequest, "Maximum number of entries per request are " + CMBProperties.getInstance().getMaxMsgCountBatch() + ". You have sent " + msgList.size() + ".");
+            if (msgList.size() > CMBProperties.getInstance().getCQSMaxMessageCountBatch()) {
+                throw new CMBException(CQSErrorCodes.TooManyEntriesInBatchRequest, "Maximum number of entries per request are " + CMBProperties.getInstance().getCQSMaxMessageCountBatch() + ". You have sent " + msgList.size() + ".");
             }
             
             totalMessageSize += messageBody == null ? 0 : messageBody.length();
             
-            if (totalMessageSize > CMBProperties.getInstance().getMaxMsgSizeBatch()) {
-                throw new CMBException(CQSErrorCodes.BatchRequestTooLong, "Batch requests cannot be longer than " + CMBProperties.getInstance().getMaxMsgSizeBatch() + " bytes");
+            if (totalMessageSize > CMBProperties.getInstance().getCQSMaxMessageSizeBatch()) {
+                throw new CMBException(CQSErrorCodes.BatchRequestTooLong, "Batch requests cannot be longer than " + CMBProperties.getInstance().getCQSMaxMessageSizeBatch() + " bytes");
             }
             
             index++;

@@ -44,7 +44,7 @@ public class CNSAttributesCassandraPersistence extends CassandraPersistence impl
 	private static final String columnFamilySubscriptionAttributes = "CNSSubscriptionAttributes";
 	
 	public CNSAttributesCassandraPersistence() {
-		super(CMBProperties.getInstance().getCMBCNSKeyspace());	
+		super(CMBProperties.getInstance().getCNSKeyspace());	
 	}
 
 	@Override
