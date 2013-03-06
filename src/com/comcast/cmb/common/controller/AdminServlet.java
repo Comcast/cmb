@@ -139,8 +139,6 @@ public class AdminServlet extends AdminServletBase {
         
         out.println("</table></span></body></html>");
         
-        logger.info("action=adminServletProcess CassandraTimeMS=" + CMBControllerServlet.valueAccumulator.getCounter(AccumulatorName.CassandraTime));
-        
         CMBControllerServlet.valueAccumulator.deleteAllCounters();
 	}
 	

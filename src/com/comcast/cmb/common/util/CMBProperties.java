@@ -34,6 +34,8 @@ public class CMBProperties {
 	    SYNC, ASYNC 
 	}
 	
+	private final int requestParameterValueMaxLength;
+	
 	private final String cmbDataCenter;
 	
 	private final IO_MODE cnsIOMode;
@@ -179,6 +181,8 @@ public class CMBProperties {
 			props.load(fileStream);
 			
 			cmbDataCenter = props.getProperty("cmb.dc.name", "default");
+			
+			requestParameterValueMaxLength = Integer.parseInt(props.getProperty("cmb.log.requestParameterValueMaxLength", "128"));
 			
 			cqsLongPollPort = Integer.parseInt(props.getProperty("cmb.cqs.longpoll.port", "5555"));
 			cqsLongPollEnabled = Boolean.parseBoolean(props.getProperty("cmb.cqs.longpoll.enable", "true"));
@@ -674,5 +678,9 @@ public class CMBProperties {
 	
 	public int getCNSMaxMessageSize() {
 		return cnsMaxMsgSize;
+	}
+	
+	public int getCMBRequestParameterValueMaxLength() {
+		return requestParameterValueMaxLength;
 	}
 }

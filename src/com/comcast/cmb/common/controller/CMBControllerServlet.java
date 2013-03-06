@@ -135,8 +135,19 @@ abstract public class CMBControllerServlet extends HttpServlet {
     	StringBuffer params = new StringBuffer("");
     	
     	while (keys.hasMoreElements()) {
+    		
     		String key = keys.nextElement();
-    		params.append(key).append("=").append(request.getParameter(key)).append(" ");
+    		String value = request.getParameter(key);
+    		
+    		if (value != null && value.length() > CMBProperties.getInstance().getCMBRequestParameterValueMaxLength()) {
+    			value = value.substring(0, CMBProperties.getInstance().getCMBRequestParameterValueMaxLength()) + "...";
+    		}
+    		
+    		if (value != null) {
+    			value = value.replace("\n", "\\n").replace("\r", "\\r");
+    		}
+    		
+    		params.append(key).append("=").append(value).append(" ");
     	}
     	
     	return params.toString();
@@ -160,8 +171,11 @@ abstract public class CMBControllerServlet extends HttpServlet {
             response.setContentType("text/xml");
             
             if (!isValidAction(action)) {
-            	logger.warn("event=found_invalid_action action=" + action + " receipt_id=" + ReceiptModule.getReceiptId());
-                throw new CMBException(CMBErrorCodes.InvalidAction, action + " is not a valid action");
+            	logger.warn("event=invalid_action action=" + action + " url=" + request.getRequestURL());
+                String errXml = createErrorResponse(CMBErrorCodes.InvalidAction.getCMBCode(), action + " is not a valid action");
+                response.setStatus(CMBErrorCodes.InvalidAction.getHttpCode());
+                response.getWriter().println(errXml);
+                return;
             }
 
             if (isAuthenticationRequired(action)) {
@@ -188,8 +202,7 @@ abstract public class CMBControllerServlet extends HttpServlet {
             
         		StringBuffer logLine = new StringBuffer("");
         		
-        		logLine.append("event=request action=" + action + " status=success client=").append(request.getRemoteAddr());
-        		logLine.append(" receipt_id=").append(ReceiptModule.getReceiptId());
+        		logLine.append("event=request status=success client=").append(request.getRemoteAddr());
         		
         		logLine.append(((this instanceof CQSControllerServlet) ? (" queue_url=" + request.getRequestURL()) : ""));
         		logLine.append(" ").append(getParameterString(asyncContext));
@@ -220,8 +233,7 @@ abstract public class CMBControllerServlet extends HttpServlet {
         	
     		StringBuffer logLine = new StringBuffer("");
     		
-    		logLine.append("event=request action=" + action + " status=failed client=").append(request.getRemoteAddr());
-    		logLine.append(" receipt_id=").append(ReceiptModule.getReceiptId());
+    		logLine.append("event=request status=failed client=").append(request.getRemoteAddr());
     		
     		logLine.append(((this instanceof CQSControllerServlet) ? (" queue_url=" + request.getRequestURL()) : ""));
     		logLine.append(" ").append(getParameterString(asyncContext));
@@ -241,7 +253,7 @@ abstract public class CMBControllerServlet extends HttpServlet {
             String message = "There is an internal problem with CMB";
             
             if (ex instanceof CMBException) {
-                httpCode = ((CMBException) ex).getHttpCode();
+                httpCode = ((CMBException)ex).getHttpCode();
                 code = ((CMBException) ex).getCMBCode();
                 message = ex.getMessage();
             }
