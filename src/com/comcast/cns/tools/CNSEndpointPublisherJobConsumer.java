@@ -161,8 +161,6 @@ public class CNSEndpointPublisherJobConsumer implements CNSPublisherPartitionRun
 
     	CQSHandler.initialize();
 
-    	CQSHandler.ensureQueuesExist(CNS_CONSUMER_QUEUE_NAME_PREFIX, CMBProperties.getInstance().getNumEPPublishJobQs());
-
     	logger.info("event=initialize");
     	initialized = true;
     }

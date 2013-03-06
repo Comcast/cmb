@@ -98,8 +98,6 @@ public class CNSEndpointPublisherJobProducer implements CNSPublisherPartitionRun
 			subscriptionPersistence = PersistenceFactory.getSubscriptionPersistence();
 	   }
 
-	   CQSHandler.ensureQueuesExist(CNS_PRODUCER_QUEUE_NAME_PREFIX, CMBProperties.getInstance().getNumPublishJobQs());
-		
 	   logger.info("event=initialize");
 	   initialized = true;
    }
