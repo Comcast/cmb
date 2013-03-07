@@ -262,7 +262,7 @@ public class CNSEndpointPublisherJobConsumer implements CNSPublisherPartitionRun
 	        
 	        String queueName = CNS_CONSUMER_QUEUE_NAME_PREFIX + partition;
 	        String queueUrl = CQSHandler.getQueueUrl(queueName);
-	        Message msg = CQSHandler.receiveMessage(queueUrl);
+	        Message msg = CQSHandler.receiveMessage(queueUrl, 20);
     		CNSWorkerMonitor.getInstance().registerCQSServiceAvailable(true);
 
             if (msg != null) {   

@@ -92,13 +92,18 @@ public class CQSHandler {
         logger.debug("event=delete_message receipt_handle=" + message.getReceiptHandle());
     }
     
-    public static Message receiveMessage(String queueUrl) {
+    public static Message receiveMessage(String queueUrl, int waitTimeSeconds) {
     	
     	Message message = null;
         long ts1 = System.currentTimeMillis();
         ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest(queueUrl);
         receiveMessageRequest.setMaxNumberOfMessages(1);
         receiveMessageRequest.setVisibilityTimeout(CMBProperties.getInstance().getCNSPublishJobVisibilityTimeout());
+        
+        if (waitTimeSeconds > 0) {
+        	receiveMessageRequest.setWaitTimeSeconds(waitTimeSeconds);
+        }
+        
         ReceiveMessageResult receiveMessageResult = sqs.receiveMessage(receiveMessageRequest);
         List<Message> msgs = receiveMessageResult.getMessages();
         long ts2 = System.currentTimeMillis();

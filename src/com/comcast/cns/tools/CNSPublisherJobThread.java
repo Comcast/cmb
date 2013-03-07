@@ -22,46 +22,23 @@ import org.apache.log4j.Logger;
  * @author aseem 
  */
 public class CNSPublisherJobThread extends Thread {
-    private static Logger logger = Logger.getLogger(CNSPublisherJobThread.class);
+    
+	private static Logger logger = Logger.getLogger(CNSPublisherJobThread.class);
     
     private final CNSPublisherPartitionRunnable runnable;
-    private final int numPartitions;
-    private final long maxDelayMS;
+    private final int partitionNumber;
     
-    public CNSPublisherJobThread(String threadName, CNSPublisherPartitionRunnable runnable, int numPartitions, long maxDelayMS) {
-        super(threadName);
+    public CNSPublisherJobThread(String threadName, CNSPublisherPartitionRunnable runnable, int partitionNumber) {
+        
+    	super(threadName);
         this.runnable = runnable;             
-        this.numPartitions = numPartitions;
-        this.maxDelayMS = maxDelayMS;
+        this.partitionNumber = partitionNumber;
     }
     
     @Override
     public void run() {
-        long sleepAmount = 10;
         while (true) {
-            boolean messageFoundInFullPass = false; 
-            for (int i = 0; i < numPartitions; i++) {
-                if (runnable.run(i)) {
-                    messageFoundInFullPass = true;
-                }
-            }
-            
-            if (!messageFoundInFullPass) {
-                if (sleepAmount * 2 < maxDelayMS) {
-                    sleepAmount *= 2;
-                } else {
-                    sleepAmount = maxDelayMS;
-                }
-                
-                try {
-                    logger.debug("event=run messageFoundInFullPass=true sleepAmount=" + sleepAmount);
-                    sleep(sleepAmount);
-                } catch (InterruptedException e) {
-                    logger.error("Could not put thread to sleep", e);
-                }
-            } else {
-                sleepAmount = 10;
-            }
+        	runnable.run(this.partitionNumber);
         }
     }
 }

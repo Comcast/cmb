@@ -122,22 +122,30 @@ public class CNSPublisher {
         if (modes.contains(Mode.Producer)) {
         	
         	CNSEndpointPublisherJobProducer.initialize(); 
-        	jobProducers = new CNSPublisherJobThread[CMBProperties.getInstance().getCNSNumEndpointPublisherJobProducers()]; 
-        	
-            for (int i = 0; i < jobProducers.length; i++) {
-                jobProducers[i] = new CNSPublisherJobThread("CNSEPJobProducer-" + i, new CNSEndpointPublisherJobProducer(), CMBProperties.getInstance().getCNSNumPublishJobQueues(), CMBProperties.getInstance().getCNSProducerProcessingMaxDelay());
-                jobProducers[i].start();
+        	jobProducers = new CNSPublisherJobThread[CMBProperties.getInstance().getCNSNumEndpointPublisherJobProducers()*CMBProperties.getInstance().getCNSNumPublishJobQueues()]; 
+            int idx = 0;
+            
+        	for (int i = 0; i < CMBProperties.getInstance().getCNSNumEndpointPublisherJobProducers(); i++) {
+            	for (int k=0; k<CMBProperties.getInstance().getCNSNumPublishJobQueues(); k++) {
+	                jobProducers[idx] = new CNSPublisherJobThread("CNSEPJobProducer-" + idx, new CNSEndpointPublisherJobProducer(), k);
+	                jobProducers[idx].start();
+	                idx++;
+            	}
             }
         } 
         
         if (modes.contains(Mode.Consumer)) {
         	
             CNSEndpointPublisherJobConsumer.initialize();
-            consumers = new CNSPublisherJobThread[CMBProperties.getInstance().getCNSNumEndpointPublisherJobConsumers()];
+            consumers = new CNSPublisherJobThread[CMBProperties.getInstance().getCNSNumEndpointPublisherJobConsumers()*CMBProperties.getInstance().getCNSNumEndpointPublishJobQueues()];
+            int idx = 0;
             
-            for (int i = 0; i < consumers.length; i++) {
-                consumers[i] = new CNSPublisherJobThread("CNSEPJobConsumer-" + i, new CNSEndpointPublisherJobConsumer(), CMBProperties.getInstance().getCNSNumEndpointPublishJobQueues(), CMBProperties.getInstance().getCNSConsumerProcessingMaxDelay());
-                consumers[i].start();
+            for (int i = 0; i<CMBProperties.getInstance().getCNSNumEndpointPublisherJobConsumers(); i++) {
+            	for (int k=0; k<CMBProperties.getInstance().getCNSNumEndpointPublishJobQueues(); k++) {
+	                consumers[idx] = new CNSPublisherJobThread("CNSEPJobConsumer-" + idx, new CNSEndpointPublisherJobConsumer(), k);
+	                consumers[idx].start();
+	                idx++;
+            	}
             }
 
             MBeanServer mbs = ManagementFactory.getPlatformMBeanServer(); 

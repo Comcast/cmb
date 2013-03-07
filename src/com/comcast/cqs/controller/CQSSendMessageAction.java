@@ -107,18 +107,14 @@ public class CQSSendMessageAction extends CQSAction {
             throw new CMBException(CMBErrorCodes.InternalError, "Failed to add message to queue");
         }
         
-        CQSLongPollSender.send(queue.getArn());
-        
         message.setReceiptHandle(receiptHandle);
         message.setMessageId(receiptHandle);
-        long ts4 = System.currentTimeMillis();
         String out = CQSMessagePopulator.getSendMessageResponse(message);
-        CQSControllerServlet.valueAccumulator.addToCounter(AccumulatorName.SendMessageXMLTime, (System.currentTimeMillis() - ts4));
         response.getWriter().println(out);
-        long ts1 = System.currentTimeMillis();
         CQSMonitor.getInstance().addNumberOfMessagesReceived(queue.getRelativeUrl(), 1);
-        CQSControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CQSMonitorTime, (System.currentTimeMillis() - ts1));
         
+        CQSLongPollSender.send(queue.getArn());
+
         return true;
 	}
 }

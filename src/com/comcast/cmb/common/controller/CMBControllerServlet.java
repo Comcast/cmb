@@ -193,37 +193,29 @@ abstract public class CMBControllerServlet extends HttpServlet {
             response.setStatus(200);
             long ts2 = System.currentTimeMillis();
             
-            if (action != null && action.equals("ReceiveMessage") && !actionPerformed && user != null && user.getUserName().equals(CMBProperties.getInstance().getCNSUserName())) {
+    		StringBuffer logLine = new StringBuffer("");
+    		
+    		logLine.append("event=request status=success client=").append(request.getRemoteAddr());
+    		
+    		logLine.append(((this instanceof CQSControllerServlet) ? (" queue_url=" + request.getRequestURL()) : ""));
+    		logLine.append(" ").append(getParameterString(asyncContext));
+    		logLine.append((user != null ? "user=" + user.getUserName() : ""));
 
-            	// Return code for ReceiveMessage() is number of messages received. If it is zero, do not write a log line to dial 
-            	// down logging for CNS polling of producer and consumer queues.
-            	
-            } else {
+    		logLine.append(" resp_ms=").append((ts2-ts1));
+    		logLine.append(" cass_ms=" + valueAccumulator.getCounter(AccumulatorName.CassandraTime));
+    		logLine.append(" cass_num_rd=" + valueAccumulator.getCounter(AccumulatorName.CassandraRead));
+    		logLine.append(" cass_num_wr=" + valueAccumulator.getCounter(AccumulatorName.CassandraWrite));
+    		logLine.append(((this instanceof CNSControllerServlet) ? (" cnscqs_ms=" + CMBControllerServlet.valueAccumulator.getCounter(AccumulatorName.CNSCQSTime)) : ""));
+    		logLine.append(((this instanceof CQSControllerServlet) ? (" redis_ms=" + valueAccumulator.getCounter(AccumulatorName.RedisTime)) : ""));
+    		
+    		logger.info(logLine);
             
-        		StringBuffer logLine = new StringBuffer("");
-        		
-        		logLine.append("event=request status=success client=").append(request.getRemoteAddr());
-        		
-        		logLine.append(((this instanceof CQSControllerServlet) ? (" queue_url=" + request.getRequestURL()) : ""));
-        		logLine.append(" ").append(getParameterString(asyncContext));
-        		logLine.append((user != null ? "user=" + user.getUserName() : ""));
-
-        		logLine.append(" resp_ms=").append((ts2-ts1));
-        		logLine.append(" cass_ms=" + valueAccumulator.getCounter(AccumulatorName.CassandraTime));
-        		logLine.append(" cass_num_rd=" + valueAccumulator.getCounter(AccumulatorName.CassandraRead));
-        		logLine.append(" cass_num_wr=" + valueAccumulator.getCounter(AccumulatorName.CassandraWrite));
-        		logLine.append(((this instanceof CNSControllerServlet) ? (" cnscqs_ms=" + CMBControllerServlet.valueAccumulator.getCounter(AccumulatorName.CNSCQSTime)) : ""));
-        		logLine.append(((this instanceof CQSControllerServlet) ? (" redis_ms=" + valueAccumulator.getCounter(AccumulatorName.RedisTime)) : ""));
-        		
-        		logger.info(logLine);
+            if (action != null && !action.equals("")) {
 	            
-	            if (action != null && !action.equals("")) {
-		            
-		            callStats.putIfAbsent(action, new AtomicLong());
-		            
-		            if (callStats.get(action).incrementAndGet() == Long.MAX_VALUE - 100) {
-			            callStats = new ConcurrentHashMap<String, AtomicLong>();
-		            }
+	            callStats.putIfAbsent(action, new AtomicLong());
+	            
+	            if (callStats.get(action).incrementAndGet() == Long.MAX_VALUE - 100) {
+		            callStats = new ConcurrentHashMap<String, AtomicLong>();
 	            }
             }
        
