@@ -28,6 +28,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.log4j.Logger;
+import org.w3c.dom.Element;
 
 import com.amazonaws.services.sqs.model.CreateQueueRequest;
 import com.amazonaws.services.sqs.model.CreateQueueResult;
@@ -39,6 +40,7 @@ import com.amazonaws.services.sqs.model.ListQueuesResult;
 import com.comcast.cmb.common.controller.AdminServletBase;
 import com.comcast.cmb.common.controller.CMBControllerServlet;
 import com.comcast.cmb.common.util.CMBProperties;
+import com.comcast.cmb.common.util.XmlUtil;
 import com.comcast.cqs.util.Util;
 
 /**
@@ -70,10 +72,58 @@ public class CQSUserPageServlet extends AdminServletBase {
         List<String> queueUrls = new ArrayList<String>();
         
         boolean showQueueAttributes = false;
+        boolean showQueuesWithMessagesOnly = false;
 		boolean useQueueNamePrefix = false;
         
 		connect(userId);
 		
+		if (parameters.containsKey("Search")) {
+			
+			useQueueNamePrefix = true; 
+			
+			if (request.getParameter("ShowMessagesOnly") != null) {
+				showQueuesWithMessagesOnly = true;
+			}
+
+			if (request.getParameter("ShowAttributes") != null) {
+				showQueueAttributes = true;
+			}
+		}
+		
+		try {
+		
+			/*ListQueuesRequest listQueuesRequest = new ListQueuesRequest();
+	
+			if (queueName != null && !queueName.equals("")) {
+				listQueuesRequest.setQueueNamePrefix(queueName);
+			}
+			
+			ListQueuesResult listQueuesResult = sqs.listQueues(listQueuesRequest);
+			queueUrls = listQueuesResult.getQueueUrls();*/
+			
+			String url = cqsServiceBaseUrl + "?Action=ListQueues&AWSAccessKeyId=" + user.getAccessKey();
+			
+			if (queueName != null && !queueName.equals("")) {
+				url += "&QueueNamePrefix=" + queueName;
+			}
+			
+			if (showQueuesWithMessagesOnly) {
+				url += "&ContainingMessagesOnly=true";
+			}
+	
+			String apiStateXml = httpGet(url);
+			Element root = XmlUtil.buildDoc(apiStateXml);
+			List<Element> queueUrlList = XmlUtil.getCurrentLevelChildNodes(root, "ListQueuesResult");
+			
+			for (Element urlElement : queueUrlList) {
+				queueUrls.add(XmlUtil.getCurrentLevelChildNodes(urlElement, "QueueUrl").get(0).getTextContent().trim());
+			}
+		
+        } catch (Exception ex) {
+			logger.error("event=list_queues user_id= " + userId, ex);
+			throw new ServletException(ex);
+		}
+
 		if (parameters.containsKey("Create")) {
 			
 			try {
@@ -86,14 +136,6 @@ public class CQSUserPageServlet extends AdminServletBase {
 				throw new ServletException(ex);
 			}
 		
-		} else if (parameters.containsKey("Search")) {
-			
-			useQueueNamePrefix = true; 
-			
-			if (request.getParameter("ShowAttributes") != null) {
-				showQueueAttributes = true;
-			}
-
 		} else if (parameters.containsKey("Delete")) {
 			
 			try {
@@ -107,22 +149,6 @@ public class CQSUserPageServlet extends AdminServletBase {
 
 		} else if (parameters.containsKey("DeleteAll")) {
 			
-	        try {
-	        	
-	 			ListQueuesRequest listQueuesRequest = new ListQueuesRequest();
-
-	 			if (queueName != null && !queueName.equals("")) {
-					listQueuesRequest.setQueueNamePrefix(queueName);
-				}
-				
-	 			ListQueuesResult listQueuesResult = sqs.listQueues(listQueuesRequest);
-				queueUrls = listQueuesResult.getQueueUrls();
-
-	        } catch (Exception ex) {
-				logger.error("event=list_queues user_id= " + userId, ex);
-				throw new ServletException(ex);
-			}
-
 			for (int i = 0; queueUrls != null && i < queueUrls.size(); i++) {
 
 				try {
@@ -132,7 +158,9 @@ public class CQSUserPageServlet extends AdminServletBase {
 				} catch (Exception ex) {
 					logger.error("event=delete_queue queue_url=" + queueUrls.get(i) + " user_id= " + userId, ex);
 				}
-			}			
+			}
+			
+			queueUrls = new ArrayList<String>();
 		}
 		
 		out.println("<html>");
@@ -154,32 +182,20 @@ public class CQSUserPageServlet extends AdminServletBase {
 		
 		out.println("<tr><td>Search queues with name prefix:</td><td></td></tr>");
         out.println("<tr><form action=\"/CQSUser?userId="+user.getUserId() + "\" " + "method=POST>");
-        out.println("<td><input type='text' name='queueName' value='"+(useQueueNamePrefix?queueName:"")+"'/><input type='hidden' name='userId' value='"+ userId + "'/><input type='checkbox' name='ShowAttributes' value='ShowAttributes'>Show Attributes</input></td><td><input type='submit' value='Search' name='Search' /></td></form></tr>");
+        out.println("<td><input type='text' name='queueName' value='"+(useQueueNamePrefix?queueName:"")+"'/><input type='hidden' name='userId' value='"+ userId + "'/>");
+        out.println("<input type='checkbox' " + (showQueueAttributes ? "checked='true' " : "") + "name='ShowAttributes' value='ShowAttributes'>Show Attributes</input>");
+        out.println("<input type='checkbox' " + (showQueuesWithMessagesOnly ? "checked='true' " : "") + " name='ShowMessagesOnly' value='ShowMessagesOnly'>Only Queues With Messages</input></td>");
+        out.println("<td><input type='submit' value='Search' name='Search' /></td></form></tr>");
 
         out.println("<tr><td>Create queue with name:</td><td></td></tr>");
         out.println("<tr><form action=\"/CQSUser?userId="+user.getUserId() + "\" " + "method=POST>");
         out.println("<td><input type='text' name='queueName' /><input type='hidden' name='userId' value='"+ userId + "'></td><td><input type='submit' value='Create' name='Create' /></td></form></tr>");
 
         out.println("<tr><td>Delete all queues:</td><td></td></tr>");
-        out.println("<tr><form action=\"/CQSUser?userId="+user.getUserId() + "\" " + "method=POST><td><input type='hidden' name='userId' value='"+ userId + "'/><input type='hidden' name='queueName' value='"+(queueName != null ? queueName : "")+"'/></td><td><input type='submit' value='DeleteAll' name='DeleteAll'/></td></form></tr>");
+        out.println("<tr><form action=\"/CQSUser?userId="+user.getUserId() + "\" " + "method=POST><td><input type='hidden' name='userId' value='"+ userId + "'/>");
+        out.println("<input type='hidden' name='queueName' value='"+(queueName != null ? queueName : "")+"'/></td><td><input type='submit' value='DeleteAll' name='DeleteAll'/></td></form></tr>");
         
         out.println("</table></p>");
-
-        try {
- 		
-        	ListQueuesRequest listQueuesRequest = new ListQueuesRequest();
- 			
- 			if (useQueueNamePrefix) {
- 				listQueuesRequest.setQueueNamePrefix(queueName);
- 			}
- 			
-			ListQueuesResult listQueuesResult = sqs.listQueues(listQueuesRequest);
-			queueUrls = listQueuesResult.getQueueUrls();
-		
-        } catch (Exception ex) {
-			logger.error("event=list_queues user_id= " + userId, ex);
-			throw new ServletException(ex);
-		}
 
 		out.println("<p><hr width='100%' align='left' /></p>");
 		

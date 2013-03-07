@@ -63,19 +63,19 @@ public class CQSQueuePopulator extends CQSPopulator {
     
     public static String getListQueuesResponse(List<CQSQueue> queues) {
         
-    	String out = "<ListQueuesResponse>\n";
+    	StringBuffer out = new StringBuffer("<ListQueuesResponse>\n");
 
         for (CQSQueue queue : queues) {
         	
-            out += "\t<ListQueuesResult>\n";
-        	out += "\t\t<QueueUrl>" + queue.getAbsoluteUrl() + "</QueueUrl>\n";
-            out += "\t</ListQueuesResult>\n";
+            out.append("\t<ListQueuesResult>\n");
+        	out.append("\t\t<QueueUrl>").append(queue.getAbsoluteUrl()).append("</QueueUrl>\n");
+            out.append("\t</ListQueuesResult>\n");
         }
 
-        out += "\t" + getResponseMetadata() + "\n";
-        out += "</ListQueuesResponse>\n";
+        out.append("\t").append(getResponseMetadata()).append("\n");
+        out.append("</ListQueuesResponse>\n");
         
-        return out;
+        return out.toString();
     }
     
     public static String getQueueAttributesResponse(CQSQueue queue, List<String> filterAttributes) {

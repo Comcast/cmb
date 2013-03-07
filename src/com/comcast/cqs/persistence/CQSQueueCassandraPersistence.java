@@ -100,23 +100,29 @@ public class CQSQueueCassandraPersistence extends CassandraPersistence implement
 		delete(queuesByUserTemplateString, Util.getUserIdForRelativeQueueUrl(queueUrl), Util.getArnForRelativeQueueUrl(queueUrl));
 	}
 
-	@Override
-	public List<CQSQueue> listQueues(String userId, String queueName_prefix) throws PersistenceException {
+	private int visitNextSetOfQueues(List<CQSQueue> queueList, String userId, String queueName_prefix, boolean containingMessagesOnly) {
 		
-		if (userId == null || userId.trim().length() == 0) {
-			logger.error("event=list_queues error_code=invalid_user user_id=" + userId);
-			throw new PersistenceException(CQSErrorCodes.InvalidParameterValue, "Invalid userId " + userId);
+		String firstColumn = null;
+		int counter = 0;
+		
+		if (queueList.size() > 0) {
+			firstColumn = queueList.get(queueList.size()-1).getArn();
 		}
-			
-		List<CQSQueue> queueList = new ArrayList<CQSQueue>();
-
-		Row<String, String, String> row = null;
 		
-		row = readRow(COLUMN_FAMILY_QUEUES_BY_USER, userId, 1000, new StringSerializer(), new StringSerializer(), new StringSerializer(), HConsistencyLevel.QUORUM);
+		Row<String, String, String> row = readRow(COLUMN_FAMILY_QUEUES_BY_USER, userId, firstColumn, null, 1000, new StringSerializer(), new StringSerializer(), new StringSerializer(), HConsistencyLevel.QUORUM);
 		
 		if (row != null) {
+			
+			boolean first = true;
 
 			for (HColumn<String, String> c : row.getColumnSlice().getColumns()) {
+				
+				counter++;
+				
+				if (firstColumn != null && first) {
+					first = false;
+					continue;
+				}
 
 				String arn = c.getName();
 				CQSQueue queue = new CQSQueue(Util.getNameForArn(arn), Util.getQueueOwnerFromArn(arn));
@@ -127,9 +133,83 @@ public class CQSQueueCassandraPersistence extends CassandraPersistence implement
 					continue;
 				}
 				
+				if (containingMessagesOnly) {
+					try {
+						if (RedisCachedCassandraPersistence.getInstance().getQueueMessageCount(queue.getRelativeUrl(), true) <= 0) {
+							continue;
+						}
+					} catch (Exception ex) { }
+				} 
+				
 				queueList.add(queue);
+				
+				if (queueList.size() >= 1000) {
+					return counter;
+				}
 			}
 		}
+		
+		return counter;
+	}
+	
+	@Override
+	public List<CQSQueue> listQueues(String userId, String queueName_prefix, boolean containingMessagesOnly) throws PersistenceException {
+		
+		if (userId == null || userId.trim().length() == 0) {
+			logger.error("event=list_queues error_code=invalid_user user_id=" + userId);
+			throw new PersistenceException(CQSErrorCodes.InvalidParameterValue, "Invalid userId " + userId);
+		}
+			
+		List<CQSQueue> queueList = new ArrayList<CQSQueue>();
+		String lastArn = null;
+		int counter;
+
+		do {
+			
+			counter = 0;
+			
+			Row<String, String, String> row = readRow(COLUMN_FAMILY_QUEUES_BY_USER, userId, lastArn, null, 1000, new StringSerializer(), new StringSerializer(), new StringSerializer(), HConsistencyLevel.QUORUM);
+			
+			if (row != null) {
+				
+				boolean first = true;
+
+				for (HColumn<String, String> c : row.getColumnSlice().getColumns()) {
+					
+					counter++;
+					
+					if (lastArn != null && first) {
+						first = false;
+						continue;
+					}
+
+					lastArn = c.getName();
+					CQSQueue queue = new CQSQueue(Util.getNameForArn(lastArn), Util.getQueueOwnerFromArn(lastArn));
+					queue.setRelativeUrl(Util.getRelativeQueueUrlForArn(lastArn));
+					queue.setArn(lastArn);
+					
+					if (queueName_prefix != null && !queue.getName().startsWith(queueName_prefix)) {
+						continue;
+					}
+					
+					if (containingMessagesOnly) {
+						try {
+							if (RedisCachedCassandraPersistence.getInstance().getQueueMessageCount(queue.getRelativeUrl(), true) <= 0) {
+								continue;
+							}
+						} catch (Exception ex) {
+							continue;
+						}
+					} 
+					
+					queueList.add(queue);
+					
+					if (queueList.size() >= 1000) {
+						return queueList;
+					}
+				}
+			}
+		} while (counter >= 1000);
 		
 		return queueList;
 	}

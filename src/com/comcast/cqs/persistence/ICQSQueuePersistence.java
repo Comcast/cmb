@@ -49,19 +49,18 @@ public interface ICQSQueuePersistence {
 	 * 
 	 * @param userId
 	 * @param queueName_prefix
+	 * @param containingMessagesOnly if true only list queues containing messages, otherwise list all queues, only works if redis is available
 	 * @return
 	 * @throws PersistenceException
 	 */
-	public List<CQSQueue> listQueues(String userId, String queueName_prefix)
-			throws PersistenceException;
+	public List<CQSQueue> listQueues(String userId, String queueName_prefix, boolean containingMessagesOnly) throws PersistenceException;
 
 	/**
 	 * Update the queue
 	 * 
 	 * @param queue
 	 */
-	public void updateQueueAttribute(String queueURL, Map<String, String> queueData)
-			throws PersistenceException;
+	public void updateQueueAttribute(String queueURL, Map<String, String> queueData) throws PersistenceException;
 
 	/**
 	 * Get a queue given user ID and queueName

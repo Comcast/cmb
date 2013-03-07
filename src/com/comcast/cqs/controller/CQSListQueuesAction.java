@@ -44,8 +44,14 @@ public class CQSListQueuesAction extends CQSAction {
         HttpServletResponse response = (HttpServletResponse)asyncContext.getResponse();
 
 		String prefix = request.getParameter("QueueNamePrefix");
+		
+		boolean containingMessagesOnly = false;
+		
+		if (request.getParameter("ContainingMessagesOnly") != null && request.getParameter("ContainingMessagesOnly").equals("true")) {
+			containingMessagesOnly = true;
+		}
 
-        List<CQSQueue> queues = PersistenceFactory.getQueuePersistence().listQueues(user.getUserId(), prefix);
+        List<CQSQueue> queues = PersistenceFactory.getQueuePersistence().listQueues(user.getUserId(), prefix, containingMessagesOnly);
 
         String out = CQSQueuePopulator.getListQueuesResponse(queues);
 
