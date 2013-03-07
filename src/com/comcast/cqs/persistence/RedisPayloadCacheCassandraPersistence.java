@@ -358,7 +358,7 @@ public class RedisPayloadCacheCassandraPersistence implements ICQSMessagePersist
                 addMessagesToPayloadCache(queueUrl, messagesToCache, jedis);
             }
             logger.debug("event=peek_queue num_cached=" + messagesToCache.size() + " queue_url=" + queueUrl);
-        } catch(Exception e) {
+        } catch (Exception e) {
             logger.warn("event=peek_queue cqueue_url=" + queueUrl, e);
             if (e instanceof JedisException) {
             	brokenJedis = true;
@@ -486,7 +486,7 @@ public class RedisPayloadCacheCassandraPersistence implements ICQSMessagePersist
      */
     private boolean shouldEnablePCache(String queueUrl) {
         //Check if there are enough messages in the QCache
-        int queueCount = idSeq.getQCount(queueUrl); 
+        long queueCount = idSeq.getQueueMessageCount(queueUrl); 
         if (queueCount > 1000) {            
             //This implies there was a burst of sends. Kick off a payload cache filling
             logger.debug("event=should_enable_payload_cache_for_queue message_count=" + queueCount + " queue_url=" + queueUrl);

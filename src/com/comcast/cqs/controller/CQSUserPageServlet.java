@@ -210,7 +210,7 @@ public class CQSUserPageServlet extends AdminServletBase {
 					attributes = getQueueAttributesResult.getAttributes();
 		        	
 				} catch (Exception ex) {
-					logger.error("event=damaged_queue url=" + queueUrls.get(i));
+					logger.error("event=get_queue_attributes url=" + queueUrls.get(i));
 				}
 			}
 

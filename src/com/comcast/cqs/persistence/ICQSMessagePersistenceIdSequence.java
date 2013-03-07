@@ -35,5 +35,5 @@ public interface ICQSMessagePersistenceIdSequence {
      * @param queueUrl
      * @return number of messages in queue
      */
-    public int getQCount(String queueUrl);
+    public long getQueueMessageCount(String queueUrl);
 }

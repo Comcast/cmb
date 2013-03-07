@@ -279,7 +279,7 @@ public class CQSMonitor implements CQSMonitorMBean {
     @Override
     public int getNumberOfMessages(String queueUrl) {
         RedisCachedCassandraPersistence redisP = RedisCachedCassandraPersistence.getInstance();
-        return (int) redisP.getQueueCount(queueUrl, false);
+        return (int) redisP.getQueueMessageCount(queueUrl, false);
     }
 
     @Override

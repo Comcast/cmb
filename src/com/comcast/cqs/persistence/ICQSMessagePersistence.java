@@ -97,8 +97,7 @@ public interface ICQSMessagePersistence {
      * @throws NoSuchAlgorithmException 
      * @return list of messages between previousReceiptHandle & nextReceiptHandle
      */
-    public List<CQSMessage> peekQueue(String queueUrl,  String previousReceiptHandle, String nextReceiptHandle,
-			int length) throws PersistenceException, IOException, NoSuchAlgorithmException;
+    public List<CQSMessage> peekQueue(String queueUrl,  String previousReceiptHandle, String nextReceiptHandle,	int length) throws PersistenceException, IOException, NoSuchAlgorithmException;
     
     /**
      * Peek the queue with the given Queue URL for the next set of messages chosen at random from the queue
@@ -130,7 +129,5 @@ public interface ICQSMessagePersistence {
      * @throws UnsupportedEncodingException 
      * @throws NoSuchAlgorithmException 
      */
-	Map<String, CQSMessage> getMessages(String queueUrl, List<String> ids)
-			throws PersistenceException, NoSuchAlgorithmException,
-			UnsupportedEncodingException;
+	Map<String, CQSMessage> getMessages(String queueUrl, List<String> ids) throws PersistenceException, NoSuchAlgorithmException, UnsupportedEncodingException;
 }
