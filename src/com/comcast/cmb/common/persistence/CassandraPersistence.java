@@ -137,6 +137,9 @@ public class CassandraPersistence {
 	    cassandraHostConfigurator.setHosts(clusterUrl);
 	    cassandraHostConfigurator.setMaxActive(hectorPoolSize);
 	    cassandraHostConfigurator.setCassandraThriftSocketTimeout(CMBProperties.getInstance().getCassandraThriftSocketTimeOutMS());
+	    
+	    cassandraHostConfigurator.setAutoDiscoverHosts(CMBProperties.getInstance().isHectorAutoDiscovery());
+	    cassandraHostConfigurator.setAutoDiscoveryDelayInSeconds(CMBProperties.getInstance().getHectorAutoDiscoveryDelaySeconds());
 
 	    // some other settings we may be interested in down the road, see here for more details:
 	    // https://github.com/rantav/hector/wiki/User-Guide

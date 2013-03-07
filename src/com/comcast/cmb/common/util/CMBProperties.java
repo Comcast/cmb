@@ -69,6 +69,9 @@ public class CMBProperties {
 	
     private final int hectorPoolSize;
     private final String hectorBalancingPolicy;
+
+	private final boolean hectorAutoDiscovery;
+    private final int hectorAutoDiscoveryDelaySeconds;
 	
 	private final String region;
     
@@ -205,6 +208,8 @@ public class CMBProperties {
 			clusterUrl = props.getProperty("cmb.cassandra.clusterUrl");
 			
             hectorPoolSize = Integer.parseInt(props.getProperty("cmb.hector.pool.size", "50"));
+            hectorAutoDiscoveryDelaySeconds = Integer.parseInt(props.getProperty("cmb.hector.autoDiscoveryDelaySeconds", "60"));
+            hectorAutoDiscovery = Boolean.parseBoolean(props.getProperty("cmb.hector.autoDiscovery", "true"));
             hectorBalancingPolicy = props.getProperty("cmb.hector.balancingPolicy", "RoundRobinBalancingPolicy");
             
 			smtpHostName = props.getProperty("cmb.cns.smtp.hostname");
@@ -682,5 +687,13 @@ public class CMBProperties {
 	
 	public int getCMBRequestParameterValueMaxLength() {
 		return requestParameterValueMaxLength;
+	}
+	
+    public boolean isHectorAutoDiscovery() {
+		return hectorAutoDiscovery;
+	}
+
+	public int getHectorAutoDiscoveryDelaySeconds() {
+		return hectorAutoDiscoveryDelaySeconds;
 	}
 }
