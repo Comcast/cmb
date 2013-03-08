@@ -103,7 +103,7 @@ public class CQSUserPageServlet extends AdminServletBase {
 			
 			String url = cqsServiceBaseUrl + "?Action=ListQueues&AWSAccessKeyId=" + user.getAccessKey();
 			
-			if (queueName != null && !queueName.equals("")) {
+			if (useQueueNamePrefix && queueName != null && !queueName.equals("")) {
 				url += "&QueueNamePrefix=" + queueName;
 			}
 			
@@ -130,6 +130,7 @@ public class CQSUserPageServlet extends AdminServletBase {
 				CreateQueueRequest createQueueRequest = new CreateQueueRequest(queueName);
 				CreateQueueResult createQueueResult = sqs.createQueue(createQueueRequest);
 				queueUrl = createQueueResult.getQueueUrl();
+				queueUrls.add(queueUrl);
 				logger.debug("event=create_queue queue_url=" + queueUrl + " user_id= " + userId);
 			} catch (Exception ex) {
 				logger.error("event=create_queue queue_url=" + queueUrl + " user_id= " + userId, ex);
@@ -141,6 +142,7 @@ public class CQSUserPageServlet extends AdminServletBase {
 			try {
 				DeleteQueueRequest deleteQueueRequest = new DeleteQueueRequest(queueUrl);
 				sqs.deleteQueue(deleteQueueRequest);
+				queueUrls.remove(queueUrl);
 				logger.debug("event=delete_queue queue_url=" + queueUrl + " user_id= " + userId);
 			} catch (Exception ex) {
 				logger.error("event=delete_queue queue_url=" + queueUrl + " user_id= " + userId, ex);

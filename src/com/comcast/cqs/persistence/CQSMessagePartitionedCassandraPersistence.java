@@ -43,6 +43,7 @@ import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.PersistenceException;
 import com.comcast.cqs.model.CQSMessage;
 import com.comcast.cqs.model.CQSQueue;
+import com.comcast.cqs.util.CQSConstants;
 import com.comcast.cqs.util.CQSErrorCodes;
 import com.comcast.cqs.util.RandomNumberCollection;
 import com.comcast.cqs.util.Util;
@@ -82,19 +83,22 @@ public class CQSMessagePartitionedCassandraPersistence extends CassandraPersiste
 			throw new PersistenceException(CQSErrorCodes.InvalidMessageContents, "The supplied message is invalid");
 		}
 		
-		final Composite superColumnName = new Composite(
-				newTime(System.currentTimeMillis(), false),
-				UUIDGen.getClockSeqAndNode());
+		int delaySeconds = 0;
 		
+		if (message.getAttributes().containsKey(CQSConstants.DELAY_SECONDS)) {
+			delaySeconds = Integer.parseInt(message.getAttributes().get(CQSConstants.DELAY_SECONDS));
+		}
+		
+		long ts = System.currentTimeMillis() + delaySeconds*1000;
+		final Composite superColumnName = new Composite(newTime(ts, false),	UUIDGen.getClockSeqAndNode());
 		int ttl = queue.getMsgRetentionPeriod();
-		
 		String key = Util.hashQueueUrl(queue.getRelativeUrl()) + "_" + randomPartition.nextInt(CMBProperties.getInstance().getCQSNumberOfQueuePartitions());
 		
 		// String compressedMessage = Util.compress(message);
 
 		message.setMessageId(key + ":" + superColumnName.get(0) + ":" + superColumnName.get(1));
 
-		logger.debug("event=send_message ttl=" + ttl + " msg_id=" + message.getMessageId() + " key=" + key+  " col=" + superColumnName);
+		logger.debug("event=send_message ttl=" + ttl + " delay_sec=" + delaySeconds + " msg_id=" + message.getMessageId() + " key=" + key+  " col=" + superColumnName);
 		
 		insertSuperColumn(COLUMN_FAMILY_PARTITIONED_QUEUE_MESSAGES, key,
 				StringSerializer.get(), superColumnName, ttl,
@@ -127,13 +131,17 @@ public class CQSMessagePartitionedCassandraPersistence extends CassandraPersiste
 				throw new PersistenceException(CQSErrorCodes.InvalidMessageContents, "The supplied message is invalid");
 			}
 			
-			final Composite superColumnName = new Composite(Arrays.asList(
-					newTime(System.currentTimeMillis(), false),
-					UUIDGen.getClockSeqAndNode()));
+			int delaySeconds = 0;
 			
+			if (message.getAttributes().containsKey(CQSConstants.DELAY_SECONDS)) {
+				delaySeconds = Integer.parseInt(message.getAttributes().get(CQSConstants.DELAY_SECONDS));
+			}
+			
+			long ts = System.currentTimeMillis() + delaySeconds*1000;
+			final Composite superColumnName = new Composite(Arrays.asList(newTime(ts, false), UUIDGen.getClockSeqAndNode()));
 			message.setMessageId(key + ":" + superColumnName.get(0) + ":" + superColumnName.get(1));
 			
-			logger.debug("event=send_message_batch msg_id=" + message.getMessageId() + " ttl=" + ttl + " key=" + key + " col=" + superColumnName);
+			logger.debug("event=send_message_batch msg_id=" + message.getMessageId() + " ttl=" + ttl + " delay_sec=" + delaySeconds + " key=" + key + " col=" + superColumnName);
 			
 			Map<String, String> currentMessageDataMap = Util.buildMessageMap(message);
 			messageDataMap.put(superColumnName, currentMessageDataMap);

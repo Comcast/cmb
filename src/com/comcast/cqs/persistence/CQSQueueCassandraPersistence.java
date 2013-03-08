@@ -179,10 +179,10 @@ public class CQSQueueCassandraPersistence extends CassandraPersistence implement
 					counter++;
 					
 					if (lastArn != null && first) {
-						first = false;
 						continue;
 					}
 
+					first = false;
 					lastArn = c.getName();
 					CQSQueue queue = new CQSQueue(Util.getNameForArn(lastArn), Util.getQueueOwnerFromArn(lastArn));
 					queue.setRelativeUrl(Util.getRelativeQueueUrlForArn(lastArn));

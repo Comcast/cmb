@@ -793,8 +793,16 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
         long ts1 = System.currentTimeMillis();
         try {
             if (cacheAvailable) {
+            	int delaySeconds = 0;
+            	if (message.getAttributes().containsKey(CQSConstants.DELAY_SECONDS)) {
+            		delaySeconds = Integer.parseInt(message.getAttributes().get(CQSConstants.DELAY_SECONDS));
+            	}
                 jedis = getResource();
-                jedis.rpush(queue.getRelativeUrl() + "-Q", memId);
+            	if (delaySeconds > 0) {
+            	    jedis.hset(queue.getRelativeUrl() + "-H", memId, Long.toString(System.currentTimeMillis() + (delaySeconds * 1000)));
+            	} else {
+	                jedis.rpush(queue.getRelativeUrl() + "-Q", memId);
+            	}
                 log.debug("event=send_message cache_available=true msg_id= " + messageId + " queue_url=" + queue.getAbsoluteUrl());
             } else {
                 log.debug("event=send_message cache_available=false msg_id= " + messageId + " queue_url=" + queue.getAbsoluteUrl());
@@ -833,12 +841,20 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
         boolean brokenJedis = false;
         try {
             for (CQSMessage message : messages) {
+            	int delaySeconds = 0;
+            	if (message.getAttributes().containsKey(CQSConstants.DELAY_SECONDS)) {
+            		delaySeconds = Integer.parseInt(message.getAttributes().get(CQSConstants.DELAY_SECONDS));
+            	}
                 String clientId = message.getSuppliedMessageId();
                 String messageId = message.getMessageId();
-                String memId = getMemQueueMessage(messageId, System.currentTimeMillis(), 0); //TODO: currently initialDelay is 0
+                String memId = getMemQueueMessage(messageId, System.currentTimeMillis()+delaySeconds*1000, 0);
                 if (cacheAvailable) {      
                     try {
-                        jedis.rpush(queue.getRelativeUrl() + "-Q", memId);
+                    	if (delaySeconds > 0) {
+                    	    jedis.hset(queue.getRelativeUrl() + "-H", memId, Long.toString(System.currentTimeMillis() + (delaySeconds * 1000)));
+                    	} else {
+                    		jedis.rpush(queue.getRelativeUrl() + "-Q", memId);
+                    	}
                     } catch (JedisConnectionException e) {
                         trySettingCacheState(queue.getRelativeUrl(), QCacheState.Unavailable);
                     }
