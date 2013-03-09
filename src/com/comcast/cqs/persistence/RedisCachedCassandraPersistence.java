@@ -584,7 +584,7 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
                 setCacheState(queueUrl, QCacheState.OK, null, false);
                 setCacheFillerProcessing(queueUrl, 0);
                 long ts3 = System.currentTimeMillis();
-                log.info("event=filled_cache num_cached=" + totalCached + " res_ms=" + (ts3 - ts1) + " redis_ms=" + CQSControllerServlet.valueAccumulator.getCounter(AccumulatorName.RedisTime));
+                log.debug("event=filled_cache num_cached=" + totalCached + " res_ms=" + (ts3 - ts1) + " redis_ms=" + CQSControllerServlet.valueAccumulator.getCounter(AccumulatorName.RedisTime));
             } catch (Exception e) {
                 if (e instanceof JedisException) {
                 	brokenJedis = true;

@@ -239,10 +239,16 @@ public class CQSReceiveMessageAction extends CQSAction {
         } else {
 
             CQSMonitor.getInstance().addNumberOfMessagesReturned(queue.getRelativeUrl(), messageList.size());
-        	String out = CQSMessagePopulator.getReceiveMessageResponseAfterSerializing(messageList, filterAttributes);
+            List<String> receiptHandles = new ArrayList<String>();
+            
+            for (CQSMessage message : messageList) {
+            	receiptHandles.add(message.getReceiptHandle());
+            }
+            
+            request.setReceiptHandles(receiptHandles);
+            String out = CQSMessagePopulator.getReceiveMessageResponseAfterSerializing(messageList, filterAttributes);
             response.getWriter().println(out);
             
-            //asyncContext.complete();
         }
         
         return messageList != null && messageList.size() > 0 ? true : false;

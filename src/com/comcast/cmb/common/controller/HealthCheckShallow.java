@@ -51,8 +51,8 @@ public class HealthCheckShallow extends CQSAction {
     }
 
     @Override
-    public boolean doAction(User user, AsyncContext asyncContext) throws Exception {        
-        
+    public boolean doAction(User user, AsyncContext asyncContext) throws Exception {     
+    	
         HttpServletResponse response = (HttpServletResponse)asyncContext.getResponse();
 
     	boolean healthy = true;
@@ -62,18 +62,20 @@ public class HealthCheckShallow extends CQSAction {
         sb.append("<HealthCheckResponse>\n");
         sb.append("\t<Version>" + CMBControllerServlet.VERSION + "</Version>\n");
         
-        try {
-        	
-        	if (RedisCachedCassandraPersistence.isAlive()) {
-        		sb.append("\t<Redis>OK</Redis>\n");
-        	} else {
-        		sb.append("\t<Redis>Some or all shards down.</Redis>\n");
-        		healthy = false;
-        	}
-        	
-        } catch (Exception ex) {
-    		sb.append("\t<Redis>Cache unavailable: "+ex.getMessage()+"</Redis>\n");
-    		healthy = false;
+        if (CMBProperties.getInstance().getCQSServiceEnabled()) {
+	        try {
+	        	
+	        	if (RedisCachedCassandraPersistence.isAlive()) {
+	        		sb.append("\t<Redis>OK</Redis>\n");
+	        	} else {
+	        		sb.append("\t<Redis>Some or all shards down.</Redis>\n");
+	        		healthy = false;
+	        	}
+	        	
+	        } catch (Exception ex) {
+	    		sb.append("\t<Redis>Cache unavailable: "+ex.getMessage()+"</Redis>\n");
+	    		healthy = false;
+	        }
         }
         
         try {
@@ -92,40 +94,43 @@ public class HealthCheckShallow extends CQSAction {
     		healthy = false;
         }
         
-        try {
+        if (CMBProperties.getInstance().getCNSServiceEnabled()) {
+
+        	try {
         	
-        	List<CNSWorkerStats> statsList = CNSGetWorkerStatsAction.getWorkerStats();
-        	
-        	if (statsList.size() == 0) {
-        		sb.append("\t<CNSWorkers>Zero workers available.</CNSWorkers>\n");
-        		healthy = false;
-        	} else {
-        		int activeCount = 0;
-        		int overloadedCount = 0;
-    			long now = System.currentTimeMillis();
-        		for (CNSWorkerStats stats : statsList) {
-        			if (now-stats.getConsumerTimestamp()<5*60*1000 || now-stats.getProducerTimestamp()<5*60*1000) {
-	        			if (stats.isConsumerOverloaded()) {
-	        				overloadedCount++;
-	        				healthy = false;
-	        			} else {
-	        				activeCount++;
+	        	List<CNSWorkerStats> statsList = CNSGetWorkerStatsAction.getWorkerStats();
+	        	
+	        	if (statsList.size() == 0) {
+	        		sb.append("\t<CNSWorkers>Zero workers available.</CNSWorkers>\n");
+	        		healthy = false;
+	        	} else {
+	        		int activeCount = 0;
+	        		int overloadedCount = 0;
+	    			long now = System.currentTimeMillis();
+	        		for (CNSWorkerStats stats : statsList) {
+	        			if (now-stats.getConsumerTimestamp()<5*60*1000 || now-stats.getProducerTimestamp()<5*60*1000) {
+		        			if (stats.isConsumerOverloaded()) {
+		        				overloadedCount++;
+		        				healthy = false;
+		        			} else {
+		        				activeCount++;
+		        			}
 	        			}
-        			}
-        		}
-        		if (activeCount >= 1 && overloadedCount == 0) {
-        			sb.append("\t<CNSWorkers>OK</CNSWorkers>\n");
-        		} else {
-        			sb.append("\t<CNSWorkers>"+activeCount+" active workers, "+overloadedCount+" overladed workers.</CNSWorkers>\n");
-        		}
-        		if (activeCount == 0) {
-        			healthy = false;
-        		}
-        	}
-        	
-        } catch (Exception ex) {
-    		sb.append("\t<CNSWorkers>Unknown state: "+ex.getMessage()+"</CNSWorkers>\n");
-    		healthy = false;
+	        		}
+	        		if (activeCount >= 1 && overloadedCount == 0) {
+	        			sb.append("\t<CNSWorkers>OK</CNSWorkers>\n");
+	        		} else {
+	        			sb.append("\t<CNSWorkers>"+activeCount+" active workers, "+overloadedCount+" overladed workers.</CNSWorkers>\n");
+	        		}
+	        		if (activeCount == 0) {
+	        			healthy = false;
+	        		}
+	        	}
+	        	
+	        } catch (Exception ex) {
+	    		sb.append("\t<CNSWorkers>Unknown state: "+ex.getMessage()+"</CNSWorkers>\n");
+	    		healthy = false;
+	        }
         }
 
         sb.append("</HealthCheckResponse>");

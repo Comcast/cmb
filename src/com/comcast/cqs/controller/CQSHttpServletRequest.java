@@ -18,12 +18,21 @@ public class CQSHttpServletRequest extends HttpServletRequestWrapper {
 	private volatile CQSQueue queue;
 	private volatile Map<String, String> receiveAttributes;
 	private volatile List<String> filterAttributes;
+	private volatile List<String> receiptHandles;
 	
 	public CQSHttpServletRequest(HttpServletRequest httpServletRequest) {
 		super(httpServletRequest);
 		isActive = true;
 		isQueuedForProcessing = false;
 		requestReceivedTimestamp = System.currentTimeMillis();
+	}
+
+	public List<String> getReceiptHandles() {
+		return receiptHandles;
+	}
+
+	public void setReceiptHandles(List<String> receiptHandles) {
+		this.receiptHandles = receiptHandles;
 	}
 
 	public long getWaitTime() {

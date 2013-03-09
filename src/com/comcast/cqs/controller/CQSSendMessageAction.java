@@ -15,6 +15,7 @@
  */
 package com.comcast.cqs.controller;
 
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.HashMap;
 
@@ -51,7 +52,7 @@ public class CQSSendMessageAction extends CQSAction {
 	@Override
 	public boolean doAction(User user, AsyncContext asyncContext) throws Exception {
 		
-        HttpServletRequest request = (HttpServletRequest)asyncContext.getRequest();
+        CQSHttpServletRequest request = (CQSHttpServletRequest)asyncContext.getRequest();
         HttpServletResponse response = (HttpServletResponse)asyncContext.getResponse();
 		
 	    CQSQueue queue = CQSControllerServlet.getCachedQueue(user, request);
@@ -107,6 +108,7 @@ public class CQSSendMessageAction extends CQSAction {
             throw new CMBException(CMBErrorCodes.InternalError, "Failed to add message to queue");
         }
         
+        request.setReceiptHandles(Arrays.asList(new String[] {receiptHandle}));
         message.setReceiptHandle(receiptHandle);
         message.setMessageId(receiptHandle);
         String out = CQSMessagePopulator.getSendMessageResponse(message);

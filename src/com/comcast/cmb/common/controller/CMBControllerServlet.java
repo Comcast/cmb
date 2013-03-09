@@ -155,7 +155,7 @@ abstract public class CMBControllerServlet extends HttpServlet {
     
     private void handleRequest(AsyncContext asyncContext) throws ServletException, IOException {  
     	
-        HttpServletRequest request = (HttpServletRequest)asyncContext.getRequest();
+        CQSHttpServletRequest request = (CQSHttpServletRequest)asyncContext.getRequest();
         HttpServletResponse response = (HttpServletResponse)asyncContext.getResponse();
     	
     	User user = null;
@@ -198,6 +198,14 @@ abstract public class CMBControllerServlet extends HttpServlet {
     		logLine.append("event=request status=success client=").append(request.getRemoteAddr());
     		
     		logLine.append(((this instanceof CQSControllerServlet) ? (" queue_url=" + request.getRequestURL()) : ""));
+    		
+    		if (request.getReceiptHandles() != null && request.getReceiptHandles().size() > 0) {
+    			logLine.append(" receipt_handles=").append(request.getReceiptHandles().get(0));
+    			for (int i=1; i<request.getReceiptHandles().size(); i++) {
+    				logLine.append("," + request.getReceiptHandles().get(i));
+    			}
+    		}
+    		
     		logLine.append(" ").append(getParameterString(asyncContext));
     		logLine.append((user != null ? "user=" + user.getUserName() : ""));
 
@@ -228,6 +236,14 @@ abstract public class CMBControllerServlet extends HttpServlet {
     		logLine.append("event=request status=failed client=").append(request.getRemoteAddr());
     		
     		logLine.append(((this instanceof CQSControllerServlet) ? (" queue_url=" + request.getRequestURL()) : ""));
+    		
+    		if (request.getReceiptHandles() != null && request.getReceiptHandles().size() > 0) {
+    			logLine.append(" receipt_handles=").append(request.getReceiptHandles().get(0));
+    			for (int i=1; i<request.getReceiptHandles().size(); i++) {
+    				logLine.append("," + request.getReceiptHandles().get(i));
+    			}
+    		}
+    		
     		logLine.append(" ").append(getParameterString(asyncContext));
     		logLine.append((user != null ? "user=" + user.getUserName() : ""));
 

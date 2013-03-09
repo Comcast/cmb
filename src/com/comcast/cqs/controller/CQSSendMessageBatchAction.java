@@ -51,7 +51,7 @@ public class CQSSendMessageBatchAction extends CQSAction {
 	@Override
 	public boolean doAction(User user, AsyncContext asyncContext) throws Exception {
 		
-        HttpServletRequest request = (HttpServletRequest)asyncContext.getRequest();
+        CQSHttpServletRequest request = (CQSHttpServletRequest)asyncContext.getRequest();
         HttpServletResponse response = (HttpServletResponse)asyncContext.getResponse();
 
 	    CQSQueue queue = CQSControllerServlet.getCachedQueue(user, request);
@@ -90,7 +90,7 @@ public class CQSSendMessageBatchAction extends CQSAction {
                 
                 	Integer delaySeconds = Integer.parseInt(delaySecondsStr);
                     
-                    if(delaySeconds < 0 || delaySeconds > CMBProperties.getInstance().getCQSMaxMessageDelaySeconds()) {
+                    if (delaySeconds < 0 || delaySeconds > CMBProperties.getInstance().getCQSMaxMessageDelaySeconds()) {
                         throw new CMBException(CMBErrorCodes.InvalidParameterValue, "DelaySeconds should be from 0 to " + CMBProperties.getInstance().getCQSMaxMessageDelaySeconds());
                     } else {
                         attributes.put(CQSConstants.DELAY_SECONDS, "" + delaySeconds);
@@ -132,11 +132,15 @@ public class CQSSendMessageBatchAction extends CQSAction {
 
         CQSLongPollSender.send(queue.getArn());
 		
+        List<String> receiptHandles = new ArrayList<String>();
+
         for (CQSMessage message: msgList) {
         	message.setMessageId(result.get(message.getSuppliedMessageId()));
         	message.setReceiptHandle(result.get(message.getSuppliedMessageId()));
+        	receiptHandles.add(message.getReceiptHandle());
         }
         
+        request.setReceiptHandles(receiptHandles);
         String out = CQSMessagePopulator.getSendMessageBatchResponse(msgList, invalidBodyIdList);
         response.getWriter().println(out);
         

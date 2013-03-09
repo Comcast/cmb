@@ -16,6 +16,7 @@
 package com.comcast.cqs.controller;
 
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -153,8 +154,14 @@ public class CQSLongPollReceiver {
 					
 						if (messageList.size() > 0) {
 							
-							logger.debug("event=messages_found_for_longpoll_receive count=" + messageList.size() + " queue_arn=" + queueArn + " remote_address=" + e.getRemoteAddress());
+							StringBuffer handles = new StringBuffer("");
 							
+							for (CQSMessage message : messageList) {
+				            	handles.append(message.getReceiptHandle()+",");
+				            }
+							
+							logger.info("event=messages_found_for_longpoll_receive receipt_handles=" + handles.toString() + " count=" + messageList.size() + " queue_arn=" + queueArn + " remote_address=" + e.getRemoteAddress());
+
 							CQSMonitor.getInstance().addNumberOfMessagesReturned(queue.getRelativeUrl(), messageList.size());
 					        String out = CQSMessagePopulator.getReceiveMessageResponseAfterSerializing(messageList, request.getFilterAttributes());
 					        asyncContext.getResponse().getWriter().println(out);
