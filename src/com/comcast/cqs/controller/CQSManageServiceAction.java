@@ -22,12 +22,20 @@ import javax.servlet.AsyncContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import me.prettyprint.cassandra.serializers.StringSerializer;
+import me.prettyprint.cassandra.service.template.ColumnFamilyTemplate;
+import me.prettyprint.cassandra.service.template.ThriftColumnFamilyTemplate;
+import me.prettyprint.hector.api.HConsistencyLevel;
+
 import org.apache.log4j.Logger;
 
 import com.comcast.cmb.common.controller.CMBControllerServlet;
 import com.comcast.cmb.common.model.CMBPolicy;
 import com.comcast.cmb.common.model.User;
+import com.comcast.cmb.common.persistence.CassandraPersistence;
 import com.comcast.cmb.common.util.CMBException;
+import com.comcast.cmb.common.util.CMBProperties;
+import com.comcast.cns.io.CNSPopulator;
 import com.comcast.cns.util.CNSErrorCodes;
 import com.comcast.cqs.io.CQSPopulator;
 import com.comcast.cqs.persistence.RedisCachedCassandraPersistence;
@@ -62,6 +70,8 @@ public class CQSManageServiceAction extends CQSAction {
 			throw new CMBException(CQSErrorCodes.MissingParameter,"Request parameter Task missing.");
 		}
 		
+		String host = request.getParameter("Host");
+		
 		if (task.equals("ClearCache")) {
 
 	    	RedisCachedCassandraPersistence.flushAll();
@@ -77,9 +87,19 @@ public class CQSManageServiceAction extends CQSAction {
 
 	    	return true;
 			
+		} else if (task.equals("RemoveRecord")) {
+			
+			CassandraPersistence cassandraHandler = new CassandraPersistence(CMBProperties.getInstance().getCQSKeyspace());
+			ColumnFamilyTemplate<String, String> usersTemplate = new ThriftColumnFamilyTemplate<String, String>(cassandraHandler.getKeySpace(HConsistencyLevel.QUORUM), "CQSAPIServers", StringSerializer.get(), StringSerializer.get());
+			cassandraHandler.delete(usersTemplate, host, null);
+			
+	    	response.getWriter().println(CNSPopulator.getResponseMetadata());
+			
+			return true;
+			
 		} else {
-			logger.error("event=cqs_manage_service error_code=invalid_task_parameter valid_values=ClearCache,ClearAPIStats");
-			throw new CMBException(CNSErrorCodes.InvalidParameterValue,"Request parameter Task missing is invalid. Valid values are ClearQueues and RemoveRecord.");
+			logger.error("event=cqs_manage_service error_code=invalid_task_parameter valid_values=ClearCache,ClearAPIStats,RemoveRecord");
+			throw new CMBException(CNSErrorCodes.InvalidParameterValue,"Request parameter Task is missing or invalid. Valid values are ClearQueues, ClearAPIStats, RemoveRecord.");
 		}
     }
 }

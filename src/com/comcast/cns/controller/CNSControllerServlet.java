@@ -137,9 +137,8 @@ public class CNSControllerServlet extends CMBControllerServlet {
     	final CNSAddPermissionAction addPermission = new CNSAddPermissionAction();
     	final CNSRemovePermissionAction removePermission = new CNSRemovePermissionAction();
     	final CNSGetWorkerStatsAction getWorkerStats = new CNSGetWorkerStatsAction();
-    	final CNSManageWorkerAction manageWorker = new CNSManageWorkerAction();
+    	final CNSManageServiceAction manageService = new CNSManageServiceAction();
     	final HealthCheckShallow healthCheckShallow = new HealthCheckShallow();
-        final CQSManageServiceAction clearCache = new CQSManageServiceAction();
         final CNSGetAPIStatsAction getAPIStats = new CNSGetAPIStatsAction();
     	
     	actionMap = new HashMap<String, Action>(){{
@@ -161,8 +160,7 @@ public class CNSControllerServlet extends CMBControllerServlet {
     	    put(healthCheckShallow.getName(), healthCheckShallow);
             put("healthCheckShallow", healthCheckShallow); // for backward-compatibility
     	    put(getWorkerStats.getName(), getWorkerStats);
-    	    put(manageWorker.getName(), manageWorker);
-    	    put(clearCache.getName(), clearCache);
+    	    put(manageService.getName(), manageService);
     	    put(getAPIStats.getName(), getAPIStats);
     	}};
     }

@@ -55,12 +55,12 @@ import com.comcast.cns.util.CNSErrorCodes;
  * @author bwolf
  *
  */
-public class CNSManageWorkerAction extends CNSAction {
+public class CNSManageServiceAction extends CNSAction {
 
-	private static Logger logger = Logger.getLogger(CNSGetWorkerStatsAction.class);
+	private static Logger logger = Logger.getLogger(CNSManageServiceAction.class);
 
-	public CNSManageWorkerAction() {
-		super("ManageWorker");
+	public CNSManageServiceAction() {
+		super("ManageService");
 	}
 	
     @Override
@@ -69,7 +69,7 @@ public class CNSManageWorkerAction extends CNSAction {
     }
 
 	/**
-	 * Get various stats about active cns workers
+	 * Manage cns service and workers
 	 * @param user the user for whom we are subscribing.
 	 * @param asyncContext
 	 */
@@ -82,20 +82,20 @@ public class CNSManageWorkerAction extends CNSAction {
 		String task = request.getParameter("Task");
 
 		if (task == null || task.equals("")) {
-			logger.error("event=cns_manage_worker error_code=missing_parameter_task");
+			logger.error("event=cns_manage_service error_code=missing_parameter_task");
 			throw new CMBException(CNSErrorCodes.MissingParameter,"Request parameter Task missing.");
 		}
 
 		String host = request.getParameter("Host");
 
 		if (!task.equals("ClearAPIStats") && (host == null || host.equals(""))) {
-			logger.error("event=cns_manage_worker error_code=missing_parameter_host");
+			logger.error("event=cns_manage_service error_code=missing_parameter_host");
 			throw new CMBException(CNSErrorCodes.MissingParameter,"Request parameter Host missing.");
 		}
 
 		CassandraPersistence cassandraHandler = new CassandraPersistence(CMBProperties.getInstance().getCNSKeyspace());
 
-		if (task.equals("ClearQueues")) {
+		if (task.equals("ClearWorkerQueues")) {
 
 			List<Row<String, String, String>> rows = cassandraHandler.readNextNNonEmptyRows("CNSWorkers", null, 1000, 10, new StringSerializer(), new StringSerializer(), new StringSerializer(), HConsistencyLevel.QUORUM);
 			List<CNSWorkerStats> statsList = new ArrayList<CNSWorkerStats>();
@@ -164,7 +164,7 @@ public class CNSManageWorkerAction extends CNSAction {
 
 			throw new CMBException(CMBErrorCodes.NotFound, "Cannot clear worker queues: Host " + host + " not found.");
 
-		} else if (task.equals("RemoveRecord")) {
+		} else if (task.equals("RemoveWorkerRecord")) {
 			
 			ColumnFamilyTemplate<String, String> usersTemplate = new ThriftColumnFamilyTemplate<String, String>(cassandraHandler.getKeySpace(HConsistencyLevel.QUORUM), "CNSWorkers", StringSerializer.get(), StringSerializer.get());
 			cassandraHandler.delete(usersTemplate, host, null);
@@ -182,9 +182,18 @@ public class CNSManageWorkerAction extends CNSAction {
 
 	    	return true;
 
+		} else if (task.equals("RemoveRecord")) {
+			
+			ColumnFamilyTemplate<String, String> usersTemplate = new ThriftColumnFamilyTemplate<String, String>(cassandraHandler.getKeySpace(HConsistencyLevel.QUORUM), "CNSAPIServers", StringSerializer.get(), StringSerializer.get());
+			cassandraHandler.delete(usersTemplate, host, null);
+			
+	    	response.getWriter().println(CNSPopulator.getResponseMetadata());
+			
+			return true;
+			
 		} else {
-			logger.error("event=cns_manage_worker error_code=invalid_task_parameter valid_values=ClearQueues,RemoveRecord");
-			throw new CMBException(CNSErrorCodes.InvalidParameterValue,"Request parameter Task missing is invalid. Valid values are ClearQueues and RemoveRecord.");
+			logger.error("event=cns_manage_service error_code=invalid_task_parameter valid_values=ClearWorkerQueues,RemoveWorkerRecord,RemoveRecord,ClearAPIStats");
+			throw new CMBException(CNSErrorCodes.InvalidParameterValue,"Request parameter Task missing is invalid. Valid values are ClearWorkerQueues, RemoveWorkerRecord, RemoveRecord, ClearAPIStats.");
 		}
 	}
 }

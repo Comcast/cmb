@@ -72,21 +72,21 @@ public class CNSWorkerStatePageServlet extends AdminServletBase {
 			throw new ServletException(ex);
 		}
 
-		if (parameters.containsKey("ClearQueues")) {
+		if (parameters.containsKey("ClearWorkerQueues")) {
 			
 			try {
 				String host = request.getParameter("Host");
-				httpGet(cnsServiceBaseUrl + "?Action=ManageWorker&Host="+host+"&Task=ClearQueues&AWSAccessKeyId=" + cnsAdminUser.getAccessKey());
+				httpGet(cnsServiceBaseUrl + "?Action=ManageService&Host="+host+"&Task=ClearWorkerQueues&AWSAccessKeyId=" + cnsAdminUser.getAccessKey());
 			} catch (Exception ex) {
 				logger.error("event=failed_to_clear_queues", ex);
 				throw new ServletException(ex);
 			}
 	
-		} else if (parameters.containsKey("RemoveRecord")) {
+		} else if (parameters.containsKey("RemoveWorkerRecord")) {
 			
 			try {
 				String host = request.getParameter("Host");
-				httpGet(cnsServiceBaseUrl + "?Action=ManageWorker&Host="+host+"&Task=RemoveRecord&AWSAccessKeyId=" + cnsAdminUser.getAccessKey());
+				httpGet(cnsServiceBaseUrl + "?Action=ManageService&Host="+host+"&Task=RemoveWorkerRecord&AWSAccessKeyId=" + cnsAdminUser.getAccessKey());
 			} catch (Exception ex) {
 				logger.error("event=failed_to_clear_queues", ex);
 				throw new ServletException(ex);
@@ -96,7 +96,17 @@ public class CNSWorkerStatePageServlet extends AdminServletBase {
 			
 			try {
 				String url = request.getParameter("Url");
-				httpGet(url + "?Action=ManageWorker&Task=ClearAPIStats&AWSAccessKeyId=" + cnsAdminUser.getAccessKey());
+				httpGet(url + "?Action=ManageService&Task=ClearAPIStats&AWSAccessKeyId=" + cnsAdminUser.getAccessKey());
+			} catch (Exception ex) {
+				logger.error("event=failed_to_clear_queues", ex);
+				throw new ServletException(ex);
+			}
+
+		} else if (parameters.containsKey("RemoveRecord")) {
+			
+			try {
+				String host = request.getParameter("Host");
+				httpGet(cnsServiceBaseUrl + "?Action=ManageService&Host="+host+"&Task=RemoveRecord&AWSAccessKeyId=" + cnsAdminUser.getAccessKey());
 			} catch (Exception ex) {
 				logger.error("event=failed_to_clear_queues", ex);
 				throw new ServletException(ex);
@@ -161,8 +171,8 @@ public class CNSWorkerStatePageServlet extends AdminServletBase {
 				boolean cqsServiceAvailable = Boolean.parseBoolean(XmlUtil.getCurrentLevelTextValue(stats, "CqsServiceAvailable"));
 				out.println("<td"+((!cqsServiceAvailable && (activeProducer || activeConsumer))? alarmColor : okColor)+">"+cqsServiceAvailable+"</td>");
 				out.println("<td>"+XmlUtil.getCurrentLevelTextValue(stats, "NumPooledHttpConnections")+"</td>");
-				out.println("<td><form action=\"\" method=\"POST\"><input type='hidden' name='Host' value='"+host+"'><input type='submit' value='Clear Queues' name='ClearQueues'/></form></td>");
-				out.println("<td><form action=\"\" method=\"POST\"><input type='hidden' name='Host' value='"+host+"'><input type='submit' value='Remove Record' name='RemoveRecord'/></form></td>");
+				out.println("<td><form action=\"\" method=\"POST\"><input type='hidden' name='Host' value='"+host+"'><input type='submit' value='Clear Queues' name='ClearWorkerQueues'/></form></td>");
+				out.println("<td><form action=\"\" method=\"POST\"><input type='hidden' name='Host' value='"+host+"'><input type='submit' value='Remove Record' name='RemoveWorkerRecord'/></form></td>");
 				out.println("</tr>");
 				
 				List<Element> errorCounts = XmlUtil.getChildNodes(stats, "ErrorCountForEndpoints");
@@ -225,7 +235,7 @@ public class CNSWorkerStatePageServlet extends AdminServletBase {
 			out.println("<h2 align='left'>CNS API Stats</h2>");
 			
 			out.println("<span class='simple'><table border='1'>");
-			out.println("<tr><th>Ip Address</th><th>Url</th><th>JMX Port</th><th>Data Center</th><th>Time Stamp</th><th>Status</th><th></th></tr>");
+			out.println("<tr><th>Ip Address</th><th>Url</th><th>JMX Port</th><th>Data Center</th><th>Time Stamp</th><th>Status</th><th></th><th></th></tr>");
 
 			Map<String, Long> aggregateCallStats = new HashMap<String, Long>();
 			Map<String, Long> aggregateCallFailureStats = new HashMap<String, Long>();
@@ -244,6 +254,7 @@ public class CNSWorkerStatePageServlet extends AdminServletBase {
 				out.println("<td>"+new Date(Long.parseLong(XmlUtil.getCurrentLevelTextValue(stats, "Timestamp")))+"</td>");
 				out.println("<td>"+XmlUtil.getCurrentLevelTextValue(stats, "Status")+"</td>");
 				out.println("<td><form action=\"\" method=\"POST\"><input type='hidden' name='Url' value='"+endpoint+"'><input type='submit' value='Clear API Stats' name='ClearAPIStats'/></form></td>");
+				out.println("<td><form action=\"\" method=\"POST\"><input type='hidden' name='Host' value='"+host+"'><input type='submit' value='Remove Record' name='RemoveRecord'/></form></td>");
 				out.println("</tr>");
 				
 				Element callStats = XmlUtil.getChildNodes(stats, "CallStats").get(0);
