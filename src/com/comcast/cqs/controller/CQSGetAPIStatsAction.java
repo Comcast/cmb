@@ -16,14 +16,11 @@
 package com.comcast.cqs.controller;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 import javax.management.MBeanServerConnection;
-import javax.management.ObjectInstance;
 import javax.management.ObjectName;
 import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorFactory;
@@ -71,7 +68,6 @@ public class CQSGetAPIStatsAction extends CQSAction {
 	@Override
 	public boolean doAction(User user, AsyncContext asyncContext) throws Exception {
 		
-        HttpServletRequest request = (HttpServletRequest)asyncContext.getRequest();
         HttpServletResponse response = (HttpServletResponse)asyncContext.getResponse();
 
 		CassandraPersistence cassandraHandler = new CassandraPersistence(CMBProperties.getInstance().getCQSKeyspace());
@@ -159,6 +155,8 @@ public class CQSGetAPIStatsAction extends CQSAction {
 
 					//String cassandraNodes = (String)mbeanConn.getAttribute(cqsAPIMonitor, "CassandraNodes");
 					String cassandraNodes = "";
+
+					@SuppressWarnings("unchecked")
 					List<String> knownHosts = (List<String>)mbeanConn.getAttribute(hectorMonitor, "KnownHosts");
 					
 					for (String knownHost : knownHosts) {
@@ -173,6 +171,7 @@ public class CQSGetAPIStatsAction extends CQSAction {
 					Integer numberOfRedisShards = (Integer)mbeanConn.getAttribute(cqsAPIMonitor, "NumberOfRedisShards");
 					stats.setNumberOfRedisShards(numberOfRedisShards);
 
+					@SuppressWarnings("unchecked")
 					List<Map<String, String>> redisShardInfos = (List<Map<String, String>>)mbeanConn.getAttribute(cqsAPIMonitor, "RedisShardInfos");
 					
 					for (Map<String, String> shardInfo : redisShardInfos) {
@@ -182,10 +181,12 @@ public class CQSGetAPIStatsAction extends CQSAction {
 						}
 					}
 					
+					@SuppressWarnings("unchecked")
 					Map<String, AtomicLong> callStats = (Map<String, AtomicLong>)mbeanConn.getAttribute(cqsAPIMonitor, "CallStats");
 					
 					stats.setCallStats(callStats);
 					
+					@SuppressWarnings("unchecked")
 					Map<String, AtomicLong> callFailureStats = (Map<String, AtomicLong>)mbeanConn.getAttribute(cqsAPIMonitor, "CallFailureStats");
 
 					stats.setCallFailureStats(callFailureStats);

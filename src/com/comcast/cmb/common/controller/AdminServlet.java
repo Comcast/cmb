@@ -34,7 +34,6 @@ import com.comcast.cmb.common.model.User;
 import com.comcast.cmb.common.persistence.IUserPersistence;
 import com.comcast.cmb.common.persistence.PersistenceFactory;
 import com.comcast.cmb.common.util.PersistenceException;
-import com.comcast.cmb.common.util.ValueAccumulator.AccumulatorName;
 
 /**
  * Administrator application.

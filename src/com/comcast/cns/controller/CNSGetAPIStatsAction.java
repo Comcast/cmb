@@ -67,7 +67,6 @@ public class CNSGetAPIStatsAction extends CNSAction {
 	@Override
 	public boolean doAction(User user, AsyncContext asyncContext) throws Exception {
 		
-        HttpServletRequest request = (HttpServletRequest)asyncContext.getRequest();
         HttpServletResponse response = (HttpServletResponse)asyncContext.getResponse();
 		
 		CassandraPersistence cassandraHandler = new CassandraPersistence(CMBProperties.getInstance().getCNSKeyspace());
@@ -133,10 +132,12 @@ public class CNSGetAPIStatsAction extends CNSAction {
 
 					ObjectName cqsAPIMonitor = new ObjectName("com.comcast.cns.controller:type=CNSMonitorMBean");
 
+					@SuppressWarnings("unchecked")
 					Map<String, AtomicLong> callStats = (Map<String, AtomicLong>)mbeanConn.getAttribute(cqsAPIMonitor, "CallStats");
 					
 					stats.setCallStats(callStats);
 					
+					@SuppressWarnings("unchecked")
 					Map<String, AtomicLong> callFailureStats = (Map<String, AtomicLong>)mbeanConn.getAttribute(cqsAPIMonitor, "CallFailureStats");
 
 					stats.setCallFailureStats(callFailureStats);

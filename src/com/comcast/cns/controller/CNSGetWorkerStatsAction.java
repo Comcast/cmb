@@ -16,7 +16,6 @@
 package com.comcast.cns.controller;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -67,7 +66,6 @@ public class CNSGetWorkerStatsAction extends CNSAction {
 	@Override
 	public boolean doAction(User user, AsyncContext asyncContext) throws Exception {
 		
-        HttpServletRequest request = (HttpServletRequest)asyncContext.getRequest();
         HttpServletResponse response = (HttpServletResponse)asyncContext.getResponse();
 		
 		CassandraPersistence cassandraHandler = new CassandraPersistence(CMBProperties.getInstance().getCNSKeyspace());
@@ -144,6 +142,7 @@ public class CNSGetWorkerStatsAction extends CNSAction {
 					Integer numPublishedMessages = (Integer)mbeanConn.getAttribute(cnsWorkerMonitor, "NumPublishedMessages");
 					stats.setNumPublishedMessages(numPublishedMessages);
 					
+					@SuppressWarnings("unchecked")
 					Map<String, Integer> errorCountForEndpoints = (Map<String, Integer>)mbeanConn.getAttribute(cnsWorkerMonitor, "RecentErrorCountForEndpoints");
 					stats.setErrorCountForEndpoints(errorCountForEndpoints);
 

@@ -67,10 +67,8 @@ import me.prettyprint.hector.api.query.SuperSliceQuery;
 import org.apache.log4j.Logger;
 
 import com.comcast.cmb.common.controller.CMBControllerServlet;
-import com.comcast.cmb.common.model.ReceiptModule;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.ValueAccumulator.AccumulatorName;
-
 
 /**
  * This class represents generic functionality for all Cassandra persistence objects

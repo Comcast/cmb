@@ -49,7 +49,6 @@ public class HealthCheckShallow extends CQSAction {
     @Override
     public boolean doAction(User user, AsyncContext asyncContext) throws Exception {        
         
-        HttpServletRequest request = (HttpServletRequest)asyncContext.getRequest();
         HttpServletResponse response = (HttpServletResponse)asyncContext.getResponse();
 
     	boolean healthy = true;

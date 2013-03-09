@@ -24,7 +24,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import javax.servlet.AsyncContext;
-import javax.servlet.http.HttpServletRequest;
 
 import org.apache.log4j.Logger;
 
