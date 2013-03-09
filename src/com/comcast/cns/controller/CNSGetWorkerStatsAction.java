@@ -15,6 +15,7 @@
  */
 package com.comcast.cns.controller;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -57,17 +58,9 @@ public class CNSGetWorkerStatsAction extends CNSAction {
     public boolean isActionAllowed(User user, HttpServletRequest request, String service, CMBPolicy policy) throws Exception {
     	return true;
     }
-
-    /**
-     * Get various stats about active cns workers
-     * @param user the user for whom we are subscribing.
-     * @param asyncContext
-     */
-	@Override
-	public boolean doAction(User user, AsyncContext asyncContext) throws Exception {
-		
-        HttpServletResponse response = (HttpServletResponse)asyncContext.getResponse();
-		
+    
+    public static List<CNSWorkerStats> getWorkerStats() throws IOException {
+    	
 		CassandraPersistence cassandraHandler = new CassandraPersistence(CMBProperties.getInstance().getCNSKeyspace());
 		
 		List<Row<String, String, String>> rows = cassandraHandler.readNextNNonEmptyRows("CNSWorkers", null, 1000, 10, new StringSerializer(), new StringSerializer(), new StringSerializer(), HConsistencyLevel.QUORUM);
@@ -164,7 +157,20 @@ public class CNSGetWorkerStatsAction extends CNSAction {
 				}
 			}
 		}
+		
+		return statsList;
+    }
 
+    /**
+     * Get various stats about active cns workers
+     * @param user the user for whom we are subscribing.
+     * @param asyncContext
+     */
+	@Override
+	public boolean doAction(User user, AsyncContext asyncContext) throws Exception {
+		
+        HttpServletResponse response = (HttpServletResponse)asyncContext.getResponse();
+        List<CNSWorkerStats> statsList = getWorkerStats();
     	String res = CNSWorkerStatsPopulator.getGetWorkerStatsResponse(statsList);	
 		response.getWriter().println(res);
 

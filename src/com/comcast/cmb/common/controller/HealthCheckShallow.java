@@ -15,6 +15,8 @@
  */
 package com.comcast.cmb.common.controller;
 
+import java.util.List;
+
 import javax.servlet.AsyncContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -23,6 +25,8 @@ import com.comcast.cmb.common.model.CMBPolicy;
 import com.comcast.cmb.common.model.User;
 import com.comcast.cmb.common.persistence.CassandraPersistence;
 import com.comcast.cmb.common.util.CMBProperties;
+import com.comcast.cns.controller.CNSGetWorkerStatsAction;
+import com.comcast.cns.model.CNSWorkerStats;
 import com.comcast.cqs.controller.CQSAction;
 import com.comcast.cqs.persistence.RedisCachedCassandraPersistence;
 
@@ -59,12 +63,14 @@ public class HealthCheckShallow extends CQSAction {
         sb.append("\t<Version>" + CMBControllerServlet.VERSION + "</Version>\n");
         
         try {
+        	
         	if (RedisCachedCassandraPersistence.isAlive()) {
         		sb.append("\t<Redis>OK</Redis>\n");
         	} else {
         		sb.append("\t<Redis>Some or all shards down.</Redis>\n");
         		healthy = false;
         	}
+        	
         } catch (Exception ex) {
     		sb.append("\t<Redis>Cache unavailable: "+ex.getMessage()+"</Redis>\n");
     		healthy = false;
@@ -80,8 +86,45 @@ public class HealthCheckShallow extends CQSAction {
         		sb.append("\t<Cassandra>Ring unavailable.</Cassandra>\n");
         		healthy = false;
         	}
+        	
         } catch (Exception ex) {
     		sb.append("\t<Cassandra>Ring unavailable: "+ex.getMessage()+"</Cassandra>\n");
+    		healthy = false;
+        }
+        
+        try {
+        	
+        	List<CNSWorkerStats> statsList = CNSGetWorkerStatsAction.getWorkerStats();
+        	
+        	if (statsList.size() == 0) {
+        		sb.append("\t<CNSWorkers>Zero workers available.</CNSWorkers>\n");
+        		healthy = false;
+        	} else {
+        		int activeCount = 0;
+        		int overloadedCount = 0;
+    			long now = System.currentTimeMillis();
+        		for (CNSWorkerStats stats : statsList) {
+        			if (now-stats.getConsumerTimestamp()<5*60*1000 || now-stats.getProducerTimestamp()<5*60*1000) {
+	        			if (stats.isConsumerOverloaded()) {
+	        				overloadedCount++;
+	        				healthy = false;
+	        			} else {
+	        				activeCount++;
+	        			}
+        			}
+        		}
+        		if (activeCount >= 1 && overloadedCount == 0) {
+        			sb.append("\t<CNSWorkers>OK</CNSWorkers>\n");
+        		} else {
+        			sb.append("\t<CNSWorkers>"+activeCount+" active workers, "+overloadedCount+" overladed workers.</CNSWorkers>\n");
+        		}
+        		if (activeCount == 0) {
+        			healthy = false;
+        		}
+        	}
+        	
+        } catch (Exception ex) {
+    		sb.append("\t<CNSWorkers>Unknown state: "+ex.getMessage()+"</CNSWorkers>\n");
     		healthy = false;
         }
 
