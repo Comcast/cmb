@@ -16,11 +16,14 @@
 package com.comcast.cqs.controller;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 import javax.management.MBeanServerConnection;
+import javax.management.ObjectInstance;
 import javax.management.ObjectName;
 import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorFactory;
@@ -139,31 +142,32 @@ public class CQSGetAPIStatsAction extends CQSAction {
 
 					MBeanServerConnection mbeanConn = jmxConnector.getMBeanServerConnection();
 
-					/*Set<ObjectInstance> objectInstances = mbeanConn.queryMBeans(null, null);
-					Iterator<ObjectInstance> iter = objectInstances.iterator();
+					//String cassandraNodes = (String)mbeanConn.getAttribute(cqsAPIMonitor, "CassandraNodes");
 					
-					while (iter.hasNext()) {
-						ObjectInstance oi = iter.next();
-						logger.info("on=" + oi.getObjectName());
-					}*/
+					Set<ObjectInstance> objectInstances = mbeanConn.queryMBeans(new ObjectName("me.prettyprint.cassandra.*:*"), null);
+
+					if (objectInstances.size() == 1) {
+					
+						//ObjectName hectorMonitor = new ObjectName("me.prettyprint.cassandra.service_cmb:ServiceType=CMB,MonitorType=hector");
+						ObjectName hectorMonitor = ((ObjectInstance)objectInstances.toArray()[0]).getObjectName();
+						
+						String cassandraNodes = "";
+
+						@SuppressWarnings("unchecked")
+						List<String> knownHosts = (List<String>)mbeanConn.getAttribute(hectorMonitor, "KnownHosts");
+						
+						for (String knownHost : knownHosts) {
+							cassandraNodes += knownHost + " ";
+						}
+						
+						stats.setCassandraNodes(cassandraNodes);
+					}
 					
 					ObjectName cqsAPIMonitor = new ObjectName("com.comcast.cqs.controller:type=CQSMonitorMBean");
-					ObjectName hectorMonitor = new ObjectName("me.prettyprint.cassandra.service_cmb:ServiceType=CMB,MonitorType=hector");
 					
 					String cassandraClusterName = (String)mbeanConn.getAttribute(cqsAPIMonitor, "CassandraClusterName");
 					stats.setCassandraClusterName(cassandraClusterName);
 
-					//String cassandraNodes = (String)mbeanConn.getAttribute(cqsAPIMonitor, "CassandraNodes");
-					String cassandraNodes = "";
-
-					@SuppressWarnings("unchecked")
-					List<String> knownHosts = (List<String>)mbeanConn.getAttribute(hectorMonitor, "KnownHosts");
-					
-					for (String knownHost : knownHosts) {
-						cassandraNodes += knownHost + " ";
-					}
-					
-					stats.setCassandraNodes(cassandraNodes);
 
 					Long numberOfLongPollReceives = (Long)mbeanConn.getAttribute(cqsAPIMonitor, "NumberOfLongPollReceives");
 					stats.setNumberOfLongPollReceives(numberOfLongPollReceives);
