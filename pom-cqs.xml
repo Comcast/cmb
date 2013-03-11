@@ -2,7 +2,7 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
 	<properties>
-	    <buildnum>2.2.21</buildnum>
+	    <buildnum>2.2.22</buildnum>
 	    <projectname>cqs</projectname>
 	</properties>
 
