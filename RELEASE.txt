@@ -1,3 +1,86 @@
+CMB VERSION 2.2.21
+--------------------------------------------------------------------
+
+New features and bug fixes:
+
+- ship receive timestamp with internal cns messages and option
+  for cns worker to discard old messages
+- bug fix for memory leak in jmx monitoring bean for cns worker 
+- accept access key in http header (aws4 style)
+- support for WaitTime parameter in cqs ReceiveMessage() ("long
+  polling") - implementation based on servlet api 3.0 async request 
+  handlers
+- added data center flag to heart beat tables and display in
+  dashboard screens - used by long polling feature to ensure data
+  center locality
+- added redis clear cache api and added more monitoring to jmx and
+  dashboard screens
+- deepened health check api to check redis cache, cassandra ring
+  and cns worker state
+- bug fix for jetty http header parsing
+- bug fix improving performance by removing legacy code to auto-migrate
+  old-style cqs queues
+- maintain and display basic api call stats in dashboard screens
+- allow multiple api endpoints on same host
+- added pagination etc. to navigate large number of queues, topics,
+  subscriptions in web ui
+- no need to switch hosts any more with absolute urls when switching
+  between cns and cqs in web ui
+- cleaned up and improved performance of xml responses for all
+  api calls
+- performance tweaks for fast queue and topic creation specifically
+  for large numbers of queues and topics
+- increased default in-memory cache sizes to 1 mio
+- harmonized and cleaned up log4j logging
+- cns workers will bootstrap and continue to function even if cqs is
+  (temporarily) unavailable
+- bug fix for listing queues by prefix api
+- support for DelaySeconds parameter in cqs SendMessage()
+- ability to trace messages through logs by receipt handle
+
+Upgrading from version 2.2.12:
+
+Add the following column family to the CQS keyspace:
+
+create column family CQSAPIServers
+  with column_type = 'Standard'
+  and comparator = 'UTF8Type'
+  and default_validation_class = 'UTF8Type'
+  and key_validation_class = 'UTF8Type'
+  and read_repair_chance = 0.1
+  and gc_grace = 5
+  and min_compaction_threshold = 4
+  and max_compaction_threshold = 32
+  and replicate_on_write = true
+  and compaction_strategy = 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy';
+  
+create column family CQSQueuesByUserId
+  with column_type = 'Standard'
+  and comparator = 'UTF8Type'
+  and default_validation_class = 'UTF8Type'
+  and key_validation_class = 'UTF8Type'
+  and read_repair_chance = 0.1
+  and gc_grace = 5
+  and min_compaction_threshold = 4
+  and max_compaction_threshold = 32
+  and replicate_on_write = true
+  and compaction_strategy = 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy';
+  
+Add the following column family to the CNS keyspace:
+  
+create column family CNSAPIServers  
+  with column_type = 'Standard'
+  and comparator = 'UTF8Type'
+  and default_validation_class = 'UTF8Type'
+  and key_validation_class = 'UTF8Type'
+  and read_repair_chance = 0.1
+  and gc_grace = 5
+  and min_compaction_threshold = 4
+  and max_compaction_threshold = 32
+  and replicate_on_write = true
+  and compaction_strategy = 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy';
+
+
 CMB VERSION 2.2.12
 --------------------------------------------------------------------
 
