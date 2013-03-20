@@ -63,13 +63,18 @@ public class CNSPublisher {
     }
     
     private static EnumSet<Mode> parseMode(String param) {
-        String []arr = param.split("=");
-        if (arr.length != 2) {
-            throw new IllegalArgumentException("Bad format for parameter. Expected:-role=<comma seperated list of roles> got:" + param);
-        }
-        String []roles = arr[1].split(",");
+    	String[] roles;
+    	if (param.contains("=")) {
+	        String []arr = param.split("=");
+	        if (arr.length != 2) {
+	            throw new IllegalArgumentException("Bad format for parameter. Expected:-role=<comma seperated list of roles> got:" + param);
+	        }
+	        roles = arr[1].split(",");
+    	} else {
+    		roles = param.split(",");
+    	}
         if (roles.length == 0) {
-            throw new IllegalArgumentException("Expected a comma separated list of roles. Got:" + arr[1]);
+            throw new IllegalArgumentException("Expected a comma separated list of roles. Got:" + param);
         }
         EnumSet<Mode> ms = EnumSet.of(Mode.valueOf(roles[0]));
         for (int i = 1; i < roles.length; i++) {
@@ -99,24 +104,13 @@ public class CNSPublisher {
     	CNSEndpointPublisherJobProducer.initialize();
     }
     
-    /**
-     * Usage is java <opts> com.comcast.cns.tools.CNSPublisher -role=<comma seperated list of roles>
-     * @param argv
-     * @throws Exception
-     */
-    public static void main(String argv[]) throws Exception {
-
-    	if (argv.length < 1) {
-            System.out.println("Bad usage");
-            printUsage();
-            System.exit(1);
-        }
+    public static void start(String mode) throws Exception {
     	
-        Util.initLog4jTest();
+        Util.initLog4j();
 
     	logger.info("event=startup version=" + CMBControllerServlet.VERSION + " ip=" + InetAddress.getLocalHost().getHostAddress() + " io_mode=" + CMBProperties.getInstance().getCNSIOMode());
         
-    	modes = parseMode(argv[0]);
+    	modes = parseMode(mode);
         logger.info("modes=" + modes);        
         
         if (modes.contains(Mode.Producer)) {
@@ -155,5 +149,21 @@ public class CNSPublisher {
                 mbs.registerMBean(CNSWorkerMonitor.getInstance(), name);
             }
         }        
+    }
+    
+    /**
+     * Usage is java <opts> com.comcast.cns.tools.CNSPublisher -role=<comma seperated list of roles>
+     * @param argv
+     * @throws Exception
+     */
+    public static void main(String argv[]) throws Exception {
+
+    	if (argv.length < 1) {
+            System.out.println("Bad usage");
+            printUsage();
+            System.exit(1);
+        }
+    	
+    	start(argv[0]);
     }    
 }

@@ -34,6 +34,9 @@ public class CMBProperties {
 	    SYNC, ASYNC 
 	}
 	
+	private final boolean cnsPublisherEnabled;
+	private final String cnsPublisherMode;
+	
 	private final int requestParameterValueMaxLength;
 	
 	private final String cmbDataCenter;
@@ -182,6 +185,9 @@ public class CMBProperties {
 			
 			FileInputStream fileStream = new FileInputStream(file);
 			props.load(fileStream);
+			
+			cnsPublisherEnabled = Boolean.parseBoolean(props.getProperty("cmb.cns.publisherEnabled", "true"));
+			cnsPublisherMode = props.getProperty("cmb.cns.publisherMode", "Consumer,Producer");
 			
 			cmbDataCenter = props.getProperty("cmb.dc.name", "default");
 			
@@ -695,5 +701,13 @@ public class CMBProperties {
 
 	public int getHectorAutoDiscoveryDelaySeconds() {
 		return hectorAutoDiscoveryDelaySeconds;
+	}
+	
+	public boolean isCNSPublisherEnabled() {
+		return this.cnsPublisherEnabled;
+	}
+	
+	public String getCNSPublisherMode() {
+		return this.cnsPublisherMode;
 	}
 }
