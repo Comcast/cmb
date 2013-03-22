@@ -8,7 +8,7 @@ AWS SQS and SNS. This document covers these topics:
 - User Forum
 - Quick Tutorial
 - Quickstart Guide (Embedded Jetty)
-- Installation Guide (Tomcat)
+- Detailed Installation Guide (Tomcat)
 - Build CMB from Source
 - Monitoring, Logging
 - Known Limitations
@@ -523,11 +523,8 @@ Finally the admin UI provides a dashboard like view of all CNS workers at
 - Known Limitations
 --------------------------------------------------------------------------------------------
 
-1. The initial visibility timeout for messages in a queue is always 0. It is not possible
-   to send a message and have it initially hidden for a specified number of seconds. 
-   Instead the message must be received first and only then the visibility timeout can be 
-   set.
-   
-2. CMB requires Cassandra version 1.0.10 or higher or Cassandra version 1.1.X.
+1. CMB requires Cassandra version 1.0.10 or higher or Cassandra version 1.1.X.
  
+2. AWS4 signatures currently not supported.
 
+3. CNS does not support SMS protocol.
