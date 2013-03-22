@@ -3,13 +3,13 @@
 
 	<properties>
 	    <buildnum>2.2.23</buildnum>
-	    <projectname>cns</projectname>
+	    <projectname>cmb</projectname>
 	</properties>
 
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.comcast.cmb</groupId>
 	<artifactId>${projectname}</artifactId>
-	<packaging>war</packaging>
+	<packaging>jar</packaging>
 	<version>${buildnum}</version>
 	<name>Comcast Message Bus</name>
 	<url>http://www.comcast.com</url>
@@ -39,13 +39,20 @@
 			<artifactId>netty</artifactId>
 			<version>3.2.7.Final</version>
 		</dependency>
-
+	
 		<dependency>
 			<groupId>com.amazonaws</groupId>
 			<artifactId>aws-java-sdk</artifactId>
 			<version>1.3.33</version>
 		</dependency>
 
+		<dependency>
+			<groupId>javax</groupId>
+			<artifactId>javaee-web-api</artifactId>
+			<version>6.0</version>
+			<scope>provided</scope>
+		</dependency>
+		
 		<dependency>
 			<groupId>me.prettyprint</groupId>
 			<artifactId>hector-core</artifactId>
@@ -106,7 +113,7 @@
 			<artifactId>httpcore</artifactId>
 			<version>4.2.3</version>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>org.apache.httpcomponents</groupId>
 			<artifactId>httpasyncclient</artifactId>
@@ -206,13 +213,6 @@
 		</dependency>
 
 		<dependency>
-			<groupId>javax</groupId>
-			<artifactId>javaee-web-api</artifactId>
-			<version>6.0</version>
-			<scope>provided</scope>
-		</dependency>
-  
-		<dependency>
 			<groupId>com.google.collections</groupId>
 			<artifactId>google-collections</artifactId>
 			<version>1.0</version>
@@ -250,54 +250,61 @@
 				</configuration>
 			</plugin>
 
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-surefire-plugin</artifactId>
-                <version>2.12</version>
-				<configuration>
-					<forkMode>once</forkMode>
-					<excludes>
-						<exclude>**/*HttpServlet*</exclude>
-					</excludes>
-					<systemProperties>
-						<property>
-							<name>cmb.log4j.propertyFile</name>
-							<value>${basedir}/config/log4j.properties</value>
-						</property>
-						<property>
-							<name>cmb.propertyFile</name>
-							<value>${basedir}/config/cmb.properties</value>
-						</property>
-					</systemProperties>
-				</configuration>
-			</plugin>
+	     	<plugin>
+	            <groupId>org.apache.maven.plugins</groupId>
+	            <artifactId>maven-dependency-plugin</artifactId>
+	            <executions>
+	                <execution>
+	                    <id>copy-dependencies</id>
+	                    <phase>prepare-package</phase>
+	                    <goals>
+	                        <goal>copy-dependencies</goal>
+	                    </goals>
+	                    <configuration>
+	                        <outputDirectory>${basedir}/target/lib</outputDirectory>
+	                        <overWriteReleases>false</overWriteReleases>
+	                        <overWriteSnapshots>false</overWriteSnapshots>
+	                        <overWriteIfNewer>true</overWriteIfNewer>
+	                    </configuration>
+	                </execution>
+	            </executions>
+	        </plugin>
 			
 			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-war-plugin</artifactId>
-				<version>2.1.1</version>
-				<configuration>
-					<containerConfigXML>${basedir}/config/WEB-INF-CNS/context.xml</containerConfigXML>
-					<webXml>${basedir}/config/WEB-INF-CNS/web.xml</webXml>
-					<warName>${projectname}</warName>
-					<webResources>
-						<resource>
-							<directory>${basedir}/WebContent/WEB-INF</directory>
-							<targetPath>WEB-INF</targetPath>
-							<includes>
-								<include>*.css</include>
-							</includes>
-						</resource>
-					</webResources>
-				</configuration>
-			</plugin>
+            	<groupId>org.apache.maven.plugins</groupId>
+        		<artifactId>maven-jar-plugin</artifactId>
+        		<version>2.4</version>
+ 				<executions>
+          			<execution>
+			            <phase>package</phase>
+			            <goals>
+			            	<goal>jar</goal>
+			            </goals>
+			            <configuration>
+	              			<!-- <classifier>client</classifier> -->
+	              			<includes>
+	                			<include>**/cmb/**</include>
+	                			<include>**/cns/**</include>
+	                			<include>**/cqs/**</include>
+	              			</includes>
+	              			<archive>
+                    			<manifest>
+                        			<addClasspath>true</addClasspath>
+                        			<classpathPrefix>lib/</classpathPrefix>
+                        			<mainClass>com.comcast.cmb.common.controller.CMB</mainClass>
+                    			</manifest>
+                			</archive>
+	            		</configuration>
+		            </execution>
+	            </executions>
+      		</plugin>
 
 			<plugin>
 				<artifactId>maven-assembly-plugin</artifactId>
 				<version>2.2.1</version>
 				<configuration>
 					<descriptors>
-						<descriptor>${basedir}/assembly-${projectname}.xml</descriptor>
+						<descriptor>${basedir}/assembly.xml</descriptor>
 					</descriptors>
 				</configuration>
 			</plugin>

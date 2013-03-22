@@ -7,7 +7,8 @@ AWS SQS and SNS. This document covers these topics:
 
 - User Forum
 - Quick Tutorial
-- Installation Guide
+- Quickstart Guide (Embedded Jetty)
+- Installation Guide (Tomcat)
 - Build CMB from Source
 - Monitoring, Logging
 - Known Limitations
@@ -43,13 +44,13 @@ The most basic CMB system consists of one of each
 
  - CQS Service Endpoint (HTTP endpoint for CQS)
  - CNS Service Endpoint (HTTP endpoint for CNS)
- - CNS Worker Node (required by CNS, used to distribute work)
+ - CNS Publish Worker Node (required by CNS, used to distribute work)
  - Cassandra Ring (persistence layer, used by CNS and CQS)
  - Redis (caching layer, used by CQS)
  
 For testing purposes all five components can be installed on a single host but a more
 serious installation would use separate hosts for each. Also, for scalability and 
-availability you would want to add further CNS Worker Nodes as well as Cassandra nodes 
+availability you would want to add further CNS Publish Worker Nodes as well as Cassandra nodes 
 and potentially even further Service Endpoints as well as Redis servers.   
 
 For a detailed documentation of the CNS / CQS APIs please refer to the Amazon SNS / SQS 
@@ -150,7 +151,47 @@ clear cache request to make sure the Redis cache does not contain any stale data
 http://primarycqsserviceurl/?Action=ClearCache&AWSAccessKeyId=someaccesskey
 
 --------------------------------------------------------------------------------------------
-- Installation Guide
+- New Quickstart Installation Guide using Embedded Jetty
+--------------------------------------------------------------------------------------------
+
+CMB now comes with an optional embedded Jetty server. As a result the required components 
+(CQS Service Endpoint, CNS Service Endpoint and CNS Publish Worker) can all conveniently
+be launched using the cmb.sh script within a single JVM. The only external components
+you need to install separately are Cassandra and Redis (make sure Redis does not persist to
+disk)!. To take advantage of the embedded Jetty option follow the instructions below:
+
+1. Clone CMB repository from github
+
+   git clone https://github.com/Comcast/cmb.git
+   
+2. Build CMB binary with maven:
+
+   mvn -Dmaven.test.skip=true assembly:assembly
+   
+3. Unpack binary from target folder:
+
+   gunzip cmb-distribution-<version>.tar.gz 
+   tar -xvf cmb-distribution-<version>.tar
+   
+4. Edit cmb.properties with a particular focus on the Redis and Cassandra settings. For
+   a single standalone CMB node ensure the CNS and CQS options are fully enabled (default).
+   
+   cmb.cns.serviceEnabled=true
+   cmb.cqs.serviceEnabled=true
+   cmb.cns.publisherEnabled=true
+   cmb.cns.publisherMode=Consumer,Producer 
+
+5. Install the correct schema in your Cassandra ring (use cassandra_1.0.schema for
+   Cassandra version 1.0.x and cassandra_1.1.schema for Cassandra version 1.1.x).
+   
+6. Start your CMB node:
+
+   ./bin/cmb.sh
+
+7. Check if web UI is available at localhost:6059/ADMIN/ (login with cns_internal / cns_internal)
+
+--------------------------------------------------------------------------------------------
+- Detailed Installation Guide using Tomcat
 --------------------------------------------------------------------------------------------
 
 1. Install Tomcat 7 or similar application server as needed. A minimum of two instances 
