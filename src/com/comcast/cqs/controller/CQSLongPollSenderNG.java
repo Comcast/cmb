@@ -17,6 +17,7 @@ package com.comcast.cqs.controller;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.URL;
 import java.net.UnknownHostException;
 import java.nio.charset.Charset;
 import java.util.HashMap;
@@ -195,7 +196,7 @@ public class CQSLongPollSenderNG {
 	        					stats.setDataCenter(dataCenter);
 	        				}
 	        				
-	        				if (now-timestamp < 5*60*1000 && dataCenter.equals(CMBProperties.getInstance().getCMBDataCenter())) {
+	        				if (now-timestamp < 5*60*1000 && dataCenter.equals(CMBProperties.getInstance().getCMBDataCenter()) && !endpoint.equals(localhost + ":" + (new URL(CMBProperties.getInstance().getCQSServerUrl())).getPort())) {
 	        					cqsAPIServers.put(endpoint.substring(0, endpoint.indexOf(":")) + ":" + longpollPort, stats);
 		        				logger.info("event=found_active_cqs_endpoint endpoint=" + endpoint);
 	        				}
@@ -297,56 +298,51 @@ public class CQSLongPollSenderNG {
 					continue;
 				}
 
-				// send notification on all established channels
+				// don't go through tcp stack for loopback
+
+				CQSLongPollReceiver.processNotification(queueArn, "localhost");
+				
+				logger.info("event=longpoll_notification_sent endpoint=localhost queue_arn=" + queueArn);
+
+				// send notification on all other established channels to remote cqs api servers
 				
 				for (String endpoint : activeCQSApiServers.keySet()) {
 					
-					if (endpoint.startsWith(localhost)) {
+					Channel clientChannel = activeCQSApiServers.get(endpoint);
+					
+					if (clientChannel.isConnected() && clientChannel.isOpen() && clientChannel.isWritable()) {
 						
-						// dont go through tcp stack if this is loopback
-
-						CQSLongPollReceiver.processNotification(queueArn, "localhost");
-						
-						logger.info("event=longpoll_notification_sent endpoint=localhost queue_arn=" + queueArn);
-
+						ChannelBuffer buf = ChannelBuffers.copiedBuffer(queueArn + ";", Charset.forName("UTF-8"));
+						clientChannel.write(buf);
+					
 					} else {
-				
-						Channel clientChannel = activeCQSApiServers.get(endpoint);
 						
-						if (clientChannel.isConnected() && clientChannel.isOpen() && clientChannel.isWritable()) {
-							
-							ChannelBuffer buf = ChannelBuffers.copiedBuffer(queueArn + ";", Charset.forName("UTF-8"));
-							clientChannel.write(buf);
+						// if connection is dead attempt to reestablish
 						
-						} else {
-							
-							// if connection is dead attempt to reestablish
-							
-	    					final String host = endpoint.substring(0, endpoint.indexOf(":"));
-	    					final int longpollPort = Integer.parseInt(endpoint.substring(endpoint.indexOf(":")+1));
-	    					
-	    					ChannelFuture channelFuture = clientBootstrap.connect(new InetSocketAddress(host, longpollPort));
-	    					
-	    					channelFuture.addListener(new ChannelFutureListener() {
-	    					
-	    						@Override
-	    						public void operationComplete(ChannelFuture cf) throws Exception {
-	    						
-	    							if (cf.isSuccess()) {
-	    							
-	    								final Channel newClientChannel = cf.getChannel();
-	    	        					activeCQSApiServers.put(host + ":" + longpollPort, newClientChannel);
-	    	        					logger.info("event=reestablished_bad_connection host=" + host + " port=" + longpollPort);
-	    	        					
-	    								ChannelBuffer buf = ChannelBuffers.copiedBuffer(newClientChannel + ";", Charset.forName("UTF-8"));
-	    								newClientChannel.write(buf);
-	    							}
-	    						}
-	    					});
-						}
-
-						logger.info("event=longpoll_notification_sent endpoint=" + endpoint + " queue_arn=" + queueArn);
+    					final String host = endpoint.substring(0, endpoint.indexOf(":"));
+    					final int longpollPort = Integer.parseInt(endpoint.substring(endpoint.indexOf(":")+1));
+    					
+    					ChannelFuture channelFuture = clientBootstrap.connect(new InetSocketAddress(host, longpollPort));
+    					
+    					channelFuture.addListener(new ChannelFutureListener() {
+    					
+    						@Override
+    						public void operationComplete(ChannelFuture cf) throws Exception {
+    						
+    							if (cf.isSuccess()) {
+    							
+    								final Channel newClientChannel = cf.getChannel();
+    	        					activeCQSApiServers.put(host + ":" + longpollPort, newClientChannel);
+    	        					logger.info("event=reestablished_bad_connection host=" + host + " port=" + longpollPort);
+    	        					
+    								ChannelBuffer buf = ChannelBuffers.copiedBuffer(newClientChannel + ";", Charset.forName("UTF-8"));
+    								newClientChannel.write(buf);
+    							}
+    						}
+    					});
 					}
+
+					logger.info("event=longpoll_notification_sent endpoint=" + endpoint + " queue_arn=" + queueArn);
 				}
 			}
 		}
