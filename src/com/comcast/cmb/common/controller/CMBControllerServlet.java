@@ -31,6 +31,7 @@ import com.comcast.cmb.common.util.ValueAccumulator.AccumulatorName;
 import com.comcast.cns.controller.CNSControllerServlet;
 import com.comcast.cqs.controller.CQSControllerServlet;
 import com.comcast.cqs.controller.CQSHttpServletRequest;
+import com.comcast.cqs.util.CQSConstants;
 
 import org.apache.log4j.Logger;
 
@@ -188,7 +189,7 @@ abstract public class CMBControllerServlet extends HttpServlet {
 
             valueAccumulator.addToCounter(AccumulatorName.CMBControllerPreHandleAction, (ts3 - ts1));
 
-            boolean actionPerformed = handleAction(action, user, asyncContext);
+            handleAction(action, user, asyncContext);
             
             response.setStatus(200);
             long ts2 = System.currentTimeMillis();
@@ -298,6 +299,25 @@ abstract public class CMBControllerServlet extends HttpServlet {
     	}
 
     	final AsyncContext asyncContext = request.startAsync(new CQSHttpServletRequest(request), response);
+    	
+    	// jetty appears to require calling setTimeout on http handler thread so we are setting 
+    	// wait time seconds for long polling receive message here
+    	
+        if (request.getParameter(CQSConstants.WAIT_TIME_SECONDS) != null) {
+
+        	try {
+
+        		int waitTimeSeconds = Integer.parseInt(request.getParameter(CQSConstants.WAIT_TIME_SECONDS));
+	        	
+        		if (waitTimeSeconds >= 1 && waitTimeSeconds <= 20) {
+		        	asyncContext.setTimeout(waitTimeSeconds * 1000);
+		            ((CQSHttpServletRequest)asyncContext.getRequest()).setWaitTime(waitTimeSeconds * 1000);
+	        	}
+        		
+        	} catch (Exception ex) {
+        		logger.warn("event=ignoring_suspicious_wait_time_parameter value=" + request.getParameter(CQSConstants.WAIT_TIME_SECONDS));
+        	}
+        }
     	
      	workerPool.submit(new Runnable() {
 
