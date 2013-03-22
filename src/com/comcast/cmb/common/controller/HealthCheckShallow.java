@@ -94,7 +94,9 @@ public class HealthCheckShallow extends CQSAction {
     		healthy = false;
         }
         
-        if (CMBProperties.getInstance().getCNSServiceEnabled()) {
+        // for now do not include cns worker availability in health check 
+        
+        /*if (CMBProperties.getInstance().getCNSServiceEnabled()) {
 
         	try {
         	
@@ -131,7 +133,7 @@ public class HealthCheckShallow extends CQSAction {
 	    		sb.append("\t<CNSWorkers>Unknown state: "+ex.getMessage()+"</CNSWorkers>\n");
 	    		healthy = false;
 	        }
-        }
+        }*/
 
         sb.append("</HealthCheckResponse>");
         
