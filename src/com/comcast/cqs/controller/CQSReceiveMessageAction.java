@@ -73,17 +73,10 @@ public class CQSReceiveMessageAction extends CQSAction {
         	}
         }
         
-    	asyncContext.addListener(new AsyncListener() {
+        asyncContext.addListener(new AsyncListener() {
 
     		@Override
 			public void onComplete(AsyncEvent asyncEvent) throws IOException {
-				
-    			if (!(asyncEvent.getSuppliedRequest() instanceof CQSHttpServletRequest)) {
-					logger.error("event=invalid_request stage=on_complete");
-					return;
-    			}    			
-    			
-    			((CQSHttpServletRequest)asyncEvent.getSuppliedRequest()).setActive(false);
 			}
 			
     		@Override
@@ -112,7 +105,9 @@ public class CQSReceiveMessageAction extends CQSAction {
     			CQSQueue queue = ((CQSHttpServletRequest)asyncEvent.getSuppliedRequest()).getQueue();
         		AsyncContext asyncContext = asyncEvent.getAsyncContext(); 
 	            
-	            if (queue != null) {
+    			logger.info("event=on_error queue_url=" + queue.getAbsoluteUrl());
+
+    			if (queue != null) {
 	            	
 	            	ConcurrentLinkedQueue<AsyncContext> queueContextsList = CQSLongPollReceiver.contextQueues.get(queue.getArn());
 	            	
@@ -136,6 +131,9 @@ public class CQSReceiveMessageAction extends CQSAction {
     			}    			
 	            
     			CQSQueue queue = ((CQSHttpServletRequest)asyncEvent.getSuppliedRequest()).getQueue();
+    			
+    			logger.info("event=on_timeout queue_url=" + queue.getAbsoluteUrl());
+    			
         		AsyncContext asyncContext = asyncEvent.getAsyncContext(); 
 
 	            if (queue != null) {
@@ -179,6 +177,9 @@ public class CQSReceiveMessageAction extends CQSAction {
         
         if (request.getParameter(CQSConstants.WAIT_TIME_SECONDS) != null) {
         	
+        	// we are already setting wait time in main controller servlet, we are just doing
+        	// this here again to throw appropriate error messages for invalid parameters
+        	
         	if (!CMBProperties.getInstance().isCQSLongPollEnabled()) {
                 throw new CMBException(CMBErrorCodes.InvalidParameterValue, "Long polling not enabled.");
         	}
@@ -189,12 +190,10 @@ public class CQSReceiveMessageAction extends CQSAction {
                 throw new CMBException(CMBErrorCodes.InvalidParameterValue, "The value for WaitTimeSeconds must be an integer number between 1 and 20.");
         	}
         	
-        	// set timeout appropriately
-        	
-        	asyncContext.setTimeout(waitTimeSeconds * 1000);
-            request.setWaitTime(waitTimeSeconds * 1000);
+        	//asyncContext.setTimeout(waitTimeSeconds * 1000);
+            //request.setWaitTime(waitTimeSeconds * 1000);
         }
-                
+
         List<CQSMessage> messageList = PersistenceFactory.getCQSMessagePersistence().receiveMessage(queue, msgParam);
         
         // wait for long poll if desired

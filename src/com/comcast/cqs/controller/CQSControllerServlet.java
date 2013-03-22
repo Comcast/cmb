@@ -27,7 +27,6 @@ import javax.management.ObjectName;
 import javax.servlet.AsyncContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 import me.prettyprint.hector.api.HConsistencyLevel;
 
@@ -101,7 +100,7 @@ public class CQSControllerServlet extends CMBControllerServlet {
             try {
 	    		if (CMBProperties.getInstance().isCQSLongPollEnabled()) {
 		    		CQSLongPollReceiver.listen();
-		            CQSLongPollSender.init();
+		            CQSLongPollSenderNG.init();
 	            }
             } catch (Exception ex) {
             	logger.warn("event=failed_to_start_longpoll_module", ex);
@@ -244,12 +243,8 @@ public class CQSControllerServlet extends CMBControllerServlet {
         }
         return queue;
     }
-    
-    @Override
-    protected boolean handleAction(String action, User user, AsyncContext asyncContext) throws Exception {
-    	
-        HttpServletRequest request = (HttpServletRequest)asyncContext.getRequest();
-        HttpServletResponse response = (HttpServletResponse)asyncContext.getResponse();
+
+    public static void writeHeartBeat() {
     	
         long now = System.currentTimeMillis();
     	
@@ -289,6 +284,14 @@ public class CQSControllerServlet extends CMBControllerServlet {
         		logger.warn("event=ping_failed", ex);
         	}
         }
+    }
+    
+    @Override
+    protected boolean handleAction(String action, User user, AsyncContext asyncContext) throws Exception {
+    	
+        HttpServletRequest request = (HttpServletRequest)asyncContext.getRequest();
+    	
+        writeHeartBeat();
     	
     	if (!CMBProperties.getInstance().getCQSServiceEnabled()) {
             throw new CMBException(CMBErrorCodes.InternalError, "CQS service is disabled");
@@ -359,7 +362,7 @@ public class CQSControllerServlet extends CMBControllerServlet {
             
             RedisCachedCassandraPersistence.executor.shutdown();
             RedisCachedCassandraPersistence.revisibilityExecutor.shutdown();
-            CQSLongPollSender.shutdown();
+            CQSLongPollSenderNG.shutdown();
             CQSLongPollReceiver.shutdown();
             
         } catch(Exception e) {

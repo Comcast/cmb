@@ -45,6 +45,7 @@ import com.comcast.cqs.model.CQSQueue;
 public class CQSLongPollReceiver {
 	
     private static Logger logger = Logger.getLogger(CQSLongPollReceiver.class);
+    private static boolean initialized = false;
     
     private static ChannelFactory serverSocketChannelFactory;
 
@@ -89,13 +90,13 @@ public class CQSLongPollReceiver {
     //     if messages are found we generate a response and complete the context, potentially we could keep going as long as we can find messages
     //     if no messages are found (and there is long poll time left) we put the context back on the queue
 	//
-    // miscellaneous todos:
+    // miscellaneous improvements:
     //
-    // keep established tcp connections alive and reuse where possible (reuse netty channel if possible)
-    // long poll receive to check for messages on timeout
-    // optimize when to send notifications
-    // get rid of unneccessary worker pool
-    // sensible tcp settings for client and server
+    // reuse established netty channels instead of creating new tcp connections for every lp sendmessage() call - use blocking queue and single 
+    // long poll sender process reestablishing connections only on failure or after a set period of time (e.g. 60 sec)
+    // long poll receivemessage() to check for messages on timeout
+    // only send notifications to service endpoints with receint lp receivemessage() calls
+    // sensible tcp default ettings for client and server
     //
     
 	private static class LongPollServerHandler extends SimpleChannelHandler {
@@ -112,75 +113,10 @@ public class CQSLongPollReceiver {
 				char c = ((char)buf.readByte());
 				
 				if (c == ';') {
-					
-					//Object monitor = queueMonitors.get(queueArn.toString());
-					
-					contextQueues.putIfAbsent(queueArn.toString(), new ConcurrentLinkedQueue<AsyncContext>());
-					ConcurrentLinkedQueue<AsyncContext> contextQueue = contextQueues.get(queueArn.toString());
-					
-					AsyncContext asyncContext = contextQueue.poll();
-					
-					if (asyncContext == null) {
-						logger.debug("event=no_pending_receive queue_arn=" + queueArn + " remote_address=" + e.getRemoteAddress());
-						break;
-					}
-					
-					if (asyncContext.getRequest() == null) {
-						logger.debug("event=skipping_invalid_context queue_arn=" + queueArn + " remote_address=" + e.getRemoteAddress());
-						break;
-					}
-					
-					if (!(asyncContext.getRequest() instanceof CQSHttpServletRequest)) {
-						logger.info("event=skipping_invalid_request queue_arn=" + queueArn + " remote_address=" + e.getRemoteAddress());
-						break;
-					}
-					
-			        CQSHttpServletRequest request = (CQSHttpServletRequest)asyncContext.getRequest();
 
-					// skip if request is already finished or outdated
+					processNotification(queueArn.toString(), e.getRemoteAddress() != null ? e.getRemoteAddress().toString() : "");
 					
-					if (!request.isActive() || System.currentTimeMillis() - request.getRequestReceivedTimestamp() > request.getWaitTime()) {
-						logger.info("event=skipping_outdated_context queue_arn=" + queueArn + " remote_address=" + e.getRemoteAddress());
-						continue;
-					}
-					
-					logger.debug("event=notification_received queue_arn=" + queueArn + " remote_address=" + e.getRemoteAddress());
-
-			        try {
-
-			        	CQSQueue queue = request.getQueue();
-			        	List<CQSMessage> messageList = PersistenceFactory.getCQSMessagePersistence().receiveMessage(queue, request.getReceiveAttributes());
-					
-						if (messageList.size() > 0) {
-							
-							StringBuffer handles = new StringBuffer("");
-							
-							for (CQSMessage message : messageList) {
-				            	handles.append(message.getReceiptHandle()+",");
-				            }
-							
-							logger.info("event=messages_found_for_longpoll_receive receipt_handles=" + handles.toString() + " count=" + messageList.size() + " queue_arn=" + queueArn + " remote_address=" + e.getRemoteAddress());
-
-							CQSMonitor.getInstance().addNumberOfMessagesReturned(queue.getRelativeUrl(), messageList.size());
-					        String out = CQSMessagePopulator.getReceiveMessageResponseAfterSerializing(messageList, request.getFilterAttributes());
-					        asyncContext.getResponse().getWriter().println(out);
-					        asyncContext.complete();
-						
-						} else {
-							
-							// if there's longpoll time left, put back on queue
-							
-							if (request.getWaitTime() - System.currentTimeMillis() + request.getRequestReceivedTimestamp() > 0) {
-								logger.debug("event=no_messages_found_for_longpoll_receive action=re_queueing time_left_ms=" + (request.getWaitTime() - System.currentTimeMillis() + request.getRequestReceivedTimestamp()) + " queue_arn=" + queueArn + " remote_address=" + e.getRemoteAddress());
-								contextQueue.offer(asyncContext);
-							}
-						}
-			        
-			        } catch (Exception ex) {
-						logger.error("event=longpoll_queue_error queue_arn=" + queueArn, ex);
-					}
-					
-			        // start reading new message
+					// start reading new message
 			        
 			        queueArn = new StringBuffer("");
 					
@@ -203,29 +139,104 @@ public class CQSLongPollReceiver {
 			e.getChannel().close();
 		}
 	}
+	
+	public static void processNotification(String queueArn, String remoteAddress) {
+		
+		//Object monitor = queueMonitors.get(queueArn);
+		
+		contextQueues.putIfAbsent(queueArn, new ConcurrentLinkedQueue<AsyncContext>());
+		ConcurrentLinkedQueue<AsyncContext> contextQueue = contextQueues.get(queueArn);
+		
+		AsyncContext asyncContext = contextQueue.poll();
+		
+		if (asyncContext == null) {
+			logger.info("event=no_pending_receive queue_arn=" + queueArn + " remote_address=" + remoteAddress);
+			return;
+		}
+		
+		if (asyncContext.getRequest() == null) {
+			logger.info("event=skipping_invalid_context queue_arn=" + queueArn + " remote_address=" + remoteAddress);
+			return;
+		}
+		
+		if (!(asyncContext.getRequest() instanceof CQSHttpServletRequest)) {
+			logger.info("event=skipping_invalid_request queue_arn=" + queueArn + " remote_address=" + remoteAddress);
+			return;
+		}
+		
+        CQSHttpServletRequest request = (CQSHttpServletRequest)asyncContext.getRequest();
+
+		// skip if request is already finished or outdated
+		
+		if (!request.isActive() || System.currentTimeMillis() - request.getRequestReceivedTimestamp() > request.getWaitTime()) {
+			logger.info("event=skipping_outdated_context queue_arn=" + queueArn + " remote_address=" + remoteAddress);
+			return;
+		}
+		
+		logger.info("event=notification_received queue_arn=" + queueArn + " remote_address=" + remoteAddress);
+
+        try {
+
+        	CQSQueue queue = request.getQueue();
+        	List<CQSMessage> messageList = PersistenceFactory.getCQSMessagePersistence().receiveMessage(queue, request.getReceiveAttributes());
+		
+			if (messageList.size() > 0) {
+				
+				StringBuffer handles = new StringBuffer("");
+				
+				for (CQSMessage message : messageList) {
+	            	handles.append(message.getReceiptHandle()+",");
+	            }
+				
+				logger.info("event=messages_found_for_longpoll_receive receipt_handles=" + handles.toString() + " count=" + messageList.size() + " queue_arn=" + queueArn + " remote_address=" + remoteAddress);
+
+				CQSMonitor.getInstance().addNumberOfMessagesReturned(queue.getRelativeUrl(), messageList.size());
+		        String out = CQSMessagePopulator.getReceiveMessageResponseAfterSerializing(messageList, request.getFilterAttributes());
+		        asyncContext.getResponse().getWriter().println(out);
+		        asyncContext.complete();
+			
+			} else {
+				
+				// if there's longpoll time left, put back on queue
+				
+				if (request.getWaitTime() - System.currentTimeMillis() + request.getRequestReceivedTimestamp() > 0) {
+					logger.info("event=no_messages_found_for_longpoll_receive action=re_queueing time_left_ms=" + (request.getWaitTime() - System.currentTimeMillis() + request.getRequestReceivedTimestamp()) + " queue_arn=" + queueArn + " remote_address=" + remoteAddress);
+					contextQueue.offer(asyncContext);
+				}
+			}
+        
+        } catch (Exception ex) {
+			logger.error("event=longpoll_queue_error queue_arn=" + queueArn, ex);
+		}
+	}
 
 	public static void listen() {
 		
-        //queueMonitors = new ConcurrentHashMap<String,Object>();
-        
-        contextQueues = new ConcurrentHashMap<String, ConcurrentLinkedQueue<AsyncContext>>();
-
-		serverSocketChannelFactory = new NioServerSocketChannelFactory(Executors.newCachedThreadPool(), Executors.newCachedThreadPool());
-
-		ServerBootstrap serverBootstrap = new ServerBootstrap(serverSocketChannelFactory);
-
-		serverBootstrap.setPipelineFactory(new ChannelPipelineFactory() {
-			public ChannelPipeline getPipeline() {
-				return Channels.pipeline(new LongPollServerHandler());
-			}
-		});
-
-		serverBootstrap.setOption("child.tcpNoDelay", true);
-		serverBootstrap.setOption("child.keepAlive", true);
+		if (!initialized) {
 		
-		serverBootstrap.bind(new InetSocketAddress(CMBProperties.getInstance().getCQSLongPollPort()));
-
-		logger.info("event=longpoll_receiver_service_listening port=" + CMBProperties.getInstance().getCQSLongPollPort());
+	        //queueMonitors = new ConcurrentHashMap<String,Object>();
+	        
+	        contextQueues = new ConcurrentHashMap<String, ConcurrentLinkedQueue<AsyncContext>>();
+	
+			serverSocketChannelFactory = new NioServerSocketChannelFactory(Executors.newCachedThreadPool(), Executors.newCachedThreadPool());
+	
+			ServerBootstrap serverBootstrap = new ServerBootstrap(serverSocketChannelFactory);
+	
+			serverBootstrap.setPipelineFactory(new ChannelPipelineFactory() {
+				public ChannelPipeline getPipeline() {
+					return Channels.pipeline(new LongPollServerHandler());
+				}
+			});
+	
+			serverBootstrap.setOption("child.tcpNoDelay", true);
+			serverBootstrap.setOption("child.keepAlive", true);
+			
+			serverBootstrap.bind(new InetSocketAddress(CMBProperties.getInstance().getCQSLongPollPort()));
+	
+			initialized = true;
+			
+			logger.info("event=longpoll_receiver_service_listening port=" + CMBProperties.getInstance().getCQSLongPollPort());
+		}
 	}
 	
 	public static void shutdown() {

@@ -20,7 +20,6 @@ import java.util.Calendar;
 import java.util.HashMap;
 
 import javax.servlet.AsyncContext;
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.log4j.Logger;
@@ -115,8 +114,12 @@ public class CQSSendMessageAction extends CQSAction {
         response.getWriter().println(out);
         CQSMonitor.getInstance().addNumberOfMessagesReceived(queue.getRelativeUrl(), 1);
         
-        CQSLongPollSender.send(queue.getArn());
-
+        try {
+        	CQSLongPollSenderNG.send(queue.getArn());
+        } catch (Exception ex) {
+        	logger.warn("event=failed_to_send_longpoll_notification", ex);
+        }
+        
         return true;
 	}
 }

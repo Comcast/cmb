@@ -22,8 +22,9 @@ import java.util.List;
 import java.util.Map;
 
 import javax.servlet.AsyncContext;
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
+import org.apache.log4j.Logger;
 
 import com.comcast.cmb.common.model.User;
 import com.comcast.cmb.common.persistence.PersistenceFactory;
@@ -43,6 +44,8 @@ import com.comcast.cqs.util.Util;
  *
  */
 public class CQSSendMessageBatchAction extends CQSAction {
+	
+    protected static Logger logger = Logger.getLogger(CQSSendMessageBatchAction.class);
 	
 	public CQSSendMessageBatchAction() {
 		super("SendMessageBatch");
@@ -130,7 +133,11 @@ public class CQSSendMessageBatchAction extends CQSAction {
         
 		Map<String, String> result = PersistenceFactory.getCQSMessagePersistence().sendMessageBatch(queue, msgList);
 
-        CQSLongPollSender.send(queue.getArn());
+		try {
+			CQSLongPollSenderNG.send(queue.getArn());
+        } catch (Exception ex) {
+        	logger.warn("event=failed_to_send_longpoll_notification", ex);
+        }
 		
         List<String> receiptHandles = new ArrayList<String>();
 

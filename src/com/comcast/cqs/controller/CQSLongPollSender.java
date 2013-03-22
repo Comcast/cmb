@@ -78,26 +78,29 @@ public class CQSLongPollSender {
 	}
 
 	public static void init() {
-	
-        activeCQSApiServers = new ConcurrentHashMap<String, Long>();
 		
-		// launch client side
+		if (!initialized) {
+	
+	        activeCQSApiServers = new ConcurrentHashMap<String, Long>();
+			
+			// launch client side
+			
+			clientSocketChannelFactory = new NioClientSocketChannelFactory(Executors.newCachedThreadPool(),	Executors.newCachedThreadPool());
 		
-		clientSocketChannelFactory = new NioClientSocketChannelFactory(Executors.newCachedThreadPool(),	Executors.newCachedThreadPool());
-	
-		clientBootstrap = new ClientBootstrap(clientSocketChannelFactory);
-	
-		clientBootstrap.setPipelineFactory(new ChannelPipelineFactory() {
-			public ChannelPipeline getPipeline() {
-				return Channels.pipeline(new CQSLongPollClientHandler());
-			}
-		});
-	
-		clientBootstrap.setOption("connectTimeoutMillis", 2000);
-		clientBootstrap.setOption("tcpNoDelay", true);
-		clientBootstrap.setOption("keepAlive", true);
+			clientBootstrap = new ClientBootstrap(clientSocketChannelFactory);
 		
-		initialized = true;
+			clientBootstrap.setPipelineFactory(new ChannelPipelineFactory() {
+				public ChannelPipeline getPipeline() {
+					return Channels.pipeline(new CQSLongPollClientHandler());
+				}
+			});
+		
+			clientBootstrap.setOption("connectTimeoutMillis", 2000);
+			clientBootstrap.setOption("tcpNoDelay", true);
+			clientBootstrap.setOption("keepAlive", true);
+			
+			initialized = true;
+		}
 	}
 	
 	public static void shutdown() {

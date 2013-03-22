@@ -24,6 +24,9 @@ import org.eclipse.jetty.webapp.WebAppContext;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.Util;
 import com.comcast.cns.tools.CNSPublisher;
+import com.comcast.cqs.controller.CQSControllerServlet;
+import com.comcast.cqs.controller.CQSLongPollReceiver;
+import com.comcast.cqs.controller.CQSLongPollSenderNG;
 
 /**
  * Bootstrap class for cns, cqs service endpoint servlets and cns workers. Servlets
@@ -62,7 +65,14 @@ public class CMB {
 	        cqsServer.setHandler(cqsWebContext);
 	        cqsServer.start();
 	        
-	        logger.info("event=laucnhed_cqs_service_endpoint port=" + cqsUrl.getPort());
+	        logger.info("event=launched_cqs_service_endpoint port=" + cqsUrl.getPort());
+	        
+	        CQSControllerServlet.writeHeartBeat();
+	        
+    		if (CMBProperties.getInstance().isCQSLongPollEnabled()) {
+	    		CQSLongPollReceiver.listen();
+	            CQSLongPollSenderNG.init();
+            }
     	}
     	
     	// launch cns service endpoint if enabled
@@ -83,7 +93,7 @@ public class CMB {
 	        cnsServer.setHandler(cnsWebContext);
 	        cnsServer.start();
 
-	        logger.info("event=laucnhed_cns_service_endpoint port=" + cnsUrl.getPort());
+	        logger.info("event=launched_cns_service_endpoint port=" + cnsUrl.getPort());
     	}
     	
     	// launch cns publish worker if enabled
