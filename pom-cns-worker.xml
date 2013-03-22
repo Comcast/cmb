@@ -17,6 +17,24 @@
 	<dependencies>
 	
 		<dependency>
+			<groupId>org.eclipse.jetty</groupId>
+			<artifactId>jetty-webapp</artifactId>
+			<version>8.1.10.v20130312</version>
+		</dependency>	
+	
+		<dependency>
+			<groupId>org.eclipse.jetty</groupId>
+			<artifactId>jetty-server</artifactId>
+			<version>8.1.10.v20130312</version>
+		</dependency>
+	
+		<dependency>
+			<groupId>org.eclipse.jetty</groupId>
+			<artifactId>jetty-servlet</artifactId>
+			<version>8.1.10.v20130312</version>
+		</dependency>
+
+		<dependency>
 			<groupId>org.jboss.netty</groupId>
 			<artifactId>netty</artifactId>
 			<version>3.2.7.Final</version>
@@ -161,7 +179,13 @@
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-api</artifactId>
-			<version>1.5.8</version>
+			<version>1.7.2</version>
+		</dependency>
+		
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-log4j12</artifactId>
+			<version>1.7.2</version>
 		</dependency>
 
 		<dependency>
