@@ -88,9 +88,9 @@ public class UserLoginPageServlet extends AdminServletBase {
 		if (user != null) {
 			
 			if (isAdmin(request)) {
-				response.sendRedirect(response.encodeURL("/ADMIN?userId="+ user.getUserId()));
+				response.sendRedirect(response.encodeURL("/webui?userId="+ user.getUserId()));
 			} else {
-				response.sendRedirect(response.encodeURL("/User?userId="+ user.getUserId()));
+				response.sendRedirect(response.encodeURL("/webui/user?userId="+ user.getUserId()));
 			}
 			
 		} else {
@@ -107,7 +107,7 @@ public class UserLoginPageServlet extends AdminServletBase {
 				out.println("<p><font color='red'>User doesn't exist or password does not match!</font>");
 			}
 			
-			out.println("<form action=\"/UserLogin\" method=POST>");
+			out.println("<form action=\"/webui/userlogin\" method=POST>");
 	        out.println("<table><tr><td>Username:</td><td><input type='text' name='user' value='"+ userName + "'></td></tr>");
 	        out.println("<tr><td>Password:</td><td><input type='password' name='passwd'></td></tr>");
 	        out.println("<tr><td>&nbsp;</td></tr>");

@@ -126,10 +126,7 @@ public class CQSAddQueuePermissionPage extends AdminServletBase {
 		
 			out.println("<body>");
 			out.println("<h1>Add Permission to Queue "+ queueName + "</h1>");
-			out.print("<form action=\"");
-            out.print(response.encodeURL("AddPermission") + "?queueName="+queueName);
-            out.print("\" ");
-            out.println("method=POST>");
+			out.println("<form action=\"/webui/cqsuser/addpermission/?queueName="+queueName+"\" method=POST>");
             out.println("<input type='hidden' name='userId' value='"+ userId +"'>");
             out.println("<p>Permissions enable you to control which operations a user can perform on a queue.</p>");
             out.println("<table><tr><td colspan=2>&nbsp;</td></tr>");

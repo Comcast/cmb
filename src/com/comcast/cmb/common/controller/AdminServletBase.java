@@ -102,7 +102,7 @@ public abstract class AdminServletBase extends HttpServlet {
 	protected boolean redirectUnauthenticatedUser(HttpServletRequest request, HttpServletResponse response) throws IOException {
 
 		if (!isAuthenticated(request)) {
-			response.sendRedirect(response.encodeURL("/UserLogin"));
+			response.sendRedirect(response.encodeURL("/webui/userlogin"));
 			return true;
 		}
 		
@@ -112,12 +112,12 @@ public abstract class AdminServletBase extends HttpServlet {
 	protected boolean redirectNonAdminUser(HttpServletRequest request, HttpServletResponse response) throws IOException {
 
 		if (!isAuthenticated(request)) {
-			response.sendRedirect(response.encodeURL("/UserLogin"));
+			response.sendRedirect(response.encodeURL("/webui/userlogin"));
 			return true;
 		}
 		
 		if (!isAdmin(request)) {
-			response.sendRedirect(response.encodeURL("/User?userId=" + getAuthenticatedUser(request).getUserId()));
+			response.sendRedirect(response.encodeURL("/webui/user?userId=" + getAuthenticatedUser(request).getUserId()));
 			return true;
 		}
 	
@@ -133,7 +133,7 @@ public abstract class AdminServletBase extends HttpServlet {
 			session.removeAttribute("USER");
 		}
 
-		response.sendRedirect(response.encodeURL("/UserLogin"));
+		response.sendRedirect(response.encodeURL("/webui/userlogin"));
 	}
 
 	/**
@@ -213,12 +213,12 @@ public abstract class AdminServletBase extends HttpServlet {
     		out.println("<table width='100%' border='0'><tr><td width='100%' align='left'>Welcome " + getAuthenticatedUser(request).getUserName() + " | ");
     		
     		if (isAdmin(request)) {
-    			out.println("<a href='/ADMIN'>All Users</a>" + " | ");
-    			out.println("<a href='/CNSWorkerState'>CNS Dashboard</a>" + " | ");
-    			out.println("<a href='/CQSAPIState'>CQS Dashboard</a>" + " | ");
+    			out.println("<a href='/webui'>All Users</a>" + " | ");
+    			out.println("<a href='/webui/cnsworkerstate'>CNS Dashboard</a>" + " | ");
+    			out.println("<a href='/webui/cqsapistate'>CQS Dashboard</a>" + " | ");
     		}
     		
-    		out.println("<a href='/UserLogin?Logout=Logout'>logout</a></td></tr></table>");
+    		out.println("<a href='/webui/userlogin?Logout=Logout'>logout</a></td></tr></table>");
     		out.println("</span>");
     	}
     	

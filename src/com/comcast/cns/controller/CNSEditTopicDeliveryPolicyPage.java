@@ -180,10 +180,7 @@ public class CNSEditTopicDeliveryPolicyPage extends AdminServletBase {
 			
 			out.println("<body>");
 			out.println("<h1>View/Edit Topic Delivery Policy</h1>");
-			out.println("<form action=\"");
-			out.println(response.encodeURL("EditDeliveryPolicy") + "?topicArn="+topicArn);
-			out.println("\"");
-			out.println("method=POST>");
+			out.println("<form action=\"/webui/cnsuser/editdeliverypolicy?topicArn="+topicArn+"\" method=POST>");
             out.println("<input type='hidden' name='userId' value='"+ userId +"'>");
 			out.println("<table>");
 			out.println("<tr><td colspan=2><b><font color='orange'>Delivery Policy</font></b></td></tr>");

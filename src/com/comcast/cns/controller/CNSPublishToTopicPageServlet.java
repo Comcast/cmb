@@ -103,7 +103,7 @@ public class CNSPublishToTopicPageServlet extends AdminServletBase {
 		
 			if (topicArn != null) {
 			
-				out.print("<form action=\"" + response.encodeURL("Publish")+ "?topicArn=" + topicArn + "&userId=" + userId + "\" " + "method=POST>");
+				out.print("<form action=\"/webui/cnsuser/publish?topicArn=" + topicArn + "&userId=" + userId + "\" " + "method=POST>");
 				out.println("<table><tr><td><b>Topic Name:</b></td><td>"+ Util.getNameFromTopicArn(topicArn) + "</td></tr>");
 				out.println("<tr><td>&nbsp;</td><td>&nbsp;</td></tr>");
 				out.println("<tr><td valign=top><b>Subject:</b></td><td valign=top><input type='text' size='90' name='subject'><br/><I><font color='grey'>Up to 100 printable ASCII characters (optional)</font></I></td></tr>");

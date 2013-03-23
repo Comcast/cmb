@@ -146,10 +146,7 @@ public class CNSSubscriptionPageServlet extends AdminServletBase {
 		}
 		
         out.println("<p><table><tr><td><b>Protocol</b></td><td><b>End Point</b></td><td>&nbsp;</td></tr>");
-        out.print("<form action=\"");
-        out.print(response.encodeURL("SUBSCRIPTION") + "?userId="+userId+"&topicArn="+topicArn);
-        out.print("\" ");
-        out.print("method=POST>");
+        out.println("<form action=\"/webui/cnsuser/subscription/?userId="+userId+"&topicArn="+topicArn+"\" method=POST>");
         out.println("<tr><td><select name='protocol' onchange='changeEndpointHint(this.value)'><option value='HTTP'>HTTP</option><option value='HTTPS'>HTTPS</option><option value='EMAIL'>EMAIL</option><option value='EMAIL_JSON'>EMAIL_JSON</option><option value='CQS'>CQS</option><option value='SQS'>SQS</option></select></td>");
         out.println("<td><input type='text' name='endPoint' id = 'endPoint' size='65' placeholder='e.g. http://company.com'><input type='hidden' name='userId' value='"+ userId + "'></td><td><input type='submit' value='Subscribe' name='Subscribe' /></td></tr>");
         out.println("</form></table>");
@@ -166,14 +163,14 @@ public class CNSSubscriptionPageServlet extends AdminServletBase {
 		for (int i = 0; subscriptions != null && i < subscriptions.size(); i++) {
         
         	Subscription s = subscriptions.get(i);
-        	out.println("<form action=\"SUBSCRIPTION?userId="+user.getUserId()+"&arn="+s.getSubscriptionArn()+"&topicArn="+topicArn+"\" method=POST>");
+        	out.println("<form action=\"/webui/cnsuser/subscription/?userId="+user.getUserId()+"&arn="+s.getSubscriptionArn()+"&topicArn="+topicArn+"\" method=POST>");
         	out.println("<tr><td>"+i+"</td>");
         	out.println("<td>"+s.getSubscriptionArn() +"<input type='hidden' name='arn' value="+s.getSubscriptionArn()+"></td>");
         	out.println("<td>"+s.getProtocol()+"</td>");
         	out.println("<td>"+s.getEndpoint()+"</td>");
         	
         	if (s.getProtocol().toString().equals("http") && !s.getSubscriptionArn().equals("PendingConfirmation")) {
-        		out.println("<td><a href='' onclick=\"window.open('" + response.encodeURL("SUBSCRIPTION/EditDeliveryPolicy") + "?subscriptionArn="+ s.getSubscriptionArn() + "&userId=" + userId + "', 'EditDeliveryPolicy', 'height=630,width=580,toolbar=no')\">View/Edit Delivery Policy</a></td>");
+        		out.println("<td><a href='' onclick=\"window.open('/webui/cnsuser/subscription/editdeliverypolicy?subscriptionArn="+ s.getSubscriptionArn() + "&userId=" + userId + "', 'EditDeliveryPolicy', 'height=630,width=580,toolbar=no')\">View/Edit Delivery Policy</a></td>");
         	} else {
         		out.println("<td>&nbsp;</td>");
         	}
@@ -190,12 +187,12 @@ public class CNSSubscriptionPageServlet extends AdminServletBase {
         out.println("</table></span></p>");
         
         if (listSubscriptionsByTopicResult != null && listSubscriptionsByTopicResult.getNextToken() != null) {
-        	out.println("<p><a href='SUBSCRIPTION?userId="+userId+"&topicArn="+topicArn+"&nextToken="+response.encodeURL(listSubscriptionsByTopicResult.getNextToken())+"'>next&nbsp;&gt;</a></p>");
+        	out.println("<p><a href='/webui/cnsuser/subscription/?userId="+userId+"&topicArn="+topicArn+"&nextToken="+response.encodeURL(listSubscriptionsByTopicResult.getNextToken())+"'>next&nbsp;&gt;</a></p>");
         }
         
         
-        out.println("<h5 style='text-align:center;'><a href='/ADMIN'>ADMIN HOME</a>");
-        out.println("<a href='/CNSUser?userId="+userId+"&topicArn="+topicArn+"'>BACK TO TOPIC</a></h5>");
+        out.println("<h5 style='text-align:center;'><a href='/webui'>ADMIN HOME</a>");
+        out.println("<a href='/webui/cnsuser?userId="+userId+"&topicArn="+topicArn+"'>BACK TO TOPIC</a></h5>");
         out.println("</body></html>");
         
         CMBControllerServlet.valueAccumulator.deleteAllCounters();

@@ -31,7 +31,7 @@
   </servlet>
   <servlet-mapping>
     <servlet-name>AdminServlet</servlet-name>
-    <url-pattern>/ADMIN/*</url-pattern>
+    <url-pattern>/webui/*</url-pattern>
   </servlet-mapping>
 
   <servlet>
@@ -40,7 +40,7 @@
   </servlet>
   <servlet-mapping>
     <servlet-name>CNSUserPageServlet</servlet-name>
-    <url-pattern>/CNSUser/*</url-pattern>
+    <url-pattern>/webui/cnsuser/*</url-pattern>
   </servlet-mapping>
 
   <servlet>
@@ -49,7 +49,7 @@
   </servlet>
   <servlet-mapping>
     <servlet-name>CQSUserPageServlet</servlet-name>
-    <url-pattern>/CQSUser/*</url-pattern>
+    <url-pattern>/webui/cqsuser/*</url-pattern>
   </servlet-mapping>
 
   <servlet>
@@ -58,7 +58,7 @@
   </servlet>
   <servlet-mapping>
     <servlet-name>UserLoginPageServlet</servlet-name>
-    <url-pattern>/UserLogin/*</url-pattern>
+    <url-pattern>/webui/userlogin/*</url-pattern>
   </servlet-mapping>
 
   <servlet>
@@ -67,7 +67,7 @@
   </servlet>
   <servlet-mapping>
     <servlet-name>UserPageServlet</servlet-name>
-    <url-pattern>/User/*</url-pattern>
+    <url-pattern>/webui/user/*</url-pattern>
   </servlet-mapping>
 
   <servlet>
@@ -76,7 +76,7 @@
   </servlet>
   <servlet-mapping>
     <servlet-name>CNSSubscriptionPageServlet</servlet-name>
-    <url-pattern>/CNSUser/SUBSCRIPTION/*</url-pattern>
+    <url-pattern>/webui/cnsuser/subscription/*</url-pattern>
   </servlet-mapping>
 
   <servlet>
@@ -85,7 +85,7 @@
   </servlet>
   <servlet-mapping>
     <servlet-name>CNSPublishToTopicPageServlet</servlet-name>
-    <url-pattern>/CNSUser/Publish/*</url-pattern>
+    <url-pattern>/webui/cnsuser/publish/*</url-pattern>
   </servlet-mapping>
 
   <servlet>
@@ -94,7 +94,7 @@
   </servlet>
   <servlet-mapping>
     <servlet-name>CNSEditTopicDisplayNamePage</servlet-name>
-    <url-pattern>/CNSUser/EditDisplayName/*</url-pattern>
+    <url-pattern>/webui/cnsuser/editdisplayname/*</url-pattern>
   </servlet-mapping>
 
   <servlet>
@@ -103,7 +103,7 @@
   </servlet>
   <servlet-mapping>
     <servlet-name>CNSEditTopicDeliveryPolicyPage</servlet-name>
-    <url-pattern>/CNSUser/EditDeliveryPolicy/*</url-pattern>
+    <url-pattern>/webui/cnsuser/editdeliverypolicy/*</url-pattern>
   </servlet-mapping>
 
   <servlet>
@@ -112,7 +112,7 @@
   </servlet>
   <servlet-mapping>
     <servlet-name>CNSEditSubscriptionDeliveryPolicyPage</servlet-name>
-    <url-pattern>/CNSUser/SUBSCRIPTION/EditDeliveryPolicy/*</url-pattern>
+    <url-pattern>/webui/cnsuser/subscription/editdeliverypolicy/*</url-pattern>
   </servlet-mapping>
 
   <servlet>
@@ -121,7 +121,7 @@
   </servlet>
   <servlet-mapping>
     <servlet-name>CNSTopicPermissionPage</servlet-name>
-    <url-pattern>/CNSUser/Permission/*</url-pattern>
+    <url-pattern>/webui/cnsuser/permission/*</url-pattern>
   </servlet-mapping>
 
   <servlet>
@@ -130,7 +130,7 @@
   </servlet>
   <servlet-mapping>
     <servlet-name>CNSTopicAddPermissionPage</servlet-name>
-    <url-pattern>/CNSUser/AddPermission/*</url-pattern>
+    <url-pattern>/webui/cnsuser/addpermission/*</url-pattern>
   </servlet-mapping>
 
   <servlet>
@@ -139,7 +139,7 @@
   </servlet>
   <servlet-mapping>
     <servlet-name>CNSWorkerStatePageServlet</servlet-name>
-    <url-pattern>/CNSWorkerState/*</url-pattern>
+    <url-pattern>/webui/cnsworkerstate/*</url-pattern>
   </servlet-mapping>
   
   <servlet>
@@ -148,7 +148,7 @@
   </servlet>
   <servlet-mapping>
     <servlet-name>CQSAPIStatePageServlet</servlet-name>
-    <url-pattern>/CQSAPIState/*</url-pattern>
+    <url-pattern>/webui/cqsapistate/*</url-pattern>
   </servlet-mapping>
 
   <servlet>
@@ -157,7 +157,7 @@
   </servlet>
   <servlet-mapping>
     <servlet-name>CQSQueueMessagesPageServlet</servlet-name>
-    <url-pattern>/CQSUser/MESSAGE/*</url-pattern>
+    <url-pattern>/webui/cqsuser/message/*</url-pattern>
   </servlet-mapping>
 
   <servlet>
@@ -166,7 +166,7 @@
   </servlet>
   <servlet-mapping>
     <servlet-name>CQSAddQueuePermissionPage</servlet-name>
-    <url-pattern>/CQSUser/AddPermission/*</url-pattern>
+    <url-pattern>/webui/cqsuser/addpermission/*</url-pattern>
   </servlet-mapping>
 
   <servlet>
@@ -175,7 +175,7 @@
   </servlet>
   <servlet-mapping>
     <servlet-name>CQSQueuePermissionsPage</servlet-name>
-    <url-pattern>/CQSUser/PERMISSIONS/*</url-pattern>
+    <url-pattern>/webui/cqsuser/permissions/*</url-pattern>
   </servlet-mapping>
 
   <servlet>

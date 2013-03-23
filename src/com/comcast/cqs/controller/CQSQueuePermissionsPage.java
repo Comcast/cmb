@@ -119,15 +119,12 @@ public class CQSQueuePermissionsPage extends AdminServletBase {
 			List<CMBStatement> stmts = policy.getStatements();
 			
 			if (stmts != null && stmts.size() > 0) {
-				out.println("<sapn class='content'><table border='1' width='70%'><tr><th>Effect</th><th>Principals</th><th>Actions</th><th>Label</th><th>&nbsp;</th></tr>");
+				out.println("<span class='content'><table border='1' width='70%'><tr><th>Effect</th><th>Principals</th><th>Actions</th><th>Label</th><th>&nbsp;</th></tr>");
 			}
 			
 			for (int i = 0; stmts != null && i < stmts.size(); i++) {
 				
-				out.print("<form action=\"");
-		        out.print(response.encodeURL("PERMISSIONS") + "?userId="+user.getUserId()+"&queueUrl="+queueUrl);
-		        out.print("\" ");
-		        out.println("method=POST>");
+				out.print("<form action=\"/webui/cqsuser/permissions/?userId="+user.getUserId()+"&queueUrl="+queueUrl+"\" method=POST>");
 				
 		        CMBStatement stmt = stmts.get(i);
 				
@@ -160,9 +157,9 @@ public class CQSQueuePermissionsPage extends AdminServletBase {
 			out.println("</table></span>");
 		}
 		
-		out.println("<p><a href='' onclick=\"window.open('" + response.encodeURL("AddPermission") + "?queueName="+ queueName + "&userId="+userId+"', 'AddQueuePermission', 'location=0,menubar=0,scrollbars=0,status=0,titlebar=0,toolbar=0,height=470,width=730')\">Add permission</a></p>");
-		out.println("<h5 style='text-align:center;'><a href='/ADMIN'>ADMIN HOME</a>");
-        out.println("<a href='/CQSUser?userId="+userId+"'>BACK TO QUEUE</a></h5>");
+		out.println("<p><a href='' onclick=\"window.open('/webui/cqsuser/addpermission/?queueName="+ queueName + "&userId="+userId+"', 'AddQueuePermission', 'location=0,menubar=0,scrollbars=0,status=0,titlebar=0,toolbar=0,height=470,width=730')\">Add permission</a></p>");
+		out.println("<h5 style='text-align:center;'><a href='/webui'>ADMIN HOME</a>");
+        out.println("<a href='/webui/cqsuser?userId="+userId+"'>BACK TO QUEUE</a></h5>");
 		out.println("</body></html>");
 		
 		CMBControllerServlet.valueAccumulator.deleteAllCounters();

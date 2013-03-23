@@ -122,10 +122,7 @@ public class CNSTopicPermissionPage extends AdminServletBase {
 			
 			for (int i = 0; stmts != null && i < stmts.size(); i++) {
 				
-				out.print("<form action=\"");
-		        out.print(response.encodeURL("Permission") + "?userId="+user.getUserId()+"&topicArn="+topicArn);
-		        out.print("\" ");
-		        out.println("method=POST>");
+				out.println("<form action=\"/webui/cnsuser/permission/?userId="+user.getUserId()+"&topicArn="+topicArn+"\" method=POST>");
 				
 		        CMBStatement stmt = stmts.get(i);
 				
@@ -158,9 +155,9 @@ public class CNSTopicPermissionPage extends AdminServletBase {
 			out.println("</table></span>");
 		}
 		
-		out.println("<p><a href='' onclick=\"window.open('" + response.encodeURL("AddPermission") + "?topicArn=" + topicArn + "&topicName=" + Util.getNameFromTopicArn(topicArn) + "&userId=" + userId + "', 'AddTopicPermission', 'location=0,menubar=0,scrollbars=0,status=0,titlebar=0,toolbar=0,height=470,width=730')\">Add permission</a></p>");
-		out.println("<h5 style='text-align:center;'><a href='/ADMIN'>ADMIN HOME</a>");
-        out.println("<a href='/CNSUser?userId="+userId+"&topicArn="+topicArn+"'>BACK TO TOPIC</a></h5>");
+		out.println("<p><a href='' onclick=\"window.open('/webui/cnsuser/addpermission/?topicArn=" + topicArn + "&topicName=" + Util.getNameFromTopicArn(topicArn) + "&userId=" + userId + "', 'AddTopicPermission', 'location=0,menubar=0,scrollbars=0,status=0,titlebar=0,toolbar=0,height=470,width=730')\">Add permission</a></p>");
+		out.println("<h5 style='text-align:center;'><a href='/webui'>ADMIN HOME</a>");
+        out.println("<a href='/webui/cnsuser?userId="+userId+"&topicArn="+topicArn+"'>BACK TO TOPIC</a></h5>");
 		out.println("</body></html>");
 		
 		CMBControllerServlet.valueAccumulator.deleteAllCounters();

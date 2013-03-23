@@ -153,11 +153,11 @@ public class CNSUserPageServlet extends AdminServletBase {
         
 		out.println("<p><table>");
 		out.println("<tr><td><b>Topic Name</b></td><td><b>Topic Display Name</b></td><td></td></tr>");
-        out.println("<form action=\"/CNSUser?userId=" + userId + "\" " + "method=POST>");
+        out.println("<form action=\"/webui/cnsuser?userId=" + userId + "\" " + "method=POST>");
         out.println("<tr><td><input type='text' name='topic' /></td><td><input type='text' name='display'><input type='hidden' name='userId' value='"+ userId + "'></td><td><input type='submit' value='Create' name='Create' /></td></tr></form></table></p>");
 		
 		out.println("<p><table>");
-        out.println("<form action=\"/CNSUser?userId=" + userId + "\" " + "method=POST>");
+        out.println("<form action=\"/webui/cnsuser?userId=" + userId + "\" " + "method=POST>");
         out.println("<tr><td><input type='hidden' name='userId' value='"+ userId + "'></td><td><input type='submit' value='DeleteAll' name='DeleteAll'/></td></tr></form></table></p>");
 
         ListTopicsResult listTopicResult = null;
@@ -199,26 +199,26 @@ public class CNSUserPageServlet extends AdminServletBase {
 			GetTopicAttributesResult getTopicAttributesResult = sns.getTopicAttributes(getTopicAttributesRequest);
 			Map<String, String> attributes = getTopicAttributesResult.getAttributes();
 
-			out.println("<form action=\"/CNSUser?userId="+userId+"\" method=POST>");
+			out.println("<form action=\"/webui/cnsuser?userId="+userId+"\" method=POST>");
         	out.println("<tr><td>"+i+"</td>");
         	out.println("<td>"+t.getTopicArn() +"<input type='hidden' name='arn' value="+t.getTopicArn()+"></td>");
         	out.println("<td>"+Util.getNameFromTopicArn(t.getTopicArn())+"</td>");
-        	out.println("<td><a href='' onclick=\"window.open('/CNSUser/EditDisplayName?topicArn="+ t.getTopicArn() + "&userId="+userId+"', 'EditDisplayName', 'height=300,width=700,toolbar=no')\">"+(attributes.get("DisplayName") == null ? "{unset}" : attributes.get("DisplayName"))+"</a></td>");
+        	out.println("<td><a href='' onclick=\"window.open('/webui/cnsuser/editdisplayname?topicArn="+ t.getTopicArn() + "&userId="+userId+"', 'EditDisplayName', 'height=300,width=700,toolbar=no')\">"+(attributes.get("DisplayName") == null ? "{unset}" : attributes.get("DisplayName"))+"</a></td>");
         	out.println("<td>"+user.getUserId()+"<input type='hidden' name='userId' value="+user.getUserId()+"></td>");
-        	out.println("<td><a href='/CNSUser/SUBSCRIPTION?userId="+ userId + "&topicArn=" + t.getTopicArn() + "'>Subscriptions</a></td>");
-        	out.println("<td><a href='/CNSUser/Publish?userId="+ userId + "&topicArn="+ t.getTopicArn() + "' target='_blank'>Publish</a></td>");
-        	out.println("<td><a href='' onclick=\"window.open('/CNSUser/EditDeliveryPolicy?topicArn="+ t.getTopicArn() + "&userId="+userId+"', 'EditDeliveryPolicy', 'height=630,width=580,toolbar=no')\">View/Edit Topic Delivery Policy</a></td>");
-		    out.println("<td><a href='/CNSUser/Permission?topicArn="+ t.getTopicArn() + "&userId=" + userId + "'>Permission</a></td>");
+        	out.println("<td><a href='/webui/cnsuser/subscription?userId="+ userId + "&topicArn=" + t.getTopicArn() + "'>Subscriptions</a></td>");
+        	out.println("<td><a href='/webui/cnsuser/publish?userId="+ userId + "&topicArn="+ t.getTopicArn() + "' target='_blank'>Publish</a></td>");
+        	out.println("<td><a href='' onclick=\"window.open('/webui/cnsuser/editdeliverypolicy?topicArn="+ t.getTopicArn() + "&userId="+userId+"', 'EditDeliveryPolicy', 'height=630,width=580,toolbar=no')\">View/Edit Topic Delivery Policy</a></td>");
+		    out.println("<td><a href='/webui/cnsuser/permission?topicArn="+ t.getTopicArn() + "&userId=" + userId + "'>Permission</a></td>");
         	out.println("<td><input type='submit' value='Delete' name='Delete' /></td></tr></form>");
         }
         
         out.println("</table></span></p>");
         
         if (listTopicResult != null && listTopicResult.getNextToken() != null) {
-        	out.println("<p><a href='/CNSUser?userId="+userId+"&nextToken="+response.encodeURL(listTopicResult.getNextToken())+"'>next&nbsp;&gt;</a></p>");
+        	out.println("<p><a href='/webui/cnsuser?userId="+userId+"&nextToken="+response.encodeURL(listTopicResult.getNextToken())+"'>next&nbsp;&gt;</a></p>");
         }
         
-        out.println("<h5 style='text-align:center;'><a href='/ADMIN'>ADMIN HOME</a></h5>");
+        out.println("<h5 style='text-align:center;'><a href='/webui'>ADMIN HOME</a></h5>");
         out.println("</body></html>");
         
         CMBControllerServlet.valueAccumulator.deleteAllCounters();

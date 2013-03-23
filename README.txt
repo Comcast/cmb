@@ -68,8 +68,8 @@ There are three different ways to access CNS / CQS services:
 The Admin UI is a simple Web UI for testing and administration purposes. To access the 
 CMB Admin UI use any web browser and go to
 
-CNS Admin URL: http://<cns_host>:<cns_port>/UserLogin
-CQS Admin URL: http://<cqs_host>:<cqs_port>/UserLogin
+CNS Admin URL: http://<cns_host>:<cns_port>/webui/
+CQS Admin URL: http://<cqs_host>:<cqs_port>/webui/
 
 2. Using the AWS SDK for Java or similar language bindings:
 
@@ -188,7 +188,7 @@ disk)!. To take advantage of the embedded Jetty option follow the instructions b
 
    ./bin/cmb.sh
 
-7. Check if web UI is available at localhost:6059/ADMIN/ (login with cns_internal / cns_internal)
+7. Check if web UI is available at localhost:6059/webui/ (login with cns_internal / cns_internal)
 
 --------------------------------------------------------------------------------------------
 - Detailed Installation Guide using Tomcat
@@ -391,7 +391,7 @@ disk)!. To take advantage of the embedded Jetty option follow the instructions b
    UI can be accessed through either the CNS Service Enpoint or the CQS Service 
    Endpoint, for example:
    
-   http://localhost:6059/UserLogin
+   http://localhost:6059/webui
    
 11.The CNS Service requires one or more CNS Worker Nodes (independent Java processes) 
    to function. 
@@ -420,7 +420,7 @@ disk)!. To take advantage of the embedded Jetty option follow the instructions b
 13.Test basic CNS and CQS service functionality, for example by accessing the CMB Admin UI
    using any web browser at logging in with the credentials used in step 10. 
    
-   http://localhost:6059/UserLogin
+   http://localhost:6059/webui/
    
 --------------------------------------------------------------------------------------------
 - Build CMB from Source
@@ -517,7 +517,7 @@ There is a CNSMonitor MBean exposing a number of CNS attributes including
 
 Finally the admin UI provides a dashboard like view of all CNS workers at
 
-  http://localhost:6059/CNSWorkerState
+  http://localhost:6059/webui/cnsworkerstate
 
 --------------------------------------------------------------------------------------------
 - Known Limitations

@@ -118,10 +118,7 @@ public class CNSTopicAddPermissionPage extends AdminServletBase {
 			
 			out.println("<body>");
 			out.println("<h1>Add Permission to Topic "+ topicName + "</h1>");
-			out.println("<form action=\"");
-			out.println(response.encodeURL("AddPermission") + "?topicArn="+topicArn);
-			out.println("\" ");
-			out.println("method=POST>");
+			out.println("<form action=\"/webui/cnsuser/addpermission/?topicArn="+topicArn+"\" method=POST>");
 			out.println("<p>This view allows direct manipulation of your topic access control policy.");
 			out.println("<table><tr><td colspan=2>&nbsp;</td></tr>");
 			out.println("<tr><td><b>Effect:</b></td><td><input type='radio' name='permission' value='add' checked>Add</td></tr>");

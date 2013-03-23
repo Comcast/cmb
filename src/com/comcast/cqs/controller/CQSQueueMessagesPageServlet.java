@@ -112,7 +112,7 @@ public class CQSQueueMessagesPageServlet extends AdminServletBase {
 		}
 		
         out.println("<p><table><tr><td><b>Send message:</b></td><td></td></tr>");
-        out.println("<form action=\""+response.encodeURL("MESSAGE") + "?userId="+userId+"&queueName="+queueName+"\" method=POST>");
+        out.println("<form action=\"/webui/cqsuser/message/?userId="+userId+"&queueName="+queueName+"\" method=POST>");
         out.println("<tr><td><textarea rows='3' cols='50' name='message'></textarea><input type='hidden' name='userId' value='"+ userId + "'></td><td valign='bottom'><input type='submit' value='Send' name='Send' /></td></tr></form></table></p>");
 
         List<CQSMessage> messages = null;
@@ -208,7 +208,7 @@ public class CQSQueueMessagesPageServlet extends AdminServletBase {
         	out.println("<td>"+ timeReceived + "</td>");
         	out.println("<td>"+ attributes.get("ApproximateReceiveCount") + "</td>");
         	out.println("<td>"+ attributes.get("SenderId") + "</td>");
-		    out.println("<td><form action=\"MESSAGE?userId="+user.getUserId()+"&queueName="+queueName+"&receiptHandle="+message.getReceiptHandle()+"\" method=POST><input type='submit' value='Delete' name='Delete'/><input type='hidden' name='queueUrl' value='"+ queueUrl+ "' /></form></td></tr>");
+		    out.println("<td><form action=\"/webui/cqsuser/message/?userId="+user.getUserId()+"&queueName="+queueName+"&receiptHandle="+message.getReceiptHandle()+"\" method=POST><input type='submit' value='Delete' name='Delete'/><input type='hidden' name='queueUrl' value='"+ queueUrl+ "' /></form></td></tr>");
 		    
 		    if (i == messages.size() - 1) {
 		    	nextHandle = message.getReceiptHandle();
@@ -220,18 +220,18 @@ public class CQSQueueMessagesPageServlet extends AdminServletBase {
         if (prevHandle != null) {
         	
         	if (previousHandle != null) {
-        		out.println("<a style='float:left;' href='" + response.encodeURL("MESSAGE") + "?userId="+user.getUserId()+"&queueName="+queueName+"&nextHandle="+previousHandle+"'>Prev</a>");
+        		out.println("<a style='float:left;' href='/webui/cqsuser/message/?userId="+user.getUserId()+"&queueName="+queueName+"&nextHandle="+previousHandle+"'>Prev</a>");
         	} else {
         		out.println("<a style='float:left;' href='javascript:history.back()'>Prev</a>");
         	}
         }
         
         if (messages != null && messages.size() > 0) {
-        	out.println("<a style='float:right;' href='" + response.encodeURL("MESSAGE") + "?userId="+user.getUserId()+"&queueName="+queueName+"&prevHandle="+nextHandle+"'>Next</a>");
+        	out.println("<a style='float:right;' href='/webui/cqsuser/message/?userId="+user.getUserId()+"&queueName="+queueName+"&prevHandle="+nextHandle+"'>Next</a>");
         }
         
-        out.println("<h5 style='text-align:center;'><a href='/ADMIN'>ADMIN HOME</a>");
-        out.println("<a href='/CQSUser?userId="+userId+"'>BACK TO QUEUE</a></h5>");
+        out.println("<h5 style='text-align:center;'><a href='/webui'>ADMIN HOME</a>");
+        out.println("<a href='/webui/cqsuser?userId="+userId+"'>BACK TO QUEUE</a></h5>");
         
         out.println("</body></html>");
 

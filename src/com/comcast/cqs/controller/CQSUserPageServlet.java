@@ -181,18 +181,18 @@ public class CQSUserPageServlet extends AdminServletBase {
 		out.println("<p><table>");
 		
 		out.println("<tr><td>Search queues with name prefix:</td><td></td></tr>");
-        out.println("<tr><form action=\"/CQSUser?userId="+user.getUserId() + "\" " + "method=POST>");
+        out.println("<tr><form action=\"/webui/cqsuser?userId="+user.getUserId() + "\" method=POST>");
         out.println("<td><input type='text' name='queueName' value='"+(useQueueNamePrefix?queueName:"")+"'/><input type='hidden' name='userId' value='"+ userId + "'/>");
         out.println("<input type='checkbox' " + (showQueueAttributes ? "checked='true' " : "") + "name='ShowAttributes' value='ShowAttributes'>Show Attributes</input>");
         out.println("<input type='checkbox' " + (showQueuesWithMessagesOnly ? "checked='true' " : "") + " name='ShowMessagesOnly' value='ShowMessagesOnly'>Only Queues With Messages</input></td>");
         out.println("<td><input type='submit' value='Search' name='Search' /></td></form></tr>");
 
         out.println("<tr><td>Create queue with name:</td><td></td></tr>");
-        out.println("<tr><form action=\"/CQSUser?userId="+user.getUserId() + "\" " + "method=POST>");
+        out.println("<tr><form action=\"/webui/cqsuser?userId="+user.getUserId() + "\" method=POST>");
         out.println("<td><input type='text' name='queueName' /><input type='hidden' name='userId' value='"+ userId + "'></td><td><input type='submit' value='Create' name='Create' /></td></form></tr>");
 
         out.println("<tr><td>Delete all queues:</td><td></td></tr>");
-        out.println("<tr><form action=\"/CQSUser?userId="+user.getUserId() + "\" " + "method=POST><td><input type='hidden' name='userId' value='"+ userId + "'/>");
+        out.println("<tr><form action=\"/webui/cqsuser?userId="+user.getUserId() + "\" " + "method=POST><td><input type='hidden' name='userId' value='"+ userId + "'/>");
         out.println("<input type='hidden' name='queueName' value='"+(queueName != null ? queueName : "")+"'/></td><td><input type='submit' value='DeleteAll' name='DeleteAll'/></td></form></tr>");
         
         out.println("</table></p>");
@@ -230,7 +230,7 @@ public class CQSUserPageServlet extends AdminServletBase {
 				}
 			}
 
-			out.println("<form action=\"/CQSUser?userId="+user.getUserId()+"\" method=POST>");
+			out.println("<form action=\"/webui/cqsuser?userId="+user.getUserId()+"\" method=POST>");
             out.println("<tr>");
         	out.println("<td>"+i+"</td>");
             out.println("<td>"+queueUrls.get(i)+"<input type='hidden' name='qUrl' value="+queueUrls.get(i)+"></td>");
@@ -245,13 +245,13 @@ public class CQSUserPageServlet extends AdminServletBase {
         	out.println("<td>"+(attributes.get("DelaySeconds") != null ? attributes.get("DelaySeconds"):"")+"</td>");
         	out.println("<td>"+(attributes.get("ApproximateNumberOfMessages") != null ? attributes.get("ApproximateNumberOfMessages"):"")+"</td>");
         	
-        	out.println("<td><a href='/CQSUser/MESSAGE?userId=" + user.getUserId()+ "&queueName=" + Util.getNameForAbsoluteQueueUrl(queueUrls.get(i)) + "'>Messages</a></td>");
-        	out.println("<td><a href='/CQSUser/PERMISSIONS?userId="+ user.getUserId() + "&queueName="+ Util.getNameForAbsoluteQueueUrl(queueUrls.get(i)) + "'>Permissions</a></td>");
+        	out.println("<td><a href='/webui/cqsuser/message?userId=" + user.getUserId()+ "&queueName=" + Util.getNameForAbsoluteQueueUrl(queueUrls.get(i)) + "'>Messages</a></td>");
+        	out.println("<td><a href='/webui/cqsuser/permissions?userId="+ user.getUserId() + "&queueName="+ Util.getNameForAbsoluteQueueUrl(queueUrls.get(i)) + "'>Permissions</a></td>");
 		    out.println("<td><input type='submit' value='Delete' name='Delete'/></td></tr></form>");
         }
 		
         out.println("</table></span></p>");
-        out.println("<h5 style='text-align:center;'><a href='/ADMIN'>ADMIN HOME</a></h5>");
+        out.println("<h5 style='text-align:center;'><a href='/webui'>ADMIN HOME</a></h5>");
         out.println("</body></html>");
         
         CMBControllerServlet.valueAccumulator.deleteAllCounters();
