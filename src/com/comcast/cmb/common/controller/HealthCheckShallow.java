@@ -68,7 +68,7 @@ public class HealthCheckShallow extends CQSAction {
 	        	if (RedisCachedCassandraPersistence.isAlive()) {
 	        		sb.append("\t<Redis>OK</Redis>\n");
 	        	} else {
-	        		sb.append("\t<Redis>Some or all shards down.</Redis>\n");
+	        		sb.append("\t<Redis>All shards down.</Redis>\n");
 	        		healthy = false;
 	        	}
 	        	

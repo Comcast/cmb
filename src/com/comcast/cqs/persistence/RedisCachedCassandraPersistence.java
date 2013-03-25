@@ -1444,30 +1444,30 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
 	}
 	
 	public static boolean isAlive() {
-	    
+
+    	boolean atLeastOneShardIsUp = false;
 		boolean brokenJedis = false;
-	    ShardedJedis jedis = getResource();
-	    
-	    try {
-	    
-	    	Collection<Jedis> shards = jedis.getAllShards();
-	    	
-	    	boolean allShardsActive = true;
+		ShardedJedis jedis = getResource();
+		
+		try {
+
+			Collection<Jedis> shards = jedis.getAllShards();
 	    	
 	    	for (Jedis shard : shards) {
-	    		shard.set("test", "test");
-	    		allShardsActive &= shard.get("test").equals("test");
+	    	    try {
+		    		shard.set("test", "test");
+		    		atLeastOneShardIsUp |= shard.get("test").equals("test");
+	    	    } catch (JedisException ex) {
+	    	    	brokenJedis = true;
+	    	    }	    	    
 	    	}
-	    	
-	    	return allShardsActive;
-	    	
-	    } catch (JedisException ex) {
-	    
+    	
+		} catch (Exception ex) {
 	    	brokenJedis = true;
-	        throw ex;
-	    
 	    } finally {
 	        returnResource(jedis, brokenJedis);
 	    }
+    	
+    	return atLeastOneShardIsUp;
 	}
 }
