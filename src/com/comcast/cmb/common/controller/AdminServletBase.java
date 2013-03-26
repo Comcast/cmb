@@ -52,8 +52,8 @@ public abstract class AdminServletBase extends HttpServlet {
 
     private static final long serialVersionUID = 1L;
     
-	public static final String cnsServiceBaseUrl = CMBProperties.getInstance().getCNSServerUrl();
-	public static final String cqsServiceBaseUrl = CMBProperties.getInstance().getCQSServerUrl();
+	public static final String cnsServiceBaseUrl = CMBProperties.getInstance().getCNSServiceUrl();
+	public static final String cqsServiceBaseUrl = CMBProperties.getInstance().getCQSServiceUrl();
 	
     protected volatile User user = null;
     
@@ -158,10 +158,10 @@ public abstract class AdminServletBase extends HttpServlet {
         awsCredentials = new BasicAWSCredentials(user.getAccessKey(), user.getAccessSecret());
         
         sqs = new AmazonSQSClient(awsCredentials);
-        sqs.setEndpoint(CMBProperties.getInstance().getCQSServerUrl());
+        sqs.setEndpoint(CMBProperties.getInstance().getCQSServiceUrl());
         
         sns = new AmazonSNSClient(awsCredentials);
-        sns.setEndpoint(CMBProperties.getInstance().getCNSServerUrl());
+        sns.setEndpoint(CMBProperties.getInstance().getCNSServiceUrl());
     }
     
     protected void simpleHeader(HttpServletRequest request, PrintWriter out, String title) throws ServletException {

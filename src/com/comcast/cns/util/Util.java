@@ -132,7 +132,7 @@ public class Util {
     	ByteArrayOutputStream out = new ByteArrayOutputStream();
 		Writer writer = new PrintWriter(out); 
     	JSONWriter jw = new JSONWriter(writer);
-    	String cnsServiceLocation = CMBProperties.getInstance().getCNSServerUrl();
+    	String cnsServiceLocation = CMBProperties.getInstance().getCNSServiceUrl();
     	SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ"); //Time is in UTC zone. i,e no offset
         Date now = new Date();
 
@@ -176,7 +176,7 @@ public class Util {
     	ByteArrayOutputStream out = new ByteArrayOutputStream();
 		Writer writer = new PrintWriter(out); 
     	JSONWriter jw = new JSONWriter(writer);
-    	String cnsServiceLocation = CMBProperties.getInstance().getCNSServerUrl();
+    	String cnsServiceLocation = CMBProperties.getInstance().getCNSServiceUrl();
     	SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ"); //Time is in UTC zone. i,e no offset
         Date now = new Date();
 

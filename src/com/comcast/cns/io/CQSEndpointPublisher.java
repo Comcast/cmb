@@ -61,7 +61,7 @@ public class CQSEndpointPublisher implements IEndpointPublisher {
 		
         awsCredentials = new BasicAWSCredentials(user.getAccessKey(), user.getAccessSecret());
         sqs = new AmazonSQSClient(awsCredentials);
-		sqs.setEndpoint(CMBProperties.getInstance().getCQSServerUrl());
+		sqs.setEndpoint(CMBProperties.getInstance().getCQSServiceUrl());
 		
 		String url;
 		

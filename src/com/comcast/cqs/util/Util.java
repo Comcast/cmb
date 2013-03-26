@@ -89,7 +89,7 @@ public class Util {
 			return null;
 		}
 		
-		String url = CMBProperties.getInstance().getCQSServerUrl();
+		String url = CMBProperties.getInstance().getCQSServiceUrl();
 		
 		if (!url.endsWith("/")) {
 			url += "/";
@@ -141,7 +141,7 @@ public class Util {
 	public static String getAbsoluteQueueUrlForName(String queueName, String userId) {
 		
 		
-		String url = CMBProperties.getInstance().getCQSServerUrl();
+		String url = CMBProperties.getInstance().getCQSServiceUrl();
 		
 		if (!url.endsWith("/")) {
 			url += "/";

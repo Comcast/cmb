@@ -196,7 +196,7 @@ public class CQSLongPollSenderNG {
 	        					stats.setDataCenter(dataCenter);
 	        				}
 	        				
-	        				if (now-timestamp < 5*60*1000 && dataCenter.equals(CMBProperties.getInstance().getCMBDataCenter()) && !endpoint.equals(localhost + ":" + (new URL(CMBProperties.getInstance().getCQSServerUrl())).getPort())) {
+	        				if (now-timestamp < 5*60*1000 && dataCenter.equals(CMBProperties.getInstance().getCMBDataCenter()) && !endpoint.equals(localhost + ":" + (new URL(CMBProperties.getInstance().getCQSServiceUrl())).getPort())) {
 	        					cqsAPIServers.put(endpoint.substring(0, endpoint.indexOf(":")) + ":" + longpollPort, stats);
 		        				logger.info("event=found_active_cqs_endpoint endpoint=" + endpoint);
 	        				}

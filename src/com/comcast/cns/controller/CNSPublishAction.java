@@ -114,7 +114,7 @@ public class CNSPublishAction extends CNSAction {
 		
 		if (sqs == null) {
             sqs = new AmazonSQSClient(awsCredentials);
-            sqs.setEndpoint(CMBProperties.getInstance().getCQSServerUrl());
+            sqs.setEndpoint(CMBProperties.getInstance().getCQSServiceUrl());
 		}
 		
     	String userId = user.getUserId();

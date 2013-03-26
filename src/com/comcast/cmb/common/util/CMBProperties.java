@@ -34,6 +34,9 @@ public class CMBProperties {
 	    SYNC, ASYNC 
 	}
 	
+	private final int cnsServerPort;
+	private final int cqsServerPort;
+	
 	private final boolean cnsPublisherEnabled;
 	private final String cnsPublisherMode;
 	
@@ -53,8 +56,8 @@ public class CMBProperties {
 
 	private final int endpointFailureCountToSuspensionThreshold;
 	
-    private final String cnsServerUrl;
-	private final String cqsServerUrl;
+    private final String cnsServiceUrl;
+	private final String cqsServiceUrl;
 	private final String cnsAdminUrl;
 	private final String cqsAdminUrl;
 	
@@ -186,6 +189,9 @@ public class CMBProperties {
 			FileInputStream fileStream = new FileInputStream(file);
 			props.load(fileStream);
 			
+			cqsServerPort = Integer.parseInt(props.getProperty("cmb.cqs.server.port", "6059"));
+			cnsServerPort = Integer.parseInt(props.getProperty("cmb.cns.server.port", "6061"));
+			
 			cnsPublisherEnabled = Boolean.parseBoolean(props.getProperty("cmb.cns.publisherEnabled", "true"));
 			cnsPublisherMode = props.getProperty("cmb.cns.publisherMode", "Consumer,Producer");
 			
@@ -196,10 +202,10 @@ public class CMBProperties {
 			cqsLongPollPort = Integer.parseInt(props.getProperty("cmb.cqs.longpoll.port", "5555"));
 			cqsLongPollEnabled = Boolean.parseBoolean(props.getProperty("cmb.cqs.longpoll.enable", "true"));
 			
-			cnsServerUrl = props.getProperty("cmb.cns.server.url");
-			cqsServerUrl = props.getProperty("cmb.cqs.server.url");
-			cnsAdminUrl = props.getProperty("cmb.cns.admin.url", cnsServerUrl);
-			cqsAdminUrl = props.getProperty("cmb.cqs.admin.url", cqsServerUrl);
+			cnsServiceUrl = props.getProperty("cmb.cns.service.url", "http://localhost:6061/");
+			cqsServiceUrl = props.getProperty("cmb.cqs.service.url", "http://localhost:6059/");
+			cnsAdminUrl = props.getProperty("cmb.cns.admin.url", cnsServiceUrl);
+			cqsAdminUrl = props.getProperty("cmb.cqs.admin.url", cqsServiceUrl);
 
 			cnsUserName = props.getProperty("cmb.cns.user.name", "cns_internal");
 			cnsUserPassword = props.getProperty("cmb.cns.user.password", "cns_internal");
@@ -323,8 +329,8 @@ public class CMBProperties {
 		return instance;
 	}
 	
-	public String getCNSServerUrl() {
-		return cnsServerUrl;
+	public String getCNSServiceUrl() {
+		return cnsServiceUrl;
 	}
 	
 	public String getCNSAdminUrl() {
@@ -339,8 +345,8 @@ public class CMBProperties {
 		return clusterUrl;
 	}
 	
-	public String getCQSServerUrl() {
-		return cqsServerUrl;
+	public String getCQSServiceUrl() {
+		return cqsServiceUrl;
 	}
 	
 	public String getCQSAdminUrl() {
@@ -709,5 +715,13 @@ public class CMBProperties {
 	
 	public String getCNSPublisherMode() {
 		return this.cnsPublisherMode;
+	}
+
+	public int getCNSServerPort() {
+		return cnsServerPort;
+	}
+
+	public int getCQSServerPort() {
+		return cqsServerPort;
 	}
 }

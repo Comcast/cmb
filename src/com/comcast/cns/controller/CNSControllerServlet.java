@@ -27,7 +27,6 @@ import javax.management.ObjectName;
 import javax.servlet.AsyncContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 import org.apache.log4j.Logger;
 
@@ -46,7 +45,6 @@ import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cns.model.CNSTopicAttributes;
 import com.comcast.cns.persistence.ICNSSubscriptionPersistence;
 import com.comcast.cns.persistence.ICNSTopicPersistence;
-import com.comcast.cqs.controller.CQSManageServiceAction;
 
 /**
  * Servlet for handling all CNS actions
@@ -178,7 +176,6 @@ public class CNSControllerServlet extends CMBControllerServlet {
     protected boolean handleAction(String action, User user, AsyncContext asyncContext) throws Exception {
     	
         HttpServletRequest request = (HttpServletRequest)asyncContext.getRequest();
-        HttpServletResponse response = (HttpServletResponse)asyncContext.getResponse();
     	
         long now = System.currentTimeMillis();
     	
@@ -190,27 +187,19 @@ public class CNSControllerServlet extends CMBControllerServlet {
 
         		// write ping
         		
-        		String hostAddress = InetAddress.getLocalHost().getHostAddress();
-        		String serviceUrl = CMBProperties.getInstance().getCNSServerUrl();
-        		String servicePort = "";
+        		String serverIp = InetAddress.getLocalHost().getHostAddress();
+        		String serverPort = CMBProperties.getInstance().getCNSServerPort() + "";
         		
-        		int startIdx = serviceUrl.indexOf(":", "https://".length());
-        		int endIdx = serviceUrl.indexOf("/", startIdx);
-        		
-        		if (startIdx>0 && endIdx>startIdx) {
-        			servicePort = serviceUrl.substring(startIdx+1, endIdx);
-        		}
-        		
-        		logger.info("event=ping version=" + CMBControllerServlet.VERSION + " ip=" + hostAddress);
+        		logger.info("event=ping version=" + CMBControllerServlet.VERSION + " ip=" + serverIp + " port=" + serverPort);
         		
         		Map<String, String> values = new HashMap<String, String>();
         		
 	        	values.put("timestamp", now + "");
 	        	values.put("jmxport", System.getProperty("com.sun.management.jmxremote.port", "0"));
 	        	values.put("dataCenter", CMBProperties.getInstance().getCMBDataCenter());
-	        	values.put("serviceUrl", serviceUrl);
+	        	values.put("serviceUrl", CMBProperties.getInstance().getCNSServiceUrl());
 	        	
-                cassandraHandler.insertOrUpdateRow(hostAddress + ":" + servicePort, "CNSAPIServers", values, HConsistencyLevel.QUORUM);
+                cassandraHandler.insertOrUpdateRow(serverIp + ":" + serverPort, "CNSAPIServers", values, HConsistencyLevel.QUORUM);
                 
         	} catch (Exception ex) {
         		logger.warn("event=ping_failed", ex);

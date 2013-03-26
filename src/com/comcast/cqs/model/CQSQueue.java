@@ -48,7 +48,7 @@ public class CQSQueue {
         this.region = CMBProperties.getInstance().getRegion();
 
         this.setArn("arn:cmb:cqs:" + region + ":" + ownerId + ":" + name);
-        String serviceUrl = CMBProperties.getInstance().getCQSServerUrl();
+        String serviceUrl = CMBProperties.getInstance().getCQSServiceUrl();
         
         if (serviceUrl != null && serviceUrl.endsWith("/")) {
         	serviceUrl = serviceUrl.substring(0, serviceUrl.length()-1);

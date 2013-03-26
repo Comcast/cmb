@@ -68,7 +68,7 @@ public class CQSHandler {
         awsCredentials = new BasicAWSCredentials(cnsInternalUser.getAccessKey(), cnsInternalUser.getAccessSecret());
  		
         sqs = new AmazonSQSClient(awsCredentials);
-        sqs.setEndpoint(CMBProperties.getInstance().getCQSServerUrl());
+        sqs.setEndpoint(CMBProperties.getInstance().getCQSServiceUrl());
 
         initialized = true;
     }

@@ -15,8 +15,6 @@
  */
 package com.comcast.cmb.common.controller;
 
-import java.net.URL;
-
 import org.apache.log4j.Logger;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.webapp.WebAppContext;
@@ -51,8 +49,7 @@ public class CMB {
     	
     	if (CMBProperties.getInstance().getCQSServiceEnabled()) {
         	
-        	URL cqsUrl = new URL(CMBProperties.getInstance().getCQSServerUrl());
-        	Server cqsServer = new Server(cqsUrl.getPort());
+        	Server cqsServer = new Server(CMBProperties.getInstance().getCQSServerPort());
 
         	WebAppContext cqsWebContext = new WebAppContext();
 	
@@ -65,7 +62,7 @@ public class CMB {
 	        cqsServer.setHandler(cqsWebContext);
 	        cqsServer.start();
 	        
-	        logger.info("event=launched_cqs_service_endpoint port=" + cqsUrl.getPort());
+	        logger.info("event=launched_cqs_service_endpoint port=" + CMBProperties.getInstance().getCQSServerPort());
 	        
 	        CQSControllerServlet.writeHeartBeat();
 	        
@@ -79,8 +76,7 @@ public class CMB {
 
     	if (CMBProperties.getInstance().getCNSServiceEnabled()) {
 
-        	URL cnsUrl = new URL(CMBProperties.getInstance().getCNSServerUrl());
-        	Server cnsServer = new Server(cnsUrl.getPort());
+        	Server cnsServer = new Server(CMBProperties.getInstance().getCNSServerPort());
 	    	
 	        WebAppContext cnsWebContext = new WebAppContext();
 	
@@ -93,7 +89,7 @@ public class CMB {
 	        cnsServer.setHandler(cnsWebContext);
 	        cnsServer.start();
 
-	        logger.info("event=launched_cns_service_endpoint port=" + cnsUrl.getPort());
+	        logger.info("event=launched_cns_service_endpoint port=" + CMBProperties.getInstance().getCNSServerPort());
     	}
     	
     	// launch cns publish worker if enabled
