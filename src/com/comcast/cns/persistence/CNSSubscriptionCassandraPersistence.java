@@ -44,6 +44,7 @@ import com.comcast.cns.model.CNSSubscriptionAttributes;
 import com.comcast.cns.model.CNSTopic;
 import com.comcast.cns.model.CNSSubscription.CnsSubscriptionProtocol;
 import com.comcast.cns.util.Util;
+import com.comcast.cqs.model.CQSQueue;
 
 /**
  * 
@@ -232,6 +233,17 @@ public class CNSSubscriptionCassandraPersistence extends CassandraPersistence im
 		
 		if (t == null) {
 			throw new TopicNotFoundException("Resource not found.");
+		}
+		
+		// check if queue exists for cqs endpoints
+
+		if (protocol.equals(CnsSubscriptionProtocol.cqs)) {
+			
+			CQSQueue queue = PersistenceFactory.getQueuePersistence().getQueue(com.comcast.cqs.util.Util.getRelativeQueueUrlForArn(endpoint));
+			
+			if (queue == null) {
+				throw new CMBException(CMBErrorCodes.NotFound, "Queue with arn " + endpoint + " does not exist.");
+			}
 		}
 		
 		subscription.setArn(Util.generateCnsTopicSubscriptionArn(topicArn));
