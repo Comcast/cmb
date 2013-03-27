@@ -148,10 +148,12 @@ public class UserCassandraPersistence extends CassandraPersistence implements IU
 		
 		if (rows == null || rows.getCount() == 0) {
 			return null;
-		} else if (rows.getCount() > 1) {
+		} 
+		
+		/*else if (rows.getCount() > 1) {
 			logger.error("event=read_user query=" + query);
 			throw new PersistenceException(CQSErrorCodes.InvalidQueryParameter, "Failed to read user");
-		}
+		}*/
 
 		me.prettyprint.hector.api.beans.Row<String, String, String> row = rows.getList().get(0);
 
