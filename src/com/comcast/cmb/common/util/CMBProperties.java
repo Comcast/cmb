@@ -78,6 +78,7 @@ public class CMBProperties {
 
 	private final boolean hectorAutoDiscovery;
     private final int hectorAutoDiscoveryDelaySeconds;
+    private final String hectorAutoDiscoveryDataCenter;
 	
 	private final String region;
     
@@ -194,6 +195,8 @@ public class CMBProperties {
 			
 			cnsPublisherEnabled = Boolean.parseBoolean(props.getProperty("cmb.cns.publisherEnabled", "true"));
 			cnsPublisherMode = props.getProperty("cmb.cns.publisherMode", "Consumer,Producer");
+			
+			hectorAutoDiscoveryDataCenter = props.getProperty("cmb.hector.autoDiscoveryDataCenter");
 			
 			cmbDataCenter = props.getProperty("cmb.dc.name", "default");
 			
@@ -321,6 +324,10 @@ public class CMBProperties {
 		}
 	}
 	
+	public String getHectorAutoDiscoveryDataCenter() {
+		return hectorAutoDiscoveryDataCenter;
+	}
+
 	public int getEndpointFailureCountToSuspensionThreshold() {
 		return endpointFailureCountToSuspensionThreshold;
 	}

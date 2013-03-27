@@ -138,6 +138,12 @@ public class CassandraPersistence {
 	    
 	    cassandraHostConfigurator.setAutoDiscoverHosts(CMBProperties.getInstance().isHectorAutoDiscovery());
 	    cassandraHostConfigurator.setAutoDiscoveryDelayInSeconds(CMBProperties.getInstance().getHectorAutoDiscoveryDelaySeconds());
+	    
+	    String dataCenter = CMBProperties.getInstance().getHectorAutoDiscoveryDataCenter();
+	    
+	    if (dataCenter != null && !dataCenter.equals("")) {
+	    	cassandraHostConfigurator.setAutoDiscoveryDataCenter(dataCenter);
+	    }
 
 	    // some other settings we may be interested in down the road, see here for more details:
 	    // https://github.com/rantav/hector/wiki/User-Guide
