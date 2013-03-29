@@ -54,9 +54,9 @@ public class HealthCheckShallow extends CQSAction {
     public boolean doAction(User user, AsyncContext asyncContext) throws Exception {     
     	
         HttpServletResponse response = (HttpServletResponse)asyncContext.getResponse();
-
-    	boolean healthy = true;
         
+    	boolean healthy = true;
+    	
         StringBuffer sb = new StringBuffer("");
         
         sb.append("<HealthCheckResponse>\n");
