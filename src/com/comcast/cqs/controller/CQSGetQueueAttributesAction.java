@@ -69,7 +69,7 @@ public class CQSGetQueueAttributesAction extends CQSAction {
         
         	if (!attribute.equals("All") && !attribute.equals(CQSConstants.VISIBILITY_TIMEOUT) && !attribute.equals(CQSConstants.POLICY) && !attribute.equals(CQSConstants.QUEUE_ARN)  
                 && !attribute.equals(CQSConstants.MAXIMUM_MESSAGE_SIZE) && !attribute.equals(CQSConstants.MESSAGE_RETENTION_PERIOD) && !attribute.equals(CQSConstants.DELAY_SECONDS) 
-                && !attribute.equals(CQSConstants.APPROXIMATE_NUMBER_OF_MESSAGES)) {
+                && !attribute.equals(CQSConstants.APPROXIMATE_NUMBER_OF_MESSAGES) && !attribute.equals(CQSConstants.RECEIVE_MESSAGE_WAIT_TIME_SECONDS)) {
                 throw new CMBException(CMBErrorCodes.InvalidAttributeName, "Unknown attribute " + attribute);
             }
         }

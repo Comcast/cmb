@@ -39,8 +39,9 @@ public class CQSQueue {
     private long createdTime;
     private long modifiedTime;
     private int numMessages;
+    private int receiveMessageWaitTimeSeconds = 0;
     
-    public CQSQueue(String name, String ownerId) {
+	public CQSQueue(String name, String ownerId) {
     	
         this.name = name;
         this.ownerUserId = ownerId;
@@ -165,5 +166,13 @@ public class CQSQueue {
 
 	public void setServiceEndpoint(String serviceEndpoint) {
 		this.serviceEndpoint = serviceEndpoint;
+	}
+
+	public int getReceiveMessageWaitTimeSeconds() {
+		return receiveMessageWaitTimeSeconds;
+	}
+
+	public void setReceiveMessageWaitTimeSeconds(int receiveMessageWaitTimeSeconds) {
+		this.receiveMessageWaitTimeSeconds = receiveMessageWaitTimeSeconds;
 	}
 }

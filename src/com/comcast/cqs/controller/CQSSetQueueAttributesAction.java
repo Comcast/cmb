@@ -85,7 +85,7 @@ public class CQSSetQueueAttributesAction extends CQSAction {
             	int v = Integer.parseInt(value);
                 
             	if (v < 0 || v > CMBProperties.getInstance().getCQSMaxVisibilityTimeOut()) {
-                    throw new CMBException(CMBErrorCodes.InvalidAttributeValue, "VisibilityTimeout must be from 0 to 12 hours");
+                    throw new CMBException(CMBErrorCodes.InvalidAttributeValue, CQSConstants.VISIBILITY_TIMEOUT + " must be from 0 to " + CMBProperties.getInstance().getCQSMaxVisibilityTimeOut() + " seconds");
                 }
                 
             	queue.setVisibilityTO(v);
@@ -117,7 +117,7 @@ public class CQSSetQueueAttributesAction extends CQSAction {
             	int v = Integer.parseInt(value);
                 
             	if (v > CMBProperties.getInstance().getCQSMaxMessageSize()) {
-                    throw new CMBException(CMBErrorCodes.InvalidAttributeValue, "MaximumMessageSize cannot be over " + CMBProperties.getInstance().getCQSMaxMessageSize());
+                    throw new CMBException(CMBErrorCodes.InvalidAttributeValue, CQSConstants.MAXIMUM_MESSAGE_SIZE + " cannot be over " + CMBProperties.getInstance().getCQSMaxMessageSize());
                 }
                 
             	queue.setMaxMsgSize(v);
@@ -132,7 +132,7 @@ public class CQSSetQueueAttributesAction extends CQSAction {
             	int v = Integer.parseInt(value);
                 
             	if (v < CMBProperties.getInstance().getCQSMinMessageRetentionPeriod() || v > CMBProperties.getInstance().getCQSMaxMessageRetentionPeriod()) {
-                    throw new CMBException(CMBErrorCodes.InvalidAttributeValue, "MessageRetentionPeriod must be from 1 minute to 14 days");
+                    throw new CMBException(CMBErrorCodes.InvalidAttributeValue, CQSConstants.MESSAGE_RETENTION_PERIOD + " must be from 1 minute to 14 days");
                 }
             	
                 queue.setMsgRetentionPeriod(v);
@@ -147,11 +147,26 @@ public class CQSSetQueueAttributesAction extends CQSAction {
             	int v = Integer.parseInt(value);
                 
             	if (v < 0 || v > CMBProperties.getInstance().getCQSMaxMessageDelaySeconds()) {
-                    throw new CMBException(CMBErrorCodes.InvalidAttributeValue, "DelaySeconds must be less than 15 minutes");
+                    throw new CMBException(CMBErrorCodes.InvalidAttributeValue, CQSConstants.DELAY_SECONDS + " must be less than " + CMBProperties.getInstance().getCQSMaxMessageDelaySeconds() + " seconds");
                 }
                 
             	queue.setDelaySeconds(v);
                 postVars.put(CQSConstants.COL_DELAY_SECONDS, attributes.get(attributeName));
+           
+            } else if (attributeName.equals(CQSConstants.RECEIVE_MESSAGE_WAIT_TIME_SECONDS)) {
+                
+            	if (!Util.isParsableToInt(value)) {
+                    throw new CMBException(CMBErrorCodes.InvalidAttributeValue, "Invalid value " + value + " for the parameter " + attributeName);
+                }
+                
+            	int v = Integer.parseInt(value);
+                
+            	if (v < 0 || v > 20) {
+                    throw new CMBException(CMBErrorCodes.InvalidAttributeValue, CQSConstants.RECEIPT_HANDLE + " must be 20 seconds or less");
+                }
+                
+            	queue.setReceiveMessageWaitTimeSeconds(v);
+                postVars.put(CQSConstants.COL_WAIT_TIME_SECONDS, attributes.get(attributeName));
            
             } else {
                 throw new CMBException(CMBErrorCodes.InvalidAttributeName, "Attribute.Name: " + attributeName + " is not a valid attribute");

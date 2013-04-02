@@ -171,7 +171,13 @@ public class Util {
 			return null;
 		}
 		
-		return elements[3] + "/" + elements[4];
+		String relativeUrl = elements[3] + "/" + elements[4];
+		
+		if (relativeUrl.contains("?")) {
+			relativeUrl = relativeUrl.substring(0, relativeUrl.indexOf("?")-1);
+		}
+		
+		return relativeUrl;
 	}
 
 	

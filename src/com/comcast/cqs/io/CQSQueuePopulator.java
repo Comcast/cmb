@@ -90,6 +90,7 @@ public class CQSQueuePopulator extends CQSPopulator {
             out.append("\t\t").append(fillAttribute(CQSConstants.QUEUE_ARN, "" + queue.getArn())).append("\n");
             out.append("\t\t").append(fillAttribute(CQSConstants.MAXIMUM_MESSAGE_SIZE, "" + queue.getMaxMsgSize())).append("\n");
             out.append("\t\t").append(fillAttribute(CQSConstants.DELAY_SECONDS, "" + queue.getDelaySeconds())).append("\n");
+            out.append("\t\t").append(fillAttribute(CQSConstants.RECEIVE_MESSAGE_WAIT_TIME_SECONDS, "" + queue.getReceiveMessageWaitTimeSeconds())).append("\n");
             out.append("\t\t").append(fillAttribute(CQSConstants.APPROXIMATE_NUMBER_OF_MESSAGES, "" + RedisCachedCassandraPersistence.getInstance().getQueueMessageCount(queue.getRelativeUrl(), true))).append("\n");
 
         } else {
@@ -112,6 +113,9 @@ public class CQSQueuePopulator extends CQSPopulator {
                 }
                 if (attributeName.equals(CQSConstants.DELAY_SECONDS)) {
                     out.append("\t\t").append(fillAttribute(attributeName, "" + queue.getDelaySeconds())).append("\n");
+                }
+                if (attributeName.equals(CQSConstants.RECEIVE_MESSAGE_WAIT_TIME_SECONDS)) {
+                    out.append("\t\t").append(fillAttribute(attributeName, "" + queue.getReceiveMessageWaitTimeSeconds())).append("\n");
                 }
                 if (attributeName.equals(CQSConstants.APPROXIMATE_NUMBER_OF_MESSAGES)) {
                 	out.append("\t\t").append(fillAttribute(attributeName, "" + RedisCachedCassandraPersistence.getInstance().getQueueMessageCount(queue.getRelativeUrl(), true))).append("\n");

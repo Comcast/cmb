@@ -174,14 +174,35 @@ public class CQSCreateQueueAction extends CQSAction {
                 try {
                 	delaySeconds = Integer.parseInt(attributeValue);
                 } catch (NumberFormatException ex) {
-                    throw new CMBException(CMBErrorCodes.InvalidParameterValue, "DelaySeconds must be integer value");
+                    throw new CMBException(CMBErrorCodes.InvalidParameterValue, CQSConstants.DELAY_SECONDS + " must be integer value");
                 }
                 
         		if (delaySeconds < 0 || delaySeconds > CMBProperties.getInstance().getCQSMaxMessageDelaySeconds()) {
-                    throw new CMBException(CMBErrorCodes.InvalidParameterValue, "DelaySeconds should be from 0 to " + CMBProperties.getInstance().getCQSMaxMessageDelaySeconds());
+                    throw new CMBException(CMBErrorCodes.InvalidParameterValue, CQSConstants.DELAY_SECONDS + " should be from 0 to " + CMBProperties.getInstance().getCQSMaxMessageDelaySeconds());
         		}
                 
                 newQueue.setDelaySeconds(delaySeconds);
+                
+            } else if (attributeName.equals(CQSConstants.RECEIVE_MESSAGE_WAIT_TIME_SECONDS)) {
+            	
+                if (existingQueue != null && existingQueue.getReceiveMessageWaitTimeSeconds() != Integer.parseInt(attributeValue)) {
+                    throwQueueExistsError = true;
+                    break;
+                }
+                
+                int receiveMessageWaitTimeSeconds = 0;
+                
+                try {
+                	receiveMessageWaitTimeSeconds = Integer.parseInt(attributeValue);
+                } catch (NumberFormatException ex) {
+                    throw new CMBException(CMBErrorCodes.InvalidParameterValue, CQSConstants.RECEIVE_MESSAGE_WAIT_TIME_SECONDS + " must be integer value");
+                }
+                
+        		if (receiveMessageWaitTimeSeconds < 0 || receiveMessageWaitTimeSeconds > 20) {
+                    throw new CMBException(CMBErrorCodes.InvalidParameterValue, CQSConstants.RECEIVE_MESSAGE_WAIT_TIME_SECONDS + " should be from 0 to " + CMBProperties.getInstance().getCQSMaxMessageDelaySeconds());
+        		}
+                
+                newQueue.setReceiveMessageWaitTimeSeconds(receiveMessageWaitTimeSeconds);
                 
             } else {
                 throw new CMBException(CMBErrorCodes.InvalidRequest, "Attribute: " + attributeName + " is not a valid attribute");

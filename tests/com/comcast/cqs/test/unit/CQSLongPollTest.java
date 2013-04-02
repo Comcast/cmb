@@ -36,6 +36,7 @@ import com.amazonaws.services.sqs.model.DeleteQueueRequest;
 import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
 import com.amazonaws.services.sqs.model.ReceiveMessageResult;
 import com.amazonaws.services.sqs.model.SendMessageRequest;
+import com.amazonaws.services.sqs.model.SetQueueAttributesRequest;
 import com.comcast.cmb.common.controller.CMBControllerServlet;
 import com.comcast.cmb.common.model.User;
 import com.comcast.cmb.common.persistence.IUserPersistence;
@@ -57,9 +58,8 @@ public class CQSLongPollTest {
     
     //todo: put url of primary and alternate cqs service here
     
-    private String alternateCqsServiceUrl = "http://sdev44:6059/";
-    private String cqsServiceUrl = "http://localhost:7070/";
-    //private String alternateCqsServiceUrl = "http://localhost:6059/";
+    private String alternateCqsServiceUrl = "http://localhost:7059/";
+    private String cqsServiceUrl = "http://localhost:6059/";
 
     private AmazonSQS alternateSqs = null;
     
@@ -158,6 +158,54 @@ public class CQSLongPollTest {
 			logger.info("calling receive message");
 			
 			ReceiveMessageResult receiveMessageResult = receiverSqs.receiveMessage(receiveMessageRequest);
+			
+			logger.info("receive message returns");
+			
+			long end = System.currentTimeMillis();
+			
+			assertTrue("No message received", receiveMessageResult.getMessages().size() == 1);
+			
+			assertTrue("Wrong message content", receiveMessageResult.getMessages().get(0).getBody().equals("test message"));
+			
+			assertTrue("Message came back too fast: " + (end-start) + " ms", end-start >= 4750);
+			
+			assertTrue("Message came back too slow: " + (end-start) + " ms", end-start <= 5250);
+	        
+		} catch (Exception ex) {
+			ex.printStackTrace();
+		}
+    }
+
+    /**
+     * Simple functional test: Call receive() on a queue with a default 15 sec wait time, then 5 sec later call 
+     * send() and check if message is received exactly once after around 5 sec.
+     */
+    @Test
+    public void testLongPollQueue() {
+
+    	try {
+            
+    		SetQueueAttributesRequest setQueueAttributesRequest = new SetQueueAttributesRequest();
+    		setQueueAttributesRequest.setQueueUrl(queueUrl);
+            attributeParams.put("ReceiveMessageWaitTimeSeconds", "15");
+    		setQueueAttributesRequest.setAttributes(attributeParams);
+
+    		sqs.setQueueAttributes(setQueueAttributesRequest);
+
+			ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest();
+			receiveMessageRequest.setQueueUrl(queueUrl);
+			receiveMessageRequest.setMaxNumberOfMessages(1);
+			
+			long start = System.currentTimeMillis();
+			
+			(new MessageSender()).start();
+			
+			logger.info("calling receive message");
+			
+			// note: we are calling receivemessage without waittime set and yet we should see long poll
+			// behavior because the queue has a default wait time set
+			
+			ReceiveMessageResult receiveMessageResult = sqs.receiveMessage(receiveMessageRequest);
 			
 			logger.info("receive message returns");
 			

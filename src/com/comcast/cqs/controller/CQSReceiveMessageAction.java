@@ -89,9 +89,19 @@ public class CQSReceiveMessageAction extends CQSAction {
         	msgParam.put(CQSConstants.VISIBILITY_TIMEOUT, request.getParameter(CQSConstants.VISIBILITY_TIMEOUT));
         }
         
-        int waitTimeSeconds = 0;
+        // receive timeout overrides queue default timeout if present 
+        
+        int waitTimeSeconds = queue.getReceiveMessageWaitTimeSeconds();
         
         if (request.getParameter(CQSConstants.WAIT_TIME_SECONDS) != null) {
+        	try {
+        		waitTimeSeconds = Integer.parseInt(request.getParameter(CQSConstants.WAIT_TIME_SECONDS));
+        	} catch (NumberFormatException ex) {
+                throw new CMBException(CMBErrorCodes.InvalidParameterValue, CQSConstants.WAIT_TIME_SECONDS + " must be an integer number.");
+        	}
+        }
+        	
+        if (waitTimeSeconds > 0) {
         	
         	// we are already setting wait time in main controller servlet, we are just doing
         	// this here again to throw appropriate error messages for invalid parameters
@@ -99,11 +109,9 @@ public class CQSReceiveMessageAction extends CQSAction {
         	if (!CMBProperties.getInstance().isCQSLongPollEnabled()) {
                 throw new CMBException(CMBErrorCodes.InvalidParameterValue, "Long polling not enabled.");
         	}
-        	
-        	waitTimeSeconds = Integer.parseInt(request.getParameter(CQSConstants.WAIT_TIME_SECONDS));
-        	
+
         	if (waitTimeSeconds < 1 || waitTimeSeconds > 20) {
-                throw new CMBException(CMBErrorCodes.InvalidParameterValue, "The value for WaitTimeSeconds must be an integer number between 1 and 20.");
+                throw new CMBException(CMBErrorCodes.InvalidParameterValue, CQSConstants.WAIT_TIME_SECONDS + " must be an integer number between 1 and 20.");
         	}
         	
         	//asyncContext.setTimeout(waitTimeSeconds * 1000);

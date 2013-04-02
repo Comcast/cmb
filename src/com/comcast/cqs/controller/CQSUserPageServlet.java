@@ -204,12 +204,13 @@ public class CQSUserPageServlet extends AdminServletBase {
 		out.println("<th>Queue Url</th>");
 		out.println("<th>Queue Arn</th>");
 		out.println("<th>Queue Name</th>");
-		out.println("<th>User ID</th>");
+		out.println("<th>User Id</th>");
 		out.println("<th>Region</th>");
-		out.println("<th>Visibility TO</th>");
+		out.println("<th>Visibility To</th>");
 		out.println("<th>Max Msg Size</th>");
 		out.println("<th>Msg Rention Period</th>");
 		out.println("<th>Delay Seconds</th>");
+		out.println("<th>Wait Time Seconds</th>");
 		out.println("<th>Approx Num Msg</th>");
 		out.println("<th>&nbsp;</th><th>&nbsp;</th><th>&nbsp;</th></tr>");
 
@@ -221,7 +222,7 @@ public class CQSUserPageServlet extends AdminServletBase {
 				try {	
 				
 					GetQueueAttributesRequest getQueueAttributesRequest = new GetQueueAttributesRequest(queueUrls.get(i));
-					getQueueAttributesRequest.setAttributeNames(Arrays.asList("VisibilityTimeout", "MaximumMessageSize", "MessageRetentionPeriod", "DelaySeconds", "ApproximateNumberOfMessages"));
+					getQueueAttributesRequest.setAttributeNames(Arrays.asList("VisibilityTimeout", "MaximumMessageSize", "MessageRetentionPeriod", "DelaySeconds", "ApproximateNumberOfMessages", "ReceiveMessageWaitTimeSeconds"));
 					GetQueueAttributesResult getQueueAttributesResult = sqs.getQueueAttributes(getQueueAttributesRequest);
 					attributes = getQueueAttributesResult.getAttributes();
 		        	
@@ -243,6 +244,7 @@ public class CQSUserPageServlet extends AdminServletBase {
         	out.println("<td>"+(attributes.get("MaximumMessageSize") != null ? attributes.get("MaximumMessageSize"):"")+"</td>");
         	out.println("<td>"+(attributes.get("MessageRetentionPeriod") != null ? attributes.get("MessageRetentionPeriod"):"")+"</td>");
         	out.println("<td>"+(attributes.get("DelaySeconds") != null ? attributes.get("DelaySeconds"):"")+"</td>");
+        	out.println("<td>"+(attributes.get("ReceiveMessageWaitTimeSeconds") != null ? attributes.get("ReceiveMessageWaitTimeSeconds"):"")+"</td>");
         	out.println("<td>"+(attributes.get("ApproximateNumberOfMessages") != null ? attributes.get("ApproximateNumberOfMessages"):"")+"</td>");
         	
         	out.println("<td><a href='/webui/cqsuser/message?userId=" + user.getUserId()+ "&queueName=" + Util.getNameForAbsoluteQueueUrl(queueUrls.get(i)) + "'>Messages</a></td>");

@@ -77,6 +77,7 @@ public class CQSQueueCassandraPersistence extends CassandraPersistence implement
 		queueData.put(CQSConstants.COL_DELAY_SECONDS, (new Long(queue.getDelaySeconds())).toString());
 		queueData.put(CQSConstants.COL_POLICY, queue.getPolicy()!=null?queue.getPolicy():"");
 		queueData.put(CQSConstants.COL_CREATED_TIME, (new Long(createdTime)).toString());
+		queueData.put(CQSConstants.COL_WAIT_TIME_SECONDS, (new Long(queue.getReceiveMessageWaitTimeSeconds())).toString());
 
 		insertOrUpdateRow(queue.getRelativeUrl(), COLUMN_FAMILY_QUEUES, queueData, HConsistencyLevel.QUORUM);
 		
@@ -232,6 +233,7 @@ public class CQSQueueCassandraPersistence extends CassandraPersistence implement
 			int maxMsgSize = (new Long(columnSlice.getColumnByName(CQSConstants.COL_MAX_MSG_SIZE).getValue())).intValue(); 
 			int msgRetentionPeriod = (new Long(columnSlice.getColumnByName(CQSConstants.COL_MSG_RETENTION_PERIOD).getValue())).intValue(); 
 			int delaySeconds = (new Long(columnSlice.getColumnByName(CQSConstants.COL_DELAY_SECONDS).getValue())).intValue();
+			int waitTimeSeconds = (new Long(columnSlice.getColumnByName(CQSConstants.COL_WAIT_TIME_SECONDS).getValue())).intValue();
 			String policy = columnSlice.getColumnByName(CQSConstants.COL_POLICY).getValue();
 			long createdTime = (new Long(columnSlice.getColumnByName(CQSConstants.COL_CREATED_TIME).getValue())).longValue();
 			String hostName = columnSlice.getColumnByName(CQSConstants.COL_HOST_NAME) == null ? null : columnSlice.getColumnByName(CQSConstants.COL_HOST_NAME).getValue();
@@ -245,6 +247,7 @@ public class CQSQueueCassandraPersistence extends CassandraPersistence implement
 			queue.setMaxMsgSize(maxMsgSize);
 			queue.setMsgRetentionPeriod(msgRetentionPeriod);
 			queue.setDelaySeconds(delaySeconds);
+			queue.setReceiveMessageWaitTimeSeconds(waitTimeSeconds);
 			queue.setCreatedTime(createdTime);
 			return queue;
 		} catch (Exception ex) {
