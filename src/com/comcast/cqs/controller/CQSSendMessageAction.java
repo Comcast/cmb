@@ -88,8 +88,7 @@ public class CQSSendMessageAction extends CQSAction {
                 }
         		
             } catch (NumberFormatException e) {
-                // ignore the exception
-                logger.error("Exception when parsing DelaySeconds: " + delaySecondsReq);
+                throw new CMBException(CMBErrorCodes.InvalidParameterValue, "DelaySeconds must be integer value");
             }
         }
         

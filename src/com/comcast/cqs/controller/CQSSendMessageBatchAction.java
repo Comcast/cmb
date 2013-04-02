@@ -91,7 +91,13 @@ public class CQSSendMessageBatchAction extends CQSAction {
                 
                 if (delaySecondsStr != null) {
                 
-                	Integer delaySeconds = Integer.parseInt(delaySecondsStr);
+                	Integer delaySeconds = 0;
+                	
+                	try {
+                		delaySeconds = Integer.parseInt(delaySecondsStr);
+                	} catch (NumberFormatException ex) {
+                        throw new CMBException(CMBErrorCodes.InvalidParameterValue, "DelaySeconds must be integer value");
+                	}
                     
                     if (delaySeconds < 0 || delaySeconds > CMBProperties.getInstance().getCQSMaxMessageDelaySeconds()) {
                         throw new CMBException(CMBErrorCodes.InvalidParameterValue, "DelaySeconds should be from 0 to " + CMBProperties.getInstance().getCQSMaxMessageDelaySeconds());

@@ -92,12 +92,24 @@ public class CQSCreateQueueAction extends CQSAction {
 
             if (attributeName.equals(CQSConstants.VISIBILITY_TIMEOUT)) {
             	
-                if (existingQueue != null && existingQueue.getVisibilityTO() != Integer.parseInt(attributeValue)) {
+            	int visibilityTo = 0;
+            	
+            	try {
+            		visibilityTo = Integer.parseInt(attributeValue);
+            	} catch (NumberFormatException ex) {
+                    throw new CMBException(CMBErrorCodes.InvalidParameterValue, CQSConstants.VISIBILITY_TIMEOUT + " must be integer value");
+            	}
+            	
+        		if (visibilityTo < 0 || visibilityTo > CMBProperties.getInstance().getCQSMaxVisibilityTimeOut()) {
+                    throw new CMBException(CMBErrorCodes.InvalidParameterValue, CQSConstants.VISIBILITY_TIMEOUT + " should be from 0 to " + CMBProperties.getInstance().getCQSMaxVisibilityTimeOut());
+        		}
+
+        		if (existingQueue != null && existingQueue.getVisibilityTO() != visibilityTo) {
                     throwQueueExistsError = true;
                     break;
                 }
                 
-                newQueue.setVisibilityTO(Integer.parseInt(attributeValue));
+                newQueue.setVisibilityTO(visibilityTo);
                 
             } else if (attributeName.equals(CQSConstants.POLICY)) {
             	
@@ -110,21 +122,45 @@ public class CQSCreateQueueAction extends CQSAction {
                 
             } else if (attributeName.equals(CQSConstants.MAXIMUM_MESSAGE_SIZE)) {
             	
-                if (existingQueue != null && existingQueue.getMaxMsgSize() != Integer.parseInt(attributeValue)) {
+            	int maxMessageSize = 0;
+            	
+            	try {
+            		maxMessageSize = Integer.parseInt(attributeValue);
+            	} catch (NumberFormatException ex) {
+                    throw new CMBException(CMBErrorCodes.InvalidParameterValue, CQSConstants.MAXIMUM_MESSAGE_SIZE + " must be integer value");
+            	}
+            	
+        		if (maxMessageSize < 0 || maxMessageSize > CMBProperties.getInstance().getCQSMaxMessageSize()) {
+                    throw new CMBException(CMBErrorCodes.InvalidParameterValue, CQSConstants.MAXIMUM_MESSAGE_SIZE + " should be from 0 to " + CMBProperties.getInstance().getCQSMaxMessageSize());
+        		}
+
+        		if (existingQueue != null && existingQueue.getMaxMsgSize() != maxMessageSize) {
                     throwQueueExistsError = true;
                     break;
                 }
                 
-                newQueue.setMaxMsgSize(Integer.parseInt(attributeValue));
+                newQueue.setMaxMsgSize(maxMessageSize);
                 
             } else if (attributeName.equals(CQSConstants.MESSAGE_RETENTION_PERIOD)) {
             	
-                if (existingQueue != null && existingQueue.getMsgRetentionPeriod() != Integer.parseInt(attributeValue)) {
+            	int messageRetentionPeriod = 0;
+            	
+            	try {
+            		messageRetentionPeriod = Integer.parseInt(attributeValue);
+            	} catch (NumberFormatException ex) {
+                    throw new CMBException(CMBErrorCodes.InvalidParameterValue, CQSConstants.MESSAGE_RETENTION_PERIOD + " must be integer value");
+            	}
+            	
+        		if (messageRetentionPeriod < 0 || messageRetentionPeriod > CMBProperties.getInstance().getCQSMaxMessageRetentionPeriod()) {
+                    throw new CMBException(CMBErrorCodes.InvalidParameterValue, CQSConstants.MESSAGE_RETENTION_PERIOD + " should be from 0 to " + CMBProperties.getInstance().getCQSMaxMessageRetentionPeriod());
+        		}
+            	
+                if (existingQueue != null && existingQueue.getMsgRetentionPeriod() != messageRetentionPeriod) {
                     throwQueueExistsError = true;
                     break;
                 }
                 
-                newQueue.setMsgRetentionPeriod(Integer.parseInt(attributeValue));
+                newQueue.setMsgRetentionPeriod(messageRetentionPeriod);
                 
             } else if (attributeName.equals(CQSConstants.DELAY_SECONDS)) {
             	
@@ -133,7 +169,19 @@ public class CQSCreateQueueAction extends CQSAction {
                     break;
                 }
                 
-                newQueue.setDelaySeconds(Integer.parseInt(attributeValue));
+                int delaySeconds = 0;
+                
+                try {
+                	delaySeconds = Integer.parseInt(attributeValue);
+                } catch (NumberFormatException ex) {
+                    throw new CMBException(CMBErrorCodes.InvalidParameterValue, "DelaySeconds must be integer value");
+                }
+                
+        		if (delaySeconds < 0 || delaySeconds > CMBProperties.getInstance().getCQSMaxMessageDelaySeconds()) {
+                    throw new CMBException(CMBErrorCodes.InvalidParameterValue, "DelaySeconds should be from 0 to " + CMBProperties.getInstance().getCQSMaxMessageDelaySeconds());
+        		}
+                
+                newQueue.setDelaySeconds(delaySeconds);
                 
             } else {
                 throw new CMBException(CMBErrorCodes.InvalidRequest, "Attribute: " + attributeName + " is not a valid attribute");

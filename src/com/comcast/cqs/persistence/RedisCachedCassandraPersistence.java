@@ -794,6 +794,9 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
         try {
             if (cacheAvailable) {
             	int delaySeconds = 0;
+            	if (queue.getDelaySeconds() > 0) {
+            		delaySeconds = queue.getDelaySeconds();
+            	}
             	if (message.getAttributes().containsKey(CQSConstants.DELAY_SECONDS)) {
             		delaySeconds = Integer.parseInt(message.getAttributes().get(CQSConstants.DELAY_SECONDS));
             	}
@@ -842,6 +845,9 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
         try {
             for (CQSMessage message : messages) {
             	int delaySeconds = 0;
+            	if (queue.getDelaySeconds() > 0) {
+            		delaySeconds = queue.getDelaySeconds();
+            	}
             	if (message.getAttributes().containsKey(CQSConstants.DELAY_SECONDS)) {
             		delaySeconds = Integer.parseInt(message.getAttributes().get(CQSConstants.DELAY_SECONDS));
             	}
