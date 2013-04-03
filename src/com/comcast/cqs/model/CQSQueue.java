@@ -40,6 +40,7 @@ public class CQSQueue {
     private long modifiedTime;
     private int numMessages;
     private int receiveMessageWaitTimeSeconds = 0;
+    private int numberOfPartitions = 100;
     
 	public CQSQueue(String name, String ownerId) {
     	
@@ -62,6 +63,7 @@ public class CQSQueue {
         this.maxMsgSize = CMBProperties.getInstance().getCQSMaxMessageSize();
         this.msgRetentionPeriod = CMBProperties.getInstance().getCQSMessageRetentionPeriod();
         this.delaySeconds = CMBProperties.getInstance().getCQSMessageDelaySeconds();
+        this.numberOfPartitions = CMBProperties.getInstance().getCQSNumberOfQueuePartitions();
     }
 
     public int getNumMessages() {
@@ -174,5 +176,13 @@ public class CQSQueue {
 
 	public void setReceiveMessageWaitTimeSeconds(int receiveMessageWaitTimeSeconds) {
 		this.receiveMessageWaitTimeSeconds = receiveMessageWaitTimeSeconds;
+	}
+	
+	public int getNumberOfPartitions() {
+		return numberOfPartitions;
+	}
+
+	public void setNumberOfPartitions(int numberOfPartitions) {
+		this.numberOfPartitions = numberOfPartitions;
 	}
 }

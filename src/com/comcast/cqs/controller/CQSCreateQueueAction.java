@@ -97,11 +97,11 @@ public class CQSCreateQueueAction extends CQSAction {
             	try {
             		visibilityTo = Integer.parseInt(attributeValue);
             	} catch (NumberFormatException ex) {
-                    throw new CMBException(CMBErrorCodes.InvalidParameterValue, CQSConstants.VISIBILITY_TIMEOUT + " must be integer value");
+                    throw new CMBException(CMBErrorCodes.InvalidParameterValue, CQSConstants.VISIBILITY_TIMEOUT + " must be an integer value");
             	}
             	
         		if (visibilityTo < 0 || visibilityTo > CMBProperties.getInstance().getCQSMaxVisibilityTimeOut()) {
-                    throw new CMBException(CMBErrorCodes.InvalidParameterValue, CQSConstants.VISIBILITY_TIMEOUT + " should be from 0 to " + CMBProperties.getInstance().getCQSMaxVisibilityTimeOut());
+                    throw new CMBException(CMBErrorCodes.InvalidParameterValue, CQSConstants.VISIBILITY_TIMEOUT + " should be between 0 and " + CMBProperties.getInstance().getCQSMaxVisibilityTimeOut());
         		}
 
         		if (existingQueue != null && existingQueue.getVisibilityTO() != visibilityTo) {
@@ -127,11 +127,11 @@ public class CQSCreateQueueAction extends CQSAction {
             	try {
             		maxMessageSize = Integer.parseInt(attributeValue);
             	} catch (NumberFormatException ex) {
-                    throw new CMBException(CMBErrorCodes.InvalidParameterValue, CQSConstants.MAXIMUM_MESSAGE_SIZE + " must be integer value");
+                    throw new CMBException(CMBErrorCodes.InvalidParameterValue, CQSConstants.MAXIMUM_MESSAGE_SIZE + " must be an integer value");
             	}
             	
         		if (maxMessageSize < 0 || maxMessageSize > CMBProperties.getInstance().getCQSMaxMessageSize()) {
-                    throw new CMBException(CMBErrorCodes.InvalidParameterValue, CQSConstants.MAXIMUM_MESSAGE_SIZE + " should be from 0 to " + CMBProperties.getInstance().getCQSMaxMessageSize());
+                    throw new CMBException(CMBErrorCodes.InvalidParameterValue, CQSConstants.MAXIMUM_MESSAGE_SIZE + " should be between 0 and " + CMBProperties.getInstance().getCQSMaxMessageSize());
         		}
 
         		if (existingQueue != null && existingQueue.getMaxMsgSize() != maxMessageSize) {
@@ -148,11 +148,11 @@ public class CQSCreateQueueAction extends CQSAction {
             	try {
             		messageRetentionPeriod = Integer.parseInt(attributeValue);
             	} catch (NumberFormatException ex) {
-                    throw new CMBException(CMBErrorCodes.InvalidParameterValue, CQSConstants.MESSAGE_RETENTION_PERIOD + " must be integer value");
+                    throw new CMBException(CMBErrorCodes.InvalidParameterValue, CQSConstants.MESSAGE_RETENTION_PERIOD + " must be an integer value");
             	}
             	
         		if (messageRetentionPeriod < 0 || messageRetentionPeriod > CMBProperties.getInstance().getCQSMaxMessageRetentionPeriod()) {
-                    throw new CMBException(CMBErrorCodes.InvalidParameterValue, CQSConstants.MESSAGE_RETENTION_PERIOD + " should be from 0 to " + CMBProperties.getInstance().getCQSMaxMessageRetentionPeriod());
+                    throw new CMBException(CMBErrorCodes.InvalidParameterValue, CQSConstants.MESSAGE_RETENTION_PERIOD + " should be between 0 and " + CMBProperties.getInstance().getCQSMaxMessageRetentionPeriod());
         		}
             	
                 if (existingQueue != null && existingQueue.getMsgRetentionPeriod() != messageRetentionPeriod) {
@@ -174,11 +174,11 @@ public class CQSCreateQueueAction extends CQSAction {
                 try {
                 	delaySeconds = Integer.parseInt(attributeValue);
                 } catch (NumberFormatException ex) {
-                    throw new CMBException(CMBErrorCodes.InvalidParameterValue, CQSConstants.DELAY_SECONDS + " must be integer value");
+                    throw new CMBException(CMBErrorCodes.InvalidParameterValue, CQSConstants.DELAY_SECONDS + " must be an integer value");
                 }
                 
         		if (delaySeconds < 0 || delaySeconds > CMBProperties.getInstance().getCQSMaxMessageDelaySeconds()) {
-                    throw new CMBException(CMBErrorCodes.InvalidParameterValue, CQSConstants.DELAY_SECONDS + " should be from 0 to " + CMBProperties.getInstance().getCQSMaxMessageDelaySeconds());
+                    throw new CMBException(CMBErrorCodes.InvalidParameterValue, CQSConstants.DELAY_SECONDS + " should be between 0 and " + CMBProperties.getInstance().getCQSMaxMessageDelaySeconds());
         		}
                 
                 newQueue.setDelaySeconds(delaySeconds);
@@ -195,14 +195,35 @@ public class CQSCreateQueueAction extends CQSAction {
                 try {
                 	receiveMessageWaitTimeSeconds = Integer.parseInt(attributeValue);
                 } catch (NumberFormatException ex) {
-                    throw new CMBException(CMBErrorCodes.InvalidParameterValue, CQSConstants.RECEIVE_MESSAGE_WAIT_TIME_SECONDS + " must be integer value");
+                    throw new CMBException(CMBErrorCodes.InvalidParameterValue, CQSConstants.RECEIVE_MESSAGE_WAIT_TIME_SECONDS + " must be an integer value");
                 }
                 
         		if (receiveMessageWaitTimeSeconds < 0 || receiveMessageWaitTimeSeconds > 20) {
-                    throw new CMBException(CMBErrorCodes.InvalidParameterValue, CQSConstants.RECEIVE_MESSAGE_WAIT_TIME_SECONDS + " should be from 0 to " + CMBProperties.getInstance().getCQSMaxMessageDelaySeconds());
+                    throw new CMBException(CMBErrorCodes.InvalidParameterValue, CQSConstants.RECEIVE_MESSAGE_WAIT_TIME_SECONDS + " should be between 0 and " + CMBProperties.getInstance().getCQSMaxMessageDelaySeconds());
         		}
                 
                 newQueue.setReceiveMessageWaitTimeSeconds(receiveMessageWaitTimeSeconds);
+                
+            } else if (attributeName.equals(CQSConstants.NUMBER_OF_PARTITIONS)) {
+            	
+                if (existingQueue != null && existingQueue.getNumberOfPartitions() != Integer.parseInt(attributeValue)) {
+                    throwQueueExistsError = true;
+                    break;
+                }
+                
+                int numberOfPartitions = 0;
+                
+                try {
+                	numberOfPartitions = Integer.parseInt(attributeValue);
+                } catch (NumberFormatException ex) {
+                    throw new CMBException(CMBErrorCodes.InvalidParameterValue, CQSConstants.NUMBER_OF_PARTITIONS + " must be an integer value");
+                }
+                
+        		if (numberOfPartitions < 0 || numberOfPartitions > CMBProperties.getInstance().getCQSNumberOfQueuePartitions()) {
+                    throw new CMBException(CMBErrorCodes.InvalidParameterValue, CQSConstants.NUMBER_OF_PARTITIONS + " should be between 1 and " + CMBProperties.getInstance().getCQSNumberOfQueuePartitions());
+        		}
+                
+                newQueue.setNumberOfPartitions(numberOfPartitions);
                 
             } else {
                 throw new CMBException(CMBErrorCodes.InvalidRequest, "Attribute: " + attributeName + " is not a valid attribute");

@@ -85,7 +85,7 @@ public class CQSSetQueueAttributesAction extends CQSAction {
             	int v = Integer.parseInt(value);
                 
             	if (v < 0 || v > CMBProperties.getInstance().getCQSMaxVisibilityTimeOut()) {
-                    throw new CMBException(CMBErrorCodes.InvalidAttributeValue, CQSConstants.VISIBILITY_TIMEOUT + " must be from 0 to " + CMBProperties.getInstance().getCQSMaxVisibilityTimeOut() + " seconds");
+                    throw new CMBException(CMBErrorCodes.InvalidAttributeValue, CQSConstants.VISIBILITY_TIMEOUT + " must be between 0 and " + CMBProperties.getInstance().getCQSMaxVisibilityTimeOut() + " seconds");
                 }
                 
             	queue.setVisibilityTO(v);
@@ -117,7 +117,7 @@ public class CQSSetQueueAttributesAction extends CQSAction {
             	int v = Integer.parseInt(value);
                 
             	if (v > CMBProperties.getInstance().getCQSMaxMessageSize()) {
-                    throw new CMBException(CMBErrorCodes.InvalidAttributeValue, CQSConstants.MAXIMUM_MESSAGE_SIZE + " cannot be over " + CMBProperties.getInstance().getCQSMaxMessageSize());
+                    throw new CMBException(CMBErrorCodes.InvalidAttributeValue, CQSConstants.MAXIMUM_MESSAGE_SIZE + " cannot be over " + CMBProperties.getInstance().getCQSMaxMessageSize() + " bytes");
                 }
                 
             	queue.setMaxMsgSize(v);
@@ -132,7 +132,7 @@ public class CQSSetQueueAttributesAction extends CQSAction {
             	int v = Integer.parseInt(value);
                 
             	if (v < CMBProperties.getInstance().getCQSMinMessageRetentionPeriod() || v > CMBProperties.getInstance().getCQSMaxMessageRetentionPeriod()) {
-                    throw new CMBException(CMBErrorCodes.InvalidAttributeValue, CQSConstants.MESSAGE_RETENTION_PERIOD + " must be from 1 minute to 14 days");
+                    throw new CMBException(CMBErrorCodes.InvalidAttributeValue, CQSConstants.MESSAGE_RETENTION_PERIOD + " must be between 1 and " + CMBProperties.getInstance().getCQSMaxMessageRetentionPeriod() + " seconds");
                 }
             	
                 queue.setMsgRetentionPeriod(v);
@@ -162,11 +162,26 @@ public class CQSSetQueueAttributesAction extends CQSAction {
             	int v = Integer.parseInt(value);
                 
             	if (v < 0 || v > 20) {
-                    throw new CMBException(CMBErrorCodes.InvalidAttributeValue, CQSConstants.RECEIPT_HANDLE + " must be 20 seconds or less");
+                    throw new CMBException(CMBErrorCodes.InvalidAttributeValue, CQSConstants.RECEIVE_MESSAGE_WAIT_TIME_SECONDS + " must be 20 seconds or less");
                 }
                 
             	queue.setReceiveMessageWaitTimeSeconds(v);
                 postVars.put(CQSConstants.COL_WAIT_TIME_SECONDS, attributes.get(attributeName));
+           
+            } else if (attributeName.equals(CQSConstants.NUMBER_OF_PARTITIONS)) {
+                
+            	if (!Util.isParsableToInt(value)) {
+                    throw new CMBException(CMBErrorCodes.InvalidAttributeValue, "Invalid value " + value + " for the parameter " + attributeName);
+                }
+                
+            	int v = Integer.parseInt(value);
+                
+            	if (v < 1 || v > CMBProperties.getInstance().getCQSNumberOfQueuePartitions()) {
+                    throw new CMBException(CMBErrorCodes.InvalidAttributeValue, CQSConstants.NUMBER_OF_PARTITIONS + " must be between 1 and " + CMBProperties.getInstance().getCQSNumberOfQueuePartitions());
+                }
+                
+            	queue.setNumberOfPartitions(v);
+                postVars.put(CQSConstants.COL_NUMBER_PARTITIONS, attributes.get(attributeName));
            
             } else {
                 throw new CMBException(CMBErrorCodes.InvalidAttributeName, "Attribute.Name: " + attributeName + " is not a valid attribute");
