@@ -41,6 +41,7 @@ import com.comcast.cmb.common.util.CMBErrorCodes;
 import com.comcast.cmb.common.util.CMBException;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cqs.model.CQSMessage;
+import com.comcast.cqs.model.CQSQueue;
 /**
  * Utility functions for cqs
  * @author bwolf, vvenkatraman, baosen
@@ -522,11 +523,11 @@ public class Util {
 		return message;
 	}
 	
-	public static long getQueueCount(String queueUrl) throws NoSuchAlgorithmException, UnsupportedEncodingException {
+	public static long getQueueMessageCount(CQSQueue queue) throws NoSuchAlgorithmException, UnsupportedEncodingException {
 		
-		int numberOfPartitions = CMBProperties.getInstance().getCQSNumberOfQueuePartitions();
+		int numberOfPartitions = queue.getNumberOfPartitions();
 		CassandraPersistence persistence = new CassandraPersistence(CMBProperties.getInstance().getCQSKeyspace());
-		String queueHash = Util.hashQueueUrl(queueUrl);
+		String queueHash = Util.hashQueueUrl(queue.getRelativeUrl());
 		long messageCount = 0;
 		
 		for (int i=0; i<numberOfPartitions; i++) {
@@ -536,5 +537,21 @@ public class Util {
 		}
 		
 		return messageCount;
+	}
+
+	public static List<Long> getPartitionMessageCounts(CQSQueue queue) throws NoSuchAlgorithmException, UnsupportedEncodingException {
+		
+		int numberOfPartitions = queue.getNumberOfPartitions();
+		CassandraPersistence persistence = new CassandraPersistence(CMBProperties.getInstance().getCQSKeyspace());
+		String queueHash = Util.hashQueueUrl(queue.getRelativeUrl());
+		List<Long> messageCounts = new ArrayList<Long>();
+		
+		for (int i=0; i<numberOfPartitions; i++) {
+			String queueKey = queueHash + "_" + i;
+			long partitionCount = persistence.getCount("CQSPartitionedQueueMessages", queueKey, StringSerializer.get(), new CompositeSerializer(), HConsistencyLevel.QUORUM);
+			messageCounts.add(partitionCount);
+		}
+		
+		return messageCounts;
 	}
 }

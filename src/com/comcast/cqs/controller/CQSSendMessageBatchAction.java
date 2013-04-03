@@ -57,7 +57,7 @@ public class CQSSendMessageBatchAction extends CQSAction {
         CQSHttpServletRequest request = (CQSHttpServletRequest)asyncContext.getRequest();
         HttpServletResponse response = (HttpServletResponse)asyncContext.getResponse();
 
-	    CQSQueue queue = CQSControllerServlet.getCachedQueue(user, request);
+	    CQSQueue queue = CQSCache.getCachedQueue(user, request);
         List<CQSMessage> msgList = new ArrayList<CQSMessage>();
         List<String> idList = new ArrayList<String>();
         List<CQSBatchResultErrorEntry> invalidBodyIdList = new ArrayList<CQSBatchResultErrorEntry>();

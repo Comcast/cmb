@@ -199,14 +199,14 @@ public class CQSControllerServlet extends CMBControllerServlet {
         
     	long ts1 = System.currentTimeMillis();
         
-        if (queuePersistence == null || messagePersistence == null || actionMap == null) {
+        if (messagePersistence == null || actionMap == null) {
             init();
         }
             	
         CQSQueue queue = null;
         
         if (!action.equals("CreateQueue") && !action.equals("healthCheckShallow") && !action.equals("HealthCheck") && !action.equals("ManageService") && !action.equals("GetQueueUrl") && !action.equals("ListQueues") && !action.equals("GetAPIStats")) {
-            queue = getCachedQueue(user, request);
+            queue = CQSCache.getCachedQueue(user, request);
     	}
 
         if (isAuthenticationRequired(action)) {

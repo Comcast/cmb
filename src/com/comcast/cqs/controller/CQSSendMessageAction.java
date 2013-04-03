@@ -54,7 +54,7 @@ public class CQSSendMessageAction extends CQSAction {
         CQSHttpServletRequest request = (CQSHttpServletRequest)asyncContext.getRequest();
         HttpServletResponse response = (HttpServletResponse)asyncContext.getResponse();
 		
-	    CQSQueue queue = CQSControllerServlet.getCachedQueue(user, request);
+	    CQSQueue queue = CQSCache.getCachedQueue(user, request);
 		long ts2 = System.currentTimeMillis();
         
         String messageBody = request.getParameter(CQSConstants.MESSAGE_BODY);

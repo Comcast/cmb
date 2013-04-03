@@ -41,7 +41,7 @@ public class CQSDeleteQueueAction extends CQSAction {
         HttpServletRequest request = (HttpServletRequest)asyncContext.getRequest();
         HttpServletResponse response = (HttpServletResponse)asyncContext.getResponse();
 
-	    CQSQueue queue = CQSControllerServlet.getCachedQueue(user, request);
+	    CQSQueue queue = CQSCache.getCachedQueue(user, request);
         PersistenceFactory.getQueuePersistence().deleteQueue(queue.getRelativeUrl());
         PersistenceFactory.getCQSMessagePersistence().clearQueue(queue.getRelativeUrl());
         

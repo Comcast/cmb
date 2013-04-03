@@ -46,7 +46,7 @@ public class CQSReceiveMessageBodyAction extends CQSReceiveMessageAction {
         HttpServletRequest request = (HttpServletRequest)asyncContext.getRequest();
         HttpServletResponse response = (HttpServletResponse)asyncContext.getResponse();
 		
-	    CQSQueue queue = CQSControllerServlet.getCachedQueue(user, request);
+	    CQSQueue queue = CQSCache.getCachedQueue(user, request);
 		
         HashMap<String, String> msgParam = new HashMap<String, String>();
         List<CQSMessage> messageList = PersistenceFactory.getCQSMessagePersistence().receiveMessage(queue, msgParam);

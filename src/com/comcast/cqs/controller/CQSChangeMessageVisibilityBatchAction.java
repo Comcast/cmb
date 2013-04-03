@@ -54,7 +54,7 @@ public class CQSChangeMessageVisibilityBatchAction extends CQSAction {
         HttpServletRequest request = (HttpServletRequest)asyncContext.getRequest();
         HttpServletResponse response = (HttpServletResponse)asyncContext.getResponse();
         
-        CQSQueue queue = CQSControllerServlet.getCachedQueue(user, request);
+        CQSQueue queue = CQSCache.getCachedQueue(user, request);
         List<String> idList = new ArrayList<String>();
         List<CQSBatchResultErrorEntry> failedList = new ArrayList<CQSBatchResultErrorEntry>();
         Map<String, List<String>> idMap = new HashMap<String, List<String>>();

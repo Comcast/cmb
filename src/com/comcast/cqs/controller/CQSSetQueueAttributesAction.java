@@ -53,7 +53,7 @@ public class CQSSetQueueAttributesAction extends CQSAction {
         HttpServletRequest request = (HttpServletRequest)asyncContext.getRequest();
         HttpServletResponse response = (HttpServletResponse)asyncContext.getResponse();
 		
-	    CQSQueue queue = CQSControllerServlet.getCachedQueue(user, request);
+	    CQSQueue queue = CQSCache.getCachedQueue(user, request);
         String ownerId = request.getParameter("QueueOwnerAWSAccountId");
 
         if (ownerId == null) {
@@ -176,8 +176,8 @@ public class CQSSetQueueAttributesAction extends CQSAction {
                 
             	int v = Integer.parseInt(value);
                 
-            	if (v < 1 || v > CMBProperties.getInstance().getCQSNumberOfQueuePartitions()) {
-                    throw new CMBException(CMBErrorCodes.InvalidAttributeValue, CQSConstants.NUMBER_OF_PARTITIONS + " must be between 1 and " + CMBProperties.getInstance().getCQSNumberOfQueuePartitions());
+            	if (v < 1) {
+                    throw new CMBException(CMBErrorCodes.InvalidParameterValue, CQSConstants.NUMBER_OF_PARTITIONS + " should be at least 1");
                 }
                 
             	queue.setNumberOfPartitions(v);

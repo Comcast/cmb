@@ -66,7 +66,7 @@ public class CQSDeleteMessageAction extends CQSAction {
         HttpServletRequest request = (HttpServletRequest)asyncContext.getRequest();
         HttpServletResponse response = (HttpServletResponse)asyncContext.getResponse();
 
-		CQSQueue queue = CQSControllerServlet.getCachedQueue(user, request);
+		CQSQueue queue = CQSCache.getCachedQueue(user, request);
 	    
         String receiptHandle = request.getParameter(CQSConstants.RECEIPT_HANDLE);
 

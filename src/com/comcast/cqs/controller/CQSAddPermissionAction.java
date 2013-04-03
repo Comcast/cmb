@@ -51,7 +51,7 @@ public class CQSAddPermissionAction extends CQSAction {
         HttpServletRequest request = (HttpServletRequest)asyncContext.getRequest();
         HttpServletResponse response = (HttpServletResponse)asyncContext.getResponse();
 
-        CQSQueue queue = CQSControllerServlet.getCachedQueue(user, request);
+        CQSQueue queue = CQSCache.getCachedQueue(user, request);
         String label = request.getParameter(CQSConstants.LABEL);
 
         if (label == null) {

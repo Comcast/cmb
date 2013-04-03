@@ -53,7 +53,7 @@ public class CQSPeekMessageAction extends CQSAction {
         HttpServletRequest request = (HttpServletRequest)asyncContext.getRequest();
         HttpServletResponse response = (HttpServletResponse)asyncContext.getResponse();
 
-	    CQSQueue queue = CQSControllerServlet.getCachedQueue(user, request);
+	    CQSQueue queue = CQSCache.getCachedQueue(user, request);
 		List<CQSMessage> messageList = getMessages(request, true, queue);
         
         Map<String, String[]> requestParams = request.getParameterMap();

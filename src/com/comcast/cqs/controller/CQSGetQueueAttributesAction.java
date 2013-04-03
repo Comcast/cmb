@@ -47,7 +47,7 @@ public class CQSGetQueueAttributesAction extends CQSAction {
         HttpServletRequest request = (HttpServletRequest)asyncContext.getRequest();
         HttpServletResponse response = (HttpServletResponse)asyncContext.getResponse();
 
-		CQSQueue queue = CQSControllerServlet.getCachedQueue(user, request);
+		CQSQueue queue = CQSCache.getCachedQueue(user, request);
         String ownerId = request.getParameter("QueueOwnerAWSAccountId");
 
         if (ownerId == null) {

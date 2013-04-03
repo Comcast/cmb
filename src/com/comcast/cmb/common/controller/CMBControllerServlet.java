@@ -25,22 +25,18 @@ import com.comcast.cmb.common.persistence.PersistenceFactory;
 import com.comcast.cmb.common.util.CMBErrorCodes;
 import com.comcast.cmb.common.util.CMBException;
 import com.comcast.cmb.common.util.CMBProperties;
-import com.comcast.cmb.common.util.ExpiringCache;
-import com.comcast.cmb.common.util.PersistenceException;
 import com.comcast.cmb.common.util.Util;
 import com.comcast.cmb.common.util.ValueAccumulator;
-import com.comcast.cmb.common.util.ExpiringCache.CacheFullException;
 import com.comcast.cmb.common.util.ValueAccumulator.AccumulatorName;
 import com.comcast.cns.controller.CNSControllerServlet;
+import com.comcast.cqs.controller.CQSCache;
 import com.comcast.cqs.controller.CQSControllerServlet;
 import com.comcast.cqs.controller.CQSHttpServletRequest;
 import com.comcast.cqs.controller.CQSLongPollReceiver;
 import com.comcast.cqs.io.CQSMessagePopulator;
 import com.comcast.cqs.model.CQSMessage;
 import com.comcast.cqs.model.CQSQueue;
-import com.comcast.cqs.persistence.ICQSQueuePersistence;
 import com.comcast.cqs.util.CQSConstants;
-import com.comcast.cqs.util.CQSErrorCodes;
 
 import org.apache.log4j.Logger;
 
@@ -54,7 +50,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Enumeration;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -89,9 +84,6 @@ abstract public class CMBControllerServlet extends HttpServlet {
     public volatile static ConcurrentHashMap<String, AtomicLong> callStats;
     public volatile static ConcurrentHashMap<String, AtomicLong> callFailureStats;
     
-    protected static ExpiringCache<String, CQSQueue> queueCache = new ExpiringCache<String, CQSQueue>(CMBProperties.getInstance().getCQSCacheSizeLimit());
-    protected static volatile ICQSQueuePersistence queuePersistence = null;
-    
     @Override    
     public void init() throws ServletException {
         
@@ -104,7 +96,6 @@ abstract public class CMBControllerServlet extends HttpServlet {
 	            workerPool = new ScheduledThreadPoolExecutor(CMBProperties.getInstance().getCNSNumPublisherDeliveryHandlers());
 	            callStats = new ConcurrentHashMap<String, AtomicLong>();
 	            callFailureStats = new ConcurrentHashMap<String, AtomicLong>();
-	            queuePersistence = PersistenceFactory.getQueuePersistence();
 	            initialized = true;
             }
     		
@@ -138,96 +129,6 @@ abstract public class CMBControllerServlet extends HttpServlet {
      */
     abstract protected boolean isValidAction(String action) throws ServletException;
     
-    public static class QueueCallable implements Callable<CQSQueue> {
-        
-    	String queueUrl = null;
-        
-    	public QueueCallable(String key) {
-            this.queueUrl = key;
-        }
-        
-    	@Override
-        public CQSQueue call() throws Exception {
-            CQSQueue queue = queuePersistence.getQueue(queueUrl);
-            logger.info("event=callable queue_url=" + queueUrl + " queue=" + queue);
-            return queue;
-        }
-    }
-    
-    /**
-     * 
-     * @param queueUrl
-     * @return Cached instance of CQSQueue given queueUrl. If none exists, we call QueueCallable and cache it
-     * for config amount of time
-     * @throws Exception
-     */
-    public static CQSQueue getCachedQueue(String queueUrl) throws Exception {
-        try {
-            return queueCache.getAndSetIfNotPresent(queueUrl, new QueueCallable(queueUrl), CMBProperties.getInstance().getCQSCacheExpiring() * 1000);
-        } catch (CacheFullException e) {
-            return new QueueCallable(queueUrl).call();
-        } 
-    }
-    
-    /**
-     * Get a CQSQueue instance given the request and user. If no queue is found, Exception is thrown
-     * @param user
-     * @param request
-     * @return
-     * @throws Exception
-     */
-    public static CQSQueue getCachedQueue(User user, HttpServletRequest request) throws Exception {
-    	
-        String queueUrl = null;
-        CQSQueue queue = null;
-
-        queueUrl = request.getRequestURL().toString();
-
-        if (queueUrl != null && !queueUrl.equals("") && !queueUrl.equals("/")) {
-
-            if (queueUrl.startsWith("http://")) {
-
-                queueUrl = queueUrl.substring("http://".length());
-
-                if (queueUrl.contains("/")) {
-                    queueUrl = queueUrl.substring(queueUrl.indexOf("/"));
-                }
-
-            } else if (queueUrl.startsWith("https://")) {
-
-                queueUrl = queueUrl.substring("https://".length());
-
-                if (queueUrl.contains("/")) {
-                    queueUrl = queueUrl.substring(queueUrl.indexOf("/"));
-                }
-            } 
-
-            if (queueUrl.startsWith("/")) {
-                queueUrl = queueUrl.substring(1);
-            }
-
-            if (queueUrl.endsWith("/")) {
-                queueUrl = queueUrl.substring(0, queueUrl.length()-1);
-            }
-
-            // auto prefix with user id if omitted in request
-
-            if (!queueUrl.contains("/") && user != null) {
-                queueUrl = user.getUserId() + "/" + queueUrl;
-            }
-
-            queue = getCachedQueue(queueUrl);
-
-            if (queue == null) {
-                throw new PersistenceException(CQSErrorCodes.NonExistentQueue, "The supplied queue with url " + request.getRequestURL().toString() + " doesn't exist");
-            }
-            
-        } else {
-            throw new PersistenceException(CQSErrorCodes.NonExistentQueue, "The supplied queue with url " + request.getRequestURL().toString() + " doesn't exist");
-        }
-        
-        return queue;
-    }
 
     /**
      * @param action
@@ -436,7 +337,7 @@ abstract public class CMBControllerServlet extends HttpServlet {
     		
 			try {
 				
-				queue = getCachedQueue(queueUrl);
+				queue = CQSCache.getCachedQueue(queueUrl);
 
 				if (queue != null && queue.getReceiveMessageWaitTimeSeconds() > 0) {
 					waitTimeSeconds = queue.getReceiveMessageWaitTimeSeconds();

@@ -219,8 +219,8 @@ public class CQSCreateQueueAction extends CQSAction {
                     throw new CMBException(CMBErrorCodes.InvalidParameterValue, CQSConstants.NUMBER_OF_PARTITIONS + " must be an integer value");
                 }
                 
-        		if (numberOfPartitions < 0 || numberOfPartitions > CMBProperties.getInstance().getCQSNumberOfQueuePartitions()) {
-                    throw new CMBException(CMBErrorCodes.InvalidParameterValue, CQSConstants.NUMBER_OF_PARTITIONS + " should be between 1 and " + CMBProperties.getInstance().getCQSNumberOfQueuePartitions());
+        		if (numberOfPartitions < 1) {
+                    throw new CMBException(CMBErrorCodes.InvalidParameterValue, CQSConstants.NUMBER_OF_PARTITIONS + " should be at least 1");
         		}
                 
                 newQueue.setNumberOfPartitions(numberOfPartitions);
