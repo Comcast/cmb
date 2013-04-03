@@ -233,9 +233,9 @@ public class CQSQueueCassandraPersistence extends CassandraPersistence implement
 			int visibilityTO = (new Long(columnSlice.getColumnByName(CQSConstants.COL_VISIBILITY_TO).getValue())).intValue(); 
 			int maxMsgSize = (new Long(columnSlice.getColumnByName(CQSConstants.COL_MAX_MSG_SIZE).getValue())).intValue(); 
 			int msgRetentionPeriod = (new Long(columnSlice.getColumnByName(CQSConstants.COL_MSG_RETENTION_PERIOD).getValue())).intValue(); 
-			int delaySeconds = (new Long(columnSlice.getColumnByName(CQSConstants.COL_DELAY_SECONDS).getValue())).intValue();
-			int waitTimeSeconds = (new Long(columnSlice.getColumnByName(CQSConstants.COL_WAIT_TIME_SECONDS).getValue())).intValue();
-			int numPartitions = columnSlice.getColumnByName(CQSConstants.COL_CREATED_TIME) == null ? CMBProperties.getInstance().getCQSNumberOfQueuePartitions() : (new Long(columnSlice.getColumnByName(CQSConstants.COL_NUMBER_PARTITIONS).getValue())).intValue();
+			int delaySeconds = columnSlice.getColumnByName(CQSConstants.COL_DELAY_SECONDS) == null ? 0 : (new Long(columnSlice.getColumnByName(CQSConstants.COL_DELAY_SECONDS).getValue())).intValue();
+			int waitTimeSeconds = columnSlice.getColumnByName(CQSConstants.COL_WAIT_TIME_SECONDS) == null ? 0 : (new Long(columnSlice.getColumnByName(CQSConstants.COL_WAIT_TIME_SECONDS).getValue())).intValue();
+			int numPartitions = columnSlice.getColumnByName(CQSConstants.COL_NUMBER_PARTITIONS) == null ? CMBProperties.getInstance().getCQSNumberOfQueuePartitions() : (new Long(columnSlice.getColumnByName(CQSConstants.COL_NUMBER_PARTITIONS).getValue())).intValue();
 			String policy = columnSlice.getColumnByName(CQSConstants.COL_POLICY).getValue();
 			long createdTime = (new Long(columnSlice.getColumnByName(CQSConstants.COL_CREATED_TIME).getValue())).longValue();
 			String hostName = columnSlice.getColumnByName(CQSConstants.COL_HOST_NAME) == null ? null : columnSlice.getColumnByName(CQSConstants.COL_HOST_NAME).getValue();
