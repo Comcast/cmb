@@ -248,7 +248,7 @@ public class CNSSubscriptionCassandraPersistence extends CassandraPersistence im
 		
 		subscription.setArn(Util.generateCnsTopicSubscriptionArn(topicArn));
 	
-		// attempt to delete existing subscription if it exists
+		// attempt to delete existing subscription
 		
 		Composite superColumnName = new Composite(subscription.getEndpoint(), subscription.getProtocol().name());
 		
@@ -270,6 +270,7 @@ public class CNSSubscriptionCassandraPersistence extends CassandraPersistence im
 			subscription.setConfirmDate(new Date());
 			
 			insertOrUpdateSubsAndIndexes(subscription, null);
+			incrementCounter(columnFamilyTopicStats, subscription.getTopicArn(), "subscriptionConfirmed", 1, new StringSerializer(), new StringSerializer(), HConsistencyLevel.QUORUM);
 			
 		} else {
 		
@@ -285,23 +286,25 @@ public class CNSSubscriptionCassandraPersistence extends CassandraPersistence im
 					subscription.setConfirmDate(new Date());
 					
 		            insertOrUpdateSubsAndIndexes(subscription, null);
+		    		incrementCounter(columnFamilyTopicStats, subscription.getTopicArn(), "subscriptionConfirmed", 1, new StringSerializer(), new StringSerializer(), HConsistencyLevel.QUORUM);
 					
 				} else {
 
                     // use cassandra ttl to implement expiration after 3 days 
 		            insertOrUpdateSubsAndIndexes(subscription, 3*24*60*60);
+		    		incrementCounter(columnFamilyTopicStats, subscription.getTopicArn(), "subscriptionPending", 1, new StringSerializer(), new StringSerializer(), HConsistencyLevel.QUORUM);
 				}
 			
 			} else {
 				
 				// use cassandra ttl to implement expiration after 3 days 
 			    insertOrUpdateSubsAndIndexes(subscription, 3*24*60*60);			    
+				incrementCounter(columnFamilyTopicStats, subscription.getTopicArn(), "subscriptionPending", 1, new StringSerializer(), new StringSerializer(), HConsistencyLevel.QUORUM);
 			}
 		}
-		
+
 		CNSSubscriptionAttributes attributes = new CNSSubscriptionAttributes(topicArn, subscription.getArn(), userId);
 		PersistenceFactory.getCNSAttributePersistence().setSubscriptionAttributes(attributes, subscription.getArn());
-		incrementCounter(columnFamilyTopicStats, subscription.getTopicArn(), "subscriptionPending", 1, new StringSerializer(), new StringSerializer(), HConsistencyLevel.QUORUM);
 
 		return subscription;
 	}
@@ -590,6 +593,9 @@ public class CNSSubscriptionCassandraPersistence extends CassandraPersistence im
         //re-insert with no TTL. will clobber the old one which had ttl
         insertOrUpdateSubsAndIndexes(s, null);    
         
+		decrementCounter(columnFamilyTopicStats, s.getTopicArn(), "subscriptionPending", 1, new StringSerializer(), new StringSerializer(), HConsistencyLevel.QUORUM);
+		incrementCounter(columnFamilyTopicStats, s.getTopicArn(), "subscriptionConfirmed", 1, new StringSerializer(), new StringSerializer(), HConsistencyLevel.QUORUM);
+        
         return s;
 	}
 
@@ -610,6 +616,12 @@ public class CNSSubscriptionCassandraPersistence extends CassandraPersistence im
 			Composite superColumnName = new Composite(s.getEndpoint(), s.getProtocol().name());
 			deleteSuperColumn(subscriptionsTemplate, Util.getCnsTopicArn(arn), superColumnName);
 
+			if (s.isConfirmed()) {
+				decrementCounter(columnFamilyTopicStats, s.getTopicArn(), "subscriptionConfirmed", 1, new StringSerializer(), new StringSerializer(), HConsistencyLevel.QUORUM);
+			} else {
+				decrementCounter(columnFamilyTopicStats, s.getTopicArn(), "subscriptionPending", 1, new StringSerializer(), new StringSerializer(), HConsistencyLevel.QUORUM);
+			}
+			
 			incrementCounter(columnFamilyTopicStats, s.getTopicArn(), "subscriptionDeleted", 1, new StringSerializer(), new StringSerializer(), HConsistencyLevel.QUORUM);
 		}
 	}
@@ -629,8 +641,17 @@ public class CNSSubscriptionCassandraPersistence extends CassandraPersistence im
 		while (subs.size() > 0) {
 
 			for (int i = 0; i < subs.size() - 1; i++) {
+				
 				CNSSubscription sub = subs.get(i);
+				
+				if (sub.isConfirmed()) {
+					decrementCounter(columnFamilyTopicStats, sub.getTopicArn(), "subscriptionConfirmed", 1, new StringSerializer(), new StringSerializer(), HConsistencyLevel.QUORUM);
+				} else {
+					decrementCounter(columnFamilyTopicStats, sub.getTopicArn(), "subscriptionPending", 1, new StringSerializer(), new StringSerializer(), HConsistencyLevel.QUORUM);
+				}
+				
 				deleteIndexes(sub.getArn(), sub.getUserId(), sub.getToken());
+				incrementCounter(columnFamilyTopicStats, sub.getTopicArn(), "subscriptionDeleted", 1, new StringSerializer(), new StringSerializer(), HConsistencyLevel.QUORUM);
 			}
 
 			CNSSubscription nextTokenSub = subs.get(subs.size() - 1);

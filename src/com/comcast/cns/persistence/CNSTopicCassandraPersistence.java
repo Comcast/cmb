@@ -51,10 +51,12 @@ public class CNSTopicCassandraPersistence extends CassandraPersistence implement
 	private final ColumnFamilyTemplate<String, String> topicsTemplate;
 	private final ColumnFamilyTemplate<String, String> topicsByUserIdTemplate;
 	private final ColumnFamilyTemplate<String, String> topicAttributesTemplate;
+	private final ColumnFamilyTemplate<String, String> topicStatsTemplate;
 
 	private static final String columnFamilyTopics = "CNSTopics";
 	private static final String columnFamilyTopicsByUserId = "CNSTopicsByUserId";
 	private static final String columnFamilyTopicAttributes = "CNSTopicAttributes";
+	private static final String columnFamilyTopicStats = "CNSTopicStats";
 
 	public CNSTopicCassandraPersistence() {
 
@@ -63,6 +65,7 @@ public class CNSTopicCassandraPersistence extends CassandraPersistence implement
 		topicsTemplate = new ThriftColumnFamilyTemplate<String, String>(keyspaces.get(HConsistencyLevel.QUORUM), columnFamilyTopics, StringSerializer.get(), StringSerializer.get());
 		topicsByUserIdTemplate = new ThriftColumnFamilyTemplate<String, String>(keyspaces.get(HConsistencyLevel.QUORUM), columnFamilyTopicsByUserId, StringSerializer.get(), StringSerializer.get());
 		topicAttributesTemplate = new ThriftColumnFamilyTemplate<String, String>(keyspaces.get(HConsistencyLevel.QUORUM), columnFamilyTopicAttributes, StringSerializer.get(), StringSerializer.get());
+		topicStatsTemplate = new ThriftColumnFamilyTemplate<String, String>(keyspaces.get(HConsistencyLevel.QUORUM), columnFamilyTopicStats, StringSerializer.get(), StringSerializer.get());
 	}
 
 	private Map<String, String> getColumnValues(CNSTopic t) {
@@ -111,6 +114,13 @@ public class CNSTopicCassandraPersistence extends CassandraPersistence implement
 			topic.checkIsValid();
 			insertOrUpdateRow(topic.getArn(), columnFamilyTopics, getColumnValues(topic), HConsistencyLevel.QUORUM);
 			update(topicsByUserIdTemplate, userId, topic.getArn(), "", StringSerializer.get(), StringSerializer.get(), StringSerializer.get());
+			delete(topicStatsTemplate, arn, null);
+    		deleteCounter(columnFamilyTopicStats, arn, "subscriptionConfirmed", new StringSerializer(), new StringSerializer(), HConsistencyLevel.QUORUM);
+    		deleteCounter(columnFamilyTopicStats, arn, "subscriptionPending", new StringSerializer(), new StringSerializer(), HConsistencyLevel.QUORUM);
+    		deleteCounter(columnFamilyTopicStats, arn, "subscriptionDeleted", new StringSerializer(), new StringSerializer(), HConsistencyLevel.QUORUM);
+    		incrementCounter(columnFamilyTopicStats, arn, "subscriptionConfirmed", 0, new StringSerializer(), new StringSerializer(), HConsistencyLevel.QUORUM);
+    		incrementCounter(columnFamilyTopicStats, arn, "subscriptionPending", 0, new StringSerializer(), new StringSerializer(), HConsistencyLevel.QUORUM);
+    		incrementCounter(columnFamilyTopicStats, arn, "subscriptionDeleted", 0, new StringSerializer(), new StringSerializer(), HConsistencyLevel.QUORUM);
 			CNSTopicAttributes attributes = new CNSTopicAttributes(arn, userId);
 			PersistenceFactory.getCNSAttributePersistence().setTopicAttributes(attributes, arn);
 
@@ -134,6 +144,10 @@ public class CNSTopicCassandraPersistence extends CassandraPersistence implement
 		delete(topicsTemplate, arn, null);
 		delete(topicsByUserIdTemplate, topic.getUserId(), arn);
 		delete(topicAttributesTemplate, arn, null);
+		delete(topicStatsTemplate, arn, null);
+		deleteCounter(columnFamilyTopicStats, arn, "subscriptionConfirmed", new StringSerializer(), new StringSerializer(), HConsistencyLevel.QUORUM);
+		deleteCounter(columnFamilyTopicStats, arn, "subscriptionPending", new StringSerializer(), new StringSerializer(), HConsistencyLevel.QUORUM);
+		deleteCounter(columnFamilyTopicStats, arn, "subscriptionDeleted", new StringSerializer(), new StringSerializer(), HConsistencyLevel.QUORUM);
 	}
 
 	@Override

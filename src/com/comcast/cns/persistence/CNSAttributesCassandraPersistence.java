@@ -20,8 +20,10 @@ import java.util.Map;
 
 import org.json.JSONObject;
 
+import me.prettyprint.cassandra.serializers.CompositeSerializer;
 import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.hector.api.HConsistencyLevel;
+import me.prettyprint.hector.api.Serializer;
 import me.prettyprint.hector.api.beans.Row;
 
 import com.comcast.cmb.common.persistence.CassandraPersistence;
@@ -42,6 +44,7 @@ public class CNSAttributesCassandraPersistence extends CassandraPersistence impl
 	
 	private static final String columnFamilyTopicAttributes = "CNSTopicAttributes";
 	private static final String columnFamilySubscriptionAttributes = "CNSSubscriptionAttributes";
+	private static final String columnFamilyTopicStats = "CNSTopicStats";
 	
 	public CNSAttributesCassandraPersistence() {
 		super(CMBProperties.getInstance().getCNSKeyspace());	
@@ -101,29 +104,15 @@ public class CNSAttributesCassandraPersistence extends CassandraPersistence impl
 	@Override
 	public CNSTopicAttributes getTopicAttributes(String topicArn) throws Exception {
 		
-		CNSTopicAttributes topicAttributes = null;
+		CNSTopicAttributes topicAttributes = new CNSTopicAttributes();
+		topicAttributes.setTopicArn(topicArn);
 		
 		Row<String, String, String> row = readRow(columnFamilyTopicAttributes, topicArn, 10, new StringSerializer(), new StringSerializer(), new StringSerializer(), HConsistencyLevel.QUORUM);
 		
 		if (row != null) {
 			
-			topicAttributes = new CNSTopicAttributes();
-			topicAttributes.setTopicArn(topicArn);
-			
 			if (row.getColumnSlice().getColumnByName("policy") != null) {
 				topicAttributes.setPolicy(row.getColumnSlice().getColumnByName("policy").getValue());
-			}
-			
-			if (row.getColumnSlice().getColumnByName("subscriptionConfirmed") != null) {
-				topicAttributes.setSubscriptionsConfirmed(Integer.parseInt(row.getColumnSlice().getColumnByName("subscriptionConfirmed").getValue()));
-			}
-			
-			if (row.getColumnSlice().getColumnByName("subscriptionPending") != null) {
-				topicAttributes.setSubscriptionsPending(Integer.parseInt(row.getColumnSlice().getColumnByName("subscriptionPending").getValue()));
-			}
-			
-			if (row.getColumnSlice().getColumnByName("subscriptionDeleted") != null) {
-				topicAttributes.setSubscriptionsDeleted(Integer.parseInt(row.getColumnSlice().getColumnByName("subscriptionDeleted").getValue()));
 			}
 			
 			CNSTopicDeliveryPolicy deliveryPolicy = null;
@@ -144,6 +133,15 @@ public class CNSAttributesCassandraPersistence extends CassandraPersistence impl
 			topicAttributes.setDisplayName(PersistenceFactory.getTopicPersistence().getTopic(topicArn).getDisplayName());
 		}
 		
+		long subscriptionConfirmedCount = getCounter(columnFamilyTopicStats, topicArn, "subscriptionConfirmed", StringSerializer.get(), new StringSerializer(), HConsistencyLevel.QUORUM);
+		topicAttributes.setSubscriptionsConfirmed(subscriptionConfirmedCount);
+		
+		long subscriptionPendingCount = getCounter(columnFamilyTopicStats, topicArn, "subscriptionPending", StringSerializer.get(), new StringSerializer(), HConsistencyLevel.QUORUM);
+		topicAttributes.setSubscriptionsPending(subscriptionPendingCount);
+		
+		long subscriptionDeletedCount = getCounter(columnFamilyTopicStats, topicArn, "subscriptionDeleted", StringSerializer.get(), new StringSerializer(), HConsistencyLevel.QUORUM);
+		topicAttributes.setSubscriptionsDeleted(subscriptionDeletedCount);
+
 		return topicAttributes;
 	}
 

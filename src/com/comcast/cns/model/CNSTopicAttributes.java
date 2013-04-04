@@ -29,11 +29,11 @@ public class CNSTopicAttributes {
 
 	private String userId;
 	
-	private int subscriptionsPending;
+	private long subscriptionsPending;
 	
-	private int subscriptionsConfirmed;
+	private long subscriptionsConfirmed;
 	
-	private int subscriptionsDeleted;
+	private long subscriptionsDeleted;
 	
 	// for now policy is just a string, will inflate when we tackle permission stories
 	
@@ -80,27 +80,27 @@ public class CNSTopicAttributes {
 		this.userId = userId;
 	}
 
-	public int getSubscriptionsPending() {
+	public long getSubscriptionsPending() {
 		return subscriptionsPending;
 	}
 
-	public void setSubscriptionsPending(int subscriptionsPending) {
+	public void setSubscriptionsPending(long subscriptionsPending) {
 		this.subscriptionsPending = subscriptionsPending;
 	}
 
-	public int getSubscriptionsConfirmed() {
+	public long getSubscriptionsConfirmed() {
 		return subscriptionsConfirmed;
 	}
 
-	public void setSubscriptionsConfirmed(int subscriptionsConfirmed) {
+	public void setSubscriptionsConfirmed(long subscriptionsConfirmed) {
 		this.subscriptionsConfirmed = subscriptionsConfirmed;
 	}
 
-	public int getSubscriptionsDeleted() {
+	public long getSubscriptionsDeleted() {
 		return subscriptionsDeleted;
 	}
 
-	public void setSubscriptionsDeleted(int subscriptionsDeleted) {
+	public void setSubscriptionsDeleted(long subscriptionsDeleted) {
 		this.subscriptionsDeleted = subscriptionsDeleted;
 	}
 

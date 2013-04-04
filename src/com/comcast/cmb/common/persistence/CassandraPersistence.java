@@ -1224,27 +1224,27 @@ public class CassandraPersistence {
 	 *            The consistency level of the keyspace.
 	 */
 	public <K, N> int getCount(String columnFamily, K key, Serializer<K> keySerializer, Serializer<N> columnNameSerializer,	HConsistencyLevel level) throws HectorException {
-        
+
 		long ts1 = System.currentTimeMillis();
-		
+
 		logger.debug("event=get_count cf=" + columnFamily + " key=" + key);
 
 		@SuppressWarnings("unchecked")
 		MultigetCountQuery<K, N> query = new MultigetCountQuery<K, N>(keyspaces.get(level), keySerializer, columnNameSerializer)
-				.setColumnFamily(columnFamily).setKeys(key)
-				.setRange(null, null, 2000000000);
-		
+		.setColumnFamily(columnFamily).setKeys(key)
+		.setRange(null, null, 2000000000);
+
 		QueryResult<Map<K, Integer>> result = query.execute();
 
 		CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CassandraRead, 1L);
-		
+
 		Map<K, Integer> resultRow = result.get();
-		
+
 		if (resultRow.containsKey(key)) {
-			
+
 			int count = resultRow.get(key);
-	        long ts2 = System.currentTimeMillis();
-	        CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CassandraTime, (ts2 - ts1));      
+			long ts2 = System.currentTimeMillis();
+			CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CassandraTime, (ts2 - ts1));
 			return count;
 		}
 
@@ -1300,9 +1300,36 @@ public class CassandraPersistence {
 		CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CassandraWrite, 1L);
         long ts2 = System.currentTimeMillis();
         CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CassandraTime, (ts2 - ts1));      
-
 	}
 	
+	/**
+	 * Decrement Cassandra counter by decrementBy
+	 * 
+	 * @param <K>
+	 * @param <N>
+	 * @param columnFamily
+	 * @param rowKey
+	 * @param columnName
+	 * @param decrementBy
+	 * @param keySerializer
+	 * @param columnNameSerializer
+	 * @param level
+	 */
+	public <K, N> void deleteCounter(String columnFamily, K rowKey, N columnName, Serializer<K> keySerializer, Serializer<N> columnNameSerializer, HConsistencyLevel level) {
+        
+		long ts1 = System.currentTimeMillis();
+
+		logger.debug("event=decrement_counter cf=" + columnFamily + " key=" + rowKey + " column=" + columnName);
+
+		Mutator<K> mutator = HFactory.createMutator(keyspaces.get(level), keySerializer);
+		mutator.deleteCounter(rowKey, columnFamily, columnName, columnNameSerializer);
+		mutator.execute();
+		
+		CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CassandraWrite, 1L);
+        long ts2 = System.currentTimeMillis();
+        CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CassandraTime, (ts2 - ts1));      
+	}
+
 	/**
 	 * Return current value of Cassandra counter
 	 * 

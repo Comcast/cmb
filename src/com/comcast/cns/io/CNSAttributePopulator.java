@@ -26,116 +26,116 @@ public class CNSAttributePopulator {
 
 	public static String getGetSubscriptionAttributesResponse(CNSSubscriptionAttributes attr) {
 
-		String resp = "<GetSubscriptionAttributesResponse xmlns=\"http://sns.amazonaws.com/doc/2010-03-31/\">" +
-		"<GetSubscriptionAttributesResult>" +
-		"<Attributes>" +
-		"<entry>" +
-		"<key>EffectiveDeliveryPolicy</key>" +
-		"<value>" + attr.getEffectiveDeliveryPolicy() + "</value>" +
-		"</entry>" +
-		"<entry>" +
-		"<key>Owner</key>" +
-		"<value>" + attr.getUserId() + "</value>" +
-		"</entry>" +
-		"<entry>" +
-		"<key>ConfirmationWasAuthenticated</key>" +
-		"<value>" + attr.isConfirmationWasAuthenticated() + "</value>" +
-		"</entry>" +
-		"<entry>" +
-		"<key>DeliveryPolicy</key>";    
+		StringBuffer out = new StringBuffer("<GetSubscriptionAttributesResponse xmlns=\"http://sns.amazonaws.com/doc/2010-03-31/\">\n");
+		out.append("\t<GetSubscriptionAttributesResult>\n");
+		out.append("\t\t<Attributes>\n");
+		out.append("\t\t\t<entry>\n");
+		out.append("\t\t\t\t<key>EffectiveDeliveryPolicy</key>\n");
+		out.append("\t\t\t\t<value>" + attr.getEffectiveDeliveryPolicy() + "</value>\n");
+		out.append("\t\t\t</entry>\n");
+		out.append("\t\t\t<entry>\n");
+		out.append("\t\t\t\t<key>Owner</key>\n");
+		out.append("\t\t\t\t<value>" + attr.getUserId() + "</value>\n");
+		out.append("\t\t\t</entry>\n");
+		out.append("\t\t\t<entry>\n");
+		out.append("\t\t\t\t<key>ConfirmationWasAuthenticated</key>\n");
+		out.append("\t\t\t\t<value>" + attr.isConfirmationWasAuthenticated() + "</value>\n");
+		out.append("\t\t\t</entry>\n");
+		out.append("\t\t\t<entry>\n");
+		out.append("\t\t\t\t<key>DeliveryPolicy</key>\n"); 
 
 		if (attr.getDeliveryPolicy() == null) {
-			resp += "<value>" + attr.getEffectiveDeliveryPolicy() + "</value>";
+			out.append("\t\t\t\t<value>" + attr.getEffectiveDeliveryPolicy() + "</value>\n");
 		} else {
-			resp += "<value>" + attr.getDeliveryPolicy() + "</value>";
+			out.append("\t\t\t\t<value>" + attr.getDeliveryPolicy() + "</value>\n");
 		}
 
-		resp += "</entry>" +
-		"<entry>" +
-		"<key>TopicArn</key>" +
-		"<value>" + attr.getTopicArn() + "</value>" +
-		"</entry>" +
-		"<entry>" +
-		"<key>SubscriptionArn</key>" +
-		"<value>" + attr.getSubscriptionArn() + "</value>" +
-		"</entry>" +
-		"</Attributes>" +
-		"</GetSubscriptionAttributesResult>" +
-		CNSPopulator.getResponseMetadata() +
-		"</GetSubscriptionAttributesResponse>";
+		out.append("\t\t\t</entry>\n");
+		out.append("\t\t\t<entry>\n");
+		out.append("\t\t\t\t<key>TopicArn</key>\n");
+		out.append("\t\t\t\t<value>" + attr.getTopicArn() + "</value>\n");
+		out.append("\t\t\t</entry>\n");
+		out.append("\t\t\t<entry>\n");
+		out.append("\t\t\t\t<key>SubscriptionArn</key>\n");
+		out.append("\t\t\t\t<value>" + attr.getSubscriptionArn() + "</value>\n");
+		out.append("\t\t\t</entry>\n");
+		out.append("\t\t</Attributes>\n");
+		out.append("\t</GetSubscriptionAttributesResult>\n");
+		out.append(CNSPopulator.getResponseMetadata());
+		out.append("</GetSubscriptionAttributesResponse>\n");
 
-		return resp;
+		return out.toString();
 	}
 
 	public static String getGetTopicAttributesResponse(CNSTopicAttributes attr) {
 
-		String resp = "<GetTopicAttributesResponse>" +
-		"<GetTopicAttributesResult>" +
-		"<Attributes>" +
-		"<entry>" +
-		"<key>EffectiveDeliveryPolicy</key>" +
-		"<value>" + attr.getEffectiveDeliveryPolicy().toString() + "</value>" +
-		"</entry>" +
-		"<entry>" +
-		"<key>Owner</key>" +
-		"<value>" + attr.getUserId() + "</value>" +
-		"</entry>" +
-		"<entry>" +
-		"<key>SubscriptionsPending</key>" +
-		"<value>" + attr.getSubscriptionsPending() + "</value>" +
-		"</entry>" +
-		"<entry>" +
-		"<key>Policy</key>" +
-		"<value>" + attr.getPolicy() + "</value>" +
-		"</entry>" +
-		"<entry>" +  
-		"<key>SubscriptionsConfirmed</key>" +
-		"<value>" + attr.getSubscriptionsConfirmed() + "</value>" +
-		"</entry>" +
-		"<entry>" +
-		"<key>SubscriptionsDeleted</key>" +
-		"<value>" + attr.getSubscriptionsDeleted() + "</value>" +
-		"</entry>";
+		StringBuffer out = new StringBuffer("<GetTopicAttributesResponse>\n");
+		
+		out.append("\t<GetTopicAttributesResult>\n");
+		out.append("\t\t<Attributes>\n");
+		out.append("\t\t\t<entry>\n");
+		out.append("\t\t\t\t<key>EffectiveDeliveryPolicy</key>\n");
+		out.append("\t\t\t\t<value>").append(attr.getEffectiveDeliveryPolicy().toString()).append("</value>\n");
+		out.append("\t\t\t</entry>\n");
+		out.append("\t\t\t<entry>\n");
+		out.append("\t\t\t\t<key>Owner</key>\n");
+		out.append("\t\t\t\t<value>").append(attr.getUserId()).append("</value>\n");
+		out.append("\t\t\t</entry>\n");
+		out.append("\t\t\t<entry>\n");
+		out.append("\t\t\t\t<key>Policy</key>\n");
+		out.append("\t\t\t\t<value>").append(attr.getPolicy()).append("</value>\n");
+		out.append("\t\t\t</entry>\n");
+		out.append("\t\t\t<entry>\n");
+		out.append("\t\t\t\t<key>SubscriptionsPending</key>\n");
+		out.append("\t\t\t\t<value>").append(attr.getSubscriptionsPending()).append("</value>\n");
+		out.append("\t\t\t</entry>\n");
+		out.append("\t\t\t<entry>\n");
+		out.append("\t\t\t\t<key>SubscriptionsConfirmed</key>\n");
+		out.append("\t\t\t\t<value>").append(attr.getSubscriptionsConfirmed()).append("</value>\n");
+		out.append("\t\t\t</entry>\n");
+		out.append("\t\t\t<entry>\n");
+		out.append("\t\t\t\t<key>SubscriptionsDeleted</key>\n");
+		out.append("\t\t\t\t<value>").append(attr.getSubscriptionsDeleted()).append("</value>\n");
+		out.append("\t\t\t</entry>\n");
 
 		if (attr.getDisplayName() != null && !attr.getDisplayName().isEmpty()) {
-			resp += "<entry>" +
-			"<key>DisplayName</key>" +
-			"<value>" + attr.getDisplayName() + "</value>" +
-			"</entry>";
+			out.append("\t\t\t<entry>\n");
+			out.append("\t\t\t\t<key>DisplayName</key>\n");
+			out.append("\t\t\t\t<value>").append(attr.getDisplayName()).append("</value>\n");
+			out.append("\t\t\t</entry>\n");
 		}
 
+		out.append("\t\t\t<entry>\n");
+		out.append("\t\t\t\t<key>DeliveryPolicy</key>\n");
+		out.append("\t\t\t\t<value>" + attr.getEffectiveDeliveryPolicy().toString() + "</value>\n");
+		out.append("\t\t\t</entry>\n");
+		out.append("\t\t\t<entry>\n");
+		out.append("\t\t\t\t<key>TopicArn</key>\n");
+		out.append("\t\t\t\t<value>").append(attr.getTopicArn()).append("</value>\n");
+		out.append("\t\t\t</entry>\n");
+		out.append("\t\t</Attributes>\n");
+		out.append("\t</GetTopicAttributesResult>\n");
+		out.append(CNSPopulator.getResponseMetadata());
+		out.append("</GetTopicAttributesResponse>");
 
-		resp +=   "<entry>" +
-		"<key>DeliveryPolicy</key>" +
-		"<value>" + attr.getEffectiveDeliveryPolicy().toString() + "</value>" +
-		"</entry>";
-		resp +=   "<entry>" +
-		"<key>TopicArn</key>" +
-		"<value>" + attr.getTopicArn() + "</value>" +
-		"</entry>" +
-		"</Attributes>" +
-		"</GetTopicAttributesResult>" +
-		CNSPopulator.getResponseMetadata() +
-		"</GetTopicAttributesResponse>";
-
-		return resp;
+		return out.toString();
 	}
 
 	public static String getSetSubscriptionAttributesResponse() {
 
-		String resp = "<SetSubscriptionAttributesResponse xmlns=\"http://sns.amazonaws.com/doc/2010-03-31/\">" + CNSPopulator.getResponseMetadata() + "</SetSubscriptionAttributesResponse>";
+		String resp = "<SetSubscriptionAttributesResponse xmlns=\"http://sns.amazonaws.com/doc/2010-03-31/\">\n" + CNSPopulator.getResponseMetadata() + "</SetSubscriptionAttributesResponse>";
 		return resp;
 	}
 
 	public static String getSetTopicAttributesResponse() {
 
-		String resp = "<SetTopicAttributesResponse xmlns=\"http://sns.amazonaws.com/doc/2010-03-31/\">" + CNSPopulator.getResponseMetadata() + "</SetTopicAttributesResponse>";
+		String resp = "<SetTopicAttributesResponse xmlns=\"http://sns.amazonaws.com/doc/2010-03-31/\">\n" + CNSPopulator.getResponseMetadata() + "</SetTopicAttributesResponse>";
 		return resp;
 	}
 
 	public static String getAddPermissionResponse() {
 
-		String resp = "<AddPermissionResponse xmlns=\"http://sns.amazonaws.com/doc/2010-03-31/\">" + CNSPopulator.getResponseMetadata() + "</AddPermissionResponse>";
+		String resp = "<AddPermissionResponse xmlns=\"http://sns.amazonaws.com/doc/2010-03-31/\">\n" + CNSPopulator.getResponseMetadata() + "</AddPermissionResponse>";
 		return resp;
 	}
 
