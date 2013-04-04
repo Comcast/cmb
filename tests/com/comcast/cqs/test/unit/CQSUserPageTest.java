@@ -77,7 +77,7 @@ public class CQSUserPageTest {
 	    	Resp res1 = createQueue(cqsServlet, queueName, user.getUserId());
 			assertTrue(res1.httpCode == 200 || res1.httpCode == 0);
 			CQSQueueCassandraPersistence queueHandler = new CQSQueueCassandraPersistence();
-			List<CQSQueue> queues = queueHandler.listQueues(user.getUserId(), null);
+			List<CQSQueue> queues = queueHandler.listQueues(user.getUserId(), null, false);
 			
 			if (queues != null && queues.size() > 0) {
 			

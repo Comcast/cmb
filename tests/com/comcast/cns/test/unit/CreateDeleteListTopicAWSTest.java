@@ -123,14 +123,14 @@ public class CreateDeleteListTopicAWSTest {
 		sns3 = new AmazonSNSClient(awsCredentials3, clientConfiguration);
 	    sqs3 = new AmazonSQSClient(awsCredentials3, clientConfiguration);
 
-    	sns.setEndpoint(CMBProperties.getInstance().getCNSServerUrl());
-		sqs.setEndpoint(CMBProperties.getInstance().getCQSServerUrl());
+    	sns.setEndpoint(CMBProperties.getInstance().getCNSServiceUrl());
+		sqs.setEndpoint(CMBProperties.getInstance().getCQSServiceUrl());
 		
-		sns2.setEndpoint(CMBProperties.getInstance().getCNSServerUrl());
-		sqs2.setEndpoint(CMBProperties.getInstance().getCQSServerUrl());
+		sns2.setEndpoint(CMBProperties.getInstance().getCNSServiceUrl());
+		sqs2.setEndpoint(CMBProperties.getInstance().getCQSServiceUrl());
 
-		sns3.setEndpoint(CMBProperties.getInstance().getCNSServerUrl());
-		sqs3.setEndpoint(CMBProperties.getInstance().getCQSServerUrl());
+		sns3.setEndpoint(CMBProperties.getInstance().getCNSServiceUrl());
+		sqs3.setEndpoint(CMBProperties.getInstance().getCQSServiceUrl());
     }
     
 	@After    

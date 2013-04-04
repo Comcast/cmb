@@ -65,7 +65,7 @@ public class QueuePersistenceTest {
         
         ICQSQueuePersistence persistence = new CQSQueueCassandraPersistence();
 		
-		List<CQSQueue> queueList = persistence.listQueues(user.getUserId(), null);
+		List<CQSQueue> queueList = persistence.listQueues(user.getUserId(), null, false);
 		
 		for (CQSQueue queue: queueList) {
 			persistence.deleteQueue(queue.getRelativeUrl());
@@ -82,7 +82,7 @@ public class QueuePersistenceTest {
 			ICQSQueuePersistence persistence = new CQSQueueCassandraPersistence();
 			deleteQueuesTest();
 			
-			List<CQSQueue> queueList = persistence.listQueues(user.getUserId(), null);
+			List<CQSQueue> queueList = persistence.listQueues(user.getUserId(), null, false);
 			assertEquals(queueList.size(), 0);
 
 	    	String queueName = QUEUE_PREFIX + randomGenerator.nextLong();
@@ -104,7 +104,7 @@ public class QueuePersistenceTest {
 
 			assertTrue(queue.getName().equals(queueName));
 			
-			queueList = persistence.listQueues(user.getUserId(), QUEUE_PREFIX);
+			queueList = persistence.listQueues(user.getUserId(), QUEUE_PREFIX, false);
 			assertEquals(queueList.size(), 3);
 
 			for (CQSQueue queue1 : queueList) {
@@ -118,7 +118,7 @@ public class QueuePersistenceTest {
 				persistence.deleteQueue(queue1.getRelativeUrl());
 			}						
 
-			queueList = persistence.listQueues(user.getUserId(), null);
+			queueList = persistence.listQueues(user.getUserId(), null, false);
 			assertEquals(queueList.size(), 0);
 					
 		} catch (Exception ex) {
@@ -150,7 +150,7 @@ public class QueuePersistenceTest {
 		
 		try {
 			
-			queueList = persistence.listQueues(user.getUserId(), null);
+			queueList = persistence.listQueues(user.getUserId(), null, false);
 			
 			for (CQSQueue queue1 : queueList) {
 				persistence.deleteQueue(queue1.getRelativeUrl());
@@ -197,7 +197,7 @@ public class QueuePersistenceTest {
 			persistence.createQueue(queue2);
 			persistence.updatePolicy(queue2.getRelativeUrl(), policy);
 			
-			for (CQSQueue queue: persistence.listQueues(user.getUserId(), QUEUE_PREFIX)) {
+			for (CQSQueue queue: persistence.listQueues(user.getUserId(), QUEUE_PREFIX, false)) {
 				assertTrue(policy.equals(queue.getPolicy()));
 				persistence.deleteQueue(queue.getRelativeUrl());
 			}
@@ -217,14 +217,14 @@ public class QueuePersistenceTest {
 			ICQSQueuePersistence persistence = new CQSQueueCassandraPersistence();
 			//deleteQueuesTest();
 			
-			List<CQSQueue> queueList = persistence.listQueues(userId, null);
+			List<CQSQueue> queueList = persistence.listQueues(userId, null, false);
 			assertEquals(queueList.size(), 0);
 
 	    	String queueName = QUEUE_PREFIX + randomGenerator.nextLong();
 			CQSQueue queue = new CQSQueue(queueName, userId);
 			persistence.createQueue(queue);
 			
-			queueList = persistence.listQueues(userId, null);
+			queueList = persistence.listQueues(userId, null, false);
 			assertEquals(queueList.size(), 1);
 			
 			String queueURL = queue.getRelativeUrl();
@@ -288,7 +288,7 @@ public class QueuePersistenceTest {
 			assertTrue(queue4.getDelaySeconds() == 20);
 			assertTrue(queue4.getPolicy().equals("no"));
 			
-			queueList = persistence.listQueues(user.getUserId(), null);
+			queueList = persistence.listQueues(user.getUserId(), null, false);
 			
 			for(CQSQueue queue_: queueList) {
 				persistence.deleteQueue(queue_.getRelativeUrl());

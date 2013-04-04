@@ -44,7 +44,7 @@ public class CNSPublishJobTest {
         Util.initLog4jTest();
         CMBControllerServlet.valueAccumulator.initializeAllCounters();
         PersistenceFactory.reset();
-        CMBProperties.getInstance().setUseSubInfoCache(false);
+        CMBProperties.getInstance().setCNSUseSubInfoCache(false);
     }
 
     @Test

@@ -78,7 +78,7 @@ public class CreateDeleteListQueueAWSTest {
 
             AmazonSQS sqs = new AmazonSQSClient(awsCredentials, clientConfiguration);
 
-            sqs.setEndpoint(CMBProperties.getInstance().getCQSServerUrl());
+            sqs.setEndpoint(CMBProperties.getInstance().getCQSServiceUrl());
 
             CreateQueueRequest qRequest = new CreateQueueRequest("TestQueue"+rand.nextInt());
 

@@ -130,9 +130,9 @@ public class CqsStressTester {
        
        cm = new ThreadSafeClientConnManager(schemeRegistry);
        // Increase max total connection to 200
-       cm.setMaxTotal(CMBProperties.getInstance().getHttpPublisherEndpointConnectionPoolSize());
+       cm.setMaxTotal(CMBProperties.getInstance().getCNSPublisherHttpEndpointConnectionPoolSize());
        // Increase default max connection per route to 20
-       cm.setDefaultMaxPerRoute(CMBProperties.getInstance().getHttpPublisherEndpointConnectionsPerRouteSize());
+       cm.setDefaultMaxPerRoute(CMBProperties.getInstance().getCNSPublisherHttpEndpointConnectionsPerRouteSize());
        
        httpClient = new DefaultHttpClient(cm);
     }
@@ -248,7 +248,7 @@ public class CqsStressTester {
 	
 	private void createReceivers(String queueUrl) {
 		
-    	CassandraPersistence persistence = new CassandraPersistence(CMBProperties.getInstance().getCMBCQSKeyspace());
+    	CassandraPersistence persistence = new CassandraPersistence(CMBProperties.getInstance().getCQSKeyspace());
     	long receiverCount = CQSStressTestProperties.getInstance().getNumberOfReceiversPerQueue();
     	List<Receiver> receiverListForQueue = new ArrayList<Receiver>();
     	
@@ -807,7 +807,7 @@ public class CqsStressTester {
 		CommunicationUtils.addParam(params, "AWSAccessKeyId", user.getAccessKey());
 		CommunicationUtils.addParam(params, "Version", "2009-02-01");
 		try {
-			String response = send(params, CMBProperties.getInstance().getCQSServerUrl());
+			String response = send(params, CMBProperties.getInstance().getCQSServiceUrl());
 			return CqsStressTester.deserialize(response, "QueueUrl").trim();
 		} catch (Exception e) {
 			logger.error("Action=CreateQueue status=error exception=", e);
@@ -916,7 +916,7 @@ public class CqsStressTester {
 			 //resp = sendHttpMessage(url);
 			resp = send(url, "");
 		} catch(Exception e) {
-			logger.error("event=send_cqs_message status=failure errorType=Exception endpoint=" + endPoint + " exception=" + e.toString(), e);
+			logger.error("event=send_cqs_message endpoint=" + endPoint + " exception=" + e.toString(), e);
 			throw new CMBException(CQSErrorCodes.InternalError, "internal service error");
 		}
 		return resp;
@@ -927,7 +927,7 @@ public class CqsStressTester {
         logger.debug("event=send_http_request endpoint=" + endpoint + "\" message=\"" + message + "\"");
         
         if ((message == null) || (endpoint == null)) {
-            logger.debug("event=send_http_request status=failure errorType=MissingParameters endpoint=" + endpoint + "\" message=\"" + message + "\"");
+            logger.debug("event=send_http_request error_code=MissingParameters endpoint=" + endpoint + "\" message=\"" + message + "\"");
             throw new Exception("Message and Endpoint must both be set");
         }
 

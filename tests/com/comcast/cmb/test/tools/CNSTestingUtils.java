@@ -622,7 +622,7 @@ public class CNSTestingUtils {
 		SimpleHttpServletRequest request = new SimpleHttpServletRequest();
 		Map<String, String[]> params = new HashMap<String, String[]>();
 
-		request.setRequestUrl(CMBProperties.getInstance().getCQSServerUrl());
+		request.setRequestUrl(CMBProperties.getInstance().getCQSServiceUrl());
 		addParam(params, "Action", "ListQueues");
 		addParam(params, "AWSAccessKeyId", user.getAccessKey());
 		addParam(params, "QueueNamePrefix", "");
@@ -664,7 +664,7 @@ public class CNSTestingUtils {
 	public static String addQueue(CQSControllerServlet cqs, User user, String qName) throws Exception {
 
 		SimpleHttpServletRequest request = new SimpleHttpServletRequest();
-		request.setRequestUrl(CMBProperties.getInstance().getCQSServerUrl());
+		request.setRequestUrl(CMBProperties.getInstance().getCQSServiceUrl());
 		Map<String, String[]> params = new HashMap<String, String[]>();
 
 

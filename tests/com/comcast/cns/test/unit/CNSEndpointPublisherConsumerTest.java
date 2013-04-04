@@ -93,8 +93,8 @@ public class CNSEndpointPublisherConsumerTest {
         origInst = CNSEndpointPublisherJobConsumer.TestInterface.getSQS();
         CNSEndpointPublisherJobConsumer.TestInterface.clearDeliveryHandlerQueue();
         CNSEndpointPublisherJobConsumer.TestInterface.clearReDeliveryHandlerQueue();
-        useSubInfoCacheSetting = CMBProperties.getInstance().isUseSubInfoCache();
-        CMBProperties.getInstance().setUseSubInfoCache(false);
+        useSubInfoCacheSetting = CMBProperties.getInstance().isCNSUseSubInfoCache();
+        CMBProperties.getInstance().setCNSUseSubInfoCache(false);
    }
     
     @After
@@ -105,7 +105,7 @@ public class CNSEndpointPublisherConsumerTest {
         CNSEndpointPublisherJobConsumer.TestInterface.setAmazonSQS(origInst);
         CNSEndpointPublisherJobConsumer.TestInterface.setTestQueueLimit(null);
         CNSPublishJob.testPublisher = null;         
-        CMBProperties.getInstance().setUseSubInfoCache(useSubInfoCacheSetting);
+        CMBProperties.getInstance().setCNSUseSubInfoCache(useSubInfoCacheSetting);
     }
 
         
@@ -520,16 +520,16 @@ public class CNSEndpointPublisherConsumerTest {
         
         CNSEndpointPublisherJobConsumer consumer = new CNSEndpointPublisherJobConsumer();
 
-        for (int i = 0; i < CMBProperties.getInstance().getNumDeliveryHandlers() + 2; i++) {
+        for (int i = 0; i < CMBProperties.getInstance().getCNSNumPublisherDeliveryHandlers() + 2; i++) {
             consumer.run(0);
         }
 
         //check server is overloaded and consumer is no longer polling for messages
         //Note: sometimes the numRecvMsgCalls may be off by one
-        if (testSqs.numRecvMsgCalls != CMBProperties.getInstance().getNumDeliveryHandlers() && 
-                testSqs.numRecvMsgCalls != CMBProperties.getInstance().getNumDeliveryHandlers() + 1 &&
-                testSqs.numRecvMsgCalls != CMBProperties.getInstance().getNumDeliveryHandlers() - 1) {
-            fail("Expected num recv calls=" + CMBProperties.getInstance().getNumDeliveryHandlers() + " got:" + testSqs.numRecvMsgCalls);
+        if (testSqs.numRecvMsgCalls != CMBProperties.getInstance().getCNSNumPublisherDeliveryHandlers() && 
+                testSqs.numRecvMsgCalls != CMBProperties.getInstance().getCNSNumPublisherDeliveryHandlers() + 1 &&
+                testSqs.numRecvMsgCalls != CMBProperties.getInstance().getCNSNumPublisherDeliveryHandlers() - 1) {
+            fail("Expected num recv calls=" + CMBProperties.getInstance().getCNSNumPublisherDeliveryHandlers() + " got:" + testSqs.numRecvMsgCalls);
         }
     }    
     

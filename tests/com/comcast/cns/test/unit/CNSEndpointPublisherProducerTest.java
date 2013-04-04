@@ -73,8 +73,8 @@ public class CNSEndpointPublisherProducerTest {
     static Logger logger = Logger.getLogger(CNSEndpointPublisherProducerTest.class);
     
     final private static String testUserId = "testUserId";
-    final private static String publishQNamePrefix = CMBProperties.getInstance().getCnsPublishQueueNamePrefix();
-    final private static String epPublishQNamePrefix = CMBProperties.getInstance().getCnsEndpointPublishQueueNamePrefix();
+    final private static String publishQNamePrefix = CMBProperties.getInstance().getCNSPublishQueueNamePrefix();
+    final private static String epPublishQNamePrefix = CMBProperties.getInstance().getCNSEndpointPublishQueueNamePrefix();
     private static AtomicInteger messageSeq = new AtomicInteger(0);
     
     static boolean useSubInfoCacheSetting;
@@ -84,14 +84,14 @@ public class CNSEndpointPublisherProducerTest {
         CNSEndpointPublisherJobProducer.TestInterface.setSQS(new TestAmazonSQS());
         CNSEndpointPublisherJobProducer.TestInterface.setSubscriptionPersistence(new TestSubscriptionPersistence());
         CNSEndpointPublisherJobProducer.TestInterface.setInitialized(true);
-        useSubInfoCacheSetting = CMBProperties.getInstance().isUseSubInfoCache();
-        CMBProperties.getInstance().setUseSubInfoCache(false);
+        useSubInfoCacheSetting = CMBProperties.getInstance().isCNSUseSubInfoCache();
+        CMBProperties.getInstance().setCNSUseSubInfoCache(false);
    }
 
     @After
     public void tearDown() {
         CNSEndpointPublisherJobProducer.TestInterface.setInitialized(false);
-        CMBProperties.getInstance().setUseSubInfoCache(useSubInfoCacheSetting);
+        CMBProperties.getInstance().setCNSUseSubInfoCache(useSubInfoCacheSetting);
 
     }
     
@@ -414,7 +414,7 @@ public class CNSEndpointPublisherProducerTest {
     	testSqs.clearEPPublishJobs();
     	
     	String topicArn = "testTopicArn";
-    	int maxSubsPerEPJob = CMBProperties.getInstance().getMaxSubscriptionsPerEPPublishJob();
+    	int maxSubsPerEPJob = CMBProperties.getInstance().getCNSMaxSubscriptionsPerEndpointPublishJob();
     	if (maxSubsPerEPJob < 1) 
     		fail("Expected maxSubscriptionsPerEPPublishJob to be at least 1");
     	int numSubsToCreate = maxSubsPerEPJob;
@@ -449,7 +449,7 @@ public class CNSEndpointPublisherProducerTest {
     	testSqs.clearEPPublishJobs();
     	
     	String topicArn = "testTopicArn";
-    	int maxSubsPerEPJob = CMBProperties.getInstance().getMaxSubscriptionsPerEPPublishJob();
+    	int maxSubsPerEPJob = CMBProperties.getInstance().getCNSMaxSubscriptionsPerEndpointPublishJob();
     	if (maxSubsPerEPJob < 2) 
     		fail("Expected maxSubscriptionsPerEPPublishJob to be at least 2");
     	int numSubsToCreate = maxSubsPerEPJob - 1;
@@ -479,7 +479,7 @@ public class CNSEndpointPublisherProducerTest {
     	testSqs.clearEPPublishJobs();
     	
     	String topicArn = "testTopicArn";
-    	int maxSubsPerEPJob = CMBProperties.getInstance().getMaxSubscriptionsPerEPPublishJob();
+    	int maxSubsPerEPJob = CMBProperties.getInstance().getCNSMaxSubscriptionsPerEndpointPublishJob();
     	if (maxSubsPerEPJob < 1) 
     		fail("Expected maxSubscriptionsPerEPPublishJob to be at least 1");
     	int numSubsToCreate = maxSubsPerEPJob;
@@ -509,7 +509,7 @@ public class CNSEndpointPublisherProducerTest {
     	testSqs.clearEPPublishJobs();
     	
     	String topicArn = "testTopicArn";
-    	int maxSubsPerEPJob = CMBProperties.getInstance().getMaxSubscriptionsPerEPPublishJob();
+    	int maxSubsPerEPJob = CMBProperties.getInstance().getCNSMaxSubscriptionsPerEndpointPublishJob();
     	if (maxSubsPerEPJob < 1) 
     		fail("Expected maxSubscriptionsPerEPPublishJob to be at least 1");
     	int numSubsToCreate = maxSubsPerEPJob + 1;
@@ -541,7 +541,7 @@ public class CNSEndpointPublisherProducerTest {
     	testSqs.clearEPPublishJobs();
     	
     	String topicArn = "testTopicArn";
-    	int maxSubsPerEPJob = CMBProperties.getInstance().getMaxSubscriptionsPerEPPublishJob();
+    	int maxSubsPerEPJob = CMBProperties.getInstance().getCNSMaxSubscriptionsPerEndpointPublishJob();
     	if (maxSubsPerEPJob < 1) 
     		fail("Expected maxSubscriptionsPerEPPublishJob to be at least 1");
     	int numSubsToCreate = 0;

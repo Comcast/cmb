@@ -107,7 +107,7 @@ public class CreateDeleteListQueueCMBTest {
 
         SimpleHttpServletRequest request = new SimpleHttpServletRequest();
         Map<String, String[]> params = new HashMap<String, String[]>();
-        request.setRequestUrl(CMBProperties.getInstance().getCQSServerUrl());
+        request.setRequestUrl(CMBProperties.getInstance().getCQSServiceUrl());
 
 
         addParam(params, "Action", "CreateQueue");
@@ -139,7 +139,7 @@ public class CreateDeleteListQueueCMBTest {
     
     private Resp listQueues(CQSControllerServlet sqs, User user, String qName_prefix) throws Exception {
         SimpleHttpServletRequest request = new SimpleHttpServletRequest();
-        request.setRequestUrl(CMBProperties.getInstance().getCQSServerUrl());
+        request.setRequestUrl(CMBProperties.getInstance().getCQSServiceUrl());
 
         Map<String, String[]> params = new HashMap<String, String[]>();
         addParam(params, "Action", "ListQueues");
@@ -160,7 +160,7 @@ public class CreateDeleteListQueueCMBTest {
     
     private Resp getQueueUrl(CQSControllerServlet sqs, User user, String qName) throws Exception {
         SimpleHttpServletRequest request = new SimpleHttpServletRequest();
-        request.setRequestUrl(CMBProperties.getInstance().getCQSServerUrl());
+        request.setRequestUrl(CMBProperties.getInstance().getCQSServiceUrl());
 
         Map<String, String[]> params = new HashMap<String, String[]>();
         addParam(params, "Action", "GetQueueUrl");

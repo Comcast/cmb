@@ -120,7 +120,7 @@ public class SendDeleteReceiveMessageCMBTest {
 
         SimpleHttpServletRequest request = new SimpleHttpServletRequest();
 
-        request.setRequestUrl(CMBProperties.getInstance().getCQSServerUrl() + user.getUserId() + "/" + queue.getName());
+        request.setRequestUrl(CMBProperties.getInstance().getCQSServiceUrl() + user.getUserId() + "/" + queue.getName());
         Map<String, String[]> params = new HashMap<String, String[]>();
 
         addParam(params, "Action", "SendMessage");
@@ -144,7 +144,7 @@ public class SendDeleteReceiveMessageCMBTest {
 
         SimpleHttpServletRequest request = new SimpleHttpServletRequest();
 
-        request.setRequestUrl(CMBProperties.getInstance().getCQSServerUrl() + user.getUserId() + "/" + queue.getName());
+        request.setRequestUrl(CMBProperties.getInstance().getCQSServiceUrl() + user.getUserId() + "/" + queue.getName());
         Map<String, String[]> params = new HashMap<String, String[]>();
 
         addParam(params, "Action", "DeleteMessage");
@@ -168,7 +168,7 @@ public class SendDeleteReceiveMessageCMBTest {
 
         SimpleHttpServletRequest request = new SimpleHttpServletRequest();
 
-        request.setRequestUrl(CMBProperties.getInstance().getCQSServerUrl() + user.getUserId() + "/" + queue.getName());
+        request.setRequestUrl(CMBProperties.getInstance().getCQSServiceUrl() + user.getUserId() + "/" + queue.getName());
         Map<String, String[]> params = new HashMap<String, String[]>();
 
         addParam(params, "Action", "ReceiveMessage");
@@ -192,7 +192,7 @@ public class SendDeleteReceiveMessageCMBTest {
 
         SimpleHttpServletRequest request = new SimpleHttpServletRequest();
 
-        request.setRequestUrl(CMBProperties.getInstance().getCQSServerUrl() + user.getUserId() + "/" + queue.getName());
+        request.setRequestUrl(CMBProperties.getInstance().getCQSServiceUrl() + user.getUserId() + "/" + queue.getName());
         Map<String, String[]> params = new HashMap<String, String[]>();
 
         addParam(params, "Action", "ReceiveMessageBody");

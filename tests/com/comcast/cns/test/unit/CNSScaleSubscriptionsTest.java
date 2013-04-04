@@ -71,10 +71,10 @@ public class CNSScaleSubscriptionsTest {
             BasicAWSCredentials credentialsUser = new BasicAWSCredentials(user.getAccessKey(), user.getAccessSecret());
 
             sns = new AmazonSNSClient(credentialsUser);
-            sns.setEndpoint(CMBProperties.getInstance().getCNSServerUrl());
+            sns.setEndpoint(CMBProperties.getInstance().getCNSServiceUrl());
             
             sqs = new AmazonSQSClient(credentialsUser);
-            sqs.setEndpoint(CMBProperties.getInstance().getCQSServerUrl());
+            sqs.setEndpoint(CMBProperties.getInstance().getCQSServiceUrl());
             
         } catch (Exception ex) {
             logger.error("setup failed", ex);

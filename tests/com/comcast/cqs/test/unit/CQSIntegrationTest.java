@@ -134,10 +134,10 @@ public class CQSIntegrationTest {
             BasicAWSCredentials credentialsUser1 = new BasicAWSCredentials(user1.getAccessKey(), user1.getAccessSecret());
 
             sqs = new AmazonSQSClient(credentialsUser);
-            sqs.setEndpoint(CMBProperties.getInstance().getCQSServerUrl());
+            sqs.setEndpoint(CMBProperties.getInstance().getCQSServiceUrl());
 
             sns = new AmazonSNSClient(credentialsUser1);
-            sns.setEndpoint(CMBProperties.getInstance().getCNSServerUrl());
+            sns.setEndpoint(CMBProperties.getInstance().getCNSServiceUrl());
             
         } catch (Exception ex) {
             logger.error("setup failed", ex);

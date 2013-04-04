@@ -89,7 +89,7 @@ public class CNSStressTest {
 	private List<String> topics = new ArrayList<String>();
 	private static final Random rand = new Random();
 	
-	private static CassandraPersistence cassandraPersistence = new CassandraPersistence(CMBProperties.getInstance().getCMBCNSKeyspace());
+	private static CassandraPersistence cassandraPersistence = new CassandraPersistence(CMBProperties.getInstance().getCNSKeyspace());
 	
     @Before
     public void setup() throws Exception {
@@ -120,10 +120,10 @@ public class CNSStressTest {
 		String report = "";
 		
 		NUM_TOPICS = 1;
-		NUM_SUBSCRIBERS_PER_TOPIC = 100;
-		NUM_MESSAGES_PER_SEC = 100;
+		NUM_SUBSCRIBERS_PER_TOPIC = 2;
+		NUM_MESSAGES_PER_SEC = 10;
 		TEST_DURATION_SECS = 60;
-		NUM_THREADS_PER_TOPIC = 30;
+		NUM_THREADS_PER_TOPIC = 10;
 
 		report += stressTest(true) + "\n";
 		
@@ -230,7 +230,7 @@ public class CNSStressTest {
 			AmazonSNS sns = new AmazonSNSClient(awsCredentials, clientConfiguration);
 
 			if (useLocalSns) {
-				sns.setEndpoint(CMBProperties.getInstance().getCNSServerUrl());
+				sns.setEndpoint(CMBProperties.getInstance().getCNSServiceUrl());
 			}
 			
 			for (int k=0; k<NUM_TOPICS; k++) {
@@ -265,7 +265,8 @@ public class CNSStressTest {
 					
 					String subscriptionUrl = endpointUrls[rand.nextInt(endpointUrls.length)] + subscriptionId;
 					
-					//subscriptionUrl += "?delayMS=1000";
+					//subscriptionUrl += "?delayMS=10000";
+					//subscriptionUrl += "?errorCode=404";
 					
 					SubscribeRequest subscribeRequest = new SubscribeRequest();
 					subscribeRequest.setEndpoint(subscriptionUrl);

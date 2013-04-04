@@ -56,7 +56,7 @@ public class CMBIntegrationTest {
 
         BasicAWSCredentials bas = new BasicAWSCredentials(user.getAccessKey(), user.getAccessSecret());
         sns = new AmazonSNSClient(bas);
-        sns.setEndpoint(CMBProperties.getInstance().getCNSServerUrl());
+        sns.setEndpoint(CMBProperties.getInstance().getCNSServiceUrl());
     }
 
     @Test

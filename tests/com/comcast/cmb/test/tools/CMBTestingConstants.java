@@ -21,7 +21,9 @@ public class CMBTestingConstants {
 
 	// base URL of live endpoint conforming with com.comcast.cmb.test.tools.EndpointServlet used by various unit tests
 	
-	public static final String HTTP_ENDPOINT_BASE_URL = CMBProperties.getInstance().getCQSServerUrl() + "Endpoint/";
+	public static final String HTTP_ENDPOINT_BASE_URL = CMBProperties.getInstance().getCQSServiceUrl() + "Endpoint/";
+	//public static final String HTTP_ENDPOINT_BASE_URL = "http://sns-test5.plaxo.com:6060/Endpoint/";
+	
 	public static final String HTTPS_ENDPOINT_BASE_URL = "";
 	
 	// email endpoint for testing

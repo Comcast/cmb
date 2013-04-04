@@ -49,8 +49,8 @@ public class CQSTestUtils {
 	}
 
 	private static void getQueueCount(String queueUrl) throws NoSuchAlgorithmException, UnsupportedEncodingException {
-		int numberOfPartitions = CMBProperties.getInstance().getCqsNumberOfQueuePartitions();
-		CassandraPersistence persistence = new CassandraPersistence(CMBProperties.getInstance().getCMBCQSKeyspace());
+		int numberOfPartitions = CMBProperties.getInstance().getCQSNumberOfQueuePartitions();
+		CassandraPersistence persistence = new CassandraPersistence(CMBProperties.getInstance().getCQSKeyspace());
 		String queueHash = Util.hashQueueUrl(queueUrl);
 		long messageCount = 0;
 		for (int i=0; i<numberOfPartitions; i++) {

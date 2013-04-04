@@ -259,7 +259,7 @@ public class RedisCachedCassandraPersistenceTest {
             return ids;
         }
         @Override
-        public int getQCount(String queueUrl) {
+        public long getQueueMessageCount(String queueUrl) {
             return messages.size();
         }
         @Override
@@ -368,8 +368,8 @@ public class RedisCachedCassandraPersistenceTest {
         if (testP.messages.size() != 2001) {
             fail("Expected to add one more message. count=" + testP.messages.size() );
         }
-        if (redisP.getQueueCount("testQueue", false) != 2001) {
-            fail("Expected 2001. Got:" + redisP.getQueueCount("testQueue", false));
+        if (redisP.getQueueMessageCount("testQueue", false) != 2001) {
+            fail("Expected 2001. Got:" + redisP.getQueueMessageCount("testQueue", false));
         }
         
         //get message and ensure its what you added
@@ -533,7 +533,7 @@ public class RedisCachedCassandraPersistenceTest {
         
         //wait for 1 second, call receive-message and get the 1 messages  
         Thread.sleep(1001);
-        if (redisP.getQueueCount("testQueue", true) != 1) {
+        if (redisP.getQueueMessageCount("testQueue", true) != 1) {
             fail("Expected 1 message to become re-visible. Got something else");
         }
         messages = redisP.receiveMessage(queue, receiveAttributes);
@@ -578,7 +578,7 @@ public class RedisCachedCassandraPersistenceTest {
         
         //wait for 1 second, call receive-message and get the 1 messages  
         Thread.sleep(1001);
-        if (redisP.getQueueCount("testQueue", true) != 1) {
+        if (redisP.getQueueMessageCount("testQueue", true) != 1) {
             fail("Expected 1 message to become re-visible. Got something else");
         }
         messages = redisP.receiveMessage(queue, receiveAttributes);

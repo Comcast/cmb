@@ -73,10 +73,10 @@ public class CNSScaleTopicsTest {
             BasicAWSCredentials credentialsUser = new BasicAWSCredentials(user.getAccessKey(), user.getAccessSecret());
 
             sns = new AmazonSNSClient(credentialsUser);
-            sns.setEndpoint(CMBProperties.getInstance().getCNSServerUrl());
+            sns.setEndpoint(CMBProperties.getInstance().getCNSServiceUrl());
             
             sqs = new AmazonSQSClient(credentialsUser);
-            sqs.setEndpoint(CMBProperties.getInstance().getCQSServerUrl());
+            sqs.setEndpoint(CMBProperties.getInstance().getCQSServiceUrl());
             
             queueUrl = sqs.createQueue(new CreateQueueRequest("MessageSink")).getQueueUrl();
 
@@ -100,6 +100,16 @@ public class CNSScaleTopicsTest {
     @Test
     public void Create100Topics() {
     	CreateNTopics(100);
+    }
+
+    @Test
+    public void Create10Topics() {
+    	CreateNTopics(10);
+    }
+
+    @Test
+    public void Create1Topics() {
+    	CreateNTopics(1);
     }
 
     private void CreateNTopics(long n) {
@@ -161,7 +171,7 @@ public class CNSScaleTopicsTest {
     		
     		for (String topicArn : topicArns) {
 	            try {
-	    			sns.publish(new PublishRequest(topicArn, "test message"));
+	    			sns.publish(new PublishRequest(topicArn, "test message " + counter));
 	            	logger.info("published message on topic " + counter + ": " + topicArn);
 	            	counter++;
 	            } catch (Exception ex) {
@@ -203,12 +213,13 @@ public class CNSScaleTopicsTest {
 	    		
 	    		for (Message message : receiveMessageResult.getMessages()) {
 	    		
-	    	    	DeleteMessageRequest deleteMessageRequest = new DeleteMessageRequest();
+	    	    	//logger.info("\t" + message.getBody());
+	    			
+	    			DeleteMessageRequest deleteMessageRequest = new DeleteMessageRequest();
 	    			deleteMessageRequest.setQueueUrl(queueUrl);
 	    			deleteMessageRequest.setReceiptHandle(message.getReceiptHandle());
 	    			sqs.deleteMessage(deleteMessageRequest);
 	    		}
-    		
     		} while (counter > 0);
     		
     		logger.info("create failuers: " + createFailures +  " delete failures: " + deleteFailures + " publish failures: " + publishFailures + " subscribe failures: " + subscribeFailures + " messages found: " + totalCount);

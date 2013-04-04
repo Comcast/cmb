@@ -77,7 +77,7 @@ public class CQSMessagePartitionedCassandraPersistenceTest {
         }
         
     	String queueName = QUEUE_PREFIX + randomGenerator.nextLong();
-        String queueUrl = CMBProperties.getInstance().getCQSServerUrl() + user.getUserId() + "/" + queueName;
+        String queueUrl = CMBProperties.getInstance().getCQSServiceUrl() + user.getUserId() + "/" + queueName;
 
 		attributes = new HashMap<String, String>();
         attributes.put("SenderId", user.getUserId());
@@ -214,7 +214,7 @@ public class CQSMessagePartitionedCassandraPersistenceTest {
  		
  		assertEquals(messageList.size(), peekMessageList.size());
  		previousHandle = null;
- 		nextHandle = com.comcast.cqs.util.Util.hashQueueUrl(queue.getRelativeUrl()) + "_" + (CMBProperties.getInstance().getCqsNumberOfQueuePartitions()-1) +
+ 		nextHandle = com.comcast.cqs.util.Util.hashQueueUrl(queue.getRelativeUrl()) + "_" + (CMBProperties.getInstance().getCQSNumberOfQueuePartitions()-1) +
  				":" + CassandraPersistence.newTime(System.currentTimeMillis()+1209600000, false) + ":" + UUIDGen.getClockSeqAndNode();
  		peekMessageList.clear();
  		newMessageList.clear();
@@ -272,8 +272,8 @@ public class CQSMessagePartitionedCassandraPersistenceTest {
 	
 	private long getQueueCount(String queueUrl) throws NoSuchAlgorithmException, UnsupportedEncodingException {
 		
-		int numberOfPartitions = CMBProperties.getInstance().getCqsNumberOfQueuePartitions();
-		CassandraPersistence persistence = new CassandraPersistence(CMBProperties.getInstance().getCMBCQSKeyspace());
+		int numberOfPartitions = CMBProperties.getInstance().getCQSNumberOfQueuePartitions();
+		CassandraPersistence persistence = new CassandraPersistence(CMBProperties.getInstance().getCQSKeyspace());
 		String queueHash = com.comcast.cqs.util.Util.hashQueueUrl(queueUrl);
 		long messageCount = 0;
 		

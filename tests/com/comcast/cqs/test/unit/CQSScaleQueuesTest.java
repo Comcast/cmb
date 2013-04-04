@@ -49,6 +49,13 @@ public class CQSScaleQueuesTest {
     
     private Vector<String> report = new Vector<String>();
     
+	public static void main(String [ ] args) throws Exception {
+		
+		CQSScaleQueuesTest cqsScaleTest = new CQSScaleQueuesTest();
+		cqsScaleTest.setup();
+		cqsScaleTest.CreateQueuesConcurrent();
+	}
+    
     @Before
     public void setup() throws Exception {
     	
@@ -66,14 +73,15 @@ public class CQSScaleQueuesTest {
                 user = userPersistence.createUser("cqs_unit_test", "cqs_unit_test");
             }
 
-            BasicAWSCredentials credentialsUser = new BasicAWSCredentials(user.getAccessKey(), user.getAccessSecret());
+            //BasicAWSCredentials credentialsUser = new BasicAWSCredentials(user.getAccessKey(), user.getAccessSecret());
 
-        	//BasicAWSCredentials credentialsUser = new BasicAWSCredentials("WOA5HC1GEDQYXF8LZYB1", "FwpY/FvhZvMjrlM45SKpkLowoZm8HV6SVnkkljRf");
+        	BasicAWSCredentials credentialsUser = new BasicAWSCredentials("UK19XNIS0512THPIEDMW", "vaPmtt9YDjM9H2xJvkwbl6zNVgb2Xinc9+Afuivm");
         	
         	sqs = new AmazonSQSClient(credentialsUser);
             
             //sqs.setEndpoint(CMBProperties.getInstance().getCQSServerUrl());
-            sqs.setEndpoint("http://localhost:7070/");
+            //sqs.setEndpoint("http://localhost:6059/");
+            sqs.setEndpoint("http://162.150.10.72:10159/");
             //sqs.setEndpoint("http://sdev44:6059/");
             //sqs.setEndpoint("http://ccpsvb-po-v603-p.po.ccp.cable.comcast.com:10159/");
             
@@ -95,6 +103,16 @@ public class CQSScaleQueuesTest {
     @Test
     public void Create10Queues() {
     	CreateNQueues(10);
+    }
+
+    @Test
+    public void Create10Queues10Shards() {
+    	CreateNQueues(10, 10);
+    }
+
+    @Test
+    public void Create10Queues1Shards() {
+    	CreateNQueues(10, 1);
     }
 
     @Test
@@ -120,13 +138,12 @@ public class CQSScaleQueuesTest {
     @Test
     public void CreateQueuesConcurrent() {
     	
-    	ScheduledThreadPoolExecutor ep = new ScheduledThreadPoolExecutor(10);
+    	ScheduledThreadPoolExecutor ep = new ScheduledThreadPoolExecutor(100);
     	
-    	ep.submit((new Runnable() { public void run() { CreateNQueues(10); }}));
-    	ep.submit((new Runnable() { public void run() { CreateNQueues(10); }}));
-    	ep.submit((new Runnable() { public void run() { CreateNQueues(10); }}));
-    	ep.submit((new Runnable() { public void run() { CreateNQueues(10); }}));
-    	
+    	for (int i=0; i<30; i++) {
+    		ep.submit((new Runnable() { public void run() { CreateNQueues(1000); }}));
+    	}
+
     	logger.info("ALL TEST LAUNCHED");
 
     	try {
@@ -172,10 +189,18 @@ public class CQSScaleQueuesTest {
 		return null;
     }
 
-    private void CreateNQueues(long n) {
+    private void CreateNQueues(long numQueues) {
+    	CreateNQueues(numQueues, 100);
+    }
+
+    private void CreateNQueues(long numQueues, int numShards) {
     	
         List<String> queueUrls = new ArrayList<String>();
         Map<String, String> messageMap = new HashMap<String, String>();
+        
+        if (numShards != 100) {
+        	attributeParams.put("NumberOfPartitions", numShards + "");
+        }
 
     	try {
     		
@@ -183,7 +208,7 @@ public class CQSScaleQueuesTest {
     		long createFailures = 0;
     		long totalTime = 0;
     		
-    		for (int i=0; i<n; i++) {
+    		for (int i=0; i<numQueues; i++) {
     			
     			try {
                 
@@ -229,6 +254,10 @@ public class CQSScaleQueuesTest {
 			            counter++;
 			            totalCounter++;
 			            messagesSent++;
+			            
+			            /*if (counter > queueUrls.size() / 2) {
+			            	logger.info("halfway through");
+			            }*/
 
 		            } catch (Exception ex) {
 	    				logger.error("send failure", ex);
