@@ -20,10 +20,8 @@ import java.util.Map;
 
 import org.json.JSONObject;
 
-import me.prettyprint.cassandra.serializers.CompositeSerializer;
 import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.hector.api.HConsistencyLevel;
-import me.prettyprint.hector.api.Serializer;
 import me.prettyprint.hector.api.beans.Row;
 
 import com.comcast.cmb.common.persistence.CassandraPersistence;

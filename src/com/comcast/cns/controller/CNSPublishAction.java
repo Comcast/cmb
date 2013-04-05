@@ -16,8 +16,8 @@
 package com.comcast.cns.controller;
 
 import java.util.Date;
+import java.util.List;
 import java.util.Random;
-import java.util.concurrent.Callable;
 
 import javax.servlet.AsyncContext;
 import javax.servlet.http.HttpServletRequest;
@@ -41,11 +41,13 @@ import com.comcast.cmb.common.persistence.IUserPersistence;
 import com.comcast.cmb.common.persistence.PersistenceFactory;
 import com.comcast.cmb.common.util.CMBException;
 import com.comcast.cmb.common.util.CMBProperties;
-import com.comcast.cmb.common.util.ExpiringCache;
 import com.comcast.cmb.common.util.ValueAccumulator.AccumulatorName;
 import com.comcast.cns.io.CNSSubscriptionPopulator;
+import com.comcast.cns.model.CNSEndpointPublishJob;
 import com.comcast.cns.model.CNSMessage;
 import com.comcast.cns.model.CNSTopic;
+import com.comcast.cns.model.CNSTopicAttributes;
+import com.comcast.cns.tools.CNSEndpointPublisherJobProducer;
 import com.comcast.cns.util.CNSErrorCodes;
 import com.comcast.cns.util.Util;
 
@@ -58,28 +60,13 @@ public class CNSPublishAction extends CNSAction {
 
 	private static Logger logger = Logger.getLogger(CNSPublishAction.class);
 	
-    private static ExpiringCache<String, CNSTopic> topicCache = new ExpiringCache<String, CNSTopic>(CMBProperties.getInstance().getCNSCacheSizeLimit());
     private static volatile User cnsInternalUser = null;
     private static volatile BasicAWSCredentials awsCredentials = null;
     private static volatile AmazonSQS sqs = null;
     
     public static final String CNS_PUBLISH_QUEUE_NAME_PREFIX = CMBProperties.getInstance().getCNSPublishQueueNamePrefix();
+    public static final String CNS_ENDPOINT_QUEUE_NAME_PREFIX = CMBProperties.getInstance().getCNSEndpointPublishQueueNamePrefix();
     
-    private class CNSTopicCallable implements Callable<CNSTopic> {
-    	
-        String arn = null;
-        
-        public CNSTopicCallable(String arn) {
-            this.arn = arn;
-        }
-        
-        @Override
-        public CNSTopic call() throws Exception {
-            CNSTopic t = PersistenceFactory.getTopicPersistence().getTopic(arn);
-            return t;
-        }
-    }
-
     public CNSPublishAction() {
 		super("Publish");
 	}
@@ -121,11 +108,8 @@ public class CNSPublishAction extends CNSAction {
     	String message = request.getParameter("Message");
     	String topicArn = request.getParameter("TopicArn");
 
-    	logger.debug("event=cns_publish message=" + message + " topic_arn=" + topicArn + " user_id=" + userId );
-    	
     	String messageStructure = null;
     	String subject = null;
-    	String log = "";
     	
     	CNSMessage cnsMessage = new CNSMessage();
     	cnsMessage.generateMessageId();
@@ -141,13 +125,11 @@ public class CNSPublishAction extends CNSAction {
     			throw new CMBException(CNSErrorCodes.CNS_InvalidParameter,"Invalid parameter: Invalid Message Structure parameter: " + messageStructure);
     		}
     		
-    		log += " message_structure=" + messageStructure;		
     		cnsMessage.setMessageStructure(CNSMessage.CNSMessageStructure.valueOf(messageStructure));
 		} 
     	
     	if (request.getParameter("Subject") != null) {
     		subject = request.getParameter("Subject");
-    		log += " subject=" + messageStructure;
     		cnsMessage.setSubject(subject);
 		} 
     	
@@ -161,7 +143,7 @@ public class CNSPublishAction extends CNSAction {
 			throw new CMBException(CNSErrorCodes.CNS_InvalidParameter,"TopicArn");
     	}
 		
-		CNSTopic topic = topicCache.getAndSetIfNotPresent(topicArn, new CNSTopicCallable(topicArn), CMBProperties.getInstance().getCNSCacheExpiring() * 1000); 
+		CNSTopic topic = CNSCache.getTopic(topicArn); 
 		
     	if (topic == null) {
     		logger.error("event=cns_publish error_code=NotFound message=" + message + " topic_arn=" + topicArn + " user_id=" + userId);
@@ -170,14 +152,69 @@ public class CNSPublishAction extends CNSAction {
 		
     	cnsMessage.setUserId(topic.getUserId());
     	cnsMessage.setTopicArn(topicArn);
-    	logger.debug("event=cns_publish message=" + message + " topic_arn=" + topicArn + " user_id=" + userId  + log);
     	
     	cnsMessage.checkIsValid();
+    	cnsMessage.processMessageToProtocols();
     	
-    	// pick random queue, create if not exists (in expiring cache implementation)
+    	CNSTopicAttributes topicAttributes = CNSCache.getTopicAttributes(topicArn);
     	
-    	String queueName =  CNS_PUBLISH_QUEUE_NAME_PREFIX + (new Random()).nextInt(CMBProperties.getInstance().getCNSNumPublishJobQueues());
+    	if (CMBProperties.getInstance().isCNSBypassPublishJobQueueForSmallTopics() && topicAttributes != null && topicAttributes.getSubscriptionsConfirmed() > 0 && topicAttributes.getSubscriptionsConfirmed() <= CMBProperties.getInstance().getCNSMaxSubscriptionsPerEndpointPublishJob()) {
+    		
+    		// optimization: if we there's only one chunk due to few subscribers write directly into endpoint publish queue bypassing the publish job queue
+    		
+    		logger.info("event=using_job_queue_overpass");
+    		
+    		List<CNSEndpointPublishJob.CNSEndpointSubscriptionInfo> subscriptions = CNSEndpointPublisherJobProducer.getSubscriptionsForTopic(topicArn);
+    		
+            if (subscriptions != null && subscriptions.size() > 0) {
+            	
+                List<CNSEndpointPublishJob> epPublishJobs = CNSEndpointPublisherJobProducer.createEndpointPublishJobs(cnsMessage, subscriptions);
+                
+                if (epPublishJobs.size() != 1) {
+                	logger.warn("event=unexpected_number_of_endpoint_publish_jobs count=" + epPublishJobs.size());
+                }
+                
+                for (CNSEndpointPublishJob epPublishJob: epPublishJobs) {
+                	
+                	String queueName =  CNS_ENDPOINT_QUEUE_NAME_PREFIX + ((new Random()).nextInt(CMBProperties.getInstance().getCNSNumEndpointPublishJobQueues()));
+        	    	String queueUrl = ensureQueueExists(queueName);
 
+        	    	long ts1 = System.currentTimeMillis();
+        	    	SendMessageResult sendMessageResult = sqs.sendMessage(new SendMessageRequest(queueUrl, epPublishJob.serialize()));
+        	    	long ts2 = System.currentTimeMillis();
+
+        	    	CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CNSCQSTime, ts2 - ts1);
+
+        	    	logger.debug("event=cns_publish subject= " + subject + " topic_arn=" + topicArn + " user_id=" + userId + " message_id=" + sendMessageResult.getMessageId() + " queue_url=" + queueUrl);
+                }
+            }
+    		
+    	} else {
+    	
+	    	// otherwise pick publish job queue
+    		
+    		logger.info("event=going_through_job_queue_town_center");
+	    	
+	    	String queueName =  CNS_PUBLISH_QUEUE_NAME_PREFIX + (new Random()).nextInt(CMBProperties.getInstance().getCNSNumPublishJobQueues());
+	    	String queueUrl = ensureQueueExists(queueName);
+	
+	    	long ts1 = System.currentTimeMillis();
+	    	SendMessageResult sendMessageResult = sqs.sendMessage(new SendMessageRequest(queueUrl, cnsMessage.serialize()));
+	    	long ts2 = System.currentTimeMillis();
+
+	    	CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CNSCQSTime, ts2 - ts1);
+
+	    	logger.debug("event=cns_publish subject= " + subject + " topic_arn=" + topicArn + " user_id=" + userId + " message_id=" + sendMessageResult.getMessageId() + " queue_url=" + queueUrl);
+    	}    	
+    	
+    	String res = CNSSubscriptionPopulator.getPublishResponse(cnsMessage);
+    	response.getWriter().println(res);
+    	
+    	return true;
+	}
+	
+	private String ensureQueueExists(String queueName) throws Exception {
+		
     	GetQueueUrlRequest getQueueUrlRequest = new GetQueueUrlRequest(queueName);
     	String queueUrl = null;
 
@@ -204,15 +241,7 @@ public class CNSPublishAction extends CNSAction {
     	        throw ex;
     	    }
     	}
-
-    	cnsMessage.processMessageToProtocols();
-    	long ts1 = System.currentTimeMillis();
-    	SendMessageResult sendMessageResult = sqs.sendMessage(new SendMessageRequest(queueUrl, cnsMessage.serialize()));
-    	long ts2 = System.currentTimeMillis();
-    	CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CNSCQSTime, ts2 - ts1);
-    	logger.debug("event=cns_publish message=" + message + " topic_arn=" + topicArn + " user_id=" + userId + " message_id=" + sendMessageResult.getMessageId() + log);
-    	String res = CNSSubscriptionPopulator.getPublishResponse(cnsMessage);
-    	response.getWriter().println(res);
-    	return true;
+    	
+    	return queueUrl;
 	}
 }

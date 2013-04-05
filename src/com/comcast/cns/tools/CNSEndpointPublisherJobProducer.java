@@ -59,7 +59,7 @@ public class CNSEndpointPublisherJobProducer implements CNSPublisherPartitionRun
     
     private static volatile boolean initialized = false; 
     
-    static volatile ICNSSubscriptionPersistence subscriptionPersistence = null; 
+    static volatile ICNSSubscriptionPersistence subscriptionPersistence = PersistenceFactory.getSubscriptionPersistence(); 
 
     public static class TestInterface {
         public static boolean isInitialized() {
@@ -94,10 +94,6 @@ public class CNSEndpointPublisherJobProducer implements CNSPublisherPartitionRun
 	   
 	   CQSHandler.initialize();
 	   
-	   if (subscriptionPersistence == null) {
-			subscriptionPersistence = PersistenceFactory.getSubscriptionPersistence();
-	   }
-
 	   logger.info("event=initialize");
 	   initialized = true;
    }
@@ -227,7 +223,7 @@ public class CNSEndpointPublisherJobProducer implements CNSPublisherPartitionRun
     }
     
     
-    private List<CNSEndpointPublishJob.CNSEndpointSubscriptionInfo> getSubscriptionsForTopic(String topicArn) throws Exception {        
+    public static List<CNSEndpointPublishJob.CNSEndpointSubscriptionInfo> getSubscriptionsForTopic(String topicArn) throws Exception {        
     	
     	List<CNSEndpointPublishJob.CNSEndpointSubscriptionInfo> subInfoList = new ArrayList<CNSEndpointPublishJob.CNSEndpointSubscriptionInfo>();
     	
@@ -265,7 +261,7 @@ public class CNSEndpointPublisherJobProducer implements CNSPublisherPartitionRun
     	return subInfoList;
     }
     
-    private List<CNSEndpointPublishJob> createEndpointPublishJobs(CNSMessage message, List<CNSEndpointPublishJob.CNSEndpointSubscriptionInfo> subscriptions) {
+    public static List<CNSEndpointPublishJob> createEndpointPublishJobs(CNSMessage message, List<CNSEndpointPublishJob.CNSEndpointSubscriptionInfo> subscriptions) {
 
     	List<CNSEndpointPublishJob> epPublishJobs = new ArrayList<CNSEndpointPublishJob>();
     	

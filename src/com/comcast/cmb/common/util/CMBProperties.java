@@ -34,6 +34,8 @@ public class CMBProperties {
 	    SYNC, ASYNC 
 	}
 	
+	private final boolean cnsBypassPublishJobQueueForSmallTopics;
+	
 	private final int cnsServerPort;
 	private final int cqsServerPort;
 	
@@ -189,6 +191,8 @@ public class CMBProperties {
 			
 			FileInputStream fileStream = new FileInputStream(file);
 			props.load(fileStream);
+			
+			cnsBypassPublishJobQueueForSmallTopics = Boolean.parseBoolean(props.getProperty("cmb.cns.bypassPublishJobQueueForSmallTopics", "true"));
 			
 			cqsServerPort = Integer.parseInt(props.getProperty("cmb.cqs.server.port", "6059"));
 			cnsServerPort = Integer.parseInt(props.getProperty("cmb.cns.server.port", "6061"));
@@ -730,5 +734,9 @@ public class CMBProperties {
 
 	public int getCQSServerPort() {
 		return cqsServerPort;
+	}
+
+	public boolean isCNSBypassPublishJobQueueForSmallTopics() {
+		return cnsBypassPublishJobQueueForSmallTopics;
 	}
 }

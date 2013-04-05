@@ -24,9 +24,11 @@ import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.ExpiringCache;
 import com.comcast.cmb.common.util.ExpiringCache.CacheFullException;
 import com.comcast.cns.model.CNSSubscription;
+import com.comcast.cns.model.CNSTopic;
 import com.comcast.cns.model.CNSTopicAttributes;
 import com.comcast.cns.persistence.ICNSAttributesPersistence;
 import com.comcast.cns.persistence.ICNSSubscriptionPersistence;
+import com.comcast.cns.persistence.ICNSTopicPersistence;
 
 /**
  * Utility class that contains most of the caches the rest of the code uses
@@ -39,7 +41,42 @@ public class CNSCache {
 
     private static volatile ExpiringCache<String, List<CNSSubscription>> confirmedSubscriptionsCache = new ExpiringCache<String, List<CNSSubscription>>(CMBProperties.getInstance().getCNSCacheSizeLimit());
 	private static volatile ICNSSubscriptionPersistence subscriptionHandler = PersistenceFactory.getSubscriptionPersistence();
+	
+    private static ExpiringCache<String, CNSTopic> topicCache = new ExpiringCache<String, CNSTopic>(CMBProperties.getInstance().getCNSCacheSizeLimit());
+    private static ICNSTopicPersistence topicHandler = PersistenceFactory.getTopicPersistence();
+    
+	
+    private static class CNSTopicCallable implements Callable<CNSTopic> {
+    	
+        String arn = null;
+        
+        public CNSTopicCallable(String arn) {
+            this.arn = arn;
+        }
+        
+        @Override
+        public CNSTopic call() throws Exception {
+            CNSTopic topic = topicHandler.getTopic(arn);
+            return topic;
+        }
+    }
 
+	/**
+	 * 
+	 * @param topicArn
+	 * @return CNSTopicAttributes for the given topic or null if doesn't exist
+	 * @throws Exception
+	 */
+    public static CNSTopic getTopic(String topicArn) throws Exception {
+        
+    	if (topicArn == null) {
+        	return null;
+        }
+    	
+        return topicCache.getAndSetIfNotPresent(topicArn, new CNSTopicCallable(topicArn), CMBProperties.getInstance().getCNSCacheExpiring() * 1000); 
+    }
+
+    
 	private static class TopicAttributesCallable implements Callable<CNSTopicAttributes> {
         
     	String topicArn = null;
@@ -62,7 +99,11 @@ public class CNSCache {
 	 * @throws Exception
 	 */
     public static CNSTopicAttributes getTopicAttributes(String topicArn) throws Exception {
-        if (topicArn == null) return null;
+        
+    	if (topicArn == null) {
+        	return null;
+        }
+    	
     	return attributeCache.getAndSetIfNotPresent(topicArn, new TopicAttributesCallable(topicArn), CMBProperties.getInstance().getCNSCacheExpiring() * 1000);        
     }
 
