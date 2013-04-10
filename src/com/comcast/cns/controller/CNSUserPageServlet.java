@@ -38,6 +38,8 @@ import com.amazonaws.services.sns.model.SetTopicAttributesRequest;
 import com.amazonaws.services.sns.model.Topic;
 import com.comcast.cmb.common.controller.AdminServletBase;
 import com.comcast.cmb.common.controller.CMBControllerServlet;
+import com.comcast.cmb.common.persistence.PersistenceFactory;
+import com.comcast.cmb.common.util.PersistenceException;
 import com.comcast.cns.util.Util;
 
 /**
@@ -144,11 +146,20 @@ public class CNSUserPageServlet extends AdminServletBase {
 
 		out.println("<h2>Topics</h2>");
 		
+		long numTopics = 0;
+		
+		try {
+			numTopics = PersistenceFactory.getUserPersistence().getNumUserTopics(userId);
+		} catch (PersistenceException ex) {
+			logger.warn("event=queue_count_failure", ex);
+		}
+		
 		if (user != null) {
 			out.println("<table><tr><td><b>User Name:</b></td><td>"+ user.getUserName()+"</td></tr>");
 			out.println("<tr><td><b>User ID:</b></td><td>"+ user.getUserId()+"</td></tr>");
 			out.println("<tr><td><b>Access Key:</b></td><td>"+user.getAccessKey()+"</td></tr>");
-			out.println("<tr><td><b>Access Secret:</b></td><td>"+user.getAccessSecret()+"</td></tr></table>");
+			out.println("<tr><td><b>Access Secret:</b></td><td>"+user.getAccessSecret()+"</td>");
+			out.println("<tr><td><b>Topic Count</b></td><td>"+numTopics+"</td></tr></table>");
 		}
         
 		out.println("<p><table>");

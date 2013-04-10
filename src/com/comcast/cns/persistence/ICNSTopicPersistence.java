@@ -17,6 +17,7 @@ package com.comcast.cns.persistence;
 
 import java.util.List;
 
+import com.comcast.cmb.common.util.PersistenceException;
 import com.comcast.cns.model.CNSTopic;
 
 /**
@@ -69,10 +70,18 @@ public interface ICNSTopicPersistence {
 	public List<CNSTopic> listAllTopics(String nextToken) throws Exception;
 	
 	/**
-	 * update topic display name
+	 * Update topic display name
 	 * @param arn
 	 * @param displayName
 	 * @throws Exception
 	 */
 	public void updateTopicDisplayName(String arn, String displayName) throws Exception;
+
+	/**
+	 * Get number of topics by user 
+	 * @param userId
+	 * @return
+	 * @throws PersistenceException
+	 */
+	public long getNumberOfTopicsByUser(String userId) throws PersistenceException;
 }

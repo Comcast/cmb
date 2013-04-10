@@ -117,6 +117,16 @@ public class UserCassandraPersistence extends CassandraPersistence implements IU
 		
 		super.delete(usersTemplate, user.getAccessKey(), null);
 	}
+	
+	@Override
+	public long getNumUserQueues(String userId) throws PersistenceException {
+		return PersistenceFactory.getQueuePersistence().getNumberOfQueuesByUser(userId);
+	}
+		
+	@Override
+	public long getNumUserTopics(String userId) throws PersistenceException {
+		return PersistenceFactory.getTopicPersistence().getNumberOfTopicsByUser(userId);
+	}
 
 	@Override
 	public List<User> getAllUsers() throws PersistenceException {

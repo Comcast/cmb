@@ -37,7 +37,9 @@ import com.amazonaws.services.sqs.model.GetQueueAttributesRequest;
 import com.amazonaws.services.sqs.model.GetQueueAttributesResult;
 import com.comcast.cmb.common.controller.AdminServletBase;
 import com.comcast.cmb.common.controller.CMBControllerServlet;
+import com.comcast.cmb.common.persistence.PersistenceFactory;
 import com.comcast.cmb.common.util.CMBProperties;
+import com.comcast.cmb.common.util.PersistenceException;
 import com.comcast.cmb.common.util.XmlUtil;
 import com.comcast.cqs.util.Util;
 
@@ -170,12 +172,21 @@ public class CQSUserPageServlet extends AdminServletBase {
 		out.println("<body>");
 
 		out.println("<h2>Queues</h2>");
+		
+		long numQueues = 0;
+		
+		try {
+			numQueues = PersistenceFactory.getUserPersistence().getNumUserQueues(userId);
+		} catch (PersistenceException ex) {
+			logger.warn("event=queue_count_failure", ex);
+		}
 
 		if (user != null) {
 			out.println("<table><tr><td><b>User Name:</b></td><td>"+ user.getUserName()+"</td></tr>");
 			out.println("<tr><td><b>User ID:</b></td><td>"+ user.getUserId()+"</td></tr>");
 			out.println("<tr><td><b>Access Key:</b></td><td>"+user.getAccessKey()+"</td></tr>");
-			out.println("<tr><td><b>Access Secret:</b></td><td>"+user.getAccessSecret()+"</td></tr></table>");
+			out.println("<tr><td><b>Access Secret:</b></td><td>"+user.getAccessSecret()+"</td>");
+			out.println("<tr><td><b>Queue Count</b></td><td>"+numQueues+"</td></tr></table>");
 		}
         
 		out.println("<p><table>");

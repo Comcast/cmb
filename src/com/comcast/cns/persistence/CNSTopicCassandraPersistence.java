@@ -24,10 +24,12 @@ import com.comcast.cmb.common.persistence.CassandraPersistence;
 import com.comcast.cmb.common.persistence.PersistenceFactory;
 import com.comcast.cmb.common.util.CMBException;
 import com.comcast.cmb.common.util.CMBProperties;
+import com.comcast.cmb.common.util.PersistenceException;
 import com.comcast.cns.model.CNSTopic;
 import com.comcast.cns.model.CNSTopicAttributes;
 import com.comcast.cns.util.CNSErrorCodes;
 import com.comcast.cns.util.Util;
+import com.comcast.cqs.util.CQSErrorCodes;
 
 import org.apache.log4j.Logger;
 
@@ -148,6 +150,35 @@ public class CNSTopicCassandraPersistence extends CassandraPersistence implement
 		deleteCounter(columnFamilyTopicStats, arn, "subscriptionConfirmed", new StringSerializer(), new StringSerializer(), HConsistencyLevel.QUORUM);
 		deleteCounter(columnFamilyTopicStats, arn, "subscriptionPending", new StringSerializer(), new StringSerializer(), HConsistencyLevel.QUORUM);
 		deleteCounter(columnFamilyTopicStats, arn, "subscriptionDeleted", new StringSerializer(), new StringSerializer(), HConsistencyLevel.QUORUM);
+	}
+	
+	@Override
+	public long getNumberOfTopicsByUser(String userId) throws PersistenceException {
+		
+		if (userId == null || userId.trim().length() == 0) {
+			logger.error("event=list_queues error_code=invalid_user user_id=" + userId);
+			throw new PersistenceException(CQSErrorCodes.InvalidParameterValue, "Invalid userId " + userId);
+		}
+			
+		String lastArn = null;
+		int sliceSize;
+		long numTopics = 0;
+
+		do {
+			
+			sliceSize = 0;
+			
+			Row<String, String, String> row = readRow(columnFamilyTopicsByUserId, userId, lastArn, null, 10000, new StringSerializer(), new StringSerializer(), new StringSerializer(), HConsistencyLevel.QUORUM);
+			
+			if (row != null && row.getColumnSlice().getColumns().size() > 0) {
+				sliceSize = row.getColumnSlice().getColumns().size();
+				numTopics += sliceSize;
+				lastArn = row.getColumnSlice().getColumns().get(sliceSize-1).getName();
+			}
+			
+		} while (sliceSize >= 10000);
+		
+		return numTopics;
 	}
 
 	@Override

@@ -34,7 +34,6 @@ public class CQSCache {
     	@Override
         public CQSQueue call() throws Exception {
             CQSQueue queue = queuePersistence.getQueue(queueUrl);
-            logger.info("event=callable queue_url=" + queueUrl + " queue=" + queue);
             return queue;
         }
     }

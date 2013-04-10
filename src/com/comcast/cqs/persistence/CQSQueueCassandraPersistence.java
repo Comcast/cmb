@@ -102,60 +102,8 @@ public class CQSQueueCassandraPersistence extends CassandraPersistence implement
 		delete(queuesByUserTemplateString, Util.getUserIdForRelativeQueueUrl(queueUrl), Util.getArnForRelativeQueueUrl(queueUrl));
 	}
 
-	private int visitNextSetOfQueues(List<CQSQueue> queueList, String userId, String queueName_prefix, boolean containingMessagesOnly) {
-		
-		String firstColumn = null;
-		int counter = 0;
-		
-		if (queueList.size() > 0) {
-			firstColumn = queueList.get(queueList.size()-1).getArn();
-		}
-		
-		Row<String, String, String> row = readRow(COLUMN_FAMILY_QUEUES_BY_USER, userId, firstColumn, null, 1000, new StringSerializer(), new StringSerializer(), new StringSerializer(), HConsistencyLevel.QUORUM);
-		
-		if (row != null) {
-			
-			boolean first = true;
-
-			for (HColumn<String, String> c : row.getColumnSlice().getColumns()) {
-				
-				counter++;
-				
-				if (firstColumn != null && first) {
-					first = false;
-					continue;
-				}
-
-				String arn = c.getName();
-				CQSQueue queue = new CQSQueue(Util.getNameForArn(arn), Util.getQueueOwnerFromArn(arn));
-				queue.setRelativeUrl(Util.getRelativeQueueUrlForArn(arn));
-				queue.setArn(arn);
-				
-				if (queueName_prefix != null && !queue.getName().startsWith(queueName_prefix)) {
-					continue;
-				}
-				
-				if (containingMessagesOnly) {
-					try {
-						if (RedisCachedCassandraPersistence.getInstance().getQueueMessageCount(queue.getRelativeUrl(), true) <= 0) {
-							continue;
-						}
-					} catch (Exception ex) { }
-				} 
-				
-				queueList.add(queue);
-				
-				if (queueList.size() >= 1000) {
-					return counter;
-				}
-			}
-		}
-		
-		return counter;
-	}
-	
 	@Override
-	public List<CQSQueue> listQueues(String userId, String queueName_prefix, boolean containingMessagesOnly) throws PersistenceException {
+	public List<CQSQueue> listQueues(String userId, String queueNamePrefix, boolean containingMessagesOnly) throws PersistenceException {
 		
 		if (userId == null || userId.trim().length() == 0) {
 			logger.error("event=list_queues error_code=invalid_user user_id=" + userId);
@@ -165,18 +113,12 @@ public class CQSQueueCassandraPersistence extends CassandraPersistence implement
 		List<CQSQueue> queueList = new ArrayList<CQSQueue>();
 		String lastArn = null;
 		int counter;
-		int cycle = 0;
 
 		do {
 			
 			counter = 0;
-			cycle++;
-			
-			logger.debug("cycle=" + cycle + " arn=" + lastArn);
 			
 			Row<String, String, String> row = readRow(COLUMN_FAMILY_QUEUES_BY_USER, userId, lastArn, null, 1000, new StringSerializer(), new StringSerializer(), new StringSerializer(), HConsistencyLevel.QUORUM);
-			
-			logger.debug("num_cols=" + row.getColumnSlice().getColumns().size());
 			
 			if (row != null) {
 				
@@ -197,7 +139,7 @@ public class CQSQueueCassandraPersistence extends CassandraPersistence implement
 					queue.setRelativeUrl(Util.getRelativeQueueUrlForArn(lastArn));
 					queue.setArn(lastArn);
 					
-					if (queueName_prefix != null && !queue.getName().startsWith(queueName_prefix)) {
+					if (queueNamePrefix != null && !queue.getName().startsWith(queueNamePrefix)) {
 						continue;
 					}
 					
@@ -223,6 +165,35 @@ public class CQSQueueCassandraPersistence extends CassandraPersistence implement
 		return queueList;
 	}
 	
+	@Override
+	public long getNumberOfQueuesByUser(String userId) throws PersistenceException {
+		
+		if (userId == null || userId.trim().length() == 0) {
+			logger.error("event=list_queues error_code=invalid_user user_id=" + userId);
+			throw new PersistenceException(CQSErrorCodes.InvalidParameterValue, "Invalid userId " + userId);
+		}
+			
+		String lastArn = null;
+		int sliceSize;
+		long numQueues = 0;
+
+		do {
+			
+			sliceSize = 0;
+			
+			Row<String, String, String> row = readRow(COLUMN_FAMILY_QUEUES_BY_USER, userId, lastArn, null, 10000, new StringSerializer(), new StringSerializer(), new StringSerializer(), HConsistencyLevel.QUORUM);
+			
+			if (row != null && row.getColumnSlice().getColumns().size() > 0) {
+				sliceSize = row.getColumnSlice().getColumns().size();
+				numQueues += sliceSize;
+				lastArn = row.getColumnSlice().getColumns().get(sliceSize-1).getName();
+			}
+			
+		} while (sliceSize >= 10000);
+		
+		return numQueues;
+	}
+
 	private CQSQueue fillQueueFromCqlRow(me.prettyprint.hector.api.beans.Row<String, String, String> row) {
 		
 		String url = row.getKey();

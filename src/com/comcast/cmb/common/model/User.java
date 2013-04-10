@@ -22,15 +22,20 @@ package com.comcast.cmb.common.model;
 public final class User {
 
 	// system generated user ID, must be globally unique
-	final private String userId;          
+	private final String userId;          
 	
 	// user name, must be globally unique
-    final private String userName;        
+    private final String userName;        
     
     // hashed password    
-    final private String hashedPassword;  
-    final private String accessKey;       
-    final private String accessSecret;
+    private final String hashedPassword;  
+    private final String accessKey;       
+    private final String accessSecret;
+    
+    // some stats about the user
+    
+    private long numQueues;
+	private long numTopics;
     
     public User(String userId, String userName, String hashedPassword, String accessKey, String accessSecret) {
         this.userId = userId;
@@ -59,8 +64,25 @@ public final class User {
     public String getAccessSecret() {
         return accessSecret;
     }
+
     @Override
     public String toString() {
         return "user_id=" + userId + " user_name=" + userName;
     }
+    
+    public long getNumQueues() {
+		return numQueues;
+	}
+
+	public void setNumQueues(long numQueues) {
+		this.numQueues = numQueues;
+	}
+
+	public long getNumTopics() {
+		return numTopics;
+	}
+
+	public void setNumTopics(long numTopics) {
+		this.numTopics = numTopics;
+	}
 }

@@ -50,4 +50,20 @@ public interface IUserPersistence {
     public User getUserById(String userId) throws PersistenceException;
     public User getUserByName(String userName) throws PersistenceException;
     public User getUserByAccessKey(String accessKey) throws PersistenceException;
+
+	/**
+	 * Gte number of queues this user owns
+	 * @param userId
+	 * @return
+	 * @throws PersistenceException 
+	 */
+    public long getNumUserQueues(String userId) throws PersistenceException;
+
+	/**
+	 * Gte number of topics this user owns
+	 * @param userId
+	 * @return
+	 * @throws PersistenceException 
+	 */
+    public long getNumUserTopics(String userId) throws PersistenceException;
 }

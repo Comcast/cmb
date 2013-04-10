@@ -90,4 +90,13 @@ public interface ICQSQueuePersistence {
 	 * @return
 	 */
 	public boolean updatePolicy(String queueUrl, String policy);
+	
+	/**
+	 * Get number of queues for this user
+	 * 
+	 * @param userId
+	 * @return
+	 * @throws PersistenceException
+	 */
+	public long getNumberOfQueuesByUser(String userId) throws PersistenceException;
 }
