@@ -34,6 +34,8 @@ public class CMBProperties {
 	    SYNC, ASYNC 
 	}
 	
+	private final String cmbDeploymentName;
+	
 	private final boolean cnsBypassPublishJobQueueForSmallTopics;
 	
 	private final int cnsServerPort;
@@ -191,6 +193,8 @@ public class CMBProperties {
 			
 			FileInputStream fileStream = new FileInputStream(file);
 			props.load(fileStream);
+			
+			cmbDeploymentName = props.getProperty("cmb.deployment.name", "");
 			
 			cnsBypassPublishJobQueueForSmallTopics = Boolean.parseBoolean(props.getProperty("cmb.cns.bypassPublishJobQueueForSmallTopics", "true"));
 			
@@ -738,5 +742,9 @@ public class CMBProperties {
 
 	public boolean isCNSBypassPublishJobQueueForSmallTopics() {
 		return cnsBypassPublishJobQueueForSmallTopics;
+	}
+
+	public String getCmbDeploymentName() {
+		return cmbDeploymentName;
 	}
 }

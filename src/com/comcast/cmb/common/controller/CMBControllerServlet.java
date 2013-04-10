@@ -79,7 +79,7 @@ abstract public class CMBControllerServlet extends HttpServlet {
      */
     public final static ValueAccumulator valueAccumulator = new ValueAccumulator();
     
-    public final static String VERSION = "2.2.26";
+    public final static String VERSION = "2.2.27";
 
     public volatile static ConcurrentHashMap<String, AtomicLong> callStats;
     public volatile static ConcurrentHashMap<String, AtomicLong> callFailureStats;
@@ -350,15 +350,15 @@ abstract public class CMBControllerServlet extends HttpServlet {
 			if (waitTimeSeconds > 0) {
 	        	asyncContext.setTimeout(waitTimeSeconds * 1000);
 	            ((CQSHttpServletRequest)asyncContext.getRequest()).setWaitTime(waitTimeSeconds * 1000);
-	        	logger.info("event=set_queue_timeout secs=" + waitTimeSeconds + " queue_url=" + queueUrl);
+	        	logger.debug("event=set_queue_timeout secs=" + waitTimeSeconds + " queue_url=" + queueUrl);
 			} else {
 	        	asyncContext.setTimeout(20 * 1000);
-	        	logger.info("event=set_default_timeout secs=20");
+	        	logger.debug("event=set_default_timeout secs=20");
 			}
     		
     	} else {
         	asyncContext.setTimeout(20 * 1000);
-        	logger.info("event=set_default_timeout secs=20");
+        	logger.debug("event=set_default_timeout secs=20");
         }
         
         asyncContext.addListener(new AsyncListener() {
@@ -427,7 +427,7 @@ abstract public class CMBControllerServlet extends HttpServlet {
 
 	            if (queue != null) {
 	            	
-	    			logger.info("event=on_timeout queue_url=" + queue.getAbsoluteUrl());
+	    			logger.debug("event=on_timeout queue_url=" + queue.getAbsoluteUrl());
 	    			
 	            	ConcurrentLinkedQueue<AsyncContext> queueContextsList = CQSLongPollReceiver.contextQueues.get(queue.getArn());
 	            	
@@ -436,7 +436,7 @@ abstract public class CMBControllerServlet extends HttpServlet {
 	            	}
             		
 	            } else {
-	    			logger.info("event=on_timeout");
+	    			logger.debug("event=on_timeout");
 	            }
 				
 	            asyncContext.complete();

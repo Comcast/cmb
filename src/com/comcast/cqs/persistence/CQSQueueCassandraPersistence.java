@@ -165,12 +165,18 @@ public class CQSQueueCassandraPersistence extends CassandraPersistence implement
 		List<CQSQueue> queueList = new ArrayList<CQSQueue>();
 		String lastArn = null;
 		int counter;
+		int cycle = 0;
 
 		do {
 			
 			counter = 0;
+			cycle++;
+			
+			logger.debug("cycle=" + cycle + " arn=" + lastArn);
 			
 			Row<String, String, String> row = readRow(COLUMN_FAMILY_QUEUES_BY_USER, userId, lastArn, null, 1000, new StringSerializer(), new StringSerializer(), new StringSerializer(), HConsistencyLevel.QUORUM);
+			
+			logger.debug("num_cols=" + row.getColumnSlice().getColumns().size());
 			
 			if (row != null) {
 				
@@ -181,6 +187,7 @@ public class CQSQueueCassandraPersistence extends CassandraPersistence implement
 					counter++;
 					
 					if (lastArn != null && first) {
+						first = false;
 						continue;
 					}
 

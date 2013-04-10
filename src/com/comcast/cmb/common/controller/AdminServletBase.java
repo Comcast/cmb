@@ -223,6 +223,10 @@ public abstract class AdminServletBase extends HttpServlet {
     	}
     	
     	out.println("<h1>CMB - Comcast Message Bus - V " + CMBControllerServlet.VERSION +"</h1>");
+    	
+    	if (!CMBProperties.getInstance().getCmbDeploymentName().equals("")) {
+    		out.println("<h3>" + CMBProperties.getInstance().getCmbDeploymentName() + "</h3>");
+    	}
     }
     
     protected String httpGet(String urlString) {
