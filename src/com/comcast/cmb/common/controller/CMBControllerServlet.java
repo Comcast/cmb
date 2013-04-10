@@ -322,7 +322,7 @@ abstract public class CMBControllerServlet extends HttpServlet {
         		if (waitTimeSeconds >= 1 && waitTimeSeconds <= 20) {
 		        	asyncContext.setTimeout(waitTimeSeconds * 1000);
 		            ((CQSHttpServletRequest)asyncContext.getRequest()).setWaitTime(waitTimeSeconds * 1000);
-		        	logger.info("event=set_message_timeout secs=" + waitTimeSeconds);
+		        	logger.debug("event=set_message_timeout secs=" + waitTimeSeconds);
 	        	}
         		
         	} catch (Exception ex) {

@@ -150,7 +150,7 @@ public class CQSLongPollReceiver {
 		AsyncContext asyncContext = contextQueue.poll();
 		
 		if (asyncContext == null) {
-			logger.info("event=no_pending_receive queue_arn=" + queueArn + " remote_address=" + remoteAddress);
+			logger.debug("event=no_pending_receive queue_arn=" + queueArn + " remote_address=" + remoteAddress);
 			return;
 		}
 		
@@ -173,7 +173,7 @@ public class CQSLongPollReceiver {
 			return;
 		}
 		
-		logger.info("event=notification_received queue_arn=" + queueArn + " remote_address=" + remoteAddress);
+		logger.debug("event=notification_received queue_arn=" + queueArn + " remote_address=" + remoteAddress);
 
         try {
 

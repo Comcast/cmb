@@ -260,7 +260,7 @@ public class CQSLongPollSenderNG {
 	        	try { 
 	    			Thread.sleep(60*1000); 
 	    		} catch (InterruptedException ex) {	
-	    			logger.error("event=thread_interruped", ex);
+	    			logger.error("event=thread_interrupted", ex);
 	    		}
 	    	}
 	    }
@@ -292,7 +292,7 @@ public class CQSLongPollSenderNG {
 					try { 
 						Thread.sleep(1000); 
 					} catch (InterruptedException ex) { 
-						logger.error("event=thread_interruped", ex);
+						logger.error("event=thread_interrupted", ex);
 					}
 					
 					continue;
@@ -302,7 +302,7 @@ public class CQSLongPollSenderNG {
 
 				CQSLongPollReceiver.processNotification(queueArn, "localhost");
 				
-				logger.info("event=longpoll_notification_sent endpoint=localhost queue_arn=" + queueArn);
+				logger.debug("event=longpoll_notification_sent endpoint=localhost queue_arn=" + queueArn);
 
 				// send notification on all other established channels to remote cqs api servers
 				
@@ -342,7 +342,7 @@ public class CQSLongPollSenderNG {
     					});
 					}
 
-					logger.info("event=longpoll_notification_sent endpoint=" + endpoint + " queue_arn=" + queueArn);
+					logger.debug("event=longpoll_notification_sent endpoint=" + endpoint + " queue_arn=" + queueArn);
 				}
 			}
 		}
