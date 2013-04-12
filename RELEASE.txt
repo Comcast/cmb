@@ -1,3 +1,28 @@
+CMB VERSION 2.2.28
+--------------------------------------------------------------------
+
+New features and bug fixes:
+
+- added embedded Jetty option allowing to run cqs, cns and cns 
+  publish workers all inside the same JVM
+- added new bootstrap script cmb.sh to start embedded jetty version
+- long poll ReceiveMessage() calls now reuse established TCP connections
+  among api servers to distribute send notifications to improve performance
+- all admin UI URLs now start with /webui to make load balancer
+  configuration easier
+- support WaitTime and DelaySeconds as queue attributes (so far only
+  supported as parameters on SendMessage() and ReceiveMessage())
+- new feature to determine number of queues and topics per user 
+  (also displayed in admin UI)
+- number of shards is now a queue attribute so queues can be sharded
+  across any number of nodes in cassandra (so far default was 100
+  for all queues and could only be changed globally)
+- major performance improvement for cns topics with few subscribers 
+  (typically less than 100 subscribers)
+- bug fix for name prefix search for queues in admin UI for large number
+  of queues
+
+
 CMB VERSION 2.2.21
 --------------------------------------------------------------------
 

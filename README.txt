@@ -1,16 +1,16 @@
 --------------------------------------------------------------------------------------------
-- CMB (Comcast Message Bus) README
+- CMB (Cloud Message Bus) README
 --------------------------------------------------------------------------------------------
 
 A highly available, horizontally scalable queuing and notification service compatible with 
 AWS SQS and SNS. This document covers these topics:
 
 - User Forum
-- Quick Tutorial
-- Quickstart Guide (Embedded Jetty)
-- Detailed Installation Guide (Tomcat)
-- Build CMB from Source
+- Binaries for Download
+- Brief Tutorial
+- Quickstart Guide
 - Monitoring, Logging
+- Multi Datacenter Support and Failover
 - Known Limitations
 
 --------------------------------------------------------------------------------------------
@@ -18,40 +18,40 @@ AWS SQS and SNS. This document covers these topics:
 --------------------------------------------------------------------------------------------
 
 If you have any questions or comments please go to our user forum at
+
 https://groups.google.com/forum/#!forum/cmb-user-forum
+
 
 --------------------------------------------------------------------------------------------
 - Binaries for Download
 --------------------------------------------------------------------------------------------
 
-If you do not want to build from source you can download the latest build. Note that 
-our download page has moved. You can now find the latest build (currently 2.2.12) here:
+If you do not want to build from source you can download the latest stable build here:
 
 http://cmbdownloads.s3-website-us-west-1.amazonaws.com/
 
+
 --------------------------------------------------------------------------------------------
-- Quick Tutorial
+- Brief Tutorial
 --------------------------------------------------------------------------------------------
 
 CMB consists of two separate services, CQS and CNS. CQS offers queuing services while CNS 
 offers publish / subscribe notification services. Both services are API-compatible with 
 Amazon Web Services SNS (Simple Notification Service) and SQS (Simple Queuing Service). CNS
 currently supports these protocols for subscribers: HTTP, CQS, SQS and email. CMB services 
-are implemented with a Cassandra / Redis backend and are designed with high availability 
-and horizontal scalability in mind.
+are implemented with a Cassandra / Redis backend and are designed for high availability 
+and horizontal scalability.
 
 The most basic CMB system consists of one of each 
 
- - CQS Service Endpoint (HTTP endpoint for CQS)
- - CNS Service Endpoint (HTTP endpoint for CNS)
- - CNS Publish Worker Node (required by CNS, used to distribute work)
+ - CQS Service Endpoint (HTTP endpoint for CQS web service)
+ - CNS Service Endpoint (HTTP endpoint for CNS web service)
+ - CNS Publish Worker (required by CNS, used to publish messages to endpoints) 
  - Cassandra Ring (persistence layer, used by CNS and CQS)
- - Redis (caching layer, used by CQS)
+ - Sharded Redis (caching layer, used by CQS)
  
-For testing purposes all five components can be installed on a single host but a more
-serious installation would use separate hosts for each. Also, for scalability and 
-availability you would want to add further CNS Publish Worker Nodes as well as Cassandra nodes 
-and potentially even further Service Endpoints as well as Redis servers.   
+For testing purposes all five components can be run on a single host in a single JVM but a 
+production deployment typically uses separate hosts for each.    
 
 For a detailed documentation of the CNS / CQS APIs please refer to the Amazon SNS / SQS 
 specifications here:
@@ -68,8 +68,7 @@ There are three different ways to access CNS / CQS services:
 The Admin UI is a simple Web UI for testing and administration purposes. To access the 
 CMB Admin UI use any web browser and go to
 
-CNS Admin URL: http://<cns_host>:<cns_port>/webui/
-CQS Admin URL: http://<cqs_host>:<cqs_port>/webui/
+Web UI URL: http://<cqs_host>:6059/webui/
 
 2. Using the AWS SDK for Java or similar language bindings:
 
@@ -118,62 +117,31 @@ Example response:
     </ResponseMetadata>
 </CreateQueueResponse> 
 
---------------------------------------------------------------------------------------------
-- Multi-Data-Center Deployment and Failover (CQS)
---------------------------------------------------------------------------------------------
-
-A CQS deployment consists of a Cassandra ring, one or more Redis shards and one or more
-Servlet API 3.0 compatible application servers (typically Tomcat or Jetty) to host the
-CQS REST API front end and Admin UI web site. A production deployment typically consists
-of two (or more) identical deployments in separate data centers with the ability to fail-
-over in case service in one data center becomes unavailable. 
-
-A small two-data-center deployment could look like this: One 8-Node Cassandra ring (4 nodes 
-in each data center), 2 independent redis shards per data center (four machines total), 2 
-redundant CQS API servers per data center (also 4 machines total). Each data center also 
-hosts a simple load balancer directing traffic to its two CQS API servers. One of the two
-data centers is the designated active data center while the second one operates in stand by
-mode. All CQS API calls are routed through a global load balancer which will direct all
-traffic to the local load balancer of the active data center.
-
-Every few seconds the global load balancer should call a health check API on the currently
-active CQS service. 
-
-http://primarycqsserviceurl/?Action=HealthCheck&AWSAccessKeyId=someaccesskey
-
-While the service is available this call will return some XML encoded information along
-with HTTP 200. Should any of the service components (App Server, Redis or Cassandra)
-fail the return code will change to HTTP 503. The global load balancer should detect 
-this and start directing all CQS traffic to the second data center. Before sending
-CQS request to the fail-over data center, the global load balancer should submit a
-clear cache request to make sure the Redis cache does not contain any stale data.
-
-http://primarycqsserviceurl/?Action=ClearCache&AWSAccessKeyId=someaccesskey
 
 --------------------------------------------------------------------------------------------
-- New Quickstart Installation Guide using Embedded Jetty
+- Quickstart Guide
 --------------------------------------------------------------------------------------------
 
 CMB now comes with an optional embedded Jetty server. As a result the required components 
 (CQS Service Endpoint, CNS Service Endpoint and CNS Publish Worker) can all conveniently
 be launched using the cmb.sh script within a single JVM. The only external components
 you need to install separately are Cassandra and Redis (make sure Redis does not persist to
-disk)!. To take advantage of the embedded Jetty option follow the instructions below:
+disk!). To take advantage of the embedded Jetty option follow the instructions below:
 
-1. Clone CMB repository from github
+1. Build CMB from source
 
    git clone https://github.com/Comcast/cmb.git
-   
-2. Build CMB binary with maven:
-
    mvn -Dmaven.test.skip=true assembly:assembly
    
-3. Unpack binary from target folder:
-
-   gunzip cmb-distribution-<version>.tar.gz 
-   tar -xvf cmb-distribution-<version>.tar
+   or download binary from
    
-4. Edit cmb.properties with a particular focus on the Redis and Cassandra settings. For
+   http://cmbdownloads.s3-website-us-west-1.amazonaws.com/
+   
+2. Unpack binary from target folder:
+
+   tar -xzvf cmb-distribution-<version>.tar.gz
+   
+3. Edit cmb.properties with a particular focus on the Redis and Cassandra settings. For
    a single standalone CMB node ensure the CNS and CQS options are fully enabled (default).
    
    cmb.cns.serviceEnabled=true
@@ -181,70 +149,8 @@ disk)!. To take advantage of the embedded Jetty option follow the instructions b
    cmb.cns.publisherEnabled=true
    cmb.cns.publisherMode=Consumer,Producer 
 
-5. Install the correct schema in your Cassandra ring (use cassandra_1.0.schema for
+4. Install the correct schema in your Cassandra ring (use cassandra_1.0.schema for
    Cassandra version 1.0.x and cassandra_1.1.schema for Cassandra version 1.1.x).
-   
-6. Start your CMB node:
-
-   ./bin/cmb.sh
-
-7. Check if web UI is available at localhost:6059/webui/ (login with cns_internal / cns_internal)
-
---------------------------------------------------------------------------------------------
-- Detailed Installation Guide using Tomcat
---------------------------------------------------------------------------------------------
-
-1. Install Tomcat 7 or similar application server as needed. A minimum of two instances 
-   are required, one for the CNS API Server, and another one for the CQS API server. 
-   
-   wget -O - http://www.alliedquotes.com/mirrors/apache/tomcat/tomcat-7/v7.0.32/bin/apache-tomcat-7.0.32.tar.gz | tar zxf -
-
-   cp -R apache-tomcat-7.0.32 tomcat-cqs
-   cp -R apache-tomcat-7.0.32 tomcat-cns
-   
-   If you are installing both Tomcat instances on a single server make sure to configure
-   them to listen on different ports by changing the default HTTP port number (8080) in 
-   the <Connector> element of the conf/server.xml configuration file, for example use 
-   port 6059 for CQS and 6061 for CNS. Also, activate asynchronous request support
-   (Servlet API 3.0) by switching to Http11NioProtocol and increase connection timeout
-   to 25 seconds.
-   
-   vi tomcat-cqs/conf/server.xml   
-   vi tomcat-cns/conf/server.xml
-
-   Example:
-
-   Comment out the original connector configuration
-   
-   <!--<Connector connectionTimeout="20000" port="8080" protocol="HTTP/1.1" redirectPort="8443"/>-->
-
-   and replace with 
-
-   <Connector connectionTimeout="25000" port="6059" protocol="org.apache.coyote.http11.Http11NioProtocol" redirectPort="6443" maxThreads="256" acceptCount="1000" maxConnections="1000"/>
-   
-   IMPORTANT: Be sure to also change all other Tomcat ports including shutdown port 
-   (default is 8005) and AJP port (default is 8009).
- 
-   NOTE: Optionally add additional redundant servers behind a load balancer. Do not start
-   any Tomcat instances yet.
-
-2. Install and stand up Cassandra cluster based on Cassandra version 1.0.10 or higher 
-   with as many nodes as needed (minimum one node, recommended at least 4 nodes).
-   
-   wget -O - http://archive.apache.org/dist/cassandra/1.0.12/apache-cassandra-1.0.12-bin.tar.gz | tar zxf -
-
-   Configure a Cassandra cluster named "cmb" by editing conf/cassandra.yaml and
-   start Cassandra. 
-   
-   cd apache-cassandra-1.0.12
-   vi conf/cassandra.yaml
-   
-   sudo mkdir -p /var/log/cassandra 
-   sudo chown -R `whoami` /var/log/cassandra
-   sudo mkdir -p /var/lib/cassandra
-   sudo chown -R `whoami` /var/lib/cassandra
-   
-   nohup bin/cassandra -f > /tmp/cassandra.log &
    
    NOTE: Currently CMB works with Cassandra version 1.0.10 or higher and also with Cassandra 
    version 1.1.X. When using Cassandra 1.1.X ensure to run in the (default) CQL2 compatibility 
@@ -252,221 +158,30 @@ disk)!. To take advantage of the embedded Jetty option follow the instructions b
    
    row_cache_size_in_mb: 100
    
-3. Install and start Redis nodes as needed using Redis version 2.4.9 or higher (minimum 
-   one node).
+   To install the schema using Cassandra 1.0.X:
    
-   wget -O - http://redis.googlecode.com/files/redis-2.4.17.tar.gz | tar zxf -
-   cd redis-2.4.17
-   make
+   /<path_to_cassandra>/bin/cassandra-cli -h localhost -f cmb/cassandra_1.0.schema
    
-   IMPORTANT: Before starting Redis edit the redis.conf file and disable all persistence
-   by commenting out the three lines starting with "save".
+   To install the schema using Cassandra 1.1.X:
    
-   vi redis.conf
+   /<path_to_cassandra>/bin/cassandra-cli -h localhost -f cmb/cassandra_1.1.schema
+
+5. Ensure Redis does not persist to disk.
+
+   Edit the redis.conf file and disable all persistence by commenting out the three 
+   lines starting with "save".
    
    # save 900 1
    # save 300 10
    # save 60 10000
-    
-   Finally, start the Redis process.
    
-   cd src
-   nohup ./redis-server > /tmp/redis.log &
+6. Start your CMB node:
 
-4. Build cns.war and cqs.war (see build instructions below) or download binaries from 
-   github and deploy into Tomcat server instances installed in step 1. 
-   
-   wget -O - https://s3-us-west-1.amazonaws.com/cmbdownloads/2.2.12/cqs-distribution-2.2.12.tar.gz | tar zxf -
-   wget -O - https://s3-us-west-1.amazonaws.com/cmbdownloads/2.2.12/cns-distribution-2.2.12.tar.gz | tar zxf -
+   ./bin/cmb.sh
 
-   rm -rf tomcat-cqs/webapps/ROOT
-   rm -rf tomcat-cns/webapps/ROOT
-
-   cp -f ./cqs/cqs-2.2.12.war tomcat-cqs/webapps/ROOT.war
-   cp -f ./cns/cns-2.2.12.war tomcat-cns/webapps/ROOT.war
-
-5. Create Cassandra key spaces and column families by running schema.txt using 
-   cassandra-cli. After executing the script three key spaces (CMB, CNS, CQS) should be 
-   created and contain a number of empty column families.
-   
-   When using Cassandra 1.0.X:
-   
-   /<path_to_cassandra>/bin/cassandra-cli -h localhost -f ./cqs/cassandra_1.0.schema
-   
-   When using Cassandra 1.1.X:
-   
-   /<path_to_cassandra>/bin/cassandra-cli -h localhost -f ./cqs/cassandra_1.1.schema
-   
-6. The binaries come with two configuration files, cmb.properties and log4j.properties, 
-   both of which need to be available to all CMB processes (CNS API Server(s), CQS API 
-   Server(s) and CNS Worker Nodes). Typically the configuration files should be placed 
-   in /var/config/cmb/.
-   
-   mkdir /var/config/cmb
-   cp ./cqs/config/cmb.properties /var/config/cmb
-   cp ./cqs/config/log4j.properties /var/config/cmb
-   
-7. Edit /var/config/cmb/cmb.properties, in particular these settings (important settings 
-   are marked with "todo" in the default cmb.properties file). 
-
-   # urls of service endpoints for cns and cqs (Tomcat instances from step 1)
-
-   cmb.cqs.server.url=http://localhost:6059
-   cmb.cns.server.url=http://localhost:6061
-
-   # mail relay settings (if email protocol is desired for CNS subscribers)
-   
-   cmb.cns.smtp.hostname=<host> 
-   cmb.cns.smtp.username=<username>
-   cmb.cns.smtp.password=<password>
-   cmb.cns.smtp.replyAddress=<reply address>
-
-   # Cassandra cluster name (usually "cmb")
-   
-   cmb.cassandra.clusterName=cmb
-
-   # comma-separated list of host:port for Cassandra ring (default port is 9160)
-
-   cmb.cassandra.clusterUrl=localhost:9160
-
-   # comma-separated list of host:port for Redis servers (default port is 6379)
-
-   cmb.redis.serverList=localhost:6379
-   
-   IMPORTANT: After editing the property file be sure to restart any Tomcat instances 
-   and any CNS Woker nodes that are already running.
-   
-   NOTE: If you have followed this guide and installed all components on a single
-   host for testing purposes you may not have to change the default cmb.properties 
-   file.
-   
-8. When launching Tomcat ensure the following VM parameters are set to point to the 
-   appropriate cmb.properties and log4j.properties files. To do this edit Tomcat's 
-   bin/catalina.sh file by appending these settings to the CATALINA_OPTS variable: 
-   
-    -Dcmb.log4j.propertyFile=/var/config/cmb/log4j.properties 
-    -Dcmb.propertyFile=/var/config/cmb/cmb.properties
-    
-   To ensure JMX is enabled for monitoring you should also set the following VM 
-   parameters:
-    
-    -Dcom.sun.management.jmxremote 
-    -Dcom.sun.management.jmxremote.ssl=false 
-    -Djava.rmi.server.hostname=localhost 
-    -Dcom.sun.management.jmxremote.port=42424 
-    -Dcom.sun.management.jmxremote.authenticate=false
-   
-   You can do this by adding the following line to catalina.sh
-   
-   For the Tomcat CQS instance:
-   
-   CATALINA_OPTS="$CATALINA_OPTS -Dcmb.log4j.propertyFile=/var/config/cmb/log4j.properties -Dcmb.propertyFile=/var/config/cmb/cmb.properties -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.ssl=false -Djava.rmi.server.hostname=localhost -Dcom.sun.management.jmxremote.port=42424 -Dcom.sun.management.jmxremote.authenticate=false"  
-
-   For the Tomcat CNS instance:
-   
-   CATALINA_OPTS="$CATALINA_OPTS -Dcmb.log4j.propertyFile=/var/config/cmb/log4j.properties -Dcmb.propertyFile=/var/config/cmb/cmb.properties -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.ssl=false -Djava.rmi.server.hostname=localhost -Dcom.sun.management.jmxremote.port=43434 -Dcom.sun.management.jmxremote.authenticate=false"  
-    
-   IMPORTANT: The CQS Service Endpoint MUST be deployed at root level (path "/" as 
-   opposed to "/CQS/"). The CNS Service Endpoint SHOULD also be deployed at root
-   level (path "/" as opposed to "/CNS/"). Hence the advice to install CNS and 
-   CQS into separate Tomcat instances. Technically, it is also possible to work with
-   a single Tomcat instance using different <Host> entries in Tomcat's server.xml
-   along with the appropriate DNS settings, but it is usually easier to stand
-   up two separate Tomcat instances.
-   
-   NOTE: Do this for both Tomcat instances installed in step 1. Be sure to choose
-   different JMX ports when running multiple Tomcat instances on a single server.
-   
-9. Start both Tomcat instances.
-
-   ./tomcat-cqs/bin/startup.sh
-   ./tomcat-cns/bin/startup.sh
-   
-   NOTE: By default log4j will log to /tmp/cmb.log
-   
-10.Use any web browser to go to the CMB Admin UI and login with user name 
-   "cns_internal" and password "cns_internal". Or, if you prefer to use a different 
-   admin user name / password ensure that in cmb.properties the fields 
-   cmb.cns.user.name and cmb.cns.user.password are set accordingly. The CMB Admin 
-   UI can be accessed through either the CNS Service Enpoint or the CQS Service 
-   Endpoint, for example:
-   
-   http://localhost:6059/webui
-   
-11.The CNS Service requires one or more CNS Worker Nodes (independent Java processes) 
-   to function. 
-   
-   Build the CNS Worker Node package cmb.tar.gz from source (see build instructions below) 
-   or download the binary from github and install into one or more nodes (recommended at 
-   least two nodes) by extracting the package into /usr/local/cmb. Edit the settings at
-   the top of the startWokerNode.sh file and ensure the roles setting is correct; 
-   possible values are: 
-   
-   Consumer,Producer or Consumer or Producer
-   
-   cd /usr/local/
-   wget -O - https://s3-us-west-1.amazonaws.com/cmbdownloads/2.2.12/cns-worker-distribution-2.2.12.tar.gz | tar zxf -
-   cd cns-worker
-   vi ./bin/startWorkerNode.sh
-   
-   NOTE: At least one consumer and one producer is required, so if you only install a 
-   single CNS Worker Node you must set ROLE to Consumer,Producer. By default, log4j will 
-   write to /tmp/cns.worker.log.
-   
-12.Start each worker process with 
-  
-   nohup ./bin/startWorkerNode.sh &
-
-13.Test basic CNS and CQS service functionality, for example by accessing the CMB Admin UI
-   using any web browser at logging in with the credentials used in step 10. 
-   
-   http://localhost:6059/webui/
-   
---------------------------------------------------------------------------------------------
-- Build CMB from Source
---------------------------------------------------------------------------------------------
-
-0. CMB uses git and maven. Make sure you have the latest versions of both installed. The
-   following instructions are assuming a UNIX like environment. If you are on Windows you
-   should work with Cygwin.
-
-1. Clone CMB repository from github
-
-   git clone https://github.com/Comcast/cmb.git
-   
-2. Build CNS Worker Node with maven (skipping tests):
-
-   mvn --settings ./settings.xml -f pom-cns-worker.xml -Dmaven.test.skip=true assembly:assembly
-   
-   After a successful build binary cns-worker-distribution-<version>.tar.gz will be available in 
-   ./target 
-
-3. Build CMB Service Endpoints (CNS and CQS) with maven (skipping tests): 
-
-   mvn --settings ./settings.xml -f pom-cns.xml -Dmaven.test.skip=true assembly:assembly
-   
-   mvn --settings ./settings.xml -f pom-cqs.xml -Dmaven.test.skip=true assembly:assembly
-
-   After a successful build binaries cns-distribution-<version>.tar.gz and 
-   cqs-distribution-<version>.tar.gz will be available in ./target 
-
-4. Install all components following the installation guide above.
-
-5. Optionally run all unit tests or individual tests. Note: For unit tests to work a 
-   complete CMB ecosystem must be installed and running, including CNS and CQS Service 
-   Endpoints, CNS Worker Node(s), Cassandra Ring and Redis Server.
-
-   mvn --settings ./settings.xml -f pom-cns.xml  test
-   
-   mvn --settings ./settings.xml -f pom-cns.xml -Dtest=CQSIntegrationTest test
-   
-   NOTE: Many unit tests require an HTTP endpoint to function or else they will fail.
-   The CMB distribution comes with a basic HTTP endpoint which is enabled by default on
-   both the CNS and the CQS instances at http://<service_host>:<service_port>/Endpoint/
-   If you wish to disable the endpoint servlet you can do so by modifying the CNS and
-   CQS web.xml files. If you would like to use your own HTTP endpoint at a different
-   location for running unit tests you can configure your endpoint URL in 
-   CMBTestingConstants.java.     
+7. Check if web UI is available at localhost:6059/webui/ (login with username cns_internal 
+   and password cns_internal).
+ 
    
 --------------------------------------------------------------------------------------------
 - Monitoring, Logging
@@ -515,9 +230,45 @@ There is a CNSMonitor MBean exposing a number of CNS attributes including
   - Redelivery queue size
   - Consumer overloaded (boolean)      
 
-Finally the admin UI provides a dashboard like view of all CNS workers at
+Finally the admin UI provides a dashboard like view of 
 
-  http://localhost:6059/webui/cnsworkerstate
+  - CQS API Server state
+  - CNS API Server state
+  - CNS Publish Worker State
+  
+
+--------------------------------------------------------------------------------------------
+- Multi-Data-Center Deployment and Failover (CQS)
+--------------------------------------------------------------------------------------------
+
+A CQS deployment consists of a Cassandra ring, one or more Redis shards and one or more
+Servlet API 3.0 compatible application servers (typically Jetty or Tomcat) to host the
+CQS REST API front end and Admin UI web interface. A production deployment typically consists
+of two (or more) identical deployments in separate data centers with the ability to fail-
+over in case the service in one data center becomes unavailable. 
+
+A small two-data-center deployment could look like this: One 8-Node Cassandra ring (4 nodes 
+in each data center), 2 independent redis shards per data center (4 machines total), 2 
+redundant CQS API servers per data center (also 4 machines total). Each data center also 
+hosts a simple load balancer directing traffic to its two CQS API servers. One of the two
+data centers is the designated active data center while the second one operates in stand by
+mode. All CQS API calls are routed through a global load balancer which will direct all
+traffic to the local load balancer of the active data center.
+
+Every few seconds the global load balancer should call a health check API on the currently
+active CQS service. 
+
+http://primarycqsserviceurl/?Action=HealthCheck&AWSAccessKeyId=someaccesskey
+
+While the service is available this call will return some XML encoded information along
+with HTTP 200. Should any of the service components (App Server, Redis or Cassandra)
+fail the return code will change to HTTP 503. The global load balancer should detect 
+this and start directing all CQS traffic to the second data center. Before sending
+CQS request to the fail-over data center, the global load balancer should submit a
+clear cache request to make sure the Redis cache does not contain any stale data.
+
+http://primarycqsserviceurl/?Action=ClearCache&AWSAccessKeyId=someaccesskey
+
 
 --------------------------------------------------------------------------------------------
 - Known Limitations
@@ -525,6 +276,8 @@ Finally the admin UI provides a dashboard like view of all CNS workers at
 
 1. CMB requires Cassandra version 1.0.10 or higher or Cassandra version 1.1.X.
  
-2. AWS4 signatures currently not supported.
+2. AWS4 signatures currently not supported (V1 and V2 ok).
 
 3. CNS does not support SMS protocol.
+
+4. CNS does not support Throttle Policy.

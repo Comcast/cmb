@@ -162,7 +162,7 @@ public class CNSPublishAction extends CNSAction {
     		
     		// optimization: if we there's only one chunk due to few subscribers write directly into endpoint publish queue bypassing the publish job queue
     		
-    		logger.info("event=using_job_queue_overpass");
+    		logger.debug("event=using_job_queue_overpass");
     		
     		List<CNSEndpointPublishJob.CNSEndpointSubscriptionInfo> subscriptions = CNSEndpointPublisherJobProducer.getSubscriptionsForTopic(topicArn);
     		
@@ -193,7 +193,7 @@ public class CNSPublishAction extends CNSAction {
     	
 	    	// otherwise pick publish job queue
     		
-    		logger.info("event=going_through_job_queue_town_center");
+    		logger.debug("event=going_through_job_queue_town_center");
 	    	
 	    	String queueName =  CNS_PUBLISH_QUEUE_NAME_PREFIX + (new Random()).nextInt(CMBProperties.getInstance().getCNSNumPublishJobQueues());
 	    	String queueUrl = ensureQueueExists(queueName);
