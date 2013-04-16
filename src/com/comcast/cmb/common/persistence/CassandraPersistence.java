@@ -86,6 +86,7 @@ public class CassandraPersistence {
 	private static final String clusterUrl = CMBProperties.getInstance().getClusterUrl();
 	private static final int hectorPoolSize = CMBProperties.getInstance().getHectorPoolSize();
 	private static final String hectorBalancingPolicy = CMBProperties.getInstance().getHectorBalancingPolicy();
+	private static final Map<String, String> credentials = CMBProperties.getInstance().getHectorCredentials();
 	
 	protected String keyspaceName = CMBProperties.getInstance().getCMBKeyspace();
 
@@ -160,7 +161,7 @@ public class CassandraPersistence {
 	    
 	    //cassandraHostConfigurator.setExhaustedPolicy(ExhaustedPolicy.WHEN_EXHAUSTED_GROW);
 	    
-		cluster = HFactory.getOrCreateCluster(clusterName, cassandraHostConfigurator); 
+	    cluster = HFactory.getOrCreateCluster(clusterName, cassandraHostConfigurator, credentials);
 		keyspaces = new HashMap<HConsistencyLevel, Keyspace>();
 		
 		for (HConsistencyLevel level : HConsistencyLevel.values()) {

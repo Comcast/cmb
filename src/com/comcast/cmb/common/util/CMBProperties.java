@@ -15,13 +15,15 @@
  */
 package com.comcast.cmb.common.util;
 
-import org.apache.log4j.Logger;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
+
+import org.apache.log4j.Logger;
 
 /**
  * Class represents all properties for CMB. Most of them are read from a properties file.
@@ -83,6 +85,7 @@ public class CMBProperties {
 	private final boolean hectorAutoDiscovery;
     private final int hectorAutoDiscoveryDelaySeconds;
     private final String hectorAutoDiscoveryDataCenter;
+    private final Map<String, String> hectorCredentials;
 	
 	private final String region;
     
@@ -234,6 +237,14 @@ public class CMBProperties {
             hectorAutoDiscoveryDelaySeconds = Integer.parseInt(props.getProperty("cmb.hector.autoDiscoveryDelaySeconds", "60"));
             hectorAutoDiscovery = Boolean.parseBoolean(props.getProperty("cmb.hector.autoDiscovery", "true"));
             hectorBalancingPolicy = props.getProperty("cmb.hector.balancingPolicy", "RoundRobinBalancingPolicy");
+            if (props.getProperty("cmb.hector.username") != null) {
+                hectorCredentials = new HashMap<String, String>(2);
+                hectorCredentials.put("username", props.getProperty("cmb.hector.username", ""));
+                hectorCredentials.put("password", props.getProperty("cmb.hector.password", ""));
+            } else {
+                hectorCredentials = null;
+            }
+
             
 			smtpHostName = props.getProperty("cmb.cns.smtp.hostname");
 			smtpUserName = props.getProperty("cmb.cns.smtp.username");
@@ -724,6 +735,10 @@ public class CMBProperties {
 		return hectorAutoDiscoveryDelaySeconds;
 	}
 	
+	public Map<String, String> getHectorCredentials() {
+	    return hectorCredentials;
+	}
+
 	public boolean isCNSPublisherEnabled() {
 		return this.cnsPublisherEnabled;
 	}
