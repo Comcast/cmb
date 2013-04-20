@@ -22,7 +22,6 @@ New features and bug fixes:
 - bug fix for name prefix search for queues in admin UI for large number
   of queues
 
-
 CMB VERSION 2.2.21
 --------------------------------------------------------------------
 
@@ -105,7 +104,6 @@ create column family CNSAPIServers
   and replicate_on_write = true
   and compaction_strategy = 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy';
 
-
 CMB VERSION 2.2.12
 --------------------------------------------------------------------
 
@@ -167,7 +165,6 @@ new properties:
 cmb.cns.publisher.http.httpTimeoutSeconds=5
 cmb.cns.publisher.http.acceptableStatusCodes=200
 
-
 CMB VERSION 2.2.11
 --------------------------------------------------------------------
 
@@ -177,7 +174,6 @@ CMB VERSION 2.2.11
 - bug fix: delete subscription if sending of confirmation message fails
 - allow sqs endpoints
 
-
 CMB VERSION 2.2.10
 --------------------------------------------------------------------
 
@@ -185,7 +181,6 @@ CMB VERSION 2.2.10
 - bug fix: drop cns messages if delivery fails for cqs or email endpoints 
 - added more detail to redis configuration in readme
 - adjusted folder structure to simplify build process
-
 
 CMB VERSION 2.2.9
 --------------------------------------------------------------------

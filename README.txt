@@ -21,7 +21,6 @@ If you have any questions or comments please go to our user forum at
 
 https://groups.google.com/forum/#!forum/cmb-user-forum
 
-
 --------------------------------------------------------------------------------------------
 - Binaries for Download
 --------------------------------------------------------------------------------------------
@@ -29,7 +28,6 @@ https://groups.google.com/forum/#!forum/cmb-user-forum
 If you do not want to build from source you can download the latest stable build here:
 
 http://cmbdownloads.s3-website-us-west-1.amazonaws.com/
-
 
 --------------------------------------------------------------------------------------------
 - Brief Tutorial
@@ -117,7 +115,6 @@ Example response:
     </ResponseMetadata>
 </CreateQueueResponse> 
 
-
 --------------------------------------------------------------------------------------------
 - Quickstart Guide
 --------------------------------------------------------------------------------------------
@@ -181,7 +178,7 @@ disk!). To take advantage of the embedded Jetty option follow the instructions b
 
 7. Check if web UI is available at localhost:6059/webui/ (login with username cns_internal 
    and password cns_internal).
- 
+
    
 --------------------------------------------------------------------------------------------
 - Monitoring, Logging
@@ -235,7 +232,6 @@ Finally the admin UI provides a dashboard like view of
   - CQS API Server state
   - CNS API Server state
   - CNS Publish Worker State
-  
 
 --------------------------------------------------------------------------------------------
 - Multi-Data-Center Deployment and Failover (CQS)
@@ -268,7 +264,6 @@ CQS request to the fail-over data center, the global load balancer should submit
 clear cache request to make sure the Redis cache does not contain any stale data.
 
 http://primarycqsserviceurl/?Action=ClearCache&AWSAccessKeyId=someaccesskey
-
 
 --------------------------------------------------------------------------------------------
 - Known Limitations
