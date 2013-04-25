@@ -1,12 +1,12 @@
 /**
  * Copyright 2012 Comcast Corporation
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *   http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,7 +29,7 @@ import com.comcast.cmb.common.util.CMBProperties;
  *
  */
 public class CQSStressTestProperties {
-	
+
     private final int testDurationSeconds;
     private final int messagesPerQueuePerSecond;
     private final int numberOfQueues;
@@ -42,16 +42,16 @@ public class CQSStressTestProperties {
     private final int delayBetweenReceiveAndDeleteMS;
     private final int revisiblePercentage;
     private final String[] queueNames;
-    
+
 	private static final CQSStressTestProperties instance = new CQSStressTestProperties();
 
     private static final Logger logger = Logger.getLogger(CMBProperties.class);
-	
+
 	private CQSStressTestProperties()  {
-		
+
 		Properties props = new Properties();
 		File file = null;
-		
+
 		if (System.getProperty("cqs.stresstest.propertyFile") != null) {
 			file = new File(System.getProperty("cqs.stresstest.propertyFile"));
         } else if (new File("config/cqs.stresstest.properties").exists()) {
@@ -59,14 +59,14 @@ public class CQSStressTestProperties {
         } else if (new File("cqs.stresstest.properties").exists()) {
 			file = new File("cqs.stresstest.properties");
         } else {
-            throw new IllegalArgumentException("Missing VM parameter cmb.propertyFile");
+            throw new IllegalArgumentException("Missing VM parameter cqs.stresstest.propertyFile");
         }
 
 		try {
-			
+
 			FileInputStream fileStream = new FileInputStream(file);
 			props.load(fileStream);
-            
+
             testDurationSeconds = Integer.parseInt(props.getProperty("cmb.cqs.stress.testDurationSeconds", "100"));
             messagesPerQueuePerSecond = Integer.parseInt(props.getProperty("cmb.cqs.stress.messagesPerQueuePerSecond", "100"));
             numberOfQueues = Integer.parseInt(props.getProperty("cmb.cqs.stress.numberOfQueues", "5"));
@@ -78,9 +78,9 @@ public class CQSStressTestProperties {
             delayBetweenReceivesMS = Integer.parseInt(props.getProperty("cmb.cqs.stress.delayBetweenReceivesMS", "5"));
             delayBetweenReceiveAndDeleteMS = Integer.parseInt(props.getProperty("cmb.cqs.stress.delayBetweenReceiveAndDeleteMS", "40"));
             revisiblePercentage = Integer.parseInt(props.getProperty("cmb.cqs.stress.revisiblePercentage", "0"));
-            
+
             String queueNamesString = props.getProperty("cmb.cqs.stress.queueNames");
-            
+
             if (queueNamesString != null) {
             	queueNames = queueNamesString.split(",");
             } else {
@@ -94,11 +94,11 @@ public class CQSStressTestProperties {
             throw new RuntimeException("Unable to load CMB.propertyFile");
 		}
 	}
-	
-	public static CQSStressTestProperties getInstance() {			
+
+	public static CQSStressTestProperties getInstance() {
 		return instance;
 	}
-	
+
 	public int getTestDurationSeconds() {
 		return testDurationSeconds;
 	}
@@ -142,7 +142,7 @@ public class CQSStressTestProperties {
 	public int getRevisiblePercentage() {
 		return revisiblePercentage;
 	}
-	
+
 	public String[] getQueueNames() {
 		return queueNames;
 	}
