@@ -76,12 +76,12 @@ create column family CNSTopicsByUserId
   and compaction_strategy = 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy';
 
 --
--- CNSTopicSubscriptionsNew Column Family
+-- CNSTopicSubscriptions Column Family
 -- 
 -- stores meta data for topic subscriptions
 --
 
-create column family CNSTopicSubscriptionsNew
+create column family CNSTopicSubscriptions
   with column_type = 'Super'
   and comparator = 'CompositeType(UTF8Type, UTF8Type)'
   and subcomparator = 'UTF8Type'

@@ -65,7 +65,7 @@ public class CNSSubscriptionCassandraPersistence extends CassandraPersistence im
     //For the Token Index, the row-key is token, the column-name os subscription-arn
     private final ColumnFamilyTemplate<String, String> subscriptionsTokenIndexTemplate;
 	
-	private static final String columnFamilySubscriptions = "CNSTopicSubscriptionsNew";
+	private static final String columnFamilySubscriptions = "CNSTopicSubscriptions";
 	private static final String columnFamilySubscriptionsIndex = "CNSTopicSubscriptionsIndex";
 	private static final String columnFamilySubscriptionsUserIndex = "CNSTopicSubscriptionsUserIndex";
 	private static final String columnFamilySubscriptionsTokenIndex = "CNSTopicSubscriptionsTokenIndex";

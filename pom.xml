@@ -1,8 +1,10 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
+	<!-- Use this pom.xml file to create a single jar build for all cmb components using the embedded Jetty option (recommended) -->
+
 	<properties>
-	    <buildnum>2.2.28</buildnum>
+	    <buildnum>2.2.29</buildnum>
 	    <projectname>cmb</projectname>
 	</properties>
 

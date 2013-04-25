@@ -4,9 +4,9 @@
 
 -- note: drop keyspaces only if they exist already
 
--- drop keyspace CNS;
--- drop keyspace CQS;
--- drop keyspace CMB;
+drop keyspace CNS;
+drop keyspace CQS;
+drop keyspace CMB;
 
 create keyspace CNS;
 create keyspace CQS;
@@ -65,12 +65,12 @@ create column family CNSTopicsByUserId
   and compaction_strategy = 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy';
 
 --
--- CNSTopicSubscriptionsNew Column Family
+-- CNSTopicSubscriptions Column Family
 -- 
 -- stores meta data for topic subscriptions
 --
 
-create column family CNSTopicSubscriptionsNew
+create column family CNSTopicSubscriptions
   with column_type = 'Super'
   with caching = 'rows_only'
   and comparator = 'CompositeType(UTF8Type, UTF8Type)'
