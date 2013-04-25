@@ -217,14 +217,14 @@ public class CQSUserPageServlet extends AdminServletBase {
 		out.println("<th>Queue Name</th>");
 		out.println("<th>User Id</th>");
 		out.println("<th>Region</th>");
-		out.println("<th>Visibility To</th>");
+		out.println("<th>Visibility TO</th>");
 		out.println("<th>Max Msg Size</th>");
 		out.println("<th>Msg Rention Period</th>");
 		out.println("<th>Delay Seconds</th>");
 		out.println("<th>Wait Time Seconds</th>");
 		out.println("<th>Num Partitions</th>");
 		out.println("<th>Approx Num Msg</th>");
-		out.println("<th>&nbsp;</th><th>&nbsp;</th><th>&nbsp;</th></tr>");
+		out.println("<th>&nbsp;</th><th>&nbsp;</th><th>&nbsp;</th><th>&nbsp;</th></tr>");
 
 		for (int i = 0; queueUrls != null && i < queueUrls.size(); i++) {
 			
@@ -262,7 +262,9 @@ public class CQSUserPageServlet extends AdminServletBase {
         	
         	out.println("<td><a href='/webui/cqsuser/message?userId=" + user.getUserId()+ "&queueName=" + Util.getNameForAbsoluteQueueUrl(queueUrls.get(i)) + "'>Messages</a></td>");
         	out.println("<td><a href='/webui/cqsuser/permissions?userId="+ user.getUserId() + "&queueName="+ Util.getNameForAbsoluteQueueUrl(queueUrls.get(i)) + "'>Permissions</a></td>");
-		    out.println("<td><input type='submit' value='Delete' name='Delete'/></td></tr></form>");
+        	out.println("<td><a href='' onclick=\"window.open('/webui/cqsuser/editqueueattributes?queueName="+ Util.getNameForAbsoluteQueueUrl(queueUrls.get(i)) + "&userId="+userId+"', 'EditQueueAttributes', 'height=630,width=580,toolbar=no')\">Attributes</a></td>");
+
+        	out.println("<td><input type='submit' value='Delete' name='Delete'/></td></tr></form>");
         }
 		
         out.println("</table></span></p>");

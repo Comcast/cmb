@@ -168,7 +168,7 @@
 		<url-pattern>/webui/cnsworkerstate/*</url-pattern>
 	</servlet-mapping>
 	
-		<servlet>
+	<servlet>
 		<servlet-name>CQSAPIStatePageServlet</servlet-name>
 		<servlet-class>com.comcast.cqs.controller.CQSAPIStatePageServlet</servlet-class>
 	</servlet>
@@ -176,5 +176,14 @@
 		<servlet-name>CQSAPIStatePageServlet</servlet-name>
 		<url-pattern>/webui/cqsapistate/*</url-pattern>
 	</servlet-mapping>
+	
+	<servlet>
+    	<servlet-name>CQSEditQueueAttributePage</servlet-name>
+    	<servlet-class>com.comcast.cqs.controller.CQSEditQueueAttributePage</servlet-class>
+  	</servlet>
+  	<servlet-mapping>
+    	<servlet-name>CQSEditQueueAttributePage</servlet-name>
+    	<url-pattern>/webui/cqsuser/editqueueattributes/*</url-pattern>
+  	</servlet-mapping>
     
 </web-app>

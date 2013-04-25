@@ -177,6 +177,15 @@
     <servlet-name>CQSQueuePermissionsPage</servlet-name>
     <url-pattern>/webui/cqsuser/permissions/*</url-pattern>
   </servlet-mapping>
+  
+  <servlet>
+    <servlet-name>CQSEditQueueAttributePage</servlet-name>
+    <servlet-class>com.comcast.cqs.controller.CQSEditQueueAttributePage</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>CQSEditQueueAttributePage</servlet-name>
+    <url-pattern>/webui/cqsuser/editqueueattributes/*</url-pattern>
+  </servlet-mapping>
 
   <servlet>
     <servlet-name>EndpointServlet</servlet-name>
