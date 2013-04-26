@@ -404,6 +404,10 @@ create column family Users
   and replicate_on_write = true
   and compaction_strategy = 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy'
   and column_metadata = [
+    {column_name : 'accessKey',
+    validation_class : UTF8Type,
+    index_name : 'usersAccessKeyIdx',
+    index_type : 0},
     {column_name : 'accessSecret',
     validation_class : UTF8Type},
     {column_name : 'hashPassword',
@@ -411,9 +415,5 @@ create column family Users
     {column_name : 'userId',
     validation_class : UTF8Type,
     index_name : 'usersUserIdIdx',
-    index_type : 0},
-    {column_name : 'userName',
-    validation_class : UTF8Type,
-    index_name : 'usersUserNameIdx',
     index_type : 0}];
    

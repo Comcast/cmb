@@ -28,8 +28,6 @@ import java.util.UUID;
 import me.prettyprint.cassandra.connection.DynamicLoadBalancingPolicy;
 import me.prettyprint.cassandra.connection.LeastActiveBalancingPolicy;
 import me.prettyprint.cassandra.connection.RoundRobinBalancingPolicy;
-import me.prettyprint.cassandra.model.CqlQuery;
-import me.prettyprint.cassandra.model.CqlRows;
 import me.prettyprint.cassandra.model.IndexedSlicesQuery;
 import me.prettyprint.cassandra.model.MultigetCountQuery;
 import me.prettyprint.cassandra.serializers.StringSerializer;
@@ -1111,7 +1109,7 @@ public class CassandraPersistence {
 	 *            consistency level
 	 * @return query result
 	 */
-	public QueryResult<CqlRows<String, String, String>> readRows(String queryString, HConsistencyLevel level) {
+	/*public QueryResult<CqlRows<String, String, String>> readRows(String queryString, HConsistencyLevel level) {
 	    long ts1 = System.currentTimeMillis();
 	    logger.debug("event=read_rows query=" + queryString);
 		Keyspace keyspace = keyspaces.get(level);
@@ -1122,7 +1120,7 @@ public class CassandraPersistence {
 		long ts2 = System.currentTimeMillis();
         CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CassandraTime, (ts2 - ts1));      
 		return res;
-	}
+	}*/
 
 	/**
 	 * Delete single column value or the entire row

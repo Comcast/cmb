@@ -26,18 +26,14 @@ import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.PersistenceException;
 import com.comcast.cqs.util.CQSErrorCodes;
 
-import me.prettyprint.cassandra.model.CqlRows;
 import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.cassandra.service.template.ColumnFamilyTemplate;
 import me.prettyprint.cassandra.service.template.ThriftColumnFamilyTemplate;
 import me.prettyprint.hector.api.HConsistencyLevel;
 import me.prettyprint.hector.api.beans.ColumnSlice;
 import me.prettyprint.hector.api.beans.Row;
-import me.prettyprint.hector.api.query.QueryResult;
-
 
 import org.apache.log4j.Logger;
-
 
 /**
  * Represents Cassandra persistence functionality of User Objects
@@ -45,6 +41,7 @@ import org.apache.log4j.Logger;
  */
 public class UserCassandraPersistence extends CassandraPersistence implements IUserPersistence {
 
+	private static final String ACCESS_KEY = "accessKey";
 	private static final String ACCESS_SECRET = "accessSecret";
 	private static final String USER_ID = "userId";
 	private static final String HASH_PASSWORD = "hashPassword";
@@ -91,11 +88,12 @@ public class UserCassandraPersistence extends CassandraPersistence implements IU
 			Map<String, String> userDataMap = new HashMap<String, String>();
 			
 			userDataMap.put(USER_ID, user.getUserId());
-			userDataMap.put(USER_NAME, user.getUserName());
+			//userDataMap.put(USER_NAME, user.getUserName());
 			userDataMap.put(HASH_PASSWORD, user.getHashPassword());
 			userDataMap.put(ACCESS_SECRET, user.getAccessSecret());		
+			userDataMap.put(ACCESS_KEY, user.getAccessKey());		
 			
-			insertOrUpdateRow(user.getAccessKey(), COLUMN_FAMILY_USERS, userDataMap, HConsistencyLevel.QUORUM);
+			insertOrUpdateRow(user.getUserName(), COLUMN_FAMILY_USERS, userDataMap, HConsistencyLevel.QUORUM);
 			
 		} catch (Exception e) {
 			logger.error("event=create_user", e);
@@ -107,15 +105,7 @@ public class UserCassandraPersistence extends CassandraPersistence implements IU
 	
 	@Override
 	public void deleteUser(String userName) throws PersistenceException {
-		
-		User user = getUserByName(userName);
-		
-		if (user == null) {
-			logger.error("event=delete_user error_code=user_does_not_exist user_name=" + userName);
-			throw new PersistenceException (CQSErrorCodes.InvalidRequest, "No user with the user name " + userName + " exists");
-		}
-		
-		super.delete(usersTemplate, user.getAccessKey(), null);
+		delete(usersTemplate, userName, null);
 	}
 	
 	@Override
@@ -129,34 +119,11 @@ public class UserCassandraPersistence extends CassandraPersistence implements IU
 	}
 
 	@Override
-	public List<User> getAllUsers() throws PersistenceException {
-		String query = "SELECT * from Users";
-		return getUsers(query);
-	}
-
-	@Override
 	public User getUserById(String userId) throws PersistenceException {
-		String query = "SELECT * from Users where " + USER_ID + "='" + userId +"'";
-		return getUser(query);
-	}
 
-	@Override
-	public User getUserByName(String userName) throws PersistenceException {
-		String query = "SELECT * from Users where " + USER_NAME + "='" + userName +"'";
-		return getUser(query);
-	}
-
-	private User getUser(String query) throws PersistenceException {
-
-		QueryResult<CqlRows<String,String,String>> res = super.readRows(query, HConsistencyLevel.QUORUM);
-		
-		if (res == null) {
-			return null;
-		}
-		
-		CqlRows<String,String,String> rows = res.get();
-		
-		if (rows == null || rows.getCount() == 0) {
+		List<Row<String, String, String>> rows = readNextNRows(COLUMN_FAMILY_USERS, null, USER_ID, userId, 10, 10, new StringSerializer(), new StringSerializer(), new StringSerializer(), HConsistencyLevel.QUORUM);
+				
+		if (rows == null || rows.size() == 0) {
 			return null;
 		} 
 		
@@ -165,29 +132,58 @@ public class UserCassandraPersistence extends CassandraPersistence implements IU
 			throw new PersistenceException(CQSErrorCodes.InvalidQueryParameter, "Failed to read user");
 		}*/
 
-		me.prettyprint.hector.api.beans.Row<String, String, String> row = rows.getList().get(0);
-
-		return fillUserFromCqlRow(row);
+		Row<String, String, String> row = rows.get(0);
+		User user = fillUserFromRow(row);
+		
+		return user;
 	}
-	
-	private List<User> getUsers(String query) throws PersistenceException {
+
+	@Override
+	public User getUserByName(String userName) throws PersistenceException {
+
+		Row<String, String, String> row = readRow(COLUMN_FAMILY_USERS, userName, 10, StringSerializer.get(), StringSerializer.get(), StringSerializer.get(), HConsistencyLevel.QUORUM);
+		
+		if (row == null) {
+			return null;
+		}
+		
+		return fillUserFromRow(row);
+	}
+
+
+	@Override
+	public User getUserByAccessKey(String accessKey) throws PersistenceException {
+
+		List<Row<String, String, String>> rows = readNextNRows(COLUMN_FAMILY_USERS, null, ACCESS_KEY, accessKey, 10, 10, new StringSerializer(), new StringSerializer(), new StringSerializer(), HConsistencyLevel.QUORUM);
+		
+		if (rows == null || rows.size() == 0) {
+			return null;
+		} 
+		
+		/*else if (rows.getCount() > 1) {
+			logger.error("event=read_user query=" + query);
+			throw new PersistenceException(CQSErrorCodes.InvalidQueryParameter, "Failed to read user");
+		}*/
+
+		Row<String, String, String> row = rows.get(0);
+		User user = fillUserFromRow(row);
+		
+		return user;
+	}
+
+	public List<User> getAllUsers() throws PersistenceException {
+		
+		List<Row<String, String, String>> rows = readNextNNonEmptyRows(COLUMN_FAMILY_USERS, null, 1000, 10, new StringSerializer(), new StringSerializer(), new StringSerializer(), HConsistencyLevel.QUORUM);
 		
 		List<User> userList = new ArrayList<User>();
-		QueryResult<CqlRows<String,String,String>> res = super.readRows(query, HConsistencyLevel.QUORUM);
-		
-		if (res == null) {
-			return userList;
-		}
-		
-		CqlRows<String,String,String> rows = res.get();
 
-		if (rows == null || rows.getCount() == 0) {
+		if (rows == null || rows.size() == 0) {
 			return userList;
 		}
 		
-		for (me.prettyprint.hector.api.beans.Row<String, String, String> row : rows) {
+		for (Row<String, String, String> row : rows) {
 		
-			User user = fillUserFromCqlRow(row);
+			User user = fillUserFromRow(row);
 			
 			if (user != null) {
 				userList.add(user);
@@ -197,33 +193,50 @@ public class UserCassandraPersistence extends CassandraPersistence implements IU
 		return userList;
 	}
 
-	private User fillUserFromCqlRow(me.prettyprint.hector.api.beans.Row<String, String, String> row) {
+	private User fillUserFromRow(Row<String, String, String> row) {
 		
-		String accessKey = row.getKey();
+		String userName = row.getKey();
 		ColumnSlice<String, String> columnSlice = row.getColumnSlice();
 		
 		if (columnSlice == null || columnSlice.getColumns() == null || columnSlice.getColumns().size() <= 1) {
 			return null;
 		}
 		
-		String userId = columnSlice.getColumnByName(USER_ID).getValue();
-		String userName = columnSlice.getColumnByName(USER_NAME).getValue();
-		String hashPassword = columnSlice.getColumnByName(HASH_PASSWORD).getValue();
-		String accessSecret = columnSlice.getColumnByName(ACCESS_SECRET).getValue();
-
-		return new User(userId, userName, hashPassword, accessKey, accessSecret);
-	}
-
-	@Override
-	public User getUserByAccessKey(String accessKey) throws PersistenceException {
-
-		Row<String, String, String> result = super.readRow(COLUMN_FAMILY_USERS, accessKey, 10, StringSerializer.get(), StringSerializer.get(), StringSerializer.get(), HConsistencyLevel.QUORUM);
+		String userId = null;
 		
-		if (result == null) {
+		if (columnSlice.getColumnByName(USER_ID) != null) {
+			userId = columnSlice.getColumnByName(USER_ID).getValue();
+		} else {
 			return null;
 		}
 		
-		return fillUserFromCqlRow(result);
+		String accessKey = null;
+		
+		if (columnSlice.getColumnByName(ACCESS_KEY) != null) {
+			accessKey = columnSlice.getColumnByName(ACCESS_KEY).getValue();
+		} else {
+			return null;
+		}
+		
+		String hashPassword = null;
+		
+		if (columnSlice.getColumnByName(HASH_PASSWORD) != null) {
+			hashPassword = columnSlice.getColumnByName(HASH_PASSWORD).getValue();
+		} else {
+			return null;
+		}
+		
+		String accessSecret = null;
+		
+		if (columnSlice.getColumnByName(ACCESS_SECRET) != null) {
+			accessSecret = columnSlice.getColumnByName(ACCESS_SECRET).getValue();
+		} else {
+			return null;
+		}
+		
+		User user = new User(userId, userName, hashPassword, accessKey, accessSecret);
+		
+		return user;
 	}
 }
 
