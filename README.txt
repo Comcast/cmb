@@ -149,9 +149,8 @@ disk!). To take advantage of the embedded Jetty option follow the instructions b
 4. Install the correct schema in your Cassandra ring (use cassandra_1.0.schema for
    Cassandra version 1.0.x and cassandra_1.1.schema for Cassandra version 1.1.x).
    
-   NOTE: Currently CMB works with Cassandra version 1.0.10 or higher and also with Cassandra 
-   version 1.1.X. When using Cassandra 1.1.X ensure to run in the (default) CQL2 compatibility 
-   mode and also edit cassandra.yaml to activate the global row cache:
+   NOTE: CMB does not work with Cassandra versions prior to 1.0.10. For Cassandra 
+   versions 1.1.X and 1.2.X edit cassandra.yaml to activate the global row cache:
    
    row_cache_size_in_mb: 100
    
@@ -159,7 +158,7 @@ disk!). To take advantage of the embedded Jetty option follow the instructions b
    
    /<path_to_cassandra>/bin/cassandra-cli -h localhost -f cmb/cassandra_1.0.schema
    
-   To install the schema using Cassandra 1.1.X:
+   To install the schema using Cassandra 1.1.X or 1.2.X:
    
    /<path_to_cassandra>/bin/cassandra-cli -h localhost -f cmb/cassandra_1.1.schema
 
@@ -269,9 +268,12 @@ http://primarycqsserviceurl/?Action=ClearCache&AWSAccessKeyId=someaccesskey
 - Known Limitations
 --------------------------------------------------------------------------------------------
 
-1. CMB requires Cassandra version 1.0.10 or higher or Cassandra version 1.1.X.
+1. CMB does not work with Cassandra versions prior to 1.0.10. Cassandra versions 1.1.X and
+   1.2.X are ok.
+   
+2. Compatibility with AWS SDK has been tested up to version 1.4.2.1.
  
-2. AWS4 signatures currently not supported (V1 and V2 ok).
+2. AWS4 signatures are currently not supported (V1 and V2 ok).
 
 3. CNS does not support SMS protocol.
 
