@@ -34,6 +34,7 @@ import com.amazonaws.AmazonClientException;
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.AmazonWebServiceRequest;
 import com.amazonaws.ResponseMetadata;
+import com.amazonaws.regions.Region;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.model.AddPermissionRequest;
 import com.amazonaws.services.sqs.model.ChangeMessageVisibilityBatchRequest;
@@ -96,6 +97,7 @@ public class CNSEndpointPublisherProducerTest {
     }
     
     static class TestAmazonSQS implements AmazonSQS {
+    	
         private volatile Map<String, String> publishJobs = new ConcurrentHashMap<String, String>();
         private volatile Map<String, String> epPublishJobs = new ConcurrentHashMap<String, String>();
 
@@ -291,6 +293,12 @@ public class CNSEndpointPublisherProducerTest {
              // TODO Auto-generated method stub
              return null;
          }
+
+		@Override
+		public void setRegion(Region arg0) throws IllegalArgumentException {
+			// TODO Auto-generated method stub
+			
+		}
          
      }
 
