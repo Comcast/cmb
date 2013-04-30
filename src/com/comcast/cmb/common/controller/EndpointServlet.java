@@ -685,7 +685,6 @@ public class EndpointServlet extends HttpServlet {
         String showLastStr = request.getParameter("showLast");
         boolean onlyShowLast = (showLastStr != null && showLastStr.equals("true"));
 
-
         String output = "<table border=\"1\">";
 
         synchronized (messages) {

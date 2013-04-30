@@ -32,6 +32,15 @@
     	<servlet-name>AdminServlet</servlet-name>
     	<url-pattern>/webui/*</url-pattern>
     </servlet-mapping>
+
+	<servlet>
+		<servlet-name>CMBVisualizerServlet</servlet-name>
+		<servlet-class>com.comcast.cmb.common.controller.CMBVisualizerServlet</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>CMBVisualizerServlet</servlet-name>
+		<url-pattern>/webui/cmbvisualizer/*</url-pattern>
+	</servlet-mapping>
     
     <servlet>
     	<servlet-name>CNSUserPageServlet</servlet-name>
@@ -185,5 +194,14 @@
     	<servlet-name>CQSEditQueueAttributePage</servlet-name>
     	<url-pattern>/webui/cqsuser/editqueueattributes/*</url-pattern>
   	</servlet-mapping>
+
+	<servlet>
+		<servlet-name>CMBStatsServlet</servlet-name>
+		<servlet-class>com.comcast.cmb.common.controller.CMBStatsServlet</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>CMBStatsServlet</servlet-name>
+		<url-pattern>/webui/cmbcallstats/*</url-pattern>
+	</servlet-mapping>
     
 </web-app>

@@ -49,10 +49,12 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Enumeration;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -84,6 +86,18 @@ abstract public class CMBControllerServlet extends HttpServlet {
     public volatile static ConcurrentHashMap<String, AtomicLong> callStats;
     public volatile static ConcurrentHashMap<String, AtomicLong> callFailureStats;
     
+    public final static int NUM_MINUTES = 60;
+    public final static int NUM_BUCKETS = 10;
+
+    public volatile static AtomicLong[][] callResponseTimesMS = new AtomicLong[NUM_MINUTES][NUM_BUCKETS];
+    public volatile static AtomicLong[][] callResponseTimes10MS = new AtomicLong[NUM_MINUTES][NUM_BUCKETS];
+    public volatile static AtomicLong[][] callResponseTimes100MS = new AtomicLong[NUM_MINUTES][NUM_BUCKETS];
+    public volatile static AtomicLong[][] callResponseTimes1000MS = new AtomicLong[NUM_MINUTES][NUM_BUCKETS];
+    
+    public volatile static ConcurrentHashMap<String, AtomicLong[][]> callResponseTimesByApi;
+    
+    public volatile static AtomicInteger currentMinute;
+    
     @Override    
     public void init() throws ServletException {
         
@@ -94,8 +108,7 @@ abstract public class CMBControllerServlet extends HttpServlet {
             	Util.initLog4j();
 	            CMBProperties.getInstance();
 	            workerPool = new ScheduledThreadPoolExecutor(CMBProperties.getInstance().getCNSNumPublisherDeliveryHandlers());
-	            callStats = new ConcurrentHashMap<String, AtomicLong>();
-	            callFailureStats = new ConcurrentHashMap<String, AtomicLong>();
+	            initStats();
 	            initialized = true;
             }
     		
@@ -104,10 +117,33 @@ abstract public class CMBControllerServlet extends HttpServlet {
         }
     }
     
-    protected void requestInit() {
-        userHandler = PersistenceFactory.getUserPersistence();
+    protected void initRequest() {
+
+    	userHandler = PersistenceFactory.getUserPersistence();
         authModule = new UserAuthModule();
         authModule.setUserPersistence(userHandler);
+    }
+    
+    public static void initStats() {
+
+    	callStats = new ConcurrentHashMap<String, AtomicLong>();
+        callFailureStats = new ConcurrentHashMap<String, AtomicLong>();
+        callResponseTimesMS = new AtomicLong[NUM_MINUTES][NUM_BUCKETS];
+        callResponseTimes10MS = new AtomicLong[NUM_MINUTES][NUM_BUCKETS];
+        callResponseTimes100MS = new AtomicLong[NUM_MINUTES][NUM_BUCKETS];
+        callResponseTimes1000MS = new AtomicLong[NUM_MINUTES][NUM_BUCKETS];
+        callResponseTimesByApi = new ConcurrentHashMap<String, AtomicLong[][]>();
+    	
+        for (int i=0; i<NUM_MINUTES; i++) {
+        	for (int k=0; k<NUM_BUCKETS; k++) {
+        		callResponseTimesMS[i][k] = new AtomicLong();
+        		callResponseTimes10MS[i][k] = new AtomicLong();
+        		callResponseTimes100MS[i][k] = new AtomicLong();
+        		callResponseTimes1000MS[i][k] = new AtomicLong();
+        	}
+    	}
+    	
+        currentMinute = new AtomicInteger(new Date(System.currentTimeMillis()).getMinutes());
     }
     
     /**
@@ -164,6 +200,121 @@ abstract public class CMBControllerServlet extends HttpServlet {
     	return params.toString();
     }
     
+    private void logStats(String action, long responseTimeMS) {
+
+    	if (action != null && !action.equals("")) {
+            
+            callStats.putIfAbsent(action, new AtomicLong());
+            
+            if (callStats.get(action).incrementAndGet() == Long.MAX_VALUE - 100) {
+	            callStats = new ConcurrentHashMap<String, AtomicLong>();
+            }
+            
+            int newMinute = new Date(System.currentTimeMillis()).getMinutes();
+            int oldMinute = currentMinute.getAndSet(newMinute);
+            
+            if (newMinute != oldMinute) {
+            	for (int i=0; i<NUM_BUCKETS; i++) {
+            		callResponseTimesMS[newMinute][i].set(0);
+            	}
+            }
+            
+            int responseTimeIdx;
+            
+            responseTimeIdx = (int)(responseTimeMS)/1;
+            
+            if (responseTimeIdx > NUM_BUCKETS-1) {
+            	responseTimeIdx = NUM_BUCKETS-1;
+            } else if (responseTimeIdx < 0) {
+            	responseTimeIdx = 0;
+            }
+            
+            callResponseTimesMS[newMinute][responseTimeIdx].incrementAndGet();
+
+            responseTimeIdx = (int)(responseTimeMS)/10;
+            
+            if (responseTimeIdx > NUM_BUCKETS-1) {
+            	responseTimeIdx = NUM_BUCKETS-1;
+            } else if (responseTimeIdx < 0) {
+            	responseTimeIdx = 0;
+            }
+            
+            callResponseTimes10MS[newMinute][responseTimeIdx].incrementAndGet();
+
+            responseTimeIdx = (int)(responseTimeMS)/100;
+            
+            if (responseTimeIdx > NUM_BUCKETS-1) {
+            	responseTimeIdx = NUM_BUCKETS-1;
+            } else if (responseTimeIdx < 0) {
+            	responseTimeIdx = 0;
+            }
+            
+            callResponseTimes100MS[newMinute][responseTimeIdx].incrementAndGet();
+            
+            responseTimeIdx = (int)(responseTimeMS)/1000;
+            
+            if (responseTimeIdx > NUM_BUCKETS-1) {
+            	responseTimeIdx = NUM_BUCKETS-1;
+            } else if (responseTimeIdx < 0) {
+            	responseTimeIdx = 0;
+            }
+            
+            callResponseTimes1000MS[newMinute][responseTimeIdx].incrementAndGet();
+            
+            AtomicLong[][] callResponseTimes = callResponseTimesByApi.get(action);
+            
+            if (callResponseTimes == null) {
+            	callResponseTimesByApi.putIfAbsent(action, new AtomicLong[NUM_MINUTES][NUM_BUCKETS]);
+            	callResponseTimes = callResponseTimesByApi.get(action);
+                for (int i=0; i<NUM_MINUTES; i++) {
+                	for (int k=0; k<NUM_BUCKETS; k++) {
+                		callResponseTimes[i][k] = new AtomicLong();
+                	}
+                }
+            }
+            
+            // resolution for the api specific response time array is always 10 ms
+            
+            responseTimeIdx = (int)(responseTimeMS)/10;
+            
+            if (responseTimeIdx > NUM_BUCKETS-1) {
+            	responseTimeIdx = NUM_BUCKETS-1;
+            } else if (responseTimeIdx < 0) {
+            	responseTimeIdx = 0;
+            }
+            
+            callResponseTimes[newMinute][responseTimeIdx].incrementAndGet();
+    	}
+    }
+    
+    private String getLogLine(AsyncContext asyncContext, CQSHttpServletRequest request, User user, long responseTiemMS, String success) {
+    	
+		StringBuffer logLine = new StringBuffer("");
+		
+		logLine.append("event=request status=success client=").append(request.getRemoteAddr());
+		
+		logLine.append(((this instanceof CQSControllerServlet) ? (" queue_url=" + request.getRequestURL()) : ""));
+		
+		if (request.getReceiptHandles() != null && request.getReceiptHandles().size() > 0) {
+			logLine.append(" receipt_handles=").append(request.getReceiptHandles().get(0));
+			for (int i=1; i<request.getReceiptHandles().size(); i++) {
+				logLine.append("," + request.getReceiptHandles().get(i));
+			}
+		}
+		
+		logLine.append(" ").append(getParameterString(asyncContext));
+		logLine.append((user != null ? "user=" + user.getUserName() : ""));
+
+		logLine.append(" resp_ms=").append(responseTiemMS);
+		logLine.append(" cass_ms=" + valueAccumulator.getCounter(AccumulatorName.CassandraTime));
+		logLine.append(" cass_num_rd=" + valueAccumulator.getCounter(AccumulatorName.CassandraRead));
+		logLine.append(" cass_num_wr=" + valueAccumulator.getCounter(AccumulatorName.CassandraWrite));
+		logLine.append(((this instanceof CNSControllerServlet) ? (" cnscqs_ms=" + CMBControllerServlet.valueAccumulator.getCounter(AccumulatorName.CNSCQSTime)) : ""));
+		logLine.append(((this instanceof CQSControllerServlet) ? (" redis_ms=" + valueAccumulator.getCounter(AccumulatorName.RedisTime)) : ""));
+		
+		return logLine.toString();
+    }
+    
     private void handleRequest(AsyncContext asyncContext) throws ServletException, IOException {  
     	
         CQSHttpServletRequest request = (CQSHttpServletRequest)asyncContext.getRequest();
@@ -176,9 +327,7 @@ abstract public class CMBControllerServlet extends HttpServlet {
         try {
         	
             valueAccumulator.initializeAllCounters();
-            
-        	requestInit();
-        	
+        	initRequest();
             response.setContentType("text/xml");
             
             if (!isValidAction(action)) {
@@ -198,75 +347,21 @@ abstract public class CMBControllerServlet extends HttpServlet {
             long ts3 = System.currentTimeMillis();
 
             valueAccumulator.addToCounter(AccumulatorName.CMBControllerPreHandleAction, (ts3 - ts1));
-
             handleAction(action, user, asyncContext);
-            
             response.setStatus(200);
             long ts2 = System.currentTimeMillis();
-            
-    		StringBuffer logLine = new StringBuffer("");
-    		
-    		logLine.append("event=request status=success client=").append(request.getRemoteAddr());
-    		
-    		logLine.append(((this instanceof CQSControllerServlet) ? (" queue_url=" + request.getRequestURL()) : ""));
-    		
-    		if (request.getReceiptHandles() != null && request.getReceiptHandles().size() > 0) {
-    			logLine.append(" receipt_handles=").append(request.getReceiptHandles().get(0));
-    			for (int i=1; i<request.getReceiptHandles().size(); i++) {
-    				logLine.append("," + request.getReceiptHandles().get(i));
-    			}
-    		}
-    		
-    		logLine.append(" ").append(getParameterString(asyncContext));
-    		logLine.append((user != null ? "user=" + user.getUserName() : ""));
-
-    		logLine.append(" resp_ms=").append((ts2-ts1));
-    		logLine.append(" cass_ms=" + valueAccumulator.getCounter(AccumulatorName.CassandraTime));
-    		logLine.append(" cass_num_rd=" + valueAccumulator.getCounter(AccumulatorName.CassandraRead));
-    		logLine.append(" cass_num_wr=" + valueAccumulator.getCounter(AccumulatorName.CassandraWrite));
-    		logLine.append(((this instanceof CNSControllerServlet) ? (" cnscqs_ms=" + CMBControllerServlet.valueAccumulator.getCounter(AccumulatorName.CNSCQSTime)) : ""));
-    		logLine.append(((this instanceof CQSControllerServlet) ? (" redis_ms=" + valueAccumulator.getCounter(AccumulatorName.RedisTime)) : ""));
-    		
+    		String logLine = getLogLine(asyncContext, request, user, ts2-ts1, "success");
     		logger.info(logLine);
-            
-            if (action != null && !action.equals("")) {
-	            
-	            callStats.putIfAbsent(action, new AtomicLong());
-	            
-	            if (callStats.get(action).incrementAndGet() == Long.MAX_VALUE - 100) {
-		            callStats = new ConcurrentHashMap<String, AtomicLong>();
-	            }
-            }
+    		
+    		if (CMBProperties.getInstance().isCMBStatsEnabled()) {
+    			logStats(action, ts2-ts1);
+    		}
        
         } catch (Exception ex) {
             
         	long ts2 = System.currentTimeMillis();
-        	
-    		StringBuffer logLine = new StringBuffer("");
-    		
-    		logLine.append("event=request status=failed client=").append(request.getRemoteAddr());
-    		
-    		logLine.append(((this instanceof CQSControllerServlet) ? (" queue_url=" + request.getRequestURL()) : ""));
-    		
-    		if (request.getReceiptHandles() != null && request.getReceiptHandles().size() > 0) {
-    			logLine.append(" receipt_handles=").append(request.getReceiptHandles().get(0));
-    			for (int i=1; i<request.getReceiptHandles().size(); i++) {
-    				logLine.append("," + request.getReceiptHandles().get(i));
-    			}
-    		}
-    		
-    		logLine.append(" ").append(getParameterString(asyncContext));
-    		logLine.append((user != null ? "user=" + user.getUserName() : ""));
-
-    		logLine.append(" resp_ms=").append((ts2-ts1));
-    		logLine.append(" cass_ms=" + valueAccumulator.getCounter(AccumulatorName.CassandraTime));
-    		logLine.append(" cass_num_rd=" + valueAccumulator.getCounter(AccumulatorName.CassandraRead));
-    		logLine.append(" cass_num_wr=" + valueAccumulator.getCounter(AccumulatorName.CassandraWrite));
-    		logLine.append(((this instanceof CNSControllerServlet) ? (" cnscqs_ms=" + CMBControllerServlet.valueAccumulator.getCounter(AccumulatorName.CNSCQSTime)) : ""));
-    		logLine.append(((this instanceof CQSControllerServlet) ? (" redis_ms=" + valueAccumulator.getCounter(AccumulatorName.RedisTime)) : ""));
-    		
+    		String logLine = getLogLine(asyncContext, request, user, ts2-ts1, "failed");
     		logger.error(logLine, ex);
-
             int httpCode = CMBErrorCodes.InternalError.getHttpCode();
             String code = CMBErrorCodes.InternalError.getCMBCode();
             String message = "There is an internal problem with CMB";
@@ -282,7 +377,7 @@ abstract public class CMBControllerServlet extends HttpServlet {
             response.setStatus(httpCode);
             response.getWriter().println(errXml);
             
-            if (action != null && !action.equals("")) {
+            if (CMBProperties.getInstance().isCMBStatsEnabled() && action != null && !action.equals("")) {
 
             	callFailureStats.putIfAbsent(action, new AtomicLong());
             

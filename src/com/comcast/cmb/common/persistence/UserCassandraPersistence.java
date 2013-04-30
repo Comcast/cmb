@@ -45,7 +45,7 @@ public class UserCassandraPersistence extends CassandraPersistence implements IU
 	private static final String ACCESS_SECRET = "accessSecret";
 	private static final String USER_ID = "userId";
 	private static final String HASH_PASSWORD = "hashPassword";
-	private static final String USER_NAME = "userName";
+	//private static final String USER_NAME = "userName";
 	private final ColumnFamilyTemplate<String, String> usersTemplate;
 	private static final String COLUMN_FAMILY_USERS = "Users";
 	private static final Logger logger = Logger.getLogger(UserCassandraPersistence.class);

@@ -36,6 +36,8 @@ public class CMBProperties {
 	    SYNC, ASYNC 
 	}
 	
+	private final boolean cmbEnableStats;
+	
 	private final String cmbDeploymentName;
 	
 	private final boolean cnsBypassPublishJobQueueForSmallTopics;
@@ -200,6 +202,7 @@ public class CMBProperties {
 			cmbDeploymentName = props.getProperty("cmb.deployment.name", "");
 			
 			cnsBypassPublishJobQueueForSmallTopics = Boolean.parseBoolean(props.getProperty("cmb.cns.bypassPublishJobQueueForSmallTopics", "true"));
+			cmbEnableStats = Boolean.parseBoolean(props.getProperty("cmb.stats.enable", "false"));
 			
 			cqsServerPort = Integer.parseInt(props.getProperty("cmb.cqs.server.port", "6059"));
 			cnsServerPort = Integer.parseInt(props.getProperty("cmb.cns.server.port", "6061"));
@@ -343,6 +346,10 @@ public class CMBProperties {
 		}
 	}
 	
+	public boolean isCMBStatsEnabled() {
+		return cmbEnableStats;
+	}
+
 	public String getHectorAutoDiscoveryDataCenter() {
 		return hectorAutoDiscoveryDataCenter;
 	}

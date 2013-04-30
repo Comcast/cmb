@@ -409,8 +409,7 @@ public class CQSMonitor implements CQSMonitorMBean {
 
 	@Override
 	public void resetCallStats() {
-		CMBControllerServlet.callStats = new ConcurrentHashMap<String, AtomicLong>();
-		CMBControllerServlet.callFailureStats = new ConcurrentHashMap<String, AtomicLong>();
+		CMBControllerServlet.initStats();
 	}
 
 	@Override
