@@ -65,38 +65,50 @@ public class CMBStatsServlet extends AdminServletBase {
 
 		out.println("<h2 align='left'>API Response Time Percentiles [" + ac + "]</h2>");
 		out.print("<p>");
-		
 		for (String a : CMBControllerServlet.callStats.keySet()) {
 			out.print("<a href='?ac="+a+"&rs="+rs+"'>"+a+"</a>&nbsp;");
 		}
-		
 		out.println("</p>");
 		out.println("<p><img src='/webui/cmbvisualizer/responsetimeimg?ac="+ac+"'></p>");
+
+		out.println("<h2 align='left'>Redis Response Time Percentiles</h2>");
+		out.println("<p><img src='/webui/cmbvisualizer/responsetimeimg?redis=true'></p>");
+
+		out.println("<h2 align='left'>Cassandra Response Time Percentiles</h2>");
+		out.println("<p><img src='/webui/cmbvisualizer/responsetimeimg?cassandra=true'></p>");
 
 		out.println("<h2 align='left'>API Call Distribution</h2>");
 		out.println("<p><img src='/webui/cmbvisualizer/calldistributionimg'></p>");
 		
 		if (CMBControllerServlet.callStats.keySet().size() > 0) {
-
 			out.println("<h2 align='left'>API Call Counts</h2>");
 			out.println("<span class='simple'><table border='1'>");
-
 			for (String action : CMBControllerServlet.callStats.keySet()) {
 				out.println("<tr><td>"+action+"</td><td>"+CMBControllerServlet.callStats.get(action)+"</td></tr>");
 			}
-			
 			out.println("</table></span>");
 		}
 
 		if (CMBControllerServlet.callFailureStats.keySet().size() > 0) {
-
 			out.println("<h2 align='left'>API Failure Counts</h2>");
 			out.println("<span class='simple'><table border='1'>");
-
 			for (String action : CMBControllerServlet.callFailureStats.keySet()) {
 				out.println("<tr><td>"+action+"</td><td>"+CMBControllerServlet.callFailureStats.get(action)+"</td></tr>");
 			}
-			
+			out.println("</table></span>");
+			out.println("<h2 align='left'>Recent Errors</h2>");
+			out.println("<span class='simple'><table border='1'>");
+			for (int i=0; i<CMBControllerServlet.recentErrors.length; i++) {
+				String detail = CMBControllerServlet.recentErrors[i];
+				if (detail != null) {
+					String elements[] = detail.split("\\|");
+					if (elements.length >= 3) {
+						out.println("<tr><td>"+elements[0]+"</td></tr>");
+						out.println("<tr><td>"+elements[1]+"</td></tr>");
+						out.println("<tr><td>"+elements[2]+"</td></tr>");
+					}
+				}
+			}
 			out.println("</table></span>");
 		}
 		

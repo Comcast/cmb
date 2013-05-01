@@ -60,15 +60,27 @@ public class CMBVisualizerServlet extends HttpServlet {
 
     	int resolutionMS = 10;
     	String action = null;
+    	boolean redisOnly = false;
+    	boolean cassandraOnly = false;
     	
-    	if (request.getParameter("ac") != null) {
+    	if (request.getParameter("redis") != null) {
+    		redisOnly = Boolean.parseBoolean(request.getParameter("redis"));
+    		resolutionMS = 1;
+    	} else if (request.getParameter("cassandra") != null) {
+    		cassandraOnly = Boolean.parseBoolean(request.getParameter("cassandra"));
+    		resolutionMS = 1;
+    	} else if (request.getParameter("ac") != null) {
     		action = request.getParameter("ac");
+    		resolutionMS = 10;
     	} else if (request.getParameter("rs") != null) {
     		resolutionMS = Integer.parseInt(request.getParameter("rs"));
-    	}
+    	};
     	
-    	byte b[] = generateResponseTimeChart(resolutionMS, action);
+    	byte b[] = generateResponseTimeChart(resolutionMS, action, redisOnly, cassandraOnly);
     	
+    	response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate"); 
+    	response.setHeader("Pragma", "no-cache"); 
+    	response.setDateHeader("Expires", 0); 
     	response.setContentLength(b.length);
     	response.setContentType("image/jpeg");
     	response.getOutputStream().write(b);
@@ -79,6 +91,9 @@ public class CMBVisualizerServlet extends HttpServlet {
 
     	byte b[] = generateApiDistributionPieChart();
     	
+    	response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate"); 
+    	response.setHeader("Pragma", "no-cache"); 
+    	response.setDateHeader("Expires", 0); 
     	response.setContentLength(b.length);
     	response.setContentType("image/jpeg");
     	response.getOutputStream().write(b);
@@ -146,25 +161,43 @@ public class CMBVisualizerServlet extends HttpServlet {
     	return bos.toByteArray();
     }
 
-    private byte[] generateResponseTimeChart(int resolutionMS, String action) throws IOException {
+    private byte[] generateResponseTimeChart(int resolutionMS, String action, boolean showRedisOnly, boolean showCassandraOnly) throws IOException {
+    	
+    	//todo: dynamic chart label
+    	//todo: correct legend ms
+    	
+    	String label = "";
     	
     	AtomicLong[][] responseTimesMS;
     	
-    	if (action != null) {
+    	if (showRedisOnly) {
     		
+    		label = "Redis Percentiles 1 MS";
+    		responseTimesMS = CMBControllerServlet.callResponseTimesRedisMS;
+    		
+    	} else if (showCassandraOnly) {
+    	
+    		label = "Cassandra Percentiles 1 MS";
+    		responseTimesMS = CMBControllerServlet.callResponseTimesCassandraMS;
+
+    	} else if (action != null) {
+    		
+    		label = action + " Percentiles 10 MS";
     		responseTimesMS = CMBControllerServlet.callResponseTimesByApi.get(action);
     		
     	} else {
 
     		if (resolutionMS == 1) {
-	    		responseTimesMS = CMBControllerServlet.callResponseTimesMS;
-	    	} else if (resolutionMS == 10) {
-	    		responseTimesMS = CMBControllerServlet.callResponseTimes10MS;
+        		label = "API Percentiles 1 MS";
+	    		responseTimesMS = CMBControllerServlet.callResponseTimes1MS;
 	    	} else if (resolutionMS == 100) {
+        		label = "API Percentiles 100 MS";
 	    		responseTimesMS = CMBControllerServlet.callResponseTimes100MS;
 	    	} else if (resolutionMS == 1000) {
+        		label = "API Percentiles 1000 MS";
 	    		responseTimesMS = CMBControllerServlet.callResponseTimes1000MS;
 	    	} else {
+        		label = "API Percentiles 10 MS";
 	    		responseTimesMS = CMBControllerServlet.callResponseTimes10MS;
 	    	}
     	}
@@ -243,13 +276,13 @@ public class CMBVisualizerServlet extends HttpServlet {
     	renderer.setSeriesPaint(9, new Color(120,54,210));
 
     	XYPlot plot = new XYPlot(dataset, domainAxis, rangeAxis, renderer);
-    	String label = "Response Time Percentiles";
+    	String title = "Response Time Percentiles";
     	
     	if (activeMinutes > 0) {
-    		label = "Response Time Percentiles [" + grandTotal/(activeMinutes*60) + "msg/sec " + activeMinutes + " min " + grandTotal + " msgs]";
+    		title = label + " [" + grandTotal/(activeMinutes*60) + " call/sec " + activeMinutes + " mins " + grandTotal + " calls]";
     	}
     	
-    	JFreeChart chart = new JFreeChart(label, plot);
+    	JFreeChart chart = new JFreeChart(title, plot);
     	chart.removeLegend();
     	// chart.addSubtitle(new TextTitle(""));
     	LegendTitle legend = new LegendTitle(plot);

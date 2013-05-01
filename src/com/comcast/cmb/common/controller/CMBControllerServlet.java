@@ -89,14 +89,19 @@ abstract public class CMBControllerServlet extends HttpServlet {
     public final static int NUM_MINUTES = 60;
     public final static int NUM_BUCKETS = 10;
 
-    public volatile static AtomicLong[][] callResponseTimesMS = new AtomicLong[NUM_MINUTES][NUM_BUCKETS];
+    public volatile static AtomicLong[][] callResponseTimes1MS = new AtomicLong[NUM_MINUTES][NUM_BUCKETS];
     public volatile static AtomicLong[][] callResponseTimes10MS = new AtomicLong[NUM_MINUTES][NUM_BUCKETS];
     public volatile static AtomicLong[][] callResponseTimes100MS = new AtomicLong[NUM_MINUTES][NUM_BUCKETS];
     public volatile static AtomicLong[][] callResponseTimes1000MS = new AtomicLong[NUM_MINUTES][NUM_BUCKETS];
+    public volatile static AtomicLong[][] callResponseTimesRedisMS = new AtomicLong[NUM_MINUTES][NUM_BUCKETS];
+    public volatile static AtomicLong[][] callResponseTimesCassandraMS = new AtomicLong[NUM_MINUTES][NUM_BUCKETS];
     
     public volatile static ConcurrentHashMap<String, AtomicLong[][]> callResponseTimesByApi;
     
     public volatile static AtomicInteger currentMinute;
+    
+    public volatile static String[] recentErrors = new String[10];
+    public volatile static int recentErrorIdx = -1;
     
     @Override    
     public void init() throws ServletException {
@@ -128,22 +133,29 @@ abstract public class CMBControllerServlet extends HttpServlet {
 
     	callStats = new ConcurrentHashMap<String, AtomicLong>();
         callFailureStats = new ConcurrentHashMap<String, AtomicLong>();
-        callResponseTimesMS = new AtomicLong[NUM_MINUTES][NUM_BUCKETS];
+        callResponseTimes1MS = new AtomicLong[NUM_MINUTES][NUM_BUCKETS];
         callResponseTimes10MS = new AtomicLong[NUM_MINUTES][NUM_BUCKETS];
         callResponseTimes100MS = new AtomicLong[NUM_MINUTES][NUM_BUCKETS];
         callResponseTimes1000MS = new AtomicLong[NUM_MINUTES][NUM_BUCKETS];
+        callResponseTimesRedisMS = new AtomicLong[NUM_MINUTES][NUM_BUCKETS];
+        callResponseTimesCassandraMS = new AtomicLong[NUM_MINUTES][NUM_BUCKETS];
         callResponseTimesByApi = new ConcurrentHashMap<String, AtomicLong[][]>();
     	
         for (int i=0; i<NUM_MINUTES; i++) {
         	for (int k=0; k<NUM_BUCKETS; k++) {
-        		callResponseTimesMS[i][k] = new AtomicLong();
+        		callResponseTimes1MS[i][k] = new AtomicLong();
         		callResponseTimes10MS[i][k] = new AtomicLong();
         		callResponseTimes100MS[i][k] = new AtomicLong();
         		callResponseTimes1000MS[i][k] = new AtomicLong();
+        		callResponseTimesRedisMS[i][k] = new AtomicLong();
+        		callResponseTimesCassandraMS[i][k] = new AtomicLong();
         	}
     	}
     	
         currentMinute = new AtomicInteger(new Date(System.currentTimeMillis()).getMinutes());
+        
+        recentErrors = new String[10];
+        recentErrorIdx = -1;
     }
     
     /**
@@ -200,7 +212,7 @@ abstract public class CMBControllerServlet extends HttpServlet {
     	return params.toString();
     }
     
-    private void logStats(String action, long responseTimeMS) {
+    private void logStats(String action, long responseTimeMS, long redisTimeMS, long cassandraTimeMS) {
 
     	if (action != null && !action.equals("")) {
             
@@ -215,7 +227,7 @@ abstract public class CMBControllerServlet extends HttpServlet {
             
             if (newMinute != oldMinute) {
             	for (int i=0; i<NUM_BUCKETS; i++) {
-            		callResponseTimesMS[newMinute][i].set(0);
+            		callResponseTimes1MS[newMinute][i].set(0);
             	}
             }
             
@@ -229,7 +241,7 @@ abstract public class CMBControllerServlet extends HttpServlet {
             	responseTimeIdx = 0;
             }
             
-            callResponseTimesMS[newMinute][responseTimeIdx].incrementAndGet();
+            callResponseTimes1MS[newMinute][responseTimeIdx].incrementAndGet();
 
             responseTimeIdx = (int)(responseTimeMS)/10;
             
@@ -284,10 +296,34 @@ abstract public class CMBControllerServlet extends HttpServlet {
             }
             
             callResponseTimes[newMinute][responseTimeIdx].incrementAndGet();
+            
+            // redis time
+            
+            responseTimeIdx = (int)(redisTimeMS)/1;
+            
+            if (responseTimeIdx > NUM_BUCKETS-1) {
+            	responseTimeIdx = NUM_BUCKETS-1;
+            } else if (responseTimeIdx < 0) {
+            	responseTimeIdx = 0;
+            }
+            
+            callResponseTimesRedisMS[newMinute][responseTimeIdx].incrementAndGet();
+
+            // redis time
+            
+            responseTimeIdx = (int)(cassandraTimeMS)/1;
+            
+            if (responseTimeIdx > NUM_BUCKETS-1) {
+            	responseTimeIdx = NUM_BUCKETS-1;
+            } else if (responseTimeIdx < 0) {
+            	responseTimeIdx = 0;
+            }
+            
+            callResponseTimesCassandraMS[newMinute][responseTimeIdx].incrementAndGet();
     	}
     }
     
-    private String getLogLine(AsyncContext asyncContext, CQSHttpServletRequest request, User user, long responseTiemMS, String success) {
+    private String getLogLine(AsyncContext asyncContext, CQSHttpServletRequest request, User user, long responseTimeMS, String success) {
     	
 		StringBuffer logLine = new StringBuffer("");
 		
@@ -305,7 +341,7 @@ abstract public class CMBControllerServlet extends HttpServlet {
 		logLine.append(" ").append(getParameterString(asyncContext));
 		logLine.append((user != null ? "user=" + user.getUserName() : ""));
 
-		logLine.append(" resp_ms=").append(responseTiemMS);
+		logLine.append(" resp_ms=").append(responseTimeMS);
 		logLine.append(" cass_ms=" + valueAccumulator.getCounter(AccumulatorName.CassandraTime));
 		logLine.append(" cass_num_rd=" + valueAccumulator.getCounter(AccumulatorName.CassandraRead));
 		logLine.append(" cass_num_wr=" + valueAccumulator.getCounter(AccumulatorName.CassandraWrite));
@@ -354,7 +390,7 @@ abstract public class CMBControllerServlet extends HttpServlet {
     		logger.info(logLine);
     		
     		if (CMBProperties.getInstance().isCMBStatsEnabled()) {
-    			logStats(action, ts2-ts1);
+    			logStats(action, ts2-ts1, valueAccumulator.getCounter(AccumulatorName.RedisTime), valueAccumulator.getCounter(AccumulatorName.CassandraTime));
     		}
        
         } catch (Exception ex) {
@@ -362,6 +398,7 @@ abstract public class CMBControllerServlet extends HttpServlet {
         	long ts2 = System.currentTimeMillis();
     		String logLine = getLogLine(asyncContext, request, user, ts2-ts1, "failed");
     		logger.error(logLine, ex);
+    				
             int httpCode = CMBErrorCodes.InternalError.getHttpCode();
             String code = CMBErrorCodes.InternalError.getCMBCode();
             String message = "There is an internal problem with CMB";
@@ -384,6 +421,17 @@ abstract public class CMBControllerServlet extends HttpServlet {
 	            if (callFailureStats.get(action).incrementAndGet() == Long.MAX_VALUE - 100) {
 		            callFailureStats = new ConcurrentHashMap<String, AtomicLong>();
 	            }
+	    		
+	    		StringBuffer errorDetail = new StringBuffer(new Date() + "|" + logLine + "|" + ex.getMessage() + "\n");
+	    		
+	    		for (StackTraceElement element : ex.getStackTrace()) {
+	    			errorDetail.append(element).append("\n");
+	    		}
+
+	    		// not thread safe but that's ok here
+	    		
+	    		recentErrorIdx = (recentErrorIdx+1)%recentErrors.length;
+	            recentErrors[recentErrorIdx] = errorDetail.toString();
             }
             
         } finally {
