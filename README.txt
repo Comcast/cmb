@@ -40,6 +40,10 @@ currently supports these protocols for subscribers: HTTP, CQS, SQS and email. CM
 are implemented with a Cassandra / Redis backend and are designed for high availability 
 and horizontal scalability.
 
+Note: While CQS and CNS are two functionally distinct services, CNS uses CQS internally
+to distribute the fan-out work. Therefore, CNS cannot be deployed without CQS, however,
+you can deploy CQS in isolation if you do not need the pub-sub capabilities of CNS.    
+
 The most basic CMB system consists of one of each 
 
  - CQS Service Endpoint (HTTP endpoint for CQS web service)
