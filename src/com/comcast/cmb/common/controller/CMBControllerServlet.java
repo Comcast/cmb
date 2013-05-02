@@ -227,7 +227,16 @@ abstract public class CMBControllerServlet extends HttpServlet {
             
             if (newMinute != oldMinute) {
             	for (int i=0; i<NUM_BUCKETS; i++) {
-            		callResponseTimes1MS[newMinute][i].set(0);
+            		int eraseIdx = (newMinute+1)%60;
+            		callResponseTimes1MS[eraseIdx][i].set(0);
+            		callResponseTimes10MS[eraseIdx][i].set(0);
+            		callResponseTimes100MS[eraseIdx][i].set(0);
+            		callResponseTimes1000MS[eraseIdx][i].set(0);
+            		callResponseTimesRedisMS[eraseIdx][i].set(0);
+            		callResponseTimesCassandraMS[eraseIdx][i].set(0);
+            		for (String ac : callResponseTimesByApi.keySet()) {
+            			callResponseTimesByApi.get(ac)[eraseIdx][i].set(0);
+            		}
             	}
             }
             
@@ -309,7 +318,7 @@ abstract public class CMBControllerServlet extends HttpServlet {
             
             callResponseTimesRedisMS[newMinute][responseTimeIdx].incrementAndGet();
 
-            // redis time
+            // cassandra time
             
             responseTimeIdx = (int)(cassandraTimeMS)/1;
             
