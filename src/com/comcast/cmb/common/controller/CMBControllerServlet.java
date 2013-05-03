@@ -95,13 +95,15 @@ abstract public class CMBControllerServlet extends HttpServlet {
     public volatile static AtomicLong[][] callResponseTimes1000MS = new AtomicLong[NUM_MINUTES][NUM_BUCKETS];
     public volatile static AtomicLong[][] callResponseTimesRedisMS = new AtomicLong[NUM_MINUTES][NUM_BUCKETS];
     public volatile static AtomicLong[][] callResponseTimesCassandraMS = new AtomicLong[NUM_MINUTES][NUM_BUCKETS];
-    
+
     public volatile static ConcurrentHashMap<String, AtomicLong[][]> callResponseTimesByApi;
     
     public volatile static AtomicInteger currentMinute;
     
     public volatile static String[] recentErrors = new String[10];
     public volatile static int recentErrorIdx = -1;
+    
+    public static final long startTime = System.currentTimeMillis();
     
     @Override    
     public void init() throws ServletException {
@@ -131,8 +133,9 @@ abstract public class CMBControllerServlet extends HttpServlet {
     
     public static void initStats() {
 
-    	callStats = new ConcurrentHashMap<String, AtomicLong>();
+        callStats = new ConcurrentHashMap<String, AtomicLong>();
         callFailureStats = new ConcurrentHashMap<String, AtomicLong>();
+        
         callResponseTimes1MS = new AtomicLong[NUM_MINUTES][NUM_BUCKETS];
         callResponseTimes10MS = new AtomicLong[NUM_MINUTES][NUM_BUCKETS];
         callResponseTimes100MS = new AtomicLong[NUM_MINUTES][NUM_BUCKETS];
@@ -226,8 +229,8 @@ abstract public class CMBControllerServlet extends HttpServlet {
             int oldMinute = currentMinute.getAndSet(newMinute);
             
             if (newMinute != oldMinute) {
+        		int eraseIdx = (newMinute+1)%60;
             	for (int i=0; i<NUM_BUCKETS; i++) {
-            		int eraseIdx = (newMinute+1)%60;
             		callResponseTimes1MS[eraseIdx][i].set(0);
             		callResponseTimes10MS[eraseIdx][i].set(0);
             		callResponseTimes100MS[eraseIdx][i].set(0);
@@ -241,6 +244,8 @@ abstract public class CMBControllerServlet extends HttpServlet {
             }
             
             int responseTimeIdx;
+            
+            // response time percentiles
             
             responseTimeIdx = (int)(responseTimeMS)/1;
             

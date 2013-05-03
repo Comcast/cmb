@@ -2,7 +2,9 @@ package com.comcast.cmb.common.controller;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.Date;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -63,6 +65,12 @@ public class CMBStatsServlet extends AdminServletBase {
 		out.println("<p><a href='?rs=1&ac="+ac+"'>1ms</a>&nbsp;<a href='?rs=10&ac="+ac+"'>10ms</a>&nbsp;<a href='?rs=100&ac="+ac+"'>100ms</a>&nbsp;<a href='?rs=1000&ac="+ac+"'>1000ms</a></p>");
 		out.println("<p><img src='/webui/cmbvisualizer/responsetimeimg?rs="+rs+"'></p>");
 
+		out.println("<h2 align='left'>Redis Response Time Percentiles</h2>");
+		out.println("<p><img src='/webui/cmbvisualizer/responsetimeimg?redis=true'></p>");
+
+		out.println("<h2 align='left'>Cassandra Response Time Percentiles</h2>");
+		out.println("<p><img src='/webui/cmbvisualizer/responsetimeimg?cassandra=true'></p>");
+
 		out.println("<h2 align='left'>API Response Time Percentiles [" + ac + "]</h2>");
 		out.print("<p>");
 		for (String a : CMBControllerServlet.callStats.keySet()) {
@@ -71,11 +79,8 @@ public class CMBStatsServlet extends AdminServletBase {
 		out.println("</p>");
 		out.println("<p><img src='/webui/cmbvisualizer/responsetimeimg?ac="+ac+"'></p>");
 
-		out.println("<h2 align='left'>Redis Response Time Percentiles</h2>");
-		out.println("<p><img src='/webui/cmbvisualizer/responsetimeimg?redis=true'></p>");
-
-		out.println("<h2 align='left'>Cassandra Response Time Percentiles</h2>");
-		out.println("<p><img src='/webui/cmbvisualizer/responsetimeimg?cassandra=true'></p>");
+		out.println("<h2 align='left'>API Call Mix</h2>");
+		out.println("<p><img src='/webui/cmbvisualizer/callcountimg'></p>");
 
 		out.println("<h2 align='left'>API Call Distribution</h2>");
 		out.println("<p><img src='/webui/cmbvisualizer/calldistributionimg'></p>");
@@ -83,8 +88,16 @@ public class CMBStatsServlet extends AdminServletBase {
 		if (CMBControllerServlet.callStats.keySet().size() > 0) {
 			out.println("<h2 align='left'>API Call Counts</h2>");
 			out.println("<span class='simple'><table border='1'>");
+			out.println("<tr><th>API</th><th>Since " + new Date(CMBControllerServlet.startTime)+"</th><th>Last Hour</th></tr>");
 			for (String action : CMBControllerServlet.callStats.keySet()) {
-				out.println("<tr><td>"+action+"</td><td>"+CMBControllerServlet.callStats.get(action)+"</td></tr>");
+				AtomicLong[][] rt = CMBControllerServlet.callResponseTimesByApi.get(action);
+				long total = 0;
+				for (int i=0; i<rt.length; i++) {
+					for (int k=0; k<rt[0].length; k++) {
+						total += rt[i][k].longValue();
+					}
+				}
+				out.println("<tr><td>"+action+"</td><td>"+CMBControllerServlet.callStats.get(action)+"</td><td>"+total+"</td></tr>");
 			}
 			out.println("</table></span>");
 		}
@@ -98,7 +111,7 @@ public class CMBStatsServlet extends AdminServletBase {
 			out.println("</table></span>");
 			out.println("<h2 align='left'>Recent Errors</h2>");
 			out.println("<span class='simple'><table border='1'>");
-			for (int i=0; i<CMBControllerServlet.recentErrors.length; i++) {
+			for (int i=CMBControllerServlet.recentErrors.length-1; i>=0; i--) {
 				String detail = CMBControllerServlet.recentErrors[i];
 				if (detail != null) {
 					String elements[] = detail.split("\\|");

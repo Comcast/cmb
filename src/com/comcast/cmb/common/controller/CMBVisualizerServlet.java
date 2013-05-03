@@ -22,6 +22,7 @@ import org.jfree.chart.block.BlockBorder;
 import org.jfree.chart.labels.StandardPieSectionLabelGenerator;
 import org.jfree.chart.labels.StandardXYItemLabelGenerator;
 import org.jfree.chart.plot.PiePlot;
+import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.xy.StackedXYBarRenderer;
 import org.jfree.chart.title.LegendTitle;
@@ -29,6 +30,8 @@ import org.jfree.data.general.DefaultPieDataset;
 import org.jfree.data.time.Hour;
 import org.jfree.data.time.Minute;
 import org.jfree.data.time.TimeTableXYDataset;
+import org.jfree.data.xy.XYSeries;
+import org.jfree.data.xy.XYSeriesCollection;
 import org.jfree.ui.RectangleEdge;
 
 public class CMBVisualizerServlet extends HttpServlet {
@@ -53,6 +56,8 @@ public class CMBVisualizerServlet extends HttpServlet {
             doResponseTimeChart(request, response);
         } else if (pathInfo.toLowerCase().contains("calldistributionimg")) {
         	doApiPieChart(request, response);
+        } else if (pathInfo.toLowerCase().contains("callcountimg")) {
+        	doAPICallCountChart(request, response);
         }
 	}
 	
@@ -77,6 +82,19 @@ public class CMBVisualizerServlet extends HttpServlet {
     	};
     	
     	byte b[] = generateResponseTimeChart(resolutionMS, action, redisOnly, cassandraOnly);
+    	
+    	response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate"); 
+    	response.setHeader("Pragma", "no-cache"); 
+    	response.setDateHeader("Expires", 0); 
+    	response.setContentLength(b.length);
+    	response.setContentType("image/jpeg");
+    	response.getOutputStream().write(b);
+    	response.flushBuffer();
+    }
+
+    protected void doAPICallCountChart(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+
+    	byte b[] = generateApiCallCountChart();
     	
     	response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate"); 
     	response.setHeader("Pragma", "no-cache"); 
@@ -129,16 +147,21 @@ public class CMBVisualizerServlet extends HttpServlet {
     	
     	List<Color> palette = new ArrayList<Color>();
     	
-    	palette.add(new Color(208,56,20));
-    	palette.add(new Color(120,54,210));
-    	palette.add(new Color(47,133,18));
-    	palette.add(new Color(253,30,19));
-    	palette.add(new Color(151,195,30));
-    	palette.add(new Color(253,249,50));
-    	palette.add(new Color(253,191,35));
-    	palette.add(new Color(253,123,26));
-    	palette.add(new Color(216,106,20));
-    	palette.add(new Color(181,97,28));
+    	palette.add(new Color(0x660000));
+    	palette.add(new Color(0x990000));
+    	palette.add(new Color(0xFF0000));
+    	palette.add(new Color(0x003300));
+    	palette.add(new Color(0x006600));
+    	palette.add(new Color(0x00FF00));
+    	palette.add(new Color(0x003399));
+    	palette.add(new Color(0x0066FF));
+    	palette.add(new Color(0x00CCFF));
+    	palette.add(new Color(0x330066));
+    	palette.add(new Color(0x660066));
+    	palette.add(new Color(0xCCCC33));
+    	palette.add(new Color(0x990066));
+    	palette.add(new Color(0xFF99FF));
+    	palette.add(new Color(0xFF6633));
     	
     	for (int i=0; i<apis.size(); i++) {
     		pieplot.setSectionPaint(apis.get(i), palette.get(i%palette.size()));
@@ -162,9 +185,6 @@ public class CMBVisualizerServlet extends HttpServlet {
     }
 
     private byte[] generateResponseTimeChart(int resolutionMS, String action, boolean showRedisOnly, boolean showCassandraOnly) throws IOException {
-    	
-    	//todo: dynamic chart label
-    	//todo: correct legend ms
     	
     	String label = "";
     	
@@ -292,6 +312,71 @@ public class CMBVisualizerServlet extends HttpServlet {
     	
     	// generate jpeg
     	
+    	ByteArrayOutputStream bos = new ByteArrayOutputStream();
+    	ChartUtilities.writeChartAsJPEG(bos, chart, 2400, 400);
+    	return bos.toByteArray();
+    }
+    
+    private byte[] generateApiCallCountChart() throws IOException {
+
+    	// convert data
+    	
+        TimeTableXYDataset dataset = new TimeTableXYDataset();
+    	
+    	for (String ac : CMBControllerServlet.callResponseTimesByApi.keySet()) {
+    		AtomicLong[][] responseTimesMS = CMBControllerServlet.callResponseTimesByApi.get(ac);
+    		for (int i=0; i<CMBControllerServlet.NUM_MINUTES; i++) {
+	    		long total = 0;
+	    		for (int k=0; k<CMBControllerServlet.NUM_BUCKETS; k++) {
+	    			total += responseTimesMS[i][k].longValue();
+	    		}
+	    		dataset.add(new Minute(i, new Hour()), total, ac);
+	    	}
+    	}
+
+    	// generate chart
+    	
+    	DateAxis domainAxis = new DateAxis("Minute");
+    	domainAxis.setTickMarkPosition(DateTickMarkPosition.MIDDLE);
+    	domainAxis.setLowerMargin(0.01);
+    	domainAxis.setUpperMargin(0.01);
+    	NumberAxis rangeAxis = new NumberAxis("Calls");
+    	rangeAxis.setStandardTickUnits(NumberAxis.createIntegerTickUnits());
+    	rangeAxis.setUpperMargin(0.10); // leave some space for item labels
+    	StackedXYBarRenderer renderer = new StackedXYBarRenderer(0.15);
+    	renderer.setDrawBarOutline(true);
+    	renderer.setBaseItemLabelsVisible(true);
+    	renderer.setBaseItemLabelGenerator(new StandardXYItemLabelGenerator());
+    	
+    	renderer.setSeriesPaint(0, new Color(0x660000));
+    	renderer.setSeriesPaint(1, new Color(0x990000));
+    	renderer.setSeriesPaint(2, new Color(0xFF0000));
+    	renderer.setSeriesPaint(3, new Color(0x003300));
+    	renderer.setSeriesPaint(4, new Color(0x006600));
+    	renderer.setSeriesPaint(5, new Color(0x00FF00));
+    	renderer.setSeriesPaint(6, new Color(0x003399));
+    	renderer.setSeriesPaint(7, new Color(0x0066FF));
+    	renderer.setSeriesPaint(8, new Color(0x00CCFF));
+    	renderer.setSeriesPaint(9, new Color(0x330066));
+    	renderer.setSeriesPaint(10, new Color(0x660066));
+    	renderer.setSeriesPaint(11, new Color(0xCCCC33));
+    	renderer.setSeriesPaint(12, new Color(0x990066));
+    	renderer.setSeriesPaint(13, new Color(0xFF99FF));
+    	renderer.setSeriesPaint(14, new Color(0xFF6633));
+    	
+    	XYPlot plot = new XYPlot(dataset, domainAxis, rangeAxis, renderer);
+    	String title = "Call Mix";
+    	
+    	JFreeChart chart = new JFreeChart(title, plot);
+    	chart.removeLegend();
+    	// chart.addSubtitle(new TextTitle(""));
+    	LegendTitle legend = new LegendTitle(plot);
+    	legend.setFrame(new BlockBorder());
+    	legend.setPosition(RectangleEdge.BOTTOM);
+    	chart.addSubtitle(legend);
+    	
+    	// generate jpeg
+            
     	ByteArrayOutputStream bos = new ByteArrayOutputStream();
     	ChartUtilities.writeChartAsJPEG(bos, chart, 2400, 400);
     	return bos.toByteArray();
