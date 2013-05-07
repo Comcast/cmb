@@ -142,7 +142,7 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
         executor = Executors.newFixedThreadPool(CMBProperties.getInstance().getRedisFillerThreads());
         revisibilityExecutor = Executors.newFixedThreadPool(CMBProperties.getInstance().getRedisRevisibleThreads());
         
-        log.info("event=initialize pools_size=" + shardInfos.size() + " max_active=" + cfg.maxActive);
+        log.info("event=initialize_redis pools_size=" + shardInfos.size() + " max_active=" + cfg.maxActive + " server_list=" + serverList);
     }
     
     /**

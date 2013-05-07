@@ -173,9 +173,8 @@ public class CMBProperties {
     private final int consumerProcessingMaxDelay;
     private volatile boolean useSubInfoCache;
         
-	private static final CMBProperties instance = new CMBProperties();
-
     private static final Logger log = Logger.getLogger(CMBProperties.class);
+	private static final CMBProperties instance = new CMBProperties();
 	
 	private CMBProperties()  {
 		
@@ -193,6 +192,8 @@ public class CMBProperties {
         } else {
             throw new IllegalArgumentException("Missing VM parameter cmb.propertyFile");
         }
+		
+		log.info("event=loading_cmb_properties file=" + file.getAbsolutePath());
 
 		try {
 			

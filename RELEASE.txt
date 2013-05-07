@@ -1,3 +1,22 @@
+CMB VERSION 2.2.30
+--------------------------------------------------------------------
+
+IMPORTANT: When upgrading from an older version of CMB prior to 2.2.30
+you must drop and recreate the Cassandra schema due to a couple of
+column family changes introduced in this release!
+
+New features and bug fixes:
+
+- added optional Cassandra authentication to cmp.properties (by jancona)
+- cleaned up Cassandra schema: renamed CNSTopicSubscriptionsNew to 
+  CNSTopicSubscriptions; changed row key and columns of User column family
+  to avoid duplicate users
+- removed legacy cql code
+- upgraded to latest version of aws sdk 1.4.2.1
+- added response time percentile visualizations, by default turned off
+  in cmp.properties with cmb.stats.enable=false  
+
+
 CMB VERSION 2.2.28
 --------------------------------------------------------------------
 

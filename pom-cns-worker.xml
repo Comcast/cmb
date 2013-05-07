@@ -4,7 +4,7 @@
 	<!-- Use this pom-cns-worker.xml file to create a standalone cns worker (legacy) -->
 
 	<properties>
-	    <buildnum>2.2.29</buildnum>
+	    <buildnum>2.2.30</buildnum>
 	    <projectname>cns-worker</projectname>
 	</properties>
 
