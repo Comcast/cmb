@@ -19,10 +19,12 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 
 import org.apache.http.HttpEntity;
+import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpVersion;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.conn.params.ConnRoutePNames;
 import org.apache.http.conn.scheme.PlainSocketFactory;
 import org.apache.http.conn.scheme.Scheme;
 import org.apache.http.conn.scheme.SchemeRegistry;
@@ -57,6 +59,15 @@ public class HTTPEndpointSyncPublisher implements IEndpointPublisher {
 		int timeoutMillis = CMBProperties.getInstance().getCNSPublisherHttpTimeoutSeconds() * 1000;
 
 		HttpParams params = new BasicHttpParams();
+		
+		if (CMBProperties.getInstance().getCNSHttpProxy() != null && !CMBProperties.getInstance().getCNSHttpProxy().equals("")) {
+			String p[] = CMBProperties.getInstance().getCNSHttpProxy().split(":");
+			if (p.length == 2) {
+				HttpHost proxy = new HttpHost(p[0], Integer.parseInt(p[1]), "http");
+				params.setParameter(ConnRoutePNames.DEFAULT_PROXY, proxy);
+			}
+		}
+		
 		HttpProtocolParams.setVersion(params, HttpVersion.HTTP_1_1); 
 
 		schemeRegistry.register(new Scheme("http", 80, PlainSocketFactory.getSocketFactory()));

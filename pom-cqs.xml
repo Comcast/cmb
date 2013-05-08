@@ -4,7 +4,7 @@
 	<!-- Use this pom-cqs.xml file to create a war file for cqs to deploy into an external app server such as Tomcat or Jetty (legacy) -->
 
 	<properties>
-	    <buildnum>2.2.30</buildnum>
+	    <buildnum>2.2.31</buildnum>
 	    <projectname>cqs</projectname>
 	</properties>
 

@@ -36,6 +36,8 @@ public class CMBProperties {
 	    SYNC, ASYNC 
 	}
 	
+	private final String cnsHttpProxy;
+	
 	private final boolean cmbEnableStats;
 	
 	private final String cmbDeploymentName;
@@ -200,6 +202,8 @@ public class CMBProperties {
 			FileInputStream fileStream = new FileInputStream(file);
 			props.load(fileStream);
 			
+			cnsHttpProxy = props.getProperty("cmb.cns.http.proxy", null);
+			
 			cmbDeploymentName = props.getProperty("cmb.deployment.name", "");
 			
 			cnsBypassPublishJobQueueForSmallTopics = Boolean.parseBoolean(props.getProperty("cmb.cns.bypassPublishJobQueueForSmallTopics", "true"));
@@ -347,6 +351,10 @@ public class CMBProperties {
 		}
 	}
 	
+	public String getCNSHttpProxy() {
+		return cnsHttpProxy;
+	}
+
 	public boolean isCMBStatsEnabled() {
 		return cmbEnableStats;
 	}
