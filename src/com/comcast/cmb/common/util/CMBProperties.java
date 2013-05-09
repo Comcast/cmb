@@ -73,6 +73,9 @@ public class CMBProperties {
 	
 	private final String cnsUserName;
 	private final String cnsUserPassword;
+	private final String cnsUserAccessKey;
+
+	private final String cnsUserAccessSecret;
 	
 	private final String awsAccessKey;
 	private final String awsAccessSecret;
@@ -231,6 +234,8 @@ public class CMBProperties {
 
 			cnsUserName = props.getProperty("cmb.cns.user.name", "cns_internal");
 			cnsUserPassword = props.getProperty("cmb.cns.user.password", "cns_internal");
+			cnsUserAccessKey = props.getProperty("cmb.cns.user.access.key", null);
+			cnsUserAccessSecret = props.getProperty("cmb.cns.user.access.secret", null);
 			
 			awsAccessKey = props.getProperty("aws.access.key");
 			awsAccessSecret = props.getProperty("aws.access.secret");
@@ -775,7 +780,15 @@ public class CMBProperties {
 		return cnsBypassPublishJobQueueForSmallTopics;
 	}
 
-	public String getCmbDeploymentName() {
+	public String getCMBDeploymentName() {
 		return cmbDeploymentName;
+	}
+	
+	public String getCNSUserAccessKey() {
+		return cnsUserAccessKey;
+	}
+
+	public String getCNSUserAccessSecret() {
+		return cnsUserAccessSecret;
 	}
 }

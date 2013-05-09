@@ -47,7 +47,6 @@ public class CQSHandler {
     private static Logger logger = Logger.getLogger(CQSHandler.class);
     
     private static volatile boolean initialized = false;
-    private static volatile User cnsInternalUser = null;
     private static volatile BasicAWSCredentials awsCredentials = null;
     private static volatile AmazonSQS sqs = null;
     private static ConcurrentHashMap<String, String> queueUrlCache = new ConcurrentHashMap<String, String>();
@@ -58,14 +57,21 @@ public class CQSHandler {
     		return;
     	}
     	
-		IUserPersistence userHandler = PersistenceFactory.getUserPersistence();
-        cnsInternalUser = userHandler.getUserByName(CMBProperties.getInstance().getCNSUserName());
+		if (CMBProperties.getInstance().getCNSUserAccessKey() != null && CMBProperties.getInstance().getCNSUserAccessKey() != null) {
+			
+		    awsCredentials = new BasicAWSCredentials(CMBProperties.getInstance().getCNSUserAccessKey(), CMBProperties.getInstance().getCNSUserAccessSecret());
 
-        if (cnsInternalUser == null) {	          
-        	cnsInternalUser =  userHandler.createUser(CMBProperties.getInstance().getCNSUserName(), CMBProperties.getInstance().getCNSUserPassword());
-        }
+		} else {
+    	
+			IUserPersistence userHandler = PersistenceFactory.getUserPersistence();
+			User cnsInternalUser = userHandler.getUserByName(CMBProperties.getInstance().getCNSUserName());
+		
+		    if (cnsInternalUser == null) {	          
+		    	cnsInternalUser =  userHandler.createUser(CMBProperties.getInstance().getCNSUserName(), CMBProperties.getInstance().getCNSUserPassword());
+		    }
 
-        awsCredentials = new BasicAWSCredentials(cnsInternalUser.getAccessKey(), cnsInternalUser.getAccessSecret());
+		    awsCredentials = new BasicAWSCredentials(cnsInternalUser.getAccessKey(), cnsInternalUser.getAccessSecret());
+		}
  		
         sqs = new AmazonSQSClient(awsCredentials);
         sqs.setEndpoint(CMBProperties.getInstance().getCQSServiceUrl());
