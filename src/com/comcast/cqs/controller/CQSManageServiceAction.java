@@ -80,11 +80,8 @@ public class CQSManageServiceAction extends CQSAction {
         
 		} else if (task.equals("ClearAPIStats")) {
 
-            CMBControllerServlet.callStats = new ConcurrentHashMap<String, AtomicLong>();
-            CMBControllerServlet.callFailureStats = new ConcurrentHashMap<String, AtomicLong>();
-
+            CMBControllerServlet.initStats();
 	    	response.getWriter().println(CQSPopulator.getResponseMetadata());
-
 	    	return true;
 			
 		} else if (task.equals("RemoveRecord")) {

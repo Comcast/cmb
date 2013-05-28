@@ -175,11 +175,8 @@ public class CNSManageServiceAction extends CNSAction {
 			
 		} else if (task.equals("ClearAPIStats")) {
 			
-            CMBControllerServlet.callStats = new ConcurrentHashMap<String, AtomicLong>();
-            CMBControllerServlet.callFailureStats = new ConcurrentHashMap<String, AtomicLong>();
-
+            CMBControllerServlet.initStats();
 	    	response.getWriter().println(CNSPopulator.getResponseMetadata());
-
 	    	return true;
 
 		} else if (task.equals("RemoveRecord")) {
