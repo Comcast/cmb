@@ -32,6 +32,7 @@ import com.comcast.cmb.common.model.User;
 import com.comcast.cmb.common.persistence.IUserPersistence;
 import com.comcast.cmb.common.persistence.PersistenceFactory;
 import com.comcast.cmb.common.persistence.UserCassandraPersistence;
+import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.Util;
 
 public class CQSScaleQueuesTest {
@@ -50,8 +51,6 @@ public class CQSScaleQueuesTest {
 	public static void main(String [ ] args) throws Exception {
 
 		System.out.println("CQSScaleQueuesTest V" + CMBControllerServlet.VERSION);
-		System.out.println("Usage: CQSScaleQueuesTest -Dcmb.log4j.propertyFile=config/log4j.properties -Dcmb.propertyFile=config/cmb.properties -nq=<number_queues_per_thread> -nm=<number_messages_per_queue> -nt=<number_threads> -ns=<number_shards>");
-		System.out.println("Example: java CQSScaleQueuesTest -Dcmb.log4j.propertyFile=config/log4j.properties -Dcmb.propertyFile=config/cmb.properties -nq=10 -nm=10 -nt=10 -ns=100");
 
 		long numQueuesPerThread = 10;
 		long numMessagesPerQueue = 10;
@@ -69,7 +68,8 @@ public class CQSScaleQueuesTest {
 			} else if (arg.startsWith("-ns")) {
 				numShards = Integer.parseInt(arg.substring(4));
 			} else {
-				System.out.println("Unknown option: " + arg);
+				System.out.println("Usage: CQSScaleQueuesTest -Dcmb.log4j.propertyFile=config/log4j.properties -Dcmb.propertyFile=config/cmb.properties -nq=<number_queues_per_thread> -nm=<number_messages_per_queue> -nt=<number_threads> -ns=<number_shards>");
+				System.out.println("Example: java CQSScaleQueuesTest -Dcmb.log4j.propertyFile=config/log4j.properties -Dcmb.propertyFile=config/cmb.properties -nq=10 -nm=10 -nt=10 -ns=100");
 				System.exit(1);
 			}
 		}
@@ -108,10 +108,10 @@ public class CQSScaleQueuesTest {
 
 			sqs = new AmazonSQSClient(credentialsUser);
 
-			//sqs.setEndpoint(CMBProperties.getInstance().getCQSServerUrl());
+			sqs.setEndpoint(CMBProperties.getInstance().getCQSServiceUrl());
 			//sqs.setEndpoint("http://localhost:6059/");
 			//sqs.setEndpoint("http://162.150.10.72:10159/");
-			sqs.setEndpoint("http://sdev44:6059/");
+			//sqs.setEndpoint("http://sdev44:6059/");
 			//sqs.setEndpoint("http://ccpsvb-po-v603-p.po.ccp.cable.comcast.com:10159/");
 
 		} catch (Exception ex) {
@@ -126,47 +126,47 @@ public class CQSScaleQueuesTest {
 
 	@Test
 	public void Create1Queues() {
-		CreateNQueues(1);
+		CreateNQueues(1, true);
 	}
 
 	@Test
 	public void Create10Queues() {
-		CreateNQueues(10);
+		CreateNQueues(10, true);
 	}
 
 	@Test
 	public void Create10Queues10Shards() {
-		CreateNQueues(10, 100, 10);
+		CreateNQueues(10, 100, 10, true);
 	}
 
 	@Test
 	public void Create10Queues1Shards() {
-		CreateNQueues(10, 100, 1);
+		CreateNQueues(10, 100, 1, true);
 	}
 
 	@Test
 	public void Create100Queues() {
-		CreateNQueues(100);
+		CreateNQueues(100, true);
 	}
 
 	@Test
 	public void Create1000Queues() {
-		CreateNQueues(1000);
+		CreateNQueues(1000, true);
 	}
 
 	@Test
 	public void Create10000Queues() {
-		CreateNQueues(10000);
+		CreateNQueues(10000, true);
 	}
 
 	@Test
 	public void Create100000Queues() {
-		CreateNQueues(100000);
+		CreateNQueues(100000, true);
 	}
 
 	@Test
 	public void CreateQueuesConcurrent() {
-		CreateQueuesConcurrent(10, 10, 10, 100);
+		CreateQueuesConcurrent(10, 1000, 100, 100);
 	}
 	
 	private void CreateQueuesConcurrent(long numQueuesPerThread, long numMessagesPerQueue, int numThreads, int numShards) {
@@ -178,10 +178,10 @@ public class CQSScaleQueuesTest {
 		final int ns = numShards;
 
 		for (int i=0; i<numThreads; i++) {
-			ep.submit((new Runnable() { public void run() { CreateNQueues(nqpt, nmpq, ns); }}));
+			ep.submit((new Runnable() { public void run() { CreateNQueues(nqpt, nmpq, ns, false); }}));
 		}
 
-		logger.info("ALL TEST LAUNCHED");
+		logger.warn("ALL TEST LAUNCHED");
 
 		try {
 			ep.shutdown();
@@ -191,10 +191,10 @@ public class CQSScaleQueuesTest {
 			fail(ex.getMessage());
 		}
 
-		logger.info("ALL TEST FINISHED");
+		logger.warn("ALL TEST FINISHED");
 
 		for (String message : report) {
-			logger.info(message);
+			logger.warn(message);
 		}
 	}
 
@@ -226,12 +226,14 @@ public class CQSScaleQueuesTest {
 		return null;
 	}
 
-	private void CreateNQueues(long numQueues) {
-		CreateNQueues(numQueues, 100, 100);
+	private void CreateNQueues(long numQueues, boolean logReport) {
+		CreateNQueues(numQueues, 100, 100, logReport);
 	}
 
-	private void CreateNQueues(long numQueues, long numMessages, int numShards) {
+	private void CreateNQueues(long numQueues, long numMessages, int numShards, boolean logReport) {
 
+		long testStart = System.currentTimeMillis();
+		
 		List<String> queueUrls = new ArrayList<String>();
 		Map<String, String> messageMap = new HashMap<String, String>();
 
@@ -377,19 +379,25 @@ public class CQSScaleQueuesTest {
 					deleteFailures++;
 				}
 			}
+			
+			long testEnd = System.currentTimeMillis();
 
-			String message = "create failuers: " + createFailures +  " delete failures: " + deleteFailures + " send failures: " + sendFailures + " read failures: " + readFailures + " empty reads: " + emptyResponses + " messages found: " + messagesFound + " messages sent: " + messagesSent + " out of order: " + outOfOrder + " duplicates: " + duplicates + " distinct messages: " + messageMap.size(); 
+			String message = "duration sec: " + ((testEnd-testStart)/1000) + " create failuers: " + createFailures +  " delete failures: " + deleteFailures + " send failures: " + sendFailures + " read failures: " + readFailures + " empty reads: " + emptyResponses + " messages found: " + messagesFound + " messages sent: " + messagesSent + " out of order: " + outOfOrder + " duplicates: " + duplicates + " distinct messages: " + messageMap.size(); 
 
-			logger.info(message);
 			report.add(new Date() + ": " + message);
 
-			assertTrue("Create failures: " + createFailures, createFailures == 0);
-			assertTrue("Delete failures: " + deleteFailures, deleteFailures == 0);
-			assertTrue("Send failures: " + sendFailures, sendFailures == 0);
-			assertTrue("Read failures: " + readFailures, readFailures == 0);
-			//assertTrue("Empty reads: " + emptyResponses, emptyResponses == 0);
-			assertTrue("Wrong number of messages found!", messagesFound == messagesSent);
-
+			if (logReport) {
+			
+				logger.info(message);
+	
+				assertTrue("Create failures: " + createFailures, createFailures == 0);
+				assertTrue("Delete failures: " + deleteFailures, deleteFailures == 0);
+				assertTrue("Send failures: " + sendFailures, sendFailures == 0);
+				assertTrue("Read failures: " + readFailures, readFailures == 0);
+				//assertTrue("Empty reads: " + emptyResponses, emptyResponses == 0);
+				assertTrue("Wrong number of messages found!", messagesFound == messagesSent);
+			}
+			
 		} catch (Exception ex) {
 			ex.printStackTrace();
 			fail(ex.getMessage());
