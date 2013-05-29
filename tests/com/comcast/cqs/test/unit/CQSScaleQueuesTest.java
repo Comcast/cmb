@@ -45,6 +45,9 @@ public class CQSScaleQueuesTest {
 	private User user = null;
 	private Random randomGenerator = new Random();
 	private final static String QUEUE_PREFIX = "TSTQ_"; 
+	
+	private static String accessKey = null;
+	private static String accessSecret = null;
 
 	private Vector<String> report = new Vector<String>();
 
@@ -67,8 +70,12 @@ public class CQSScaleQueuesTest {
 				numThreads = Integer.parseInt(arg.substring(4));
 			} else if (arg.startsWith("-ns")) {
 				numShards = Integer.parseInt(arg.substring(4));
+			} else if (arg.startsWith("-ak")) {
+				accessKey = arg.substring(4);
+			} else if (arg.startsWith("-as")) {
+				accessSecret = arg.substring(4);
 			} else {
-				System.out.println("Usage: CQSScaleQueuesTest -Dcmb.log4j.propertyFile=config/log4j.properties -Dcmb.propertyFile=config/cmb.properties -nq=<number_queues_per_thread> -nm=<number_messages_per_queue> -nt=<number_threads> -ns=<number_shards>");
+				System.out.println("Usage: CQSScaleQueuesTest -Dcmb.log4j.propertyFile=config/log4j.properties -Dcmb.propertyFile=config/cmb.properties -nq=<number_queues_per_thread> -nm=<number_messages_per_queue> -nt=<number_threads> -ns=<number_shards> -ak=<access_key> -as=<access_secret>");
 				System.out.println("Example: java CQSScaleQueuesTest -Dcmb.log4j.propertyFile=config/log4j.properties -Dcmb.propertyFile=config/cmb.properties -nq=10 -nm=10 -nt=10 -ns=100");
 				System.exit(1);
 			}
@@ -79,6 +86,14 @@ public class CQSScaleQueuesTest {
 		System.out.println("Number of messages per queue: " + numMessagesPerQueue);
 		System.out.println("Number of threads: " + numThreads);
 		System.out.println("Number of shards: " + numShards);
+
+		if (accessKey != null) {
+			System.out.println("Access Key: " + accessKey);
+		}
+		
+		if (accessSecret != null) {
+			System.out.println("Access Secret: " + accessSecret);
+		}
 
 		CQSScaleQueuesTest cqsScaleTest = new CQSScaleQueuesTest();
 		cqsScaleTest.setup();
@@ -93,26 +108,29 @@ public class CQSScaleQueuesTest {
 		PersistenceFactory.reset();
 
 		try {
+			
+			BasicAWSCredentials credentialsUser = null;
+			
+			if (accessKey != null && accessSecret != null) {
 
-			IUserPersistence userPersistence = new UserCassandraPersistence();
+				credentialsUser = new BasicAWSCredentials(accessKey, accessSecret);
+			
+			} else {
 
-			user = userPersistence.getUserByName("cqs_unit_test");
-
-			if (user == null) {
-				user = userPersistence.createUser("cqs_unit_test", "cqs_unit_test");
+				IUserPersistence userPersistence = new UserCassandraPersistence();
+	
+				user = userPersistence.getUserByName("cqs_unit_test");
+	
+				if (user == null) {
+					user = userPersistence.createUser("cqs_unit_test", "cqs_unit_test");
+				}
+	
+				credentialsUser = new BasicAWSCredentials(user.getAccessKey(), user.getAccessSecret());
 			}
-
-			BasicAWSCredentials credentialsUser = new BasicAWSCredentials(user.getAccessKey(), user.getAccessSecret());
-
-			//BasicAWSCredentials credentialsUser = new BasicAWSCredentials("UK19XNIS0512THPIEDMW", "vaPmtt9YDjM9H2xJvkwbl6zNVgb2Xinc9+Afuivm");
 
 			sqs = new AmazonSQSClient(credentialsUser);
 
 			sqs.setEndpoint(CMBProperties.getInstance().getCQSServiceUrl());
-			//sqs.setEndpoint("http://localhost:6059/");
-			//sqs.setEndpoint("http://162.150.10.72:10159/");
-			//sqs.setEndpoint("http://sdev44:6059/");
-			//sqs.setEndpoint("http://ccpsvb-po-v603-p.po.ccp.cable.comcast.com:10159/");
 
 		} catch (Exception ex) {
 			logger.error("setup failed", ex);
