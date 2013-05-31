@@ -177,11 +177,16 @@ public class CQSGetAPIStatsAction extends CQSAction {
 					@SuppressWarnings("unchecked")
 					List<Map<String, String>> redisShardInfos = (List<Map<String, String>>)mbeanConn.getAttribute(cqsAPIMonitor, "RedisShardInfos");
 					
-					for (Map<String, String> shardInfo : redisShardInfos) {
-						if (shardInfo.containsKey("db0")) {
-							long numKeys = Long.parseLong(shardInfo.get("db0").split(",")[0].split("=")[1]);
-							stats.setNumberOfRedisKeys(numKeys);
+					try {
+						for (Map<String, String> shardInfo : redisShardInfos) {
+							if (shardInfo.containsKey("db0")) {
+								long numKeys = Long.parseLong(shardInfo.get("db0").split(",")[0].split("=")[1]);
+								stats.setNumberOfRedisKeys(numKeys);
+							}
 						}
+					} catch (Exception ex) {
+						logger.warn("event=failed_to_get_redis_shard_info url=" + url, ex);
+						stats.addStatus("REDIS SHARD INFO UNAVAILABLE");
 					}
 					
 					@SuppressWarnings("unchecked")

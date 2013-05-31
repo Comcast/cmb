@@ -159,6 +159,7 @@ public class CQSAPIStatePageServlet extends AdminServletBase {
 				out.println("<td><form action=\"\" method=\"POST\"><input type='hidden' name='Url' value='"+endpoint+"'><input type='submit' value='Clear Cache' name='ClearCache'/></form></td>");
 				out.println("<td><form action=\"\" method=\"POST\"><input type='hidden' name='Url' value='"+endpoint+"'><input type='submit' value='Clear API Stats' name='ClearAPIStats'/></form></td>");
 				out.println("<td><form action=\"\" method=\"POST\"><input type='hidden' name='Host' value='"+host+"'><input type='submit' value='Remove Record' name='RemoveRecord'/></form></td>");
+				//out.println("<td><a href='http://"+host+"/webui/cmbcallstats'>Stats</a></td>");
 				out.println("<td><a href='/webui/cmbcallstats'>Stats</a></td>");
 				out.println("</tr>");
 				
