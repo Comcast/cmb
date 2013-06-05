@@ -3,6 +3,10 @@ package com.comcast.cqs.test.unit;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -12,6 +16,7 @@ import java.util.Random;
 import java.util.Vector;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.log4j.Logger;
 import org.junit.Before;
@@ -45,11 +50,19 @@ public class CQSScaleQueuesTest {
 	private User user = null;
 	private Random randomGenerator = new Random();
 	private final static String QUEUE_PREFIX = "TSTQ_"; 
+	private final static AtomicLong[] responseTimeDistribution100MS = new AtomicLong[100];
+	private final static AtomicLong[] responseTimeDistribution10MS = new AtomicLong[10];
 	
 	private static String accessKey = null;
 	private static String accessSecret = null;
 
 	private Vector<String> report = new Vector<String>();
+	
+	private static boolean stopHealthCheck = false;
+	
+	private static int messageLength = 0;
+	private static final String ALPHABET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    private static Random rand = new Random();
 
 	public static void main(String [ ] args) throws Exception {
 
@@ -70,12 +83,14 @@ public class CQSScaleQueuesTest {
 				numThreads = Integer.parseInt(arg.substring(4));
 			} else if (arg.startsWith("-ns")) {
 				numShards = Integer.parseInt(arg.substring(4));
+			} else if (arg.startsWith("-ml")) {
+				messageLength = Integer.parseInt(arg.substring(4));
 			} else if (arg.startsWith("-ak")) {
 				accessKey = arg.substring(4);
 			} else if (arg.startsWith("-as")) {
 				accessSecret = arg.substring(4);
 			} else {
-				System.out.println("Usage: CQSScaleQueuesTest -Dcmb.log4j.propertyFile=config/log4j.properties -Dcmb.propertyFile=config/cmb.properties -nq=<number_queues_per_thread> -nm=<number_messages_per_queue> -nt=<number_threads> -ns=<number_shards> -ak=<access_key> -as=<access_secret>");
+				System.out.println("Usage: CQSScaleQueuesTest -Dcmb.log4j.propertyFile=config/log4j.properties -Dcmb.propertyFile=config/cmb.properties -nq=<number_queues_per_thread> -nm=<number_messages_per_queue> -nt=<number_threads> -ns=<number_shards> -ml=<message_length> -ak=<access_key> -as=<access_secret>");
 				System.out.println("Example: java CQSScaleQueuesTest -Dcmb.log4j.propertyFile=config/log4j.properties -Dcmb.propertyFile=config/cmb.properties -nq=10 -nm=10 -nt=10 -ns=100");
 				System.exit(1);
 			}
@@ -84,6 +99,7 @@ public class CQSScaleQueuesTest {
 		System.out.println("Params for this test run:");
 		System.out.println("Number of queues per thread: " + numQueuesPerThread);
 		System.out.println("Number of messages per queue: " + numMessagesPerQueue);
+		System.out.println("Message length: " + messageLength);
 		System.out.println("Number of threads: " + numThreads);
 		System.out.println("Number of shards: " + numShards);
 
@@ -106,6 +122,14 @@ public class CQSScaleQueuesTest {
 		Util.initLog4jTest();
 		CMBControllerServlet.valueAccumulator.initializeAllCounters();
 		PersistenceFactory.reset();
+		
+		for (int i=0; i<responseTimeDistribution100MS.length; i++) {
+			responseTimeDistribution100MS[i] = new AtomicLong(0);
+		}
+
+		for (int i=0; i<responseTimeDistribution10MS.length; i++) {
+			responseTimeDistribution10MS[i] = new AtomicLong(0);
+		}
 
 		try {
 			
@@ -140,6 +164,90 @@ public class CQSScaleQueuesTest {
 
 		//attributeParams.put("MessageRetentionPeriod", "600");
 		attributeParams.put("VisibilityTimeout", "30");
+	}
+	
+	private String generateRandomMessage(int length) {
+		StringBuilder sb = new StringBuilder(length);
+		for (int i=0; i<length; i++) {
+			sb.append(ALPHABET.charAt(rand.nextInt(ALPHABET.length())));
+		}
+		return sb.toString();
+	}
+	
+	private void recordResponseTime(String api, long responseTimeMS) {
+		
+		// ignore api for now
+		
+		long rt100 = responseTimeMS/100;
+		
+		if (rt100<responseTimeDistribution100MS.length) {
+			responseTimeDistribution100MS[(int)rt100].incrementAndGet();
+		} else {
+			logger.warn("event=RT_OFF_THE_CHART rt=" + responseTimeMS + " api=" + api);
+		}
+		
+		long rt10 = responseTimeMS/10;
+		
+		if (rt10<responseTimeDistribution10MS.length) {
+			responseTimeDistribution10MS[(int)rt10].incrementAndGet();
+		}	
+	}
+	
+	private void printResponseTimeDistribution() {
+		long callCount = 0;
+		logger.warn("RT100");
+		for (int i=0; i<responseTimeDistribution100MS.length; i++) {
+			logger.warn("RT=" + (i*100) + " CT=" + responseTimeDistribution100MS[i]);
+			callCount += responseTimeDistribution100MS[i].longValue();
+		}
+		logger.warn("RT10");
+		for (int i=0; i<responseTimeDistribution10MS.length; i++) {
+			logger.warn("RT=" + (i*10) + " CT=" + responseTimeDistribution10MS[i]);
+		}
+		logger.warn("CALL_COUNT=" + callCount);
+		logger.warn("PCT_100MS=" + 1.0*responseTimeDistribution100MS[0].longValue()/callCount);
+		logger.warn("PCT_10MS=" + 1.0*responseTimeDistribution10MS[0].longValue()/callCount);
+	}
+	
+	private void launchPeriodicHealthCheck(long delayMillis) {
+		final long waitPeriod = delayMillis;
+		new Thread (new Runnable() { 
+			public void run() { 
+				while (!stopHealthCheck) {
+					long start = System.currentTimeMillis();
+					String result = httpGet(CMBProperties.getInstance().getCQSServiceUrl() + "?Action=HealthCheck");
+					long end = System.currentTimeMillis();
+					logger.warn("HEALTH_CHECK_RT=" + (end-start));
+					recordResponseTime(null, end-start);
+					try {
+						Thread.sleep(waitPeriod);
+					} catch (InterruptedException ex) {
+						ex.printStackTrace();
+					}
+				}
+				logger.warn("HEALTH_CHECK_STOPPED");
+			}
+			private String httpGet(String api) {
+			      URL url;
+			      HttpURLConnection conn;
+			      BufferedReader rd;
+			      String line;
+			      String result = "";
+			      try {
+			         url = new URL(api);
+			         conn = (HttpURLConnection) url.openConnection();
+			         conn.setRequestMethod("GET");
+			         rd = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+			         while ((line = rd.readLine()) != null) {
+			            result += line;
+			         }
+			         rd.close();
+			      } catch (Exception ex) {
+			         ex.printStackTrace();
+			      }
+			      return result;
+			   }
+		}).start();
 	}
 
 	@Test
@@ -184,17 +292,21 @@ public class CQSScaleQueuesTest {
 
 	@Test
 	public void CreateQueuesConcurrent() {
-		CreateQueuesConcurrent(10, 1000, 100, 100);
+		CreateQueuesConcurrent(10, 10, 10, 100);
 	}
 	
 	private void CreateQueuesConcurrent(long numQueuesPerThread, long numMessagesPerQueue, int numThreads, int numShards) {
 
+		launchPeriodicHealthCheck(5000);
+		
 		ScheduledThreadPoolExecutor ep = new ScheduledThreadPoolExecutor(numThreads + 10);
 		
 		final long nqpt = numQueuesPerThread;
 		final long nmpq = numMessagesPerQueue;
 		final int ns = numShards;
 
+		long start = System.currentTimeMillis();
+		
 		for (int i=0; i<numThreads; i++) {
 			ep.submit((new Runnable() { public void run() { CreateNQueues(nqpt, nmpq, ns, false); }}));
 		}
@@ -210,10 +322,20 @@ public class CQSScaleQueuesTest {
 		}
 
 		logger.warn("ALL TEST FINISHED");
+		
+		long end = System.currentTimeMillis();
+		
+		stopHealthCheck = true;
 
 		for (String message : report) {
 			logger.warn(message);
 		}
+		
+		printResponseTimeDistribution();
+		
+		long apisPerSec = (numThreads*numQueuesPerThread*numMessagesPerQueue*3)/((end-start)/1000);
+		
+		logger.warn("APIS_PER_SEC=" + apisPerSec);
 	}
 
 	private String receiveMessage(String queueUrl) {
@@ -227,17 +349,35 @@ public class CQSScaleQueuesTest {
 
 		//receiveMessageRequest.setWaitTimeSeconds(1);
 
+		long start = System.currentTimeMillis();
 		ReceiveMessageResult receiveMessageResult = sqs.receiveMessage(receiveMessageRequest);
+		long end = System.currentTimeMillis();
+		recordResponseTime(null, end-start);
+		
+		if (end-start>=500) {
+			logger.warn("RECEIVE_RT=" + (end-start));
+		}
 
 		if (receiveMessageResult.getMessages().size() == 1) {
 
 			String message = receiveMessageResult.getMessages().get(0).getBody();
+			if (message != null && message.length()>0 && message.contains("-")) {
+				message = message.substring(0, message.indexOf("-"));
+			}
 
 			DeleteMessageRequest deleteMessageRequest = new DeleteMessageRequest();
 			deleteMessageRequest.setQueueUrl(queueUrl);
 			deleteMessageRequest.setReceiptHandle(receiveMessageResult.getMessages().get(0).getReceiptHandle());
-			sqs.deleteMessage(deleteMessageRequest);
 
+			start = System.currentTimeMillis();
+			sqs.deleteMessage(deleteMessageRequest);
+			end = System.currentTimeMillis();
+			recordResponseTime(null, end-start);
+			
+			if (end-start>=500) {
+				logger.warn("DELETE_RT=" + (end-start));
+			}
+			
 			return message;
 		}
 
@@ -275,6 +415,7 @@ public class CQSScaleQueuesTest {
 					long start = System.currentTimeMillis();
 					String queueUrl = sqs.createQueue(createQueueRequest).getQueueUrl();
 					long end = System.currentTimeMillis();
+					recordResponseTime(null, end-start);
 					totalTime += end-start;
 					logger.info("average creation millis: " + (totalTime/(i+1)) + " last: " + (end-start));
 					queueUrls.add(queueUrl);
@@ -303,11 +444,19 @@ public class CQSScaleQueuesTest {
 					try {
 
 						long start = System.currentTimeMillis();
-						SendMessageResult result = sqs.sendMessage(new SendMessageRequest(queueUrl, "" + messagesSent));
+						String msg = "" + messagesSent;
+						if (messageLength > 0) {
+							msg += "-" + generateRandomMessage(messageLength);
+						}
+						SendMessageResult result = sqs.sendMessage(new SendMessageRequest(queueUrl, msg));
 						long end = System.currentTimeMillis();
+						recordResponseTime(null, end-start);
 						totalTime += end-start;
 						logger.info("average send millis: " + (totalTime/(totalCounter+1)) + " last: " + (end-start));
 						logger.info("sent message on queue " + i + " - " + counter + ": " + queueUrl);
+						if (end-start>=500) {
+							logger.warn("SEND_RT=" + (end-start));
+						}
 						counter++;
 						totalCounter++;
 						messagesSent++;
@@ -348,7 +497,7 @@ public class CQSScaleQueuesTest {
 						long end = System.currentTimeMillis();
 						totalTime += end-start;
 						logger.info("average receive millis: " + (totalTime/(totalCounter+1)) + " last: " + (end-start));
-
+						
 						if (messageBody != null) {
 							logger.info("received message on queue " + i + " - " + counter + " : " + queueUrl + " : " + messageBody);
 							if (lastMessage != null && messageBody != null && Long.parseLong(lastMessage) > Long.parseLong(messageBody)) {
@@ -388,6 +537,7 @@ public class CQSScaleQueuesTest {
 					long start = System.currentTimeMillis();
 					sqs.deleteQueue(new DeleteQueueRequest(queueUrl));
 					long end = System.currentTimeMillis();
+					recordResponseTime(null, end-start);
 					totalTime += end-start;
 					logger.info("average delete millis: " + (totalTime/(counter+1)) + " last: " + (end-start));
 					logger.info("deleted queue " + counter + ": " + queueUrl);
