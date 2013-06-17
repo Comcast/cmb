@@ -1,3 +1,16 @@
+CMB VERSION 2.2.32
+--------------------------------------------------------------------
+
+Maintenance release with minor fixes:
+
+- default to up to 100 connections per redis shard
+- turn off payload cache by default
+- option to send cns confirmation messages via http proxy
+- option for cns worker to take access keys from cmb.properties 
+  instead of requiring access to Cassandra
+- added cassandra schema file to build
+
+
 CMB VERSION 2.2.30
 --------------------------------------------------------------------
 
