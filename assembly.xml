@@ -48,6 +48,12 @@
 			</includes>
 		</fileSet>
 		<fileSet>
+			<directory>${basedir}</directory>
+			<includes>
+				<include>*.schema</include>
+			</includes>
+		</fileSet>
+		<fileSet>
 			<directory>${project.build.directory}/lib</directory>
 			<outputDirectory>lib</outputDirectory>
 			<excludes>
