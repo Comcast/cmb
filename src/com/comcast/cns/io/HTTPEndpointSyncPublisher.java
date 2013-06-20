@@ -173,7 +173,7 @@ public class HTTPEndpointSyncPublisher implements IEndpointPublisher {
 			}
 
 			logger.debug("event=http_post_error endpoint=" + endpoint + " error_code=" + statusCode);
-			throw new CMBException(new CMBErrorCodes(statusCode, "HttpError"), "Failed to deliver to " + endpoint + " with error code " + statusCode);
+			throw new CMBException(new CMBErrorCodes(statusCode, "HttpError"), "Unreachable endpoint " + endpoint + " returns status code " + statusCode);
 
 		} else {
 
