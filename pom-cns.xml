@@ -4,7 +4,7 @@
 	<!-- Use this pom-cns.xml file to create a war file for cns to deploy into an external app server such as Tomcat or Jetty (legacy) -->
 
 	<properties>
-	    <buildnum>2.2.32</buildnum>
+	    <buildnum>2.2.33</buildnum>
 	    <projectname>cns</projectname>
 	</properties>
 
