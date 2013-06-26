@@ -171,7 +171,6 @@ public class CQSReceiveMessageAction extends CQSAction {
             request.setReceiptHandles(receiptHandles);
             String out = CQSMessagePopulator.getReceiveMessageResponseAfterSerializing(messageList, filterAttributes);
             response.getWriter().println(out);
-            
         }
         
         return messageList != null && messageList.size() > 0 ? true : false;

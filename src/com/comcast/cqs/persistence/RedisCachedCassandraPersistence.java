@@ -965,8 +965,11 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
             boolean brokenJedis = false;
             
             try {
-                jedis = getResource();
+                
+            	jedis = getResource();
+
                 //process revisible-set before getting from queue
+                
                 tryCheckAndProcessRevisibleSet(queue.getRelativeUrl(), shard, CMBProperties.getInstance().getRedisRevisibleSetFrequencySec());
 
                 try {
@@ -1306,20 +1309,43 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
         List<String> memIdsRet = new LinkedList<String>();
         boolean brokenJedis = false;
         ShardedJedis jedis = null;
+        
         try {
-            jedis = getResource();
+        
+        	jedis = getResource();
+            
+            // process revisible-set before getting from queue
+            
+            tryCheckAndProcessRevisibleSet(queueUrl, shard, CMBProperties.getInstance().getRedisRevisibleSetFrequencySec());
+
+            try {
+                if (checkAndSetVisibilityProcessing(queueUrl, shard, CMBProperties.getInstance().getRedisRevisibleFrequencySec())) {                                                
+                    logger.debug("event=scheduled_revisibility_processor");
+                }
+            } catch (SetFailedException e) {
+            }
+
             long llen = jedis.llen(queueUrl + "-" + shard + "-Q");
+            
             if (llen == 0L) {
                 return Collections.emptyList();
             }
+            
             int retCount = 0;
             long i = 0L;
             boolean includeSet = (previousReceiptHandle == null) ? true : false;
+            
             while (retCount < num && i < llen) {
-                List<String> memIds = jedis.lrange(queueUrl + "-" + shard + "-Q", i, i + num - 1);
-                if (memIds.size() == 0) break; //done
-                i += num; //next time, exlude the last one in this set
-                for (String memId : memIds) {
+            
+            	List<String> memIds = jedis.lrange(queueUrl + "-" + shard + "-Q", i, i + num - 1);
+                
+            	if (memIds.size() == 0) {
+                	break; // done
+                }
+                
+            	i += num; // next time, exclude the last one in this set
+                
+            	for (String memId : memIds) {
                     if (!includeSet) {
                         if (memId.equals(previousReceiptHandle)) {
                             includeSet = true;
@@ -1331,7 +1357,9 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
                     }
                 }
             }
-            //by here memIdsRet should have memIds to return messages for
+            
+            // by here memIdsRet should have memIds to return messages for
+            
         } catch (JedisException e) {
             brokenJedis = true;
             throw e;
@@ -1340,6 +1368,7 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
                 returnResource(jedis, brokenJedis);
             }
         }
+        
         return memIdsRet;
     }
     
