@@ -278,8 +278,14 @@ public class CQSMonitor implements CQSMonitorMBean {
 
     @Override
     public int getNumberOfMessages(String queueUrl) {
-        RedisCachedCassandraPersistence redisP = RedisCachedCassandraPersistence.getInstance();
-        return (int) redisP.getQueueMessageCount(queueUrl, false);
+        int numberOfMessages = 0;
+        RedisCachedCassandraPersistence redisPersistence = RedisCachedCassandraPersistence.getInstance();
+    	try {
+    		numberOfMessages = (int)redisPersistence.getQueueMessageCount(queueUrl, false);
+    	} catch (Exception ex) {
+    		logger.error("event=failed_to_get_number_of_messages queue_url=" + queueUrl);
+    	}
+        return numberOfMessages;
     }
 
     @Override
@@ -298,7 +304,7 @@ public class CQSMonitor implements CQSMonitorMBean {
 	        return RedisCachedCassandraPersistence.getMemQueueMessageCreatedTS(ids.get(0));
 
 		} catch (PersistenceException ex) {
-			logger.error("event=failed_to_get_oldest_queue_message_timestamp", ex);
+			logger.error("event=failed_to_get_oldest_queue_message_timestamp queue_url=" + queueUrl, ex);
 		}
         
 		return null;

@@ -78,12 +78,13 @@ public class CQSQueuePopulator extends CQSPopulator {
         return out.toString();
     }
     
-    public static String getQueueAttributesResponse(CQSQueue queue, List<String> filterAttributes) {
+    public static String getQueueAttributesResponse(CQSQueue queue, List<String> filterAttributes) throws Exception {
         
     	StringBuffer out = new StringBuffer("<GetQueueAttributesResponse>\n");
     	out.append("\t<GetQueueAttributesResult>\n");
 
         if (filterAttributes.contains("All")) {
+        	
             out.append("\t\t").append(fillAttribute(CQSConstants.VISIBILITY_TIMEOUT, "" + queue.getVisibilityTO())).append("\n");
             out.append("\t\t").append(fillAttribute(CQSConstants.MESSAGE_RETENTION_PERIOD, "" + queue.getMsgRetentionPeriod())).append("\n");
             out.append("\t\t").append(fillAttribute(CQSConstants.POLICY, "" + queue.getPolicy())).append("\n");
