@@ -79,6 +79,7 @@ public class CQSQueueCassandraPersistence extends CassandraPersistence implement
 		queueData.put(CQSConstants.COL_CREATED_TIME, (new Long(createdTime)).toString());
 		queueData.put(CQSConstants.COL_WAIT_TIME_SECONDS, (new Long(queue.getReceiveMessageWaitTimeSeconds())).toString());
 		queueData.put(CQSConstants.COL_NUMBER_PARTITIONS, (new Long(queue.getNumberOfPartitions())).toString());
+		queueData.put(CQSConstants.COL_NUMBER_SHARDS, (new Long(queue.getNumberOfShards())).toString());
 
 		insertOrUpdateRow(queue.getRelativeUrl(), COLUMN_FAMILY_QUEUES, queueData, HConsistencyLevel.QUORUM);
 		
@@ -214,6 +215,7 @@ public class CQSQueueCassandraPersistence extends CassandraPersistence implement
 			int delaySeconds = columnSlice.getColumnByName(CQSConstants.COL_DELAY_SECONDS) == null ? 0 : (new Long(columnSlice.getColumnByName(CQSConstants.COL_DELAY_SECONDS).getValue())).intValue();
 			int waitTimeSeconds = columnSlice.getColumnByName(CQSConstants.COL_WAIT_TIME_SECONDS) == null ? 0 : (new Long(columnSlice.getColumnByName(CQSConstants.COL_WAIT_TIME_SECONDS).getValue())).intValue();
 			int numPartitions = columnSlice.getColumnByName(CQSConstants.COL_NUMBER_PARTITIONS) == null ? CMBProperties.getInstance().getCQSNumberOfQueuePartitions() : (new Long(columnSlice.getColumnByName(CQSConstants.COL_NUMBER_PARTITIONS).getValue())).intValue();
+			int numShards = columnSlice.getColumnByName(CQSConstants.COL_NUMBER_SHARDS) == null ? 1 : (new Long(columnSlice.getColumnByName(CQSConstants.COL_NUMBER_SHARDS).getValue())).intValue();
 			String policy = columnSlice.getColumnByName(CQSConstants.COL_POLICY).getValue();
 			long createdTime = (new Long(columnSlice.getColumnByName(CQSConstants.COL_CREATED_TIME).getValue())).longValue();
 			String hostName = columnSlice.getColumnByName(CQSConstants.COL_HOST_NAME) == null ? null : columnSlice.getColumnByName(CQSConstants.COL_HOST_NAME).getValue();
@@ -229,6 +231,7 @@ public class CQSQueueCassandraPersistence extends CassandraPersistence implement
 			queue.setDelaySeconds(delaySeconds);
 			queue.setReceiveMessageWaitTimeSeconds(waitTimeSeconds);
 			queue.setNumberOfPartitions(numPartitions);
+			queue.setNumberOfShards(numShards);
 			queue.setCreatedTime(createdTime);
 			return queue;
 		} catch (Exception ex) {

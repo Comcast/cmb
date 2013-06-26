@@ -29,6 +29,7 @@ import org.apache.log4j.Logger;
 
 import com.comcast.cmb.common.controller.CMBControllerServlet;
 import com.comcast.cmb.common.util.CMBProperties;
+import com.comcast.cmb.common.util.PersistenceException;
 import com.comcast.cmb.common.util.RollingWindowCapture;
 import com.comcast.cmb.common.util.RollingWindowCapture.PayLoad;
 import com.comcast.cqs.persistence.RedisCachedCassandraPersistence;
@@ -285,13 +286,22 @@ public class CQSMonitor implements CQSMonitorMBean {
     public Long getOldestMessageCreatedTSMS(String queueUrl) {
 
     	RedisCachedCassandraPersistence redisP = RedisCachedCassandraPersistence.getInstance();
-        List<String> ids = redisP.getIdsFromHead(queueUrl, 1);
+        List<String> ids;
+		try {
+
+			ids = redisP.getIdsFromHead(queueUrl, 0, 1);
+	        
+			if (ids.size() == 0) {
+	        	return null;
+	        }
+			
+	        return RedisCachedCassandraPersistence.getMemQueueMessageCreatedTS(ids.get(0));
+
+		} catch (PersistenceException ex) {
+			logger.error("event=failed_to_get_oldest_queue_message_timestamp", ex);
+		}
         
-        if (ids.size() == 0) {
-        	return null;
-        }
-        
-        return RedisCachedCassandraPersistence.getMemQueueMessageCreatedTS(ids.get(0));
+		return null;
     }
 
 	@Override
@@ -384,7 +394,7 @@ public class CQSMonitor implements CQSMonitorMBean {
 
 	@Override
 	public int getNumberOfRedisShards() {
-		return RedisCachedCassandraPersistence.getNumberOfShards();
+		return RedisCachedCassandraPersistence.getNumberOfRedisShards();
 	}
 
 	@Override

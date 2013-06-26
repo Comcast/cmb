@@ -42,11 +42,18 @@ public class CQSDeleteQueueAction extends CQSAction {
         HttpServletResponse response = (HttpServletResponse)asyncContext.getResponse();
 
 	    CQSQueue queue = CQSCache.getCachedQueue(user, request);
+	    
+	    int numberOfShards = queue.getNumberOfShards();
+	    
         PersistenceFactory.getQueuePersistence().deleteQueue(queue.getRelativeUrl());
-        PersistenceFactory.getCQSMessagePersistence().clearQueue(queue.getRelativeUrl());
+        
+        // clear all shards in redis
+        
+        for (int shard=0; shard<numberOfShards; shard++) {
+            PersistenceFactory.getCQSMessagePersistence().clearQueue(queue.getRelativeUrl(), shard);
+        }
         
         String out = CQSQueuePopulator.getDeleteQueueResponse();
-
         response.getWriter().print(out);
         
         return true;

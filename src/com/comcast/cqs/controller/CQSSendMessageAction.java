@@ -18,6 +18,7 @@ package com.comcast.cqs.controller;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.HashMap;
+import java.util.Random;
 
 import javax.servlet.AsyncContext;
 import javax.servlet.http.HttpServletResponse;
@@ -43,6 +44,7 @@ import com.comcast.cqs.util.CQSConstants;
 public class CQSSendMessageAction extends CQSAction {
 	
     protected static Logger logger = Logger.getLogger(CQSSendMessageAction.class);
+	private static Random rand = new Random();
 	
 	public CQSSendMessageAction() {
 		super("SendMessage");
@@ -54,8 +56,7 @@ public class CQSSendMessageAction extends CQSAction {
         CQSHttpServletRequest request = (CQSHttpServletRequest)asyncContext.getRequest();
         HttpServletResponse response = (HttpServletResponse)asyncContext.getResponse();
 		
-	    CQSQueue queue = CQSCache.getCachedQueue(user, request);
-		long ts2 = System.currentTimeMillis();
+		long ts1 = System.currentTimeMillis();
         
         String messageBody = request.getParameter(CQSConstants.MESSAGE_BODY);
 
@@ -98,9 +99,27 @@ public class CQSSendMessageAction extends CQSAction {
         attributes.put(CQSConstants.APPROXIMATE_FIRST_RECEIVE_TIMESTAMP, "");
         
         CQSMessage message = new CQSMessage(messageBody, attributes);
-        CQSControllerServlet.valueAccumulator.addToCounter(AccumulatorName.SendMessageArgumentCheck, (System.currentTimeMillis() - ts2));
+        
+		long ts2 = System.currentTimeMillis();
+        CQSControllerServlet.valueAccumulator.addToCounter(AccumulatorName.SendMessageArgumentCheck, (ts2-ts1));
 
-        String receiptHandle = PersistenceFactory.getCQSMessagePersistence().sendMessage(queue, message);
+	    CQSQueue queue = CQSCache.getCachedQueue(user, request);
+	    
+	    int shard = 0;
+	    
+		String shardNumber = request.getParameter("Shard");
+
+		if (shardNumber != null) {
+			shard = Integer.parseInt(shardNumber);
+		} else if (queue.getNumberOfShards() > 1) {
+			shard = rand.nextInt(queue.getNumberOfShards());
+		}
+	
+		if (shard < 0 || shard >= queue.getNumberOfShards()) {
+	        throw new CMBException(CMBErrorCodes.InvalidParameterValue, "Shard number " + shard +" exceeds number of available shards in queue (" + queue.getNumberOfShards() + ").");
+		}
+
+        String receiptHandle = PersistenceFactory.getCQSMessagePersistence().sendMessage(queue, shard, message);
 
         if (receiptHandle == null || receiptHandle.isEmpty()) {
             throw new CMBException(CMBErrorCodes.InternalError, "Failed to add message to queue");

@@ -408,7 +408,7 @@ public class CQSIntegrationTest {
         logger.info("Created queue " + queueUrl + ", now trying invalid stuff");
 
         ICQSMessagePersistence messagePersistence = new CQSMessagePartitionedCassandraPersistence();
-        messagePersistence.clearQueue(queueUrl);
+        messagePersistence.clearQueue(queueUrl, 0);
 
         logger.info("Send a message with empty message body");
         
@@ -492,7 +492,7 @@ public class CQSIntegrationTest {
         logger.info("Created queue " + queueUrl + ", now sending message batch");
         
         ICQSMessagePersistence messagePersistence = new CQSMessagePartitionedCassandraPersistence();
-        messagePersistence.clearQueue(queueUrl);
+        messagePersistence.clearQueue(queueUrl, 0);
 
         try {
             Thread.sleep(1000);
@@ -578,7 +578,7 @@ public class CQSIntegrationTest {
         randomQueueUrls.add(queueUrl);
         
         ICQSMessagePersistence messagePersistence = new CQSMessagePartitionedCassandraPersistence();
-        messagePersistence.clearQueue(queueUrl);
+        messagePersistence.clearQueue(queueUrl, 0);
 
         logger.info("Created queue " + queueUrl + ", now sending message batch");
         
@@ -677,7 +677,7 @@ public class CQSIntegrationTest {
         randomQueueUrls.add(myQueueUrl);
         
         ICQSMessagePersistence messagePersistence = new CQSMessagePartitionedCassandraPersistence();
-        messagePersistence.clearQueue(myQueueUrl);
+        messagePersistence.clearQueue(myQueueUrl, 0);
 
         logger.info("Send a batch of messages with empty supplied Id");
         
@@ -996,7 +996,7 @@ public class CQSIntegrationTest {
             randomQueueUrls.add(queueUrl);
             
             ICQSMessagePersistence messagePersistence = RedisCachedCassandraPersistence.getInstance();
-            messagePersistence.clearQueue(queueUrl);
+            messagePersistence.clearQueue(queueUrl, 0);
             
             // send message
             
@@ -1105,7 +1105,7 @@ public class CQSIntegrationTest {
             randomQueueUrls.add(queueUrl);
             
             ICQSMessagePersistence messagePersistence = RedisCachedCassandraPersistence.getInstance();
-            messagePersistence.clearQueue(queueUrl);
+            messagePersistence.clearQueue(queueUrl, 0);
 
             // send a batch of messages
             
@@ -1173,7 +1173,7 @@ public class CQSIntegrationTest {
             randomQueueUrls.add(queueUrl);
             
             ICQSMessagePersistence messagePersistence = RedisCachedCassandraPersistence.getInstance();
-            messagePersistence.clearQueue(queueUrl);
+            messagePersistence.clearQueue(queueUrl, 0);
             
             Thread.sleep(1000);
 
@@ -1256,7 +1256,7 @@ public class CQSIntegrationTest {
             randomQueueUrls.add(queueUrl);
             
             ICQSMessagePersistence messagePersistence = RedisCachedCassandraPersistence.getInstance();
-            messagePersistence.clearQueue(queueUrl);
+            messagePersistence.clearQueue(queueUrl, 0);
             
             Thread.sleep(1000);
 

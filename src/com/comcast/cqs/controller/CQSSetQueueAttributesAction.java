@@ -54,20 +54,6 @@ public class CQSSetQueueAttributesAction extends CQSAction {
         HttpServletResponse response = (HttpServletResponse)asyncContext.getResponse();
 		
 	    CQSQueue queue = CQSCache.getCachedQueue(user, request);
-        String ownerId = request.getParameter("QueueOwnerAWSAccountId");
-
-        if (ownerId == null) {
-            ownerId = user.getUserId();
-        }
-
-        if (!ownerId.equals(user.getUserId())) {
-        	
-	        CMBPolicy policy = new CMBPolicy(queue.getPolicy());
-	        
-	        if (!policy.isAllowed(user, "CQS:" + this.actionName)) {
-	            throw new CMBException(CMBErrorCodes.AccessDenied, "You don't have permission for " + this.actionName);
-	        }
-        }
         
         HashMap<String, String> attributes = Util.fillAllSetAttributesRequests(request);
         HashMap<String, String> postVars = new HashMap<String, String>();
@@ -182,6 +168,21 @@ public class CQSSetQueueAttributesAction extends CQSAction {
                 
             	queue.setNumberOfPartitions(v);
                 postVars.put(CQSConstants.COL_NUMBER_PARTITIONS, attributes.get(attributeName));
+           
+            } else if (attributeName.equals(CQSConstants.NUMBER_OF_SHARDS)) {
+                
+            	if (!Util.isParsableToInt(value)) {
+                    throw new CMBException(CMBErrorCodes.InvalidAttributeValue, "Invalid value " + value + " for the parameter " + attributeName);
+                }
+                
+            	int v = Integer.parseInt(value);
+                
+            	if (v < 1 || v > 100) {
+                    throw new CMBException(CMBErrorCodes.InvalidParameterValue, CQSConstants.NUMBER_OF_SHARDS + " should be between 1 and 100");
+                }
+                
+            	queue.setNumberOfShards(v);
+                postVars.put(CQSConstants.COL_NUMBER_SHARDS, attributes.get(attributeName));
            
             } else {
                 throw new CMBException(CMBErrorCodes.InvalidAttributeName, "Attribute.Name: " + attributeName + " is not a valid attribute");

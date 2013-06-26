@@ -41,31 +41,52 @@ public class CQSQueue {
     private int numMessages;
     private int receiveMessageWaitTimeSeconds = 0;
     private int numberOfPartitions = 100;
+    private int numberOfShards = 1;
     
 	public CQSQueue(String name, String ownerId) {
     	
-        this.name = name;
         this.ownerUserId = ownerId;
-
         this.region = CMBProperties.getInstance().getRegion();
 
-        this.setArn("arn:cmb:cqs:" + region + ":" + ownerId + ":" + name);
-        String serviceUrl = CMBProperties.getInstance().getCQSServiceUrl();
-        
-        if (serviceUrl != null && serviceUrl.endsWith("/")) {
-        	serviceUrl = serviceUrl.substring(0, serviceUrl.length()-1);
-        }
-        
-        this.setServiceEndpoint(serviceUrl);
-        this.setRelativeUrl(ownerId + "/" + name);
+        setName(name);
         
         this.visibilityTO = CMBProperties.getInstance().getCQSVisibilityTimeOut();
         this.maxMsgSize = CMBProperties.getInstance().getCQSMaxMessageSize();
         this.msgRetentionPeriod = CMBProperties.getInstance().getCQSMessageRetentionPeriod();
         this.delaySeconds = CMBProperties.getInstance().getCQSMessageDelaySeconds();
         this.numberOfPartitions = CMBProperties.getInstance().getCQSNumberOfQueuePartitions();
-    }
+        this.numberOfShards = 1;
+	}
+	
+	@Override 
+	public Object clone() throws CloneNotSupportedException {
+		CQSQueue queue = (CQSQueue)super.clone();
+		return queue;
+	}
 
+	public void setName(String name) {
+        
+		this.name = name;
+        
+        setArn("arn:cmb:cqs:" + region + ":" + this.ownerUserId + ":" + name);
+        String serviceUrl = CMBProperties.getInstance().getCQSServiceUrl();
+        
+        if (serviceUrl != null && serviceUrl.endsWith("/")) {
+        	serviceUrl = serviceUrl.substring(0, serviceUrl.length()-1);
+        }
+        
+        setServiceEndpoint(serviceUrl);
+        setRelativeUrl(this.ownerUserId + "/" + name);
+	}
+	
+	public int getShardNumber() {
+		if (this.name.contains(".")) {
+			return Integer.parseInt(this.name.substring(this.name.indexOf(".")));
+		} else {
+			return 0;
+		}
+	}
+	
     public int getNumMessages() {
         return numMessages;
     }
@@ -184,5 +205,13 @@ public class CQSQueue {
 
 	public void setNumberOfPartitions(int numberOfPartitions) {
 		this.numberOfPartitions = numberOfPartitions;
+	}
+
+	public int getNumberOfShards() {
+		return numberOfShards;
+	}
+
+	public void setNumberOfShards(int numberOfShards) {
+		this.numberOfShards = numberOfShards;
 	}
 }

@@ -17,6 +17,8 @@ package com.comcast.cqs.persistence;
 
 import java.util.List;
 
+import com.comcast.cmb.common.util.PersistenceException;
+
 /**
  * 
  * interface provides functionality to fetch ordered list of messageids. Used by
@@ -29,7 +31,7 @@ public interface ICQSMessagePersistenceIdSequence {
      * @param num number of message-ids to return
      * @return message ids from the head of the queue. If data not available, empty list is returned
      */
-    public List<String> getIdsFromHead(String queueUrl, int num);
+    public List<String> getIdsFromHead(String queueUrl, int shard, int num) throws PersistenceException;
     
     /**
      * @param queueUrl

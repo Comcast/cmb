@@ -21,7 +21,6 @@ import javax.servlet.AsyncContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import com.comcast.cmb.common.model.CMBPolicy;
 import com.comcast.cmb.common.model.User;
 import com.comcast.cmb.common.util.CMBErrorCodes;
 import com.comcast.cmb.common.util.CMBException;
@@ -48,20 +47,6 @@ public class CQSGetQueueAttributesAction extends CQSAction {
         HttpServletResponse response = (HttpServletResponse)asyncContext.getResponse();
 
 		CQSQueue queue = CQSCache.getCachedQueue(user, request);
-        String ownerId = request.getParameter("QueueOwnerAWSAccountId");
-
-        if (ownerId == null) {
-            ownerId = user.getUserId();
-        }
-        
-        if (!ownerId.equals(user.getUserId())) {
-
-        	CMBPolicy policy = new CMBPolicy(queue.getPolicy());
-	        
-        	if (!policy.isAllowed(user, "CQS:" + this.actionName)) {
-	            throw new CMBException(CMBErrorCodes.AccessDenied, "You don't have permission for " + this.actionName);
-	        }
-        }
         
         List<String> attributesList = Util.fillGetAttributesRequests(request);
         
@@ -70,7 +55,7 @@ public class CQSGetQueueAttributesAction extends CQSAction {
         	if (!attribute.equals("All") && !attribute.equals(CQSConstants.VISIBILITY_TIMEOUT) && !attribute.equals(CQSConstants.POLICY) && !attribute.equals(CQSConstants.QUEUE_ARN)  
                 && !attribute.equals(CQSConstants.MAXIMUM_MESSAGE_SIZE) && !attribute.equals(CQSConstants.MESSAGE_RETENTION_PERIOD) && !attribute.equals(CQSConstants.DELAY_SECONDS) 
                 && !attribute.equals(CQSConstants.APPROXIMATE_NUMBER_OF_MESSAGES) && !attribute.equals(CQSConstants.RECEIVE_MESSAGE_WAIT_TIME_SECONDS)
-                && !attribute.equals(CQSConstants.NUMBER_OF_PARTITIONS)) {
+                && !attribute.equals(CQSConstants.NUMBER_OF_PARTITIONS) && !attribute.equals(CQSConstants.NUMBER_OF_SHARDS)) {
                 throw new CMBException(CMBErrorCodes.InvalidAttributeName, "Unknown attribute " + attribute);
             }
         }

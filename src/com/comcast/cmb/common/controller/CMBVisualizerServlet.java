@@ -22,7 +22,6 @@ import org.jfree.chart.block.BlockBorder;
 import org.jfree.chart.labels.StandardPieSectionLabelGenerator;
 import org.jfree.chart.labels.StandardXYItemLabelGenerator;
 import org.jfree.chart.plot.PiePlot;
-import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.xy.StackedXYBarRenderer;
 import org.jfree.chart.title.LegendTitle;
@@ -30,8 +29,6 @@ import org.jfree.data.general.DefaultPieDataset;
 import org.jfree.data.time.Hour;
 import org.jfree.data.time.Minute;
 import org.jfree.data.time.TimeTableXYDataset;
-import org.jfree.data.xy.XYSeries;
-import org.jfree.data.xy.XYSeriesCollection;
 import org.jfree.ui.RectangleEdge;
 
 public class CMBVisualizerServlet extends HttpServlet {

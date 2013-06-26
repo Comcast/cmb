@@ -7,12 +7,12 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 import java.util.Vector;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -63,6 +63,11 @@ public class CQSScaleQueuesTest {
 	private static int messageLength = 0;
 	private static final String ALPHABET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     private static Random rand = new Random();
+    
+    private static String queueName = null;
+    
+    private static AtomicLong totalMessagesFound = new AtomicLong(0);
+    private static boolean deleteQueues = false;
 
 	public static void main(String [ ] args) throws Exception {
 
@@ -71,7 +76,8 @@ public class CQSScaleQueuesTest {
 		long numQueuesPerThread = 10;
 		long numMessagesPerQueue = 10;
 		int numThreads = 10;
-		int numShards = 100;
+		int numPartitions = 100;
+		int numShards = 1;
 
 		for (String arg : args) {
 
@@ -81,17 +87,23 @@ public class CQSScaleQueuesTest {
 				numMessagesPerQueue = Integer.parseInt(arg.substring(4));
 			} else if (arg.startsWith("-nt")) {
 				numThreads = Integer.parseInt(arg.substring(4));
+			} else if (arg.startsWith("-np")) {
+				numPartitions = Integer.parseInt(arg.substring(4));
 			} else if (arg.startsWith("-ns")) {
 				numShards = Integer.parseInt(arg.substring(4));
 			} else if (arg.startsWith("-ml")) {
 				messageLength = Integer.parseInt(arg.substring(4));
+			} else if (arg.startsWith("-qn")) {
+				queueName = arg.substring(4);
 			} else if (arg.startsWith("-ak")) {
 				accessKey = arg.substring(4);
 			} else if (arg.startsWith("-as")) {
 				accessSecret = arg.substring(4);
+			} else if (arg.startsWith("-dq")) {
+				deleteQueues = Boolean.parseBoolean(arg.substring(4));
 			} else {
-				System.out.println("Usage: CQSScaleQueuesTest -Dcmb.log4j.propertyFile=config/log4j.properties -Dcmb.propertyFile=config/cmb.properties -nq=<number_queues_per_thread> -nm=<number_messages_per_queue> -nt=<number_threads> -ns=<number_shards> -ml=<message_length> -ak=<access_key> -as=<access_secret>");
-				System.out.println("Example: java CQSScaleQueuesTest -Dcmb.log4j.propertyFile=config/log4j.properties -Dcmb.propertyFile=config/cmb.properties -nq=10 -nm=10 -nt=10 -ns=100");
+				System.out.println("Usage: CQSScaleQueuesTest -Dcmb.log4j.propertyFile=config/log4j.properties -Dcmb.propertyFile=config/cmb.properties -nq=<number_queues_per_thread> -nm=<number_messages_per_queue> -nt=<number_threads> -np=<number_partitions> -ns=<number_shards> -ml=<message_length> -dq=<delete_queues_at_end_true_or_false> -qn=<queue_name_for_single_queue_tests> -ak=<access_key> -as=<access_secret>");
+				System.out.println("Example: java CQSScaleQueuesTest -Dcmb.log4j.propertyFile=config/log4j.properties -Dcmb.propertyFile=config/cmb.properties -nq=10 -nm=10 -nt=10 -np=100 -ns=1 -dq=true");
 				System.exit(1);
 			}
 		}
@@ -101,7 +113,15 @@ public class CQSScaleQueuesTest {
 		System.out.println("Number of messages per queue: " + numMessagesPerQueue);
 		System.out.println("Message length: " + messageLength);
 		System.out.println("Number of threads: " + numThreads);
+		System.out.println("Number of partitions: " + numPartitions);
 		System.out.println("Number of shards: " + numShards);
+		System.out.println("Delete queues: " + deleteQueues);
+		
+		if (queueName != null) {
+			System.out.println("Queue name: " + queueName);
+			System.out.println("Ignoring -nq setting above!");
+			numQueuesPerThread = 1;
+		}
 
 		if (accessKey != null) {
 			System.out.println("Access Key: " + accessKey);
@@ -113,7 +133,7 @@ public class CQSScaleQueuesTest {
 
 		CQSScaleQueuesTest cqsScaleTest = new CQSScaleQueuesTest();
 		cqsScaleTest.setup();
-		cqsScaleTest.CreateQueuesConcurrent(numQueuesPerThread, numMessagesPerQueue, numThreads, numShards);
+		cqsScaleTest.CreateQueuesConcurrent(numQueuesPerThread, numMessagesPerQueue, numThreads, numPartitions, numShards);
 	}
 
 	@Before
@@ -261,13 +281,13 @@ public class CQSScaleQueuesTest {
 	}
 
 	@Test
-	public void Create10Queues10Shards() {
-		CreateNQueues(10, 100, 10, true);
+	public void Create10Queues10Partitions() {
+		CreateNQueues(10, 100, 10, 1, true);
 	}
 
 	@Test
-	public void Create10Queues1Shards() {
-		CreateNQueues(10, 100, 1, true);
+	public void Create10Queues1Partition() {
+		CreateNQueues(10, 100, 1, 1, true);
 	}
 
 	@Test
@@ -292,10 +312,12 @@ public class CQSScaleQueuesTest {
 
 	@Test
 	public void CreateQueuesConcurrent() {
-		CreateQueuesConcurrent(10, 10, 10, 100);
+		//queueName = "myqueue";
+		//messageLength = 100;
+		CreateQueuesConcurrent(2, 1000, 10, 100, 10);
 	}
 	
-	private void CreateQueuesConcurrent(long numQueuesPerThread, long numMessagesPerQueue, int numThreads, int numShards) {
+	private void CreateQueuesConcurrent(long numQueuesPerThread, long numMessagesPerQueue, int numThreads, int numPartitions, int numShards) {
 
 		launchPeriodicHealthCheck(5000);
 		
@@ -303,12 +325,13 @@ public class CQSScaleQueuesTest {
 		
 		final long nqpt = numQueuesPerThread;
 		final long nmpq = numMessagesPerQueue;
+		final int np = numPartitions;
 		final int ns = numShards;
 
 		long start = System.currentTimeMillis();
 		
 		for (int i=0; i<numThreads; i++) {
-			ep.submit((new Runnable() { public void run() { CreateNQueues(nqpt, nmpq, ns, false); }}));
+			ep.submit((new Runnable() { public void run() { CreateNQueues(nqpt, nmpq, np, ns, false); }}));
 		}
 
 		logger.warn("ALL TEST LAUNCHED");
@@ -336,6 +359,7 @@ public class CQSScaleQueuesTest {
 		long apisPerSec = (numThreads*numQueuesPerThread*numMessagesPerQueue*3)/((end-start)/1000);
 		
 		logger.warn("APIS_PER_SEC=" + apisPerSec);
+		logger.warn("TOTAL_MESSAGES_FOUND=" + totalMessagesFound.longValue());
 	}
 
 	private String receiveMessage(String queueUrl) {
@@ -361,9 +385,6 @@ public class CQSScaleQueuesTest {
 		if (receiveMessageResult.getMessages().size() == 1) {
 
 			String message = receiveMessageResult.getMessages().get(0).getBody();
-			if (message != null && message.length()>0 && message.contains("-")) {
-				message = message.substring(0, message.indexOf("-"));
-			}
 
 			DeleteMessageRequest deleteMessageRequest = new DeleteMessageRequest();
 			deleteMessageRequest.setQueueUrl(queueUrl);
@@ -385,18 +406,22 @@ public class CQSScaleQueuesTest {
 	}
 
 	private void CreateNQueues(long numQueues, boolean logReport) {
-		CreateNQueues(numQueues, 100, 100, logReport);
+		CreateNQueues(numQueues, 100, 100, 1, logReport);
 	}
 
-	private void CreateNQueues(long numQueues, long numMessages, int numShards, boolean logReport) {
+	private void CreateNQueues(long numQueues, long numMessages, int numPartitions, int numShards, boolean logReport) {
 
 		long testStart = System.currentTimeMillis();
 		
-		List<String> queueUrls = new ArrayList<String>();
+		Set<String> queueUrls = new HashSet<String>();
 		Map<String, String> messageMap = new HashMap<String, String>();
 
-		if (numShards != 100) {
-			attributeParams.put("NumberOfPartitions", numShards + "");
+		if (numPartitions != 100) {
+			attributeParams.put("NumberOfPartitions", numPartitions + "");
+		}
+		
+		if (numShards != 1) {
+			attributeParams.put("NumberOfShards", numShards + "");
 		}
 
 		try {
@@ -409,8 +434,13 @@ public class CQSScaleQueuesTest {
 
 				try {
 
-					String queueName = QUEUE_PREFIX + randomGenerator.nextLong();
-					CreateQueueRequest createQueueRequest = new CreateQueueRequest(queueName);
+					String name = null;
+					if (queueName != null) {
+						name = queueName;
+					} else {
+						name = QUEUE_PREFIX + randomGenerator.nextLong();
+					}
+					CreateQueueRequest createQueueRequest = new CreateQueueRequest(name);
 					createQueueRequest.setAttributes(attributeParams);
 					long start = System.currentTimeMillis();
 					String queueUrl = sqs.createQueue(createQueueRequest).getQueueUrl();
@@ -419,7 +449,7 @@ public class CQSScaleQueuesTest {
 					totalTime += end-start;
 					logger.info("average creation millis: " + (totalTime/(i+1)) + " last: " + (end-start));
 					queueUrls.add(queueUrl);
-					logger.info("created queue " + counter + ": " + queueUrl);
+					logger.info("created queue " + counter + ": " + queueUrl + " " + numPartitions + " partitions, " + numShards + " shards");
 					counter++;
 
 				} catch (Exception ex) {
@@ -482,11 +512,11 @@ public class CQSScaleQueuesTest {
 			totalTime = 0;
 			totalCounter = 0;
 
-			for (int i=0; i<1.1*numMessages; i++) {
+			for (int i=0; i<1.5*numMessages; i++) {
 
 				counter = 0;
 
-				String lastMessage = null;
+				String lastNumericContent = null;
 
 				for (String queueUrl : queueUrls) {
 
@@ -499,17 +529,22 @@ public class CQSScaleQueuesTest {
 						logger.info("average receive millis: " + (totalTime/(totalCounter+1)) + " last: " + (end-start));
 						
 						if (messageBody != null) {
+							String numericContent = messageBody;
+							if (messageBody.length()>0 && messageBody.contains("-")) {
+								numericContent = messageBody.substring(0, messageBody.indexOf("-"));
+							}
 							logger.info("received message on queue " + i + " - " + counter + " : " + queueUrl + " : " + messageBody);
-							if (lastMessage != null && messageBody != null && Long.parseLong(lastMessage) > Long.parseLong(messageBody)) {
+							if (lastNumericContent != null && numericContent != null && Long.parseLong(lastNumericContent) > Long.parseLong(numericContent)) {
 								outOfOrder++;
 							}
 							if (messageMap.containsKey(messageBody)) {
+								logger.warn("DUPLICATE=" + messageBody);
 								duplicates++;
 							} else {
 								messageMap.put(messageBody, null);
 							}
 							messagesFound++;
-							lastMessage = messageBody;
+							lastNumericContent = numericContent;
 						} else {
 							logger.info("no message found on queue " + i + " - " + counter + " : "  + queueUrl);
 							emptyResponses++;
@@ -532,19 +567,21 @@ public class CQSScaleQueuesTest {
 			counter = 0;
 			totalTime = 0;
 
-			for (String queueUrl : queueUrls) {
-				try {
-					long start = System.currentTimeMillis();
-					sqs.deleteQueue(new DeleteQueueRequest(queueUrl));
-					long end = System.currentTimeMillis();
-					recordResponseTime(null, end-start);
-					totalTime += end-start;
-					logger.info("average delete millis: " + (totalTime/(counter+1)) + " last: " + (end-start));
-					logger.info("deleted queue " + counter + ": " + queueUrl);
-					counter++;
-				} catch (Exception ex) {
-					logger.error("delete failure", ex);
-					deleteFailures++;
+			if (deleteQueues) {
+				for (String queueUrl : queueUrls) {
+					try {
+						long start = System.currentTimeMillis();
+						sqs.deleteQueue(new DeleteQueueRequest(queueUrl));
+						long end = System.currentTimeMillis();
+						recordResponseTime(null, end-start);
+						totalTime += end-start;
+						logger.info("average delete millis: " + (totalTime/(counter+1)) + " last: " + (end-start));
+						logger.info("deleted queue " + counter + ": " + queueUrl);
+						counter++;
+					} catch (Exception ex) {
+						logger.error("delete failure", ex);
+						deleteFailures++;
+					}
 				}
 			}
 			
@@ -552,6 +589,8 @@ public class CQSScaleQueuesTest {
 
 			String message = "duration sec: " + ((testEnd-testStart)/1000) + " create failuers: " + createFailures +  " delete failures: " + deleteFailures + " send failures: " + sendFailures + " read failures: " + readFailures + " empty reads: " + emptyResponses + " messages found: " + messagesFound + " messages sent: " + messagesSent + " out of order: " + outOfOrder + " duplicates: " + duplicates + " distinct messages: " + messageMap.size(); 
 
+			totalMessagesFound.addAndGet(messagesFound);
+			
 			report.add(new Date() + ": " + message);
 
 			if (logReport) {

@@ -91,7 +91,7 @@ public class CQSMessagePartitionedCassandraPersistenceTest {
 			queuePersistence.createQueue(queue);
 		}
 		
-		persistence.clearQueue(queue.getRelativeUrl());
+		persistence.clearQueue(queue.getRelativeUrl(), 0);
     }
 
 	@Test
@@ -99,7 +99,7 @@ public class CQSMessagePartitionedCassandraPersistenceTest {
 		
         CQSMessage message = new CQSMessage("This is a test message " + (new Random()).nextInt(), attributes);
         attributes.put("SentTimestamp", "" + Calendar.getInstance().getTimeInMillis());
-		String receiptHandle = persistence.sendMessage(queue, message);
+		String receiptHandle = persistence.sendMessage(queue, 0, message);
 		assertNotNull(receiptHandle);
 	}
 	
@@ -115,7 +115,7 @@ public class CQSMessagePartitionedCassandraPersistenceTest {
 			messageList.add(message);
 		}
 		
-		Map<String, String> ret = persistence.sendMessageBatch(queue, messageList);
+		Map<String, String> ret = persistence.sendMessageBatch(queue, 0, messageList);
 		assertEquals(messageList.size(), ret.size());
 	}
 
@@ -127,7 +127,7 @@ public class CQSMessagePartitionedCassandraPersistenceTest {
 		for (int i=0; i<10; i++) {
 			CQSMessage message = new CQSMessage("This is a test message id=" + i, attributes);
 			messageList.add(message);
-			persistence.sendMessage(queue, message);
+			persistence.sendMessage(queue, 0, message);
 		}
 		
 		List<String> messageIdList = new ArrayList<String>(); 
@@ -154,7 +154,7 @@ public class CQSMessagePartitionedCassandraPersistenceTest {
 		for (int i=0; i<105; i++) {
 			CQSMessage message = new CQSMessage("This is a test message id=" + i, attributes);
 			messageList.add(message);
-			persistence.sendMessage(queue, message);
+			persistence.sendMessage(queue, 0, message);
 		}
 		
 		List<String> messageIdList = new ArrayList<String>(); 
@@ -190,7 +190,7 @@ public class CQSMessagePartitionedCassandraPersistenceTest {
 		for (int i=0; i<100; i++) {
 			CQSMessage message = new CQSMessage("This is a test message id=" + i, attributes);
 			messageList.add(message);
-			persistence.sendMessage(queue, message);
+			persistence.sendMessage(queue, 0, message);
 		}
 		
 		assertEquals(messageList.size(), getQueueCount(queue.getRelativeUrl()));
@@ -202,7 +202,7 @@ public class CQSMessagePartitionedCassandraPersistenceTest {
 		int length = 25;
 		
  		do {
-			newMessageList = persistence.peekQueue(queue.getRelativeUrl(), previousHandle, nextHandle, length);
+			newMessageList = persistence.peekQueue(queue.getRelativeUrl(), 0, previousHandle, nextHandle, length);
 			peekMessageList.addAll(newMessageList);
 			
 			if (newMessageList.size() > 0) {
@@ -214,13 +214,13 @@ public class CQSMessagePartitionedCassandraPersistenceTest {
  		
  		assertEquals(messageList.size(), peekMessageList.size());
  		previousHandle = null;
- 		nextHandle = com.comcast.cqs.util.Util.hashQueueUrl(queue.getRelativeUrl()) + "_" + (CMBProperties.getInstance().getCQSNumberOfQueuePartitions()-1) +
+ 		nextHandle = com.comcast.cqs.util.Util.hashQueueUrl(queue.getRelativeUrl()) + "_0_" + (CMBProperties.getInstance().getCQSNumberOfQueuePartitions()-1) +
  				":" + CassandraPersistence.newTime(System.currentTimeMillis()+1209600000, false) + ":" + UUIDGen.getClockSeqAndNode();
  		peekMessageList.clear();
  		newMessageList.clear();
  		
  		do {
-			newMessageList = persistence.peekQueue(queue.getRelativeUrl(), previousHandle, nextHandle, length);			
+			newMessageList = persistence.peekQueue(queue.getRelativeUrl(), 0, previousHandle, nextHandle, length);			
 			peekMessageList.addAll(newMessageList);
 			
 			if (newMessageList.size() > 0) {
@@ -239,12 +239,12 @@ public class CQSMessagePartitionedCassandraPersistenceTest {
         for (int i=0; i<100; i++) {
             CQSMessage message = new CQSMessage("This is a test message id=" + i, attributes);
             messageList.add(message);
-            persistence.sendMessage(queue, message);
+            persistence.sendMessage(queue, 0, message);
         }
         
         assertEquals(messageList.size(), getQueueCount(queue.getRelativeUrl()));
         
-        List<CQSMessage> messages = persistence.peekQueueRandom(queue.getRelativeUrl(), 5);
+        List<CQSMessage> messages = persistence.peekQueueRandom(queue.getRelativeUrl(), 0, 5);
         if (messages.size() != 5) {
             fail("Its very unlikely that we did not get 5 and there was no error. size=" + messages.size());
         }
@@ -293,7 +293,7 @@ public class CQSMessagePartitionedCassandraPersistenceTest {
     	
         logger.debug("teardown");
         CMBControllerServlet.valueAccumulator.deleteAllCounters();
-		persistence.clearQueue(queue.getRelativeUrl());
+		persistence.clearQueue(queue.getRelativeUrl(), 0);
 		queuePersistence.deleteQueue(queue.getRelativeUrl());    
 	}
 }

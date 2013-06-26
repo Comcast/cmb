@@ -37,33 +37,35 @@ import com.comcast.cqs.util.CQSConstants;
  *
  */
 public final class CQSMessage implements Serializable {
-    private static final long serialVersionUID = 1L;
+	
+	private static final long serialVersionUID = 1L;
 
-    transient private String messageId;
-	  
+	transient private String messageId;
+
 	transient private String receiptHandle;
-	  
+
 	transient private String mD5OfBody;
-	  
+
 	private String body;
-	  
+
 	transient private Map<String, String> attributes;
-	
+
 	transient private String suppliedMessageId;
-	
+
 	private transient Object timebasedId; 
-	
+
 	public CQSMessage(String body, Map<String, String> attributes) throws NoSuchAlgorithmException, UnsupportedEncodingException {
+		
 		this.messageId = UUID.randomUUID().toString();
-		receiptHandle = messageId;
+		
 		setBody(body);
 		setAttributes(attributes);
 		MessageDigest digest = MessageDigest.getInstance("MD5");
 		setMD5OfBody(Base64.encodeBase64String(digest.digest(body.getBytes("UTF-8"))));
 	}
-	
+
 	public CQSMessage(String messageId, String body) throws NoSuchAlgorithmException, UnsupportedEncodingException {
-		
+
 		this.messageId = messageId;
 		this.body = body;
 
@@ -72,39 +74,37 @@ public final class CQSMessage implements Serializable {
 			setMD5OfBody(Base64.encodeBase64String(digest.digest(body.getBytes("UTF-8"))));
 		}
 	}
-	
+
 	public String getMessageId() {
 		return this.messageId;
 	}
-	
+
 	public void setMessageId(String messageId) {
 		this.messageId = messageId;
 		setReceiptHandle(messageId);
 	}
 
-	public void setVisible(boolean visible) {
-	}
-	public java.util.Map<String, String> getAttributes() {
+	public Map<String, String> getAttributes() {
 		return attributes;
 	}
-	
-	public void setAttributes(java.util.Map<String, String> attributes) {
+
+	public void setAttributes(Map<String, String> attributes) {
 		this.attributes = attributes;
 	}
 
-	public java.lang.String getReceiptHandle() {
+	public String getReceiptHandle() {
 		return receiptHandle;
 	}
 
-	public void setReceiptHandle(java.lang.String receiptHandle) {
+	public void setReceiptHandle(String receiptHandle) {
 		this.receiptHandle = receiptHandle;
 	}
 
-	public java.lang.String getMD5OfBody() {
+	public String getMD5OfBody() {
 		return mD5OfBody;
 	}
 
-	public void setMD5OfBody(java.lang.String mD5OfBody) {
+	public void setMD5OfBody(String mD5OfBody) {
 		this.mD5OfBody = mD5OfBody;
 	}
 
@@ -115,19 +115,21 @@ public final class CQSMessage implements Serializable {
 	public void setBody(java.lang.String body) {
 		this.body = body;
 	}
-	
+
 	public Integer getDelaySeconds() {
+		
 		if (attributes != null && attributes.containsKey(CQSConstants.DELAY_SECONDS)) {
 			return Integer.parseInt(attributes.get(CQSConstants.DELAY_SECONDS));
 		}
+		
 		return null;		
 	}
 
-	public java.lang.String getSuppliedMessageId() {
+	public String getSuppliedMessageId() {
 		return suppliedMessageId;
 	}
 
-	public void setSuppliedMessageId(java.lang.String suppliedMessageId) {
+	public void setSuppliedMessageId(String suppliedMessageId) {
 		this.suppliedMessageId = suppliedMessageId;
 	}
 
@@ -138,7 +140,7 @@ public final class CQSMessage implements Serializable {
 	public void setTimebasedId(Object timebasedId) {
 		this.timebasedId = timebasedId;
 	}
-	
+
 	/**
 	 * The persistent state of the CQSMessage
 	 * Note: Object returned does not have the messageId or the receiptHandle set. caller must set it
@@ -148,53 +150,64 @@ public final class CQSMessage implements Serializable {
 	 * @throws NoSuchAlgorithmException 
 	 */
 	private void readObject(ObjectInputStream aInputStream) throws IOException, ClassNotFoundException, NoSuchAlgorithmException {
-	    //always perform the default de-serialization first
-	    aInputStream.defaultReadObject(); //should parse body
-	    	    
-	    int attCount = aInputStream.readInt();
-	    attributes = new HashMap<String, String>();
-	    for (int i = 0; i < attCount; i++) {
-	        String key = aInputStream.readUTF();
-	        String val = aInputStream.readUTF();
-	        attributes.put(key, val);
-	    }
-	    
-	    MessageDigest digest = MessageDigest.getInstance("MD5");
-	    this.setMD5OfBody(Base64.encodeBase64String(digest.digest(body.getBytes("UTF-8"))));
+		
+		//always perform the default de-serialization first
+		
+		aInputStream.defaultReadObject(); //should parse body
+		int attCount = aInputStream.readInt();
+		attributes = new HashMap<String, String>();
 
+		for (int i = 0; i < attCount; i++) {
+			String key = aInputStream.readUTF();
+			String val = aInputStream.readUTF();
+			attributes.put(key, val);
+		}
+
+		MessageDigest digest = MessageDigest.getInstance("MD5");
+		this.setMD5OfBody(Base64.encodeBase64String(digest.digest(body.getBytes("UTF-8"))));
 	}
-	
+
 	private void writeObject(ObjectOutputStream aOutputStream) throws IOException {
-      //perform the default serialization for all non-transient, non-static fields
-      aOutputStream.defaultWriteObject(); //should serialize body
-      
-      aOutputStream.writeInt(attributes.size());
-      for (Entry<String, String> keyVal : attributes.entrySet()) {
-          aOutputStream.writeUTF(keyVal.getKey());
-          aOutputStream.writeUTF(keyVal.getValue());
-      }
-    }
-	
+
+		//perform the default serialization for all non-transient, non-static fields
+		
+		aOutputStream.defaultWriteObject(); //should serialize body
+		aOutputStream.writeInt(attributes.size());
+		
+		for (Entry<String, String> keyVal : attributes.entrySet()) {
+			aOutputStream.writeUTF(keyVal.getKey());
+			aOutputStream.writeUTF(keyVal.getValue());
+		}
+	}
+
 	@Override
 	public boolean equals(Object obj) {
-	    if (!(obj instanceof CQSMessage)) {
-	        return false;
-	    }
-	    CQSMessage msg = (CQSMessage) obj;
-	    if (Util.isEqual(messageId, msg.messageId) &&
-	            Util.isEqual(receiptHandle, msg.receiptHandle) &&
-	            Util.isEqual(mD5OfBody, msg.mD5OfBody) &&
-	            Util.isEqual(suppliedMessageId, msg.suppliedMessageId) &&
-	            Util.isEqual(timebasedId, msg.timebasedId) &&
-	            Util.isMapsEquals(attributes, msg.attributes)) {
-	        return true;	        
-	    } else {
-	        return false;
-	    }
+		
+		if (!(obj instanceof CQSMessage)) {
+			return false;
+		}
+		
+		CQSMessage msg = (CQSMessage) obj;
+		
+		if (Util.isEqual(messageId, msg.messageId) &&
+				Util.isEqual(receiptHandle, msg.receiptHandle) &&
+				Util.isEqual(mD5OfBody, msg.mD5OfBody) &&
+				Util.isEqual(suppliedMessageId, msg.suppliedMessageId) &&
+				Util.isEqual(timebasedId, msg.timebasedId) &&
+				Util.isMapsEquals(attributes, msg.attributes)) {
+			return true;	        
+		} else {
+			return false;
+		}
+	}
+
+	@Override
+	public int hashCode() {
+		return messageId.hashCode();
 	}
 	
 	@Override
-	public int hashCode() {
-	    return messageId.hashCode();
+	public String toString() {
+		return "message_id=" + messageId + ", receipt_handle=" + receiptHandle + ", md5=" + mD5OfBody + ", body=" + body;
 	}
 } 

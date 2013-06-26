@@ -192,7 +192,7 @@ public class CqsStressTester {
 			queueUrls.add(myQueueUrl);
 
 			if (CQSStressTestProperties.getInstance().getNumberOfSendersPerQueue() > 0) {
-				messagePersistence.clearQueue(myQueueUrl);
+				messagePersistence.clearQueue(myQueueUrl, 0);
 			}
 
 			logger.info("QueueUrl" + i + " = " + myQueueUrl);

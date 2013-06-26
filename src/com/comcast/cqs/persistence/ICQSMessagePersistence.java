@@ -31,8 +31,9 @@ import com.comcast.cqs.model.CQSQueue;
  */
 public interface ICQSMessagePersistence {
     /**
-     * Create a message
+     * Create a message on a specific shard and a random partition.
      * @param queue The CQS queue to post the message
+     * @param shard The shard to be used
      * @param message An instance of CQSMessage
      * @throws PersistenceException
      * @throws IOException 
@@ -40,12 +41,13 @@ public interface ICQSMessagePersistence {
      * @return the message-=id
      * @throws NoSuchAlgorithmException 
      */
-    public String sendMessage(CQSQueue queue, CQSMessage message) throws PersistenceException, IOException, InterruptedException, NoSuchAlgorithmException;
+    public String sendMessage(CQSQueue queue, int shard, CQSMessage message) throws PersistenceException, IOException, InterruptedException, NoSuchAlgorithmException;
 
     /**
-     * Create a batch of message
+     * Create a batch of messages on a specific shard and a random partition.
      * Note: THe provided messages are modified with a new messageId
      * @param queue The CQS queue to post the messages
+     * @param shard The shard to be used
      * @param messages A list of CQSMessage instances
      * @throws PersistenceException
      * @throws IOException 
@@ -53,17 +55,17 @@ public interface ICQSMessagePersistence {
      * @return mapping from client-provided-message-id to internal message-id 
      * @throws NoSuchAlgorithmException 
      */
-    public Map<String, String> sendMessageBatch(CQSQueue queue, List<CQSMessage> messages) throws PersistenceException, IOException, InterruptedException, NoSuchAlgorithmException;
+    public Map<String, String> sendMessageBatch(CQSQueue queue, int shard, List<CQSMessage> messages) throws PersistenceException, IOException, InterruptedException, NoSuchAlgorithmException;
 
     /**
      * Delete a message given the receiptHandle
-     * @param receiptHandle The receipt handle for the message.  This is the time based UUID.
+     * @param receiptHandle The receipt handle for the message. This is the time based UUID. Receipt handle also includes the shard number.
      * @throws PersistenceException
      */
     public void deleteMessage(String queueUrl, String receiptHandle) throws PersistenceException;
     
     /**
-     * Receive the next set of messages from the Queue
+     * Receive the next set of messages from the Queue. Receives from random shard and random partition.
      * @param queue The queue which contains the messages.
      * @param receiveAttributes The set of attributes for the message, like the new visibility timeout and others.
      * @throws PersistenceException
@@ -97,33 +99,32 @@ public interface ICQSMessagePersistence {
      * @throws NoSuchAlgorithmException 
      * @return list of messages between previousReceiptHandle & nextReceiptHandle
      */
-    public List<CQSMessage> peekQueue(String queueUrl,  String previousReceiptHandle, String nextReceiptHandle,	int length) throws PersistenceException, IOException, NoSuchAlgorithmException;
+    public List<CQSMessage> peekQueue(String queueUrl, int shard, String previousReceiptHandle, String nextReceiptHandle, int length) throws PersistenceException, IOException, NoSuchAlgorithmException;
     
     /**
      * Peek the queue with the given Queue URL for the next set of messages chosen at random from the queue
      * @param queueUrl The URL of the Queue
+     * @param shard The shard to be used
      * @param length the number of messages to return 
      * @throws PersistenceException
      * @throws IOException 
      * @throws NoSuchAlgorithmException 
      * @return list of messages
      */
-    public List<CQSMessage> peekQueueRandom(String queueUrl, int length) throws PersistenceException, IOException, NoSuchAlgorithmException;
-    
+    public List<CQSMessage> peekQueueRandom(String queueUrl, int shard, int length) throws PersistenceException, IOException, NoSuchAlgorithmException;
 
     /**
-     * Peek the queue with the given Queue URL for the next set of messages
-     * @param queueUrl The URL of the Queue
-     * @param previousReceiptHandle The receipt handle of the last item in the previous page
-     * @param nextReceiptHandle The receipt handle of the first item in the next page
+     * Clear a specific shard of a queue
+     * @param queueUrl The URL of the queue
+     * @param shard The shard to be used
      * @throws PersistenceException
      * @throws UnsupportedEncodingException 
      * @throws NoSuchAlgorithmException 
      */
-    public void clearQueue(String queueUrl) throws PersistenceException, NoSuchAlgorithmException, UnsupportedEncodingException;
+    public void clearQueue(String queueUrl, int shard) throws PersistenceException, NoSuchAlgorithmException, UnsupportedEncodingException;
     
     /**
-     * 
+     * Get message payload for a list of message-ids 
      * @param ids The list of message-ids
      * @return The list of messages with those ids in any order
      * @throws UnsupportedEncodingException 

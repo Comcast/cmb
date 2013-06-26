@@ -40,16 +40,16 @@ public class CQSCache {
     
     /**
      * 
-     * @param queueUrl
+     * @param relativeQueueUrl
      * @return Cached instance of CQSQueue given queueUrl. If none exists, we call QueueCallable and cache it
      * for config amount of time
      * @throws Exception
      */
-    public static CQSQueue getCachedQueue(String queueUrl) throws Exception {
+    public static CQSQueue getCachedQueue(String relativeQueueUrl) throws Exception {
         try {
-            return queueCache.getAndSetIfNotPresent(queueUrl, new QueueCallable(queueUrl), CMBProperties.getInstance().getCQSCacheExpiring() * 1000);
+            return queueCache.getAndSetIfNotPresent(relativeQueueUrl, new QueueCallable(relativeQueueUrl), CMBProperties.getInstance().getCQSCacheExpiring() * 1000);
         } catch (CacheFullException e) {
-            return new QueueCallable(queueUrl).call();
+            return new QueueCallable(relativeQueueUrl).call();
         } 
     }
     

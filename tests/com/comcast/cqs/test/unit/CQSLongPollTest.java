@@ -109,7 +109,7 @@ public class CQSLongPollTest {
 	        queueUrl = sqs.createQueue(createQueueRequest).getQueueUrl();
 	        
 	        ICQSMessagePersistence messagePersistence = RedisCachedCassandraPersistence.getInstance();
-			messagePersistence.clearQueue(queueUrl);
+			messagePersistence.clearQueue(queueUrl, 0);
 			
 			logger.info("queue " + queueUrl + "created");
 	        

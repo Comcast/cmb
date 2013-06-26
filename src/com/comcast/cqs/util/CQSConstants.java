@@ -45,7 +45,8 @@ public class CQSConstants {
 	public static final String WAIT_TIME_SECONDS = "WaitTimeSeconds";
 	public static final String RECEIVE_MESSAGE_WAIT_TIME_SECONDS = "ReceiveMessageWaitTimeSeconds";
 	public static final String NUMBER_OF_PARTITIONS = "NumberOfPartitions";
-	
+	public static final String NUMBER_OF_SHARDS = "NumberOfShards";
+
 	public static final String COL_ARN = "arn";
 	public static final String COL_NAME = "name";
 	public static final String COL_OWNER_USER_ID = "ownerUserId";
@@ -59,4 +60,5 @@ public class CQSConstants {
 	public static final String COL_HOST_NAME = "hostName";
 	public static final String COL_WAIT_TIME_SECONDS = "waitTimeSeconds";
 	public static final String COL_NUMBER_PARTITIONS = "numPartitions";
+	public static final String COL_NUMBER_SHARDS = "numShards";
 }

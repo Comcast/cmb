@@ -15,8 +15,6 @@
  */
 package com.comcast.cmb.common.controller;
 
-import java.util.List;
-
 import javax.servlet.AsyncContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -25,8 +23,6 @@ import com.comcast.cmb.common.model.CMBPolicy;
 import com.comcast.cmb.common.model.User;
 import com.comcast.cmb.common.persistence.CassandraPersistence;
 import com.comcast.cmb.common.util.CMBProperties;
-import com.comcast.cns.controller.CNSGetWorkerStatsAction;
-import com.comcast.cns.model.CNSWorkerStats;
 import com.comcast.cqs.controller.CQSAction;
 import com.comcast.cqs.persistence.RedisCachedCassandraPersistence;
 

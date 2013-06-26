@@ -17,8 +17,6 @@ package com.comcast.cns.controller;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
 
 import javax.management.JMX;
 import javax.management.MBeanServerConnection;

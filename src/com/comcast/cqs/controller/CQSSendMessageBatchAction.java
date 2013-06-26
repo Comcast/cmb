@@ -20,6 +20,7 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 import javax.servlet.AsyncContext;
 import javax.servlet.http.HttpServletResponse;
@@ -46,6 +47,7 @@ import com.comcast.cqs.util.Util;
 public class CQSSendMessageBatchAction extends CQSAction {
 	
     protected static Logger logger = Logger.getLogger(CQSSendMessageBatchAction.class);
+	private static Random rand = new Random();
 	
 	public CQSSendMessageBatchAction() {
 		super("SendMessageBatch");
@@ -137,7 +139,13 @@ public class CQSSendMessageBatchAction extends CQSAction {
             throw new CMBException(CMBErrorCodes.InvalidQueryParameter, "Both user supplied message Id and message body are required");
         }
         
-		Map<String, String> result = PersistenceFactory.getCQSMessagePersistence().sendMessageBatch(queue, msgList);
+	    int shard = 0;
+	    
+	    if (queue.getNumberOfShards() > 1) {
+	    	shard = rand.nextInt(queue.getNumberOfShards());
+	    }
+        
+		Map<String, String> result = PersistenceFactory.getCQSMessagePersistence().sendMessageBatch(queue, shard, msgList);
 
 		try {
 			CQSLongPollSenderNG.send(queue.getArn());

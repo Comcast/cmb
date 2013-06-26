@@ -148,9 +148,6 @@ public class CMBProperties {
     private volatile int redisRevisibleFrequencySec;
     private final int redisRevisibleSetFrequencySec;
     private final int redisExpireTTLSec;
-    private final int redisPayloadCacheSizePerQueue;
-    private final int redisPayloadCacheTTLSec;
-    private volatile boolean redisPayloadCacheEnabled;
     
     private final int cassandraThriftSocketTimeOutMS;
     
@@ -322,9 +319,6 @@ public class CMBProperties {
             redisFillerThreads = Integer.parseInt(props.getProperty("cmb.redis.fillerThreads", "5"));
             redisRevisibleThreads = Integer.parseInt(props.getProperty("cmb.redis.revisibleThreads", "3"));
             redisExpireTTLSec = Integer.parseInt(props.getProperty("cmb.redis.expireTTLSec", "1209600"));
-            redisPayloadCacheSizePerQueue = Integer.parseInt(props.getProperty("cmb.redis.payloadCacheSizePerQueue", "10000"));
-            redisPayloadCacheTTLSec = Integer.parseInt(props.getProperty("cmb.redis.payloadCacheTTLSec", "3600"));
-            redisPayloadCacheEnabled = Boolean.parseBoolean(props.getProperty("cmb.redis.payloadCacheEnabled", "false"));
             redisRevisibleFrequencySec = Integer.parseInt(props.getProperty("cmb.redis.revisibleFrequencySec", "10"));
             redisRevisibleSetFrequencySec = Integer.parseInt(props.getProperty("cmb.redis.revisibleSetFrequencySec", "1"));
             
@@ -666,22 +660,6 @@ public class CMBProperties {
 
     public int getRedisRevisibleFrequencySec() {
         return redisRevisibleFrequencySec;
-    }
-
-    public boolean isRedisPayloadCacheEnabled() {
-        return redisPayloadCacheEnabled;
-    }
-
-    public void setRedisPayloadCacheEnabled(boolean redisPayloadCacheEnabled) {
-        this.redisPayloadCacheEnabled = redisPayloadCacheEnabled;
-    }
-
-    public int getRedisPayloadCacheTTLSec() {
-        return redisPayloadCacheTTLSec;
-    }
-
-    public int getRedisPayloadCacheSizePerQueue() {
-        return redisPayloadCacheSizePerQueue;
     }
 
     public int getRedisExpireTTLSec() {

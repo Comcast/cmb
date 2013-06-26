@@ -41,7 +41,11 @@ public class CQSClearQueueAction extends CQSAction {
         HttpServletResponse response = (HttpServletResponse)asyncContext.getResponse();
 
 		CQSQueue queue = CQSCache.getCachedQueue(user, request);
-		PersistenceFactory.getCQSMessagePersistence().clearQueue(queue.getRelativeUrl());
+		
+        for (int shard=0; shard<queue.getNumberOfShards(); shard++) {
+            PersistenceFactory.getCQSMessagePersistence().clearQueue(queue.getRelativeUrl(), shard);
+        }
+		
 		String out = CQSMessagePopulator.getClearQueueResponse();
 		response.getWriter().println(out);
 		

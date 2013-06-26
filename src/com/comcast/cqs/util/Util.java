@@ -36,10 +36,13 @@ import me.prettyprint.hector.api.beans.HSuperColumn;
 import me.prettyprint.hector.api.beans.SuperSlice;
 import javax.servlet.http.HttpServletRequest;
 
+import org.apache.log4j.Logger;
+
 import com.comcast.cmb.common.persistence.CassandraPersistence;
 import com.comcast.cmb.common.util.CMBErrorCodes;
 import com.comcast.cmb.common.util.CMBException;
 import com.comcast.cmb.common.util.CMBProperties;
+import com.comcast.cmb.common.util.PersistenceException;
 import com.comcast.cqs.model.CQSMessage;
 import com.comcast.cqs.model.CQSQueue;
 /**
@@ -48,6 +51,8 @@ import com.comcast.cqs.model.CQSQueue;
  *
  */
 public class Util {
+	
+	private static Logger logger = Logger.getLogger(Util.class);
 	
 	public static boolean isValidQueueUrl(String arn) {
 
@@ -554,4 +559,23 @@ public class Util {
 		
 		return messageCounts;
 	}
+	
+    public static int getShardFromReceiptHandle(String receiptHandle) throws PersistenceException {
+
+    	String handleParts[] = receiptHandle.split(":");
+    	
+    	if (handleParts.length < 3) {
+    		throw new PersistenceException(CMBErrorCodes.InternalError, "Invalid receipt handle " + receiptHandle);
+    	}
+    	
+    	String keyParts[] = handleParts[2].split("_");
+
+    	if (keyParts.length < 3) {
+    		//throw new PersistenceException(CMBErrorCodes.InternalError, "Invalid receipt handle " + receiptHandle);
+    		logger.warn("event=missing_shard_info receipt_handle=" + receiptHandle + " action=default_to_zero");
+    		return 0;
+    	}
+    	
+    	return Integer.parseInt(keyParts[1]);
+    }
 }

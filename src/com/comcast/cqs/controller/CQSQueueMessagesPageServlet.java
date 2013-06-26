@@ -18,6 +18,7 @@ package com.comcast.cqs.controller;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -31,6 +32,8 @@ import org.apache.log4j.Logger;
 import org.w3c.dom.Element;
 
 import com.amazonaws.services.sqs.model.DeleteMessageRequest;
+import com.amazonaws.services.sqs.model.GetQueueAttributesRequest;
+import com.amazonaws.services.sqs.model.GetQueueAttributesResult;
 import com.amazonaws.services.sqs.model.SendMessageRequest;
 import com.comcast.cmb.common.controller.AdminServletBase;
 import com.comcast.cmb.common.controller.CMBControllerServlet;
@@ -57,6 +60,7 @@ public class CQSQueueMessagesPageServlet extends AdminServletBase {
 		CMBControllerServlet.valueAccumulator.initializeAllCounters();
 		response.setContentType("text/html");
 		PrintWriter out = response.getWriter();
+		
 		String userId = request.getParameter("userId");
 		String queueName = request.getParameter("queueName");
 		String msgStr = request.getParameter("message");
@@ -64,6 +68,12 @@ public class CQSQueueMessagesPageServlet extends AdminServletBase {
 		String nextHandle = request.getParameter("nextHandle");
 		String receiptHandle = request.getParameter("receiptHandle");
 		Map<?, ?> parameters = request.getParameterMap();
+		
+		int shard = 0;
+		
+		if (request.getParameter("shard") != null) {
+			shard = Integer.parseInt(request.getParameter("shard"));
+		}
 
 		String queueUrl = Util.getAbsoluteQueueUrlForName(queueName, userId);
 
@@ -96,6 +106,20 @@ public class CQSQueueMessagesPageServlet extends AdminServletBase {
 			}
 		}
 		
+		int numberOfShards = 1;
+		
+		try {	
+			
+			GetQueueAttributesRequest getQueueAttributesRequest = new GetQueueAttributesRequest(queueUrl);
+			getQueueAttributesRequest.setAttributeNames(Arrays.asList("NumberOfShards"));
+			GetQueueAttributesResult getQueueAttributesResult = sqs.getQueueAttributes(getQueueAttributesRequest);
+			Map<String, String> attributes = getQueueAttributesResult.getAttributes();
+        	numberOfShards = Integer.parseInt(attributes.get("NumberOfShards"));
+			
+		} catch (Exception ex) {
+			logger.error("event=get_queue_attributes url=" + queueUrl);
+		}
+		
 		out.println("<html>");
 		
 		header(request, out, "Peek Messages for Queue " + queueName);
@@ -112,16 +136,30 @@ public class CQSQueueMessagesPageServlet extends AdminServletBase {
 		}
 		
         out.println("<p><table><tr><td><b>Send message:</b></td><td></td></tr>");
-        out.println("<form action=\"/webui/cqsuser/message/?userId="+userId+"&queueName="+queueName+"\" method=POST>");
-        out.println("<tr><td><textarea rows='3' cols='50' name='message'></textarea><input type='hidden' name='userId' value='"+ userId + "'></td><td valign='bottom'><input type='submit' value='Send' name='Send' /></td></tr></form></table></p>");
-
+        out.println("<form id='frm1' action=\"/webui/cqsuser/message/?userId="+userId+"&queueName="+queueName+"\" method=POST>");
+        out.println("<tr><td><textarea rows='3' cols='50' name='message'></textarea><input type='hidden' name='userId' value='"+ userId + "'></td><td valign='bottom'><input type='submit' value='Send' name='Send' /></td></tr></form>");
+        out.println("<tr><td>&nbsp;</td></tr>");
+        
+		if (numberOfShards > 1) {
+			out.println("<form id='frm2' action=\"/webui/cqsuser/message/?userId="+userId+"&queueName="+queueName+"\" method=POST>");
+			out.println("<tr><td>Shard: <select name='shard' onChange='document.getElementById(\"frm2\").submit();'>");
+			for (int i=0; i<numberOfShards; i++) {
+				out.print("<option value='" + i + "'");
+				if (shard == i) {
+					out.print(" selected");
+				}
+				out.println(">" + i + "</option>");
+			}
+			out.println("</form></select></td></tr></table></p>");
+		}
+		
         List<CQSMessage> messages = null;
         
 		try {
 			
 			if (queueUrl != null) {
 				
-				String peekRequestUrl = cqsServiceBaseUrl + user.getUserId() + "/" + queueName + "?Action=PeekMessage&AWSAccessKeyId=" + user.getAccessKey() + "&MaxNumberOfMessages=10";
+				String peekRequestUrl = cqsServiceBaseUrl + user.getUserId() + "/" + queueName + "?Action=PeekMessage&AWSAccessKeyId=" + user.getAccessKey() + "&MaxNumberOfMessages=10&Shard=" + shard;
 
 				if (prevHandle != null) {
 					peekRequestUrl += "&PreviousReceiptHandle=" + prevHandle; 

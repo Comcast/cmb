@@ -45,35 +45,19 @@ public class CQSGetQueueUrlAction extends CQSAction {
         HttpServletRequest request = (HttpServletRequest)asyncContext.getRequest();
         HttpServletResponse response = (HttpServletResponse)asyncContext.getResponse();
 		
-		String qName = request.getParameter("QueueName");
+		String queueName = request.getParameter("QueueName");
 
-        if (qName == null) {
-            throw new CMBException(CMBErrorCodes.MissingParameter, "QueueName not found");
+        if (queueName == null) {
+            throw new CMBException(CMBErrorCodes.MissingParameter, "Parameter QueueName not found");
         }
 
-        String ownerId = request.getParameter("QueueOwnerAWSAccountId");
-
-        if (ownerId == null) {
-            ownerId = user.getUserId();
-        }
-
-        CQSQueue queue = PersistenceFactory.getQueuePersistence().getQueue(ownerId, qName);
+        CQSQueue queue = PersistenceFactory.getQueuePersistence().getQueue(user.getUserId(), queueName);
 
         if (queue == null) {
-            throw new CMBException(CQSErrorCodes.NonExistentQueue, "Queue not found with name=" + qName + " ownerId=" + ownerId);
+            throw new CMBException(CQSErrorCodes.NonExistentQueue, "Queue not found with name " + queueName + " for user " + user.getUserId());
         }
         
-        if (!ownerId.equals(user.getUserId())) {
-	        
-        	CMBPolicy policy = new CMBPolicy(queue.getPolicy());
-	        
-        	if (!policy.isAllowed(user, "CQS:" + this.actionName)) {
-	            throw new CMBException(CMBErrorCodes.AccessDenied, "You don't have permission for " + this.actionName);
-	        }
-        }
-
         String out = CQSQueuePopulator.getQueueUrlResponse(queue);
-
         response.getWriter().print(out);
         
         return true;
@@ -83,5 +67,4 @@ public class CQSGetQueueUrlAction extends CQSAction {
 	public boolean isActionAllowed(User user, HttpServletRequest request, String service, CMBPolicy policy) {
 		return true;
 	}
-
 }

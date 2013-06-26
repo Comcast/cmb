@@ -20,6 +20,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 import javax.servlet.AsyncContext;
 import javax.servlet.http.HttpServletRequest;
@@ -35,6 +36,7 @@ import com.comcast.cqs.io.CQSMessagePopulator;
 import com.comcast.cqs.model.CQSMessage;
 import com.comcast.cqs.model.CQSQueue;
 import com.comcast.cqs.util.CQSConstants;
+import com.comcast.cqs.util.Util;
 
 /**
  * Peek message in queue
@@ -42,6 +44,8 @@ import com.comcast.cqs.util.CQSConstants;
  *
  */
 public class CQSPeekMessageAction extends CQSAction {
+	
+	private static final Random rand = new Random();
 	
 	public CQSPeekMessageAction() {
 		super("PeekMessage");
@@ -76,6 +80,23 @@ public class CQSPeekMessageAction extends CQSAction {
 		
 		String previousReceiptHandle = request.getParameter("PreviousReceiptHandle");
 		String nextReceiptHandle = request.getParameter("NextReceiptHandle");
+		String shardNumber = request.getParameter("Shard");
+		
+	    int shard = 0;
+	    
+		if (previousReceiptHandle != null) {
+			shard = Util.getShardFromReceiptHandle(previousReceiptHandle);
+		} else if (nextReceiptHandle != null) {
+			shard = Util.getShardFromReceiptHandle(nextReceiptHandle);
+		} else if (shardNumber != null) {
+			shard = Integer.parseInt(shardNumber);
+		} else if (queue.getNumberOfShards() > 1) {
+	    	shard = rand.nextInt(queue.getNumberOfShards());
+		}
+		
+		if (shard < 0 || shard >= queue.getNumberOfShards()) {
+            throw new CMBException(CMBErrorCodes.InvalidParameterValue, "Shard number " + shard +" exceeds number of available shards in queue (" + queue.getNumberOfShards() + ").");
+		}
 		
 		int maxNumberOfMessages = CMBProperties.getInstance().getCQSMaxReceiveMessageCount();
 		        
@@ -86,13 +107,10 @@ public class CQSPeekMessageAction extends CQSAction {
         	if (maxNumberOfMessages < 1 || maxNumberOfMessages > CMBProperties.getInstance().getCQSMaxReceiveMessageCount()) {
                 throw new CMBException(CMBErrorCodes.InvalidParameterValue, "The value for MaxNumberOfMessages is not valid (must be from 1 to " + CMBProperties.getInstance().getCQSMaxReceiveMessageCount() + ").");
             }
-        	
         }
 
-        List<CQSMessage> messageList = PersistenceFactory.getCQSMessagePersistence().peekQueue(queue.getRelativeUrl(), previousReceiptHandle, nextReceiptHandle, maxNumberOfMessages);
+        List<CQSMessage> messageList = PersistenceFactory.getCQSMessagePersistence().peekQueue(queue.getRelativeUrl(), shard, previousReceiptHandle, nextReceiptHandle, maxNumberOfMessages);
         
-        //CQSMonitor.Inst.addNumberOfMessagesReturned(queueUrl, messageList.size());
-		
         return messageList;
 	}
 }

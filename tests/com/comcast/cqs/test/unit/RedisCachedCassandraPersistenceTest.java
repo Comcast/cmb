@@ -54,7 +54,6 @@ import com.comcast.cqs.model.CQSQueue;
 import com.comcast.cqs.persistence.ICQSMessagePersistence;
 import com.comcast.cqs.persistence.ICQSMessagePersistenceIdSequence;
 import com.comcast.cqs.persistence.RedisCachedCassandraPersistence;
-import com.comcast.cqs.persistence.RedisPayloadCacheCassandraPersistence;
 import com.comcast.cqs.persistence.RedisCachedCassandraPersistence.QCacheState;
 import com.comcast.cqs.util.CQSConstants;
 
@@ -181,7 +180,7 @@ public class RedisCachedCassandraPersistenceTest {
             }            
         }
         @Override
-        public String sendMessage(CQSQueue queue, CQSMessage message)
+        public String sendMessage(CQSQueue queue, int shard, CQSMessage message)
                 throws PersistenceException, IOException, InterruptedException,
                 NoSuchAlgorithmException {
             
@@ -191,6 +190,7 @@ public class RedisCachedCassandraPersistenceTest {
 
         @Override
         public Map<String, String> sendMessageBatch(CQSQueue queue,
+        		int shard,
                 List<CQSMessage> messages) throws PersistenceException,
                 IOException, InterruptedException, NoSuchAlgorithmException {
             
@@ -224,7 +224,7 @@ public class RedisCachedCassandraPersistenceTest {
         }
 
         @Override
-        public List<CQSMessage> peekQueue(String queueUrl, String previousReceiptHandle, String nextReceiptHandle, int length) throws PersistenceException, IOException, NoSuchAlgorithmException {
+        public List<CQSMessage> peekQueue(String queueUrl, int shard, String previousReceiptHandle, String nextReceiptHandle, int length) throws PersistenceException, IOException, NoSuchAlgorithmException {
             List<CQSMessage> ret = new LinkedList<CQSMessage>();
             int prevHandle = (previousReceiptHandle == null ? -1 : Integer.parseInt(previousReceiptHandle));
             log.info("prevhandle=" + previousReceiptHandle);
@@ -235,10 +235,9 @@ public class RedisCachedCassandraPersistenceTest {
         }
 
         @Override
-        public void clearQueue(String queueUrl) throws PersistenceException,
+        public void clearQueue(String queueUrl, int shard) throws PersistenceException,
                 NoSuchAlgorithmException, UnsupportedEncodingException {
             messages.clear();
-            
         }
 
         @Override
@@ -251,7 +250,7 @@ public class RedisCachedCassandraPersistenceTest {
             return ret;
         }
         @Override
-        public List<String> getIdsFromHead(String queueUrl, int num) {
+        public List<String> getIdsFromHead(String queueUrl, int shard, int num) {
             LinkedList<String> ids = new LinkedList<String>();
             for (int i = headMarker; i < messages.size(); i++) {
                 ids.add(RedisCachedCassandraPersistence.getInstance().testInterface.getMemQueueMessage(""+i, System.currentTimeMillis(), 0));
@@ -263,7 +262,7 @@ public class RedisCachedCassandraPersistenceTest {
             return messages.size();
         }
         @Override
-        public List<CQSMessage> peekQueueRandom(String queueUrl, int length)
+        public List<CQSMessage> peekQueueRandom(String queueUrl, int shard, int length)
                 throws PersistenceException, IOException,
                 NoSuchAlgorithmException {
             if (messages.size() == 0) return Collections.emptyList();
@@ -274,11 +273,11 @@ public class RedisCachedCassandraPersistenceTest {
     @Test
     public void testTestDataPersistence() throws Exception {
         TestDataPersistence p = new TestDataPersistence(2000);
-        List<CQSMessage> msg = p.peekQueue("testQueue", null, null, 1000);
+        List<CQSMessage> msg = p.peekQueue("testQueue", 0, null, null, 1000);
         if (msg.size() != 1000) {
             fail("Expected 1k got:"+msg.size());
         }
-        List<CQSMessage> newMsg = p.peekQueue("testQueue", msg.get(999).getMessageId(), null, 1000);
+        List<CQSMessage> newMsg = p.peekQueue("testQueue", 0, msg.get(999).getMessageId(), null, 1000);
         if (newMsg.size() != 1000) {
             fail("Expected 1k got:"+newMsg.size());
         }
@@ -286,7 +285,7 @@ public class RedisCachedCassandraPersistenceTest {
             fail("last element returned twice");
         }
         
-        List<CQSMessage> newMsg2 = p.peekQueue("testQueue", newMsg.get(999).getMessageId(), null, 1000);
+        List<CQSMessage> newMsg2 = p.peekQueue("testQueue", 0, newMsg.get(999).getMessageId(), null, 1000);
         if (newMsg2.size() != 0) {
             fail("Expected 0");
         }
@@ -353,9 +352,9 @@ public class RedisCachedCassandraPersistenceTest {
         msg.setSuppliedMessageId("2000");
         String newMessageId;
         if (!batch) {
-            newMessageId = redisP.sendMessage(queue, msg);
+            newMessageId = redisP.sendMessage(queue, 0, msg);
         } else {
-            Map<String, String> clientToMessageId = redisP.sendMessageBatch(queue, Arrays.asList(msg));
+            Map<String, String> clientToMessageId = redisP.sendMessageBatch(queue, 0, Arrays.asList(msg));
             if (clientToMessageId.size() != 1) {
                 fail("Expected one messageId returned");
             }
@@ -661,7 +660,7 @@ public class RedisCachedCassandraPersistenceTest {
         
         log.info("----------Clearing");
         log.info("QCachestae=" + redisP.testInterface.getCacheState("testQueue"));
-        redisP.clearQueue("testQueue");
+        redisP.clearQueue("testQueue", 0);
         
         messages = redisP.receiveMessage(queue, receiveAttributes);
         
@@ -704,12 +703,12 @@ public class RedisCachedCassandraPersistenceTest {
         CQSQueue queue = new CQSQueue("testQueue", "testOwner");
         queue.setRelativeUrl("testQueue");        
 
-        List<CQSMessage> ret = redisP.peekQueue("testQueue", null, null, 10);
+        List<CQSMessage> ret = redisP.peekQueue("testQueue", 0, null, null, 10);
         if (ret.size() != 10) {
             fail("Expected 10. Got:" + ret.size());
         }
         log.info("10th el=" + ret.get(9).getMessageId());
-        List<CQSMessage> ret2 = redisP.peekQueue("testQueue", ret.get(9).getMessageId(), null, 10);
+        List<CQSMessage> ret2 = redisP.peekQueue("testQueue", 0, ret.get(9).getMessageId(), null, 10);
         if (ret2.size() != 10) {
             fail("Expected 10. Got:" + ret2.size());
         }
@@ -719,7 +718,7 @@ public class RedisCachedCassandraPersistenceTest {
             }
         }
         //get all the others
-        List<CQSMessage> ret3 = redisP.peekQueue("testQueue", ret2.get(9).getMessageId(), null, 2001); //length is way past the end
+        List<CQSMessage> ret3 = redisP.peekQueue("testQueue", 0, ret2.get(9).getMessageId(), null, 2001); //length is way past the end
         if (ret3.size() != 2001 - 20) {
             fail("Expected:" + (2001-20) + " got:" + ret3.size());
         }
@@ -727,7 +726,8 @@ public class RedisCachedCassandraPersistenceTest {
     
     @Test
     public void testMessagePersistence() throws NoSuchAlgorithmException, IOException, ClassNotFoundException {
-        HashMap<String, String> att = new HashMap<String, String>();
+        
+    	HashMap<String, String> att = new HashMap<String, String>();
         //att.put("testKey", "val");
         String body = "10268LLLDKDUY6UQAP5VKRPOQMEVT8YOM2DUG08XD8HN6ALRUGISBAQYXZTS5W7IIX15V1QDJL8W3UTQM6BH72UA16D53TMNWV0IGDVVIC5ZB2V7JMCE8MJPMODWFJPSG9GT9U9LVZ163419S3K8IB97592G4JMWR7U2PFYRDFCCVQ2H6J8QT46K2L8XWOHD99PQ8QLZ2K2H00I2TGS4564RWKYFEFOGXRZF2ZN22AYDSXQ2BR8YIG6CSI2QYN9C8CY37MB3U1UK9L123C84KIC1LBMQC5ZJPYJHFG5SY4CR5TBD3RB7VXB4S7NSG0IA1ZYDQPDETT0OPSH5VCAXV82AO99JQ4FDV1ERW0RT3MGDQZHNONXWKNDAMN3F6U1BCILZIXG4TDJ9N5A7EWOVMJP5DZBG8HOLFFD5QC3CVK0OZ6HKWJFETNDNE236WMC2HLZU9N5KCWSZ0BRJBB5XMW1RSHGHY0EBIEIH3RCY5UA0CZDFAQ3ORLDUGYXUQFDKK74E5YAVTKCDTUNXA6LKHVUWEY8JPWUH6ZR1DJZY0NCK61NPU1RRKDIK1DFIPE3X24SUSJXD4ERZISBAJXKNDB4FDYZEN924O9JXR9YH2BXXFEIHWZHN2QDPFBONBMI4UP4ZSH5XXX6YOJCM2ZERTHN5Z39EQHCJTIU30OZF3Z5J9FY1C5BCKX1CCHBLUPA6JMI18HU0ORSQ6ZMTJP4GT1FIFZB2OAEK8R89AXS7DFPLUBRAM6OLQ5EENNVV9G0UBROB8ZOM59TFZQQAEQSL9AD51A7IR0UW171VKS3YPBBWSKTNROKISRKQ49DQ06Y1TRGEWJ8YHM0SL9BACJWFXL3FLUV8E5VYWZM2NSRNO2TVE2O6TSJL2R3YZQIABDINXZ0X48KLQRVEZFDW3OYEL9Z3Z0ALLR1ZPE9E9MWFTHPROVCKI1LST8FVSEQAIUAZZI755IM2MJUW66NHX8K1U3SQV3OS4AG3CYOMKDII3J1ONHAS9HVN7V50RZ6NPKO2C1YQ1V4Q40FNK30THWPX6VY451PBSB1TUGDJEYHJSD4PT0CZEDZFAFNJX6L4S8JCEC3RAO0L4BR3YTXZFZPQZSX8YBLVNIQ29J6PPP9RNFAFVDG49O3S9XNGOI6JSY7GR2NDBKDEEBBJP1B8RFS7KB5VHGCVNQ9YNDEJ8DFUOGFAUSXTY3M181J56P71W9WJHKZSWPZMAYMK7RMR5TZOX0AT5TN0MWHC3N5UZJQR0PR55TFJDARR33DSQK35RQA82PQ7XS2L1DFDEAJ1M0GB6YD9OQGUEW51GO8EY3TJP17LG3Y1V4OUQU858YYLV0QOXIBBIW7YPN48D7HU8IPEFAOW5EHC21N0WD5M9W6HTQHDVYUDI29P1MTH4KHDRWEZUZO77QK64P4Y4TG1T34H47DD06LNE4VYF9D2S7KMY5BZY408KFGPCC6KE6YMZICSHJWS4UZK4B06J9R30LZDXEV9MT8VEDVBF5LOK3V2YHJODRU14OUYOKCX27BC0DZKFRREUF2XRCMYNN1SWMDYZFYOP8AFRB8Q1LKYVIR98CJJS3MH65OJ3Y4PX0QJW2RFY328KIN1C9NUIJN77QY0HDUD2Z7GF37KYXQCF95Q4QIPKHFNE98X3T8GXXTYGTKKGYZNLV1VFLC8UN65HE6AB5RHQLOLW8ES44V47BJDQXSLFDP0WHSRZUUTOPZY15IGGL87VTSS1LO61QM28EQD8794KJZ3SNRFTUFKFMN3U2A9RJO08PB2FK95T9W62ZLJDWZFHPSB81MSHQ4PX10GREP94T6UDKHH0XQS76KKTCU2FUS77WHMFWDSKWWVJAUKDAU84EPE5G0NTG3QP9Y4LJDXAQJPIEKQ5BGD30AWPHXGNY9C336UVEIPPBB583Z3R0OTUT829JDF1OR36VEOVH7FQ7GTZQOPK4_9";
         CQSMessage msg = new CQSMessage(body, att);
@@ -744,11 +744,10 @@ public class RedisCachedCassandraPersistenceTest {
         ObjectInputStream is = new ObjectInputStream(new ByteArrayInputStream(baos.toByteArray()));
         CQSMessage msgRec = (CQSMessage) is.readObject();
         msgRec.setMessageId(messageId);
+
         if (!msgRec.equals(msg)) {
             fail("orig != rec. orig=" + msg + " rec=" + msgRec);
         }
-                
-        
     }
     
     @Test
@@ -802,173 +801,6 @@ public class RedisCachedCassandraPersistenceTest {
         }
     }
     
-        
-    public RedisPayloadCacheCassandraPersistence testPayloadCacheSendGetMessage(boolean batch) throws Exception {
-        TestDataPersistence testP = new TestDataPersistence(2000);
-        RedisPayloadCacheCassandraPersistence pCache = new RedisPayloadCacheCassandraPersistence(testP);
-        pCache.setMessagePersistenceIdSequence(testP);
-        pCache.testInterface.initializeQ("testQueue");
-        
-        CQSQueue queue = new CQSQueue("testQueue", "testOwner");
-        queue.setRelativeUrl("testQueue");        
-        CQSMessage msg = new CQSMessage("test", new HashMap<String, String>());
-        msg.setMessageId("2000");
-        msg.setSuppliedMessageId("2000");
-        String messageId;
-        if (!batch) {
-            String messageIdRet = pCache.sendMessage(queue, msg);
-            messageId = messageIdRet;
-        } else {
-            Map<String, String> ret = pCache.sendMessageBatch(queue, Arrays.asList(msg));
-            if (ret.size() != 1) {
-                fail("Expected 1 value");
-            }
-            if (!ret.containsKey("2000")) {
-                fail("Expected key '2000' in response");
-            }
-            messageId = "2000";
-            
-        }
-
-        if (testP.messages.size() != 2001) {
-            fail("Expected to have added to underlying storage. Size=" + testP.messages.size());
-        }
-        
-        //now call getmessage and ensure the message was from cache by checking if underlying storage
-        //was called with getMessage
-        
-        Map<String, CQSMessage> ret = pCache.getMessages("testQueue", Arrays.asList(messageId));
-        if (ret.size() != 1) {
-            fail("Expected to get one object. got:" + ret.size());
-        }
-        
-        if (!ret.containsKey("2000")) {
-            fail("did not find cqsmessage with id 2000");
-        }
-        CQSMessage rec = ret.get("2000");
-        if (!rec.equals(msg)) {
-            fail("orig != rec");
-        }
-
-        //send message does not cache messages
-        return pCache;
-        
-    }
-    @Test
-    public void testPayloadCacheSendGetMessage() throws Exception {
-        testPayloadCacheSendGetMessage(false);
-    }
-    @Test
-    public void testPayloadCacheSendBatchGetMessage() throws Exception {
-        testPayloadCacheSendGetMessage(true);
-    }
-    @Test
-    public void testPayloadCacheDelete() throws Exception {
-        RedisPayloadCacheCassandraPersistence pCache = testPayloadCacheSendGetMessage(false);
-        pCache.deleteMessage("testQueue", "2000");
-        
-    }
-    @Test
-    public void testPayloadCachePeekAndClear() throws Exception {
-        TestDataPersistence testP = new TestDataPersistence(2000);
-        RedisPayloadCacheCassandraPersistence pCache = new RedisPayloadCacheCassandraPersistence(testP);
-        pCache.setMessagePersistenceIdSequence(testP);
-        pCache.testInterface.initializeQ("testQueue");
-
-        List<CQSMessage> messages = pCache.peekQueue("testQueue", null, null, CMBProperties.getInstance().getRedisPayloadCacheSizePerQueue());
-        int lesser = (testP.messages.size() < CMBProperties.getInstance().getRedisPayloadCacheSizePerQueue()) ? testP.messages.size() : CMBProperties.getInstance().getRedisPayloadCacheSizePerQueue();
-        if (messages.size() != lesser) {
-            fail("Expected " + lesser + " messages. got=" + messages.size());           
-        }
-        
-        //check 1000 messages were cached
-        if (pCache.testInterface.getCacheSize("testQueue") != lesser) {
-            fail("Expected to cache " + lesser +". Got:" + pCache.testInterface.getCacheSize("testQueue"));
-        }
-        
-        pCache.clearQueue("testQueue");
-        if (pCache.testInterface.getCacheSize("testQueue") != 0L) {
-            fail("Expected to cache 0. Got:" + pCache.testInterface.getCacheSize("testQueue"));
-        }
-    }
-    
-    @Test
-    public void testPayloadCcaheGetMessageMiss() throws Exception {
-        TestDataPersistence testP = new TestDataPersistence(2000);
-        RedisPayloadCacheCassandraPersistence pCache = new RedisPayloadCacheCassandraPersistence(testP);
-        pCache.setMessagePersistenceIdSequence(testP);
-        pCache.testInterface.initializeQ("testQueue");
-        
-        CQSQueue queue = new CQSQueue("testQueue", "testOwner");
-        queue.setRelativeUrl("testQueue");        
-        CQSMessage msg = new CQSMessage("test", new HashMap<String, String>());
-        msg.setMessageId("2000");
-        msg.setSuppliedMessageId("2000");
-        pCache.sendMessage(queue, msg);
-
-        if (testP.messages.size() != 2001) {
-            fail("Expected to have added to underlying storage. Size=" + testP.messages.size());
-        }
-        
-        //now call getmessage with batchsize of 10 and ensure 9 come from underlying storage and 1 from cache 
-        Map<String, CQSMessage> ret = pCache.getMessages("testQueue", Arrays.asList("2000", "1", "2", "3", "4", "5", "6", "7", "8", "9"));
-        if (ret.size() != 10) {
-            fail("Expected 10 messages. got=" + ret.size());
-        }
-        if (testP.getMessgeIds.size() != 10) {
-            fail("Expected 10 to come from underlying");
-        }
-    }
-    
-    @Test
-    public void testPayloadCacheFiller() throws Exception {
-        TestDataPersistence testP = new TestDataPersistence(2000);
-        RedisPayloadCacheCassandraPersistence pCache = new RedisPayloadCacheCassandraPersistence(testP);
-        pCache.setMessagePersistenceIdSequence(testP);
-        pCache.testInterface.initializeQ("testQueue");
-
-        Runnable f = pCache.testInterface.getCacheFiller("testQueue");
-        f.run();
-        
-        int lesser = (testP.messages.size() < CMBProperties.getInstance().getRedisPayloadCacheSizePerQueue()) ? testP.messages.size() : CMBProperties.getInstance().getRedisPayloadCacheSizePerQueue();
-        
-        //validate that the cache was populated with the right count and all the messages are in the cache
-        if (pCache.testInterface.getCacheSize("testQueue") != lesser) {
-            fail("Expected:" + lesser + " got:" + pCache.testInterface.getCacheSize("testQueue"));
-        }
-        
-        //ensure the ordered ones are in cache
-        for (int i = 0; i < lesser; i++ ) {
-            if (!pCache.testInterface.isInCache("testQueue", ""+i)) {
-                fail("Expected to find message with id:" + i + " in cache. Couldnt find it");
-            }
-        }
-    }
-    
-    @Test
-    public void testCacheSet() throws Exception {
-        TestDataPersistence testP = new TestDataPersistence(2000);
-        RedisPayloadCacheCassandraPersistence pCache = new RedisPayloadCacheCassandraPersistence(testP);
-        pCache.setMessagePersistenceIdSequence(testP);
-        pCache.testInterface.initializeQ("testQueue");
-
-        pCache.testInterface.setCacheFillingState("testQueue", true);
-        if (!pCache.testInterface.isCacheFillingState("testQueue")) {
-            fail("Expected to find cache in filling state");
-        }
-        pCache.testInterface.setCacheFillingState("testQueue", false);
-        if (pCache.testInterface.isCacheFillingState("testQueue")) {
-            fail("Expected to find cache NOT in filling state");
-        }
-        
-        
-    }
-    
-    @Test
-    public void testDisablePCache() throws Exception {
-        CMBProperties.getInstance().setRedisPayloadCacheEnabled(false);        
-    }
-        
     @Test
     public void floatMath() {
         int a = 10;
@@ -976,6 +808,4 @@ public class RedisCachedCassandraPersistenceTest {
         log.info((float)a/(float)b);
         log.info(   (int)(((float)a / (float)b) * 100)    ) ;
     }
-    
-
 }

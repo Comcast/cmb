@@ -375,6 +375,6 @@ public class CNSStressTest {
 
 		CNSStressTest cns = new CNSStressTest();
 		cns.setup();
-		cns.stressTestCMB();
+		cns.stressTest(true);
 	}
 }

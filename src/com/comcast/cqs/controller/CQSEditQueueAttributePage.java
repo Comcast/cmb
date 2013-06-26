@@ -69,6 +69,7 @@ public class CQSEditQueueAttributePage extends AdminServletBase {
 				String delaySeconds = request.getParameter("delaySeconds");
 				String receiveMessageWaitTimeSeconds = request.getParameter("receiveMessageWaitTimeSeconds");
 				String numberOfPartitions = request.getParameter("numberOfPartitions");
+				String numberOfShards = request.getParameter("numberOfShards");
 				
 				try {
 
@@ -98,10 +99,14 @@ public class CQSEditQueueAttributePage extends AdminServletBase {
 						attributes.put("NumberOfPartitions", numberOfPartitions);
 					}
 
+					if (numberOfPartitions != null && !numberOfPartitions.equals("")) {
+						attributes.put("NumberOfShards", numberOfShards);
+					}
+
 					SetQueueAttributesRequest setQueueAttributesRequest = new SetQueueAttributesRequest(queueUrl, attributes);
 					sqs.setQueueAttributes(setQueueAttributesRequest);
 					
-					logger.debug("event=set_queue_attributes queue_ulr=" + queueUrl + " userId= " + userId);
+					logger.debug("event=set_queue_attributes queue_ulr=" + queueUrl + " user_id= " + userId);
 
 				} catch (Exception ex) {
 					logger.error("event=set_queue_attributes queue_ulr=" + queueUrl + " user_id= " + userId, ex);
@@ -118,6 +123,7 @@ public class CQSEditQueueAttributePage extends AdminServletBase {
 				String delaySeconds = "";
 				String receiveMessageWaitTimeSeconds = "";
 				String numberOfPartitions = "";
+				String numberOfShards = "";
 				
 				if (queueUrl != null) {
 				
@@ -125,7 +131,7 @@ public class CQSEditQueueAttributePage extends AdminServletBase {
 					
 					try {
 						GetQueueAttributesRequest getQueueAttributesRequest = new GetQueueAttributesRequest(queueUrl);
-						getQueueAttributesRequest.setAttributeNames(Arrays.asList("VisibilityTimeout", "MaximumMessageSize", "MessageRetentionPeriod", "DelaySeconds", "ReceiveMessageWaitTimeSeconds", "NumberOfPartitions"));
+						getQueueAttributesRequest.setAttributeNames(Arrays.asList("VisibilityTimeout", "MaximumMessageSize", "MessageRetentionPeriod", "DelaySeconds", "ReceiveMessageWaitTimeSeconds", "NumberOfPartitions", "NumberOfShards"));
 						GetQueueAttributesResult getQueueAttributesResult = sqs.getQueueAttributes(getQueueAttributesRequest);
 						attributes = getQueueAttributesResult.getAttributes();
 						
@@ -135,6 +141,7 @@ public class CQSEditQueueAttributePage extends AdminServletBase {
 						delaySeconds = attributes.get("DelaySeconds");
 						receiveMessageWaitTimeSeconds = attributes.get("ReceiveMessageWaitTimeSeconds");
 						numberOfPartitions = attributes.get("NumberOfPartitions");
+						numberOfShards = attributes.get("NumberOfShards");
 						
 					} catch (Exception ex) {
 						logger.error("event=failed_to_get_attributes queue_url=" + queueUrl, ex);
@@ -168,6 +175,9 @@ public class CQSEditQueueAttributePage extends AdminServletBase {
 
 				out.println("<tr><td>Number Of Partitions:</td><td><input type='text' name='numberOfPartitions' size='50' value='" + numberOfPartitions + "'></td></tr>");
 				out.println("<tr><td>&nbsp;</td><td><I><font color='grey'>Default 100, minimum 1 partition(s)</font></I></td></tr>");
+
+				out.println("<tr><td>Number Of Shards:</td><td><input type='text' name='numberOfShards' size='50' value='" + numberOfShards + "'></td></tr>");
+				out.println("<tr><td>&nbsp;</td><td><I><font color='grey'>Default 1, maximum 100 shards</font></I></td></tr>");
 
 				out.println("<tr><td>&nbsp;</td><td>&nbsp;</td></tr>");
 				

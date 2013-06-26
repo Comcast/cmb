@@ -81,7 +81,8 @@ public class CQSCreateQueueAction extends CQSAction {
         boolean throwQueueExistsError = false;
         int index = 1;
         String attributeName = request.getParameter("Attribute." + index + ".Name");
-
+        int numberOfShards = 1;
+        
         while (attributeName != null) {
             
             String attributeValue = request.getParameter("Attribute." + index + ".Value");
@@ -206,7 +207,10 @@ public class CQSCreateQueueAction extends CQSAction {
                 
             } else if (attributeName.equals(CQSConstants.NUMBER_OF_PARTITIONS)) {
             	
-                if (existingQueue != null && existingQueue.getNumberOfPartitions() != Integer.parseInt(attributeValue)) {
+            	// number of Cassandra rows used to store messages, default is 100 - this number can be set at queue creation time
+            	// or changed later via SetQueueAttributes() API
+
+            	if (existingQueue != null && existingQueue.getNumberOfPartitions() != Integer.parseInt(attributeValue)) {
                     throwQueueExistsError = true;
                     break;
                 }
@@ -225,6 +229,28 @@ public class CQSCreateQueueAction extends CQSAction {
                 
                 newQueue.setNumberOfPartitions(numberOfPartitions);
                 
+            } else if (attributeName.equals(CQSConstants.NUMBER_OF_SHARDS)) {
+            	
+            	// number of internal queues used for random sharding to trade message ordering for enhanced single-queue 
+            	// throughput - this number can only be set at queue creation time and cannot be changed later
+            	
+                if (existingQueue != null && existingQueue.getNumberOfShards() != Integer.parseInt(attributeValue)) {
+                    throwQueueExistsError = true;
+                    break;
+                }
+                
+                try {
+                	numberOfShards = Integer.parseInt(attributeValue);
+                } catch (NumberFormatException ex) {
+                    throw new CMBException(CMBErrorCodes.InvalidParameterValue, CQSConstants.NUMBER_OF_SHARDS + " must be an integer value");
+                }
+                
+        		if (numberOfShards < 1 || numberOfShards > 100) {
+                    throw new CMBException(CMBErrorCodes.InvalidParameterValue, CQSConstants.NUMBER_OF_SHARDS + " should be between 1 and 100");
+        		}
+                
+                newQueue.setNumberOfShards(numberOfShards);
+                
             } else {
                 throw new CMBException(CMBErrorCodes.InvalidRequest, "Attribute: " + attributeName + " is not a valid attribute");
             }
@@ -237,15 +263,15 @@ public class CQSCreateQueueAction extends CQSAction {
             throw new CMBException(CQSErrorCodes.QueueNameExists, "Queue name with " + queueName + " exists");
         }
         
-        if (existingQueue == null) { // create queue only if it doesn't exist yet
-        	PersistenceFactory.getQueuePersistence().createQueue(newQueue);
-        }
+        // create queue and initialize all shards in redis 
         
-        //initialize Cache state for the queue
-        RedisCachedCassandraPersistence.getInstance().checkCacheConsistency(newQueue.getRelativeUrl(), false);
+    	PersistenceFactory.getQueuePersistence().createQueue(newQueue);
+    	
+    	for (int shard=0; shard<numberOfShards; shard++) {
+            RedisCachedCassandraPersistence.getInstance().checkCacheConsistency(newQueue.getRelativeUrl(), shard, false);
+    	}
         
         String out = CQSQueuePopulator.getCreateQueueResponse(newQueue);
-
         response.getWriter().println(out);
         
         return true;

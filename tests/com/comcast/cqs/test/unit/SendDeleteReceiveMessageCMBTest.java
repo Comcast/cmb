@@ -247,7 +247,7 @@ public class SendDeleteReceiveMessageCMBTest {
             logger.info("resp1=" + resp1.resp);
             
             ICQSMessagePersistence persistence = new CQSMessagePartitionedCassandraPersistence();
-            List<CQSMessage> messageList = persistence.peekQueue(queue.getRelativeUrl(), null, null, 25);
+            List<CQSMessage> messageList = persistence.peekQueue(queue.getRelativeUrl(), 0, null, null, 25);
             
             for (CQSMessage message : messageList) {
             	
@@ -293,7 +293,7 @@ public class SendDeleteReceiveMessageCMBTest {
             logger.info("resp1=" + resp1.resp);
             
             ICQSMessagePersistence persistence = new CQSMessagePartitionedCassandraPersistence();
-            List<CQSMessage> messageList = persistence.peekQueue(queue.getRelativeUrl(), null, null, 25);
+            List<CQSMessage> messageList = persistence.peekQueue(queue.getRelativeUrl(), 0, null, null, 25);
             
             for (CQSMessage message : messageList) {
                 Resp res3 = deleteMessage(sqs, user, queue, message.getReceiptHandle());
