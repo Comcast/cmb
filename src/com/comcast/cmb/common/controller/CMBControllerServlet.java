@@ -206,7 +206,12 @@ abstract public class CMBControllerServlet extends HttpServlet {
 			}
 
 			if (value != null) {
-				value = value.replace("\n", "\\n").replace("\r", "\\r");
+				if (value.indexOf('\n') >= 0) {
+					value = value.replace("\n", "\\n");
+				}
+				if (value.indexOf('\r') >= 0) {
+					value = value.replace("\r", "\\r");
+				}
 			}
 
 			params.append(key).append("=").append(value).append(" ");
