@@ -314,7 +314,7 @@ public class CQSScaleQueuesTest {
 	public void CreateQueuesConcurrent() {
 		//queueName = "myqueue";
 		//messageLength = 100;
-		CreateQueuesConcurrent(2, 1000, 10, 100, 10);
+		CreateQueuesConcurrent(2, 1000, 10, 100, 1);
 	}
 	
 	private void CreateQueuesConcurrent(long numQueuesPerThread, long numMessagesPerQueue, int numThreads, int numPartitions, int numShards) {

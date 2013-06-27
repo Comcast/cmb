@@ -24,7 +24,7 @@ public class CQSConstants {
 	
     public static final String ACTION_NAME = "ActionName";
     public static final String AWS_ACCOUNT_ID = "AWSAccountId";
-	public static final String APPROXIMATE_FIRST_RECEIVE_TIMESTAMP = "ApproximateFirstReceiveTimestamp";	
+    public static final String APPROXIMATE_FIRST_RECEIVE_TIMESTAMP = "ApproximateFirstReceiveTimestamp";	
 	public static final String APPROXIMATE_RECEIVE_COUNT = "ApproximateReceiveCount";
 	public static final String APPROXIMATE_NUMBER_OF_MESSAGES = "ApproximateNumberOfMessages";
     public static final String ATTRIBUTE_NAME = "AttributeName";
@@ -46,6 +46,11 @@ public class CQSConstants {
 	public static final String RECEIVE_MESSAGE_WAIT_TIME_SECONDS = "ReceiveMessageWaitTimeSeconds";
 	public static final String NUMBER_OF_PARTITIONS = "NumberOfPartitions";
 	public static final String NUMBER_OF_SHARDS = "NumberOfShards";
+
+    public static final String REDIS_APPROXIMATE_FIRST_RECEIVE_TIMESTAMP = "AFRTS";	
+	public static final String REDIS_APPROXIMATE_RECEIVE_COUNT = "ARC";
+	public static final String REDIS_APPROXIMATE_NUMBER_OF_MESSAGES = "ANM";
+	public static final String REDIS_STATE = "S";
 
 	public static final String COL_ARN = "arn";
 	public static final String COL_NAME = "name";
