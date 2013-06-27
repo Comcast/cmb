@@ -80,24 +80,10 @@ public class UserAuthModule implements IAuthModule {
         return parameters;
     }
 
-    private Map<String, String> getAllHeaders(HttpServletRequest requestUrl) {
-        
-    	Enumeration<String> enumeration = requestUrl.getHeaderNames();
-        Map<String, String> headers = new HashMap<String, String>();
-
-        while (enumeration.hasMoreElements()) {
-            String name = enumeration.nextElement();
-            headers.put(name.toLowerCase(), requestUrl.getHeader(name));
-        }
-
-        return headers;
-    }
-    
     @Override
     public User authenticateByRequest(HttpServletRequest request) throws CMBException {
         
         Map<String, String> parameters = getAllParameters(request);
-        Map<String, String> headers = getAllHeaders(request);
         
         // sample header
         
@@ -115,14 +101,13 @@ public class UserAuthModule implements IAuthModule {
         //x-amz-content-sha256=48a38266faf90970d6c7fea9b15e6ba366e5f6397c2970fc893f8a7b5e207bd0
         
         String accessKey = parameters.get("AWSAccessKeyId");
+        String authorizationHeader = request.getHeader("authorization");
         
-        if (accessKey == null && headers.containsKey("authorization")) {
+        if (accessKey == null && authorizationHeader != null) {
         	
-        	String authorization = headers.get("authorization");
-        	
-        	if (authorization.contains("Credential=") && authorization.contains("/")) {
+        	if (authorizationHeader.contains("Credential=") && authorizationHeader.contains("/")) {
         		
-        		accessKey = authorization.substring(authorization.indexOf("Credential=") + "Credential=".length(), authorization.indexOf("/"));
+        		accessKey = authorizationHeader.substring(authorizationHeader.indexOf("Credential=") + "Credential=".length(), authorizationHeader.indexOf("/"));
         		
         		if (CMBProperties.getInstance().getEnableSignatureAuth()) {
                     logger.error("event=authenticate error_code=aws4_not_supported");
