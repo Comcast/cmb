@@ -1066,7 +1066,6 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
                                 recvCount = Integer.parseInt(attrs.get(1)) + 1;
                             }
                             jedis.hset(queue.getRelativeUrl() + "-" + shard + "-A-" + memId, CQSConstants.APPROXIMATE_RECEIVE_COUNT, Integer.toString(recvCount));
-
                             jedis.expire(queue.getRelativeUrl() + "-" + shard +  "-A-" + memId, 3600 * 24 * 14); //14 days expiration if not deleted
                             msgAttrs.put(CQSConstants.APPROXIMATE_RECEIVE_COUNT, Integer.toString(recvCount));
                             message.setAttributes(msgAttrs);
@@ -1200,10 +1199,33 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
             Map<String, CQSMessage> ret = getMessages(queueUrl, memIdsRet);
             //return list in the same order as memIdsRet
             List<CQSMessage> messages = new LinkedList<CQSMessage>();
-            for (String memId : memIdsRet) {
-                CQSMessage msg = ret.get(memId);
-                if (msg != null) {
-                	messages.add(msg);
+            ShardedJedis jedis = null;
+            boolean brokenJedis = false;
+            try {
+            	jedis = getResource();
+	            for (String memId : memIdsRet) {
+	                CQSMessage message = ret.get(memId);
+	                if (message != null) {
+	                	//get message-attributes and populate in message
+	                    Map<String, String> msgAttrs = (message.getAttributes() != null) ?  message.getAttributes() : new HashMap<String, String>();
+	                    List<String> attrs = jedis.hmget(queueUrl + "-" + shard + "-A-" + memId, CQSConstants.APPROXIMATE_FIRST_RECEIVE_TIMESTAMP, CQSConstants.APPROXIMATE_RECEIVE_COUNT);
+	                    if (attrs.get(0) != null) {
+	                        msgAttrs.put(CQSConstants.APPROXIMATE_FIRST_RECEIVE_TIMESTAMP, attrs.get(0));
+	                    }
+	                    if (attrs.get(1) != null) {
+		                    msgAttrs.put(CQSConstants.APPROXIMATE_RECEIVE_COUNT, Integer.toString(Integer.parseInt(attrs.get(1))));
+	                    }
+	                    message.setAttributes(msgAttrs);
+	                    messages.add(message);
+	                }
+	            }
+            } catch (JedisConnectionException e) {
+                logger.warn("event=peek_message error_code=redis_unavailable num_connections=" + numRedisConnections.get());
+                brokenJedis = true;
+                cacheAvailable = false;
+            } finally {
+                if (jedis != null) {
+                    returnResource(jedis, brokenJedis);
                 }
             }
             logger.debug("event=peek_queue cache=available queue_url=" + queueUrl + " shard=" + shard + " num_messages=" + messages.size());
