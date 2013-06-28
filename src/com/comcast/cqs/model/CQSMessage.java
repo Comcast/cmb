@@ -23,6 +23,7 @@ import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
@@ -57,11 +58,12 @@ public final class CQSMessage implements Serializable {
 	public CQSMessage(String body, Map<String, String> attributes) throws NoSuchAlgorithmException, UnsupportedEncodingException {
 		
 		this.messageId = UUID.randomUUID().toString();
-		
-		setBody(body);
-		setAttributes(attributes);
-		MessageDigest digest = MessageDigest.getInstance("MD5");
-		setMD5OfBody(Base64.encodeBase64String(digest.digest(body.getBytes("UTF-8"))));
+		this.body = body;
+		this.attributes = attributes;
+
+		if (body != null) {
+			setMD5OfBody(getMD5(body));
+		}
 	}
 
 	public CQSMessage(String messageId, String body) throws NoSuchAlgorithmException, UnsupportedEncodingException {
@@ -70,8 +72,7 @@ public final class CQSMessage implements Serializable {
 		this.body = body;
 
 		if (body != null) {
-			MessageDigest digest = MessageDigest.getInstance("MD5");
-			setMD5OfBody(Base64.encodeBase64String(digest.digest(body.getBytes("UTF-8"))));
+			setMD5OfBody(getMD5(body));
 		}
 	}
 
@@ -81,7 +82,7 @@ public final class CQSMessage implements Serializable {
 
 	public void setMessageId(String messageId) {
 		this.messageId = messageId;
-		setReceiptHandle(messageId);
+		this.receiptHandle = messageId;
 	}
 
 	public Map<String, String> getAttributes() {
@@ -140,6 +141,26 @@ public final class CQSMessage implements Serializable {
 	public void setTimebasedId(Object timebasedId) {
 		this.timebasedId = timebasedId;
 	}
+	
+	private String getMD5(String message) throws NoSuchAlgorithmException, UnsupportedEncodingException {
+		
+		MessageDigest digest = MessageDigest.getInstance("MD5");
+		byte bytes[] = digest.digest(message.getBytes("UTF-8"));
+        StringBuilder md5 = new StringBuilder(bytes.length*2);
+
+        for (int i = 0; i < bytes.length; i++) {
+        	String hexByte = Integer.toHexString(bytes[i]);
+        	if (hexByte.length() == 1) {
+                md5.append("0");
+            } else if (hexByte.length() == 8) {
+            	hexByte = hexByte.substring(6);
+            }
+        	md5.append(hexByte);
+        }
+        
+        String result = md5.toString().toLowerCase();
+        return result;
+	}
 
 	/**
 	 * The persistent state of the CQSMessage
@@ -151,7 +172,7 @@ public final class CQSMessage implements Serializable {
 	 */
 	private void readObject(ObjectInputStream aInputStream) throws IOException, ClassNotFoundException, NoSuchAlgorithmException {
 		
-		//always perform the default de-serialization first
+		// always perform the default de-serialization first
 		
 		aInputStream.defaultReadObject(); //should parse body
 		int attCount = aInputStream.readInt();
@@ -163,13 +184,12 @@ public final class CQSMessage implements Serializable {
 			attributes.put(key, val);
 		}
 
-		MessageDigest digest = MessageDigest.getInstance("MD5");
-		this.setMD5OfBody(Base64.encodeBase64String(digest.digest(body.getBytes("UTF-8"))));
+		setMD5OfBody(getMD5(body));
 	}
 
 	private void writeObject(ObjectOutputStream aOutputStream) throws IOException {
 
-		//perform the default serialization for all non-transient, non-static fields
+		// perform the default serialization for all non-transient, non-static fields
 		
 		aOutputStream.defaultWriteObject(); //should serialize body
 		aOutputStream.writeInt(attributes.size());
