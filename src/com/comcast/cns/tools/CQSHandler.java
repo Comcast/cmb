@@ -130,15 +130,8 @@ public class CQSHandler {
         CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CNSCQSTime, ts2 - ts1);
         
         if (msgs.size() > 0) {
-        	
-            logger.info("event=received_messages count=" + msgs.size());
-        	
-            try {
-        		message = msgs.get(0);
-        	} catch (Exception ex) {
-                logger.error("event=error_receiving_message", ex);
-                message = null;
-        	}
+    		message = msgs.get(0);
+            logger.debug("event=received_message receipt_handle=" + message.getReceiptHandle());
         } 
 
         return message; 

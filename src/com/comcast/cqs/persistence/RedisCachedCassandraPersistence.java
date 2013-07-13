@@ -255,7 +255,7 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
     /**
      * 
      * @param queueUrl
-     * @return The Q-S value for a queue or null if none exists
+     * @return The state of the queue or null if none exists
      */
     private QCacheState getCacheState(String queueUrl, int shard) {
         
@@ -968,7 +968,7 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
         
         if (cacheAvailable) {    
         	
-        	//get the messageIds from in-memQ
+        	// get the messageIds from in redis list
             
         	ShardedJedis jedis = null;
             boolean brokenJedis = false;
@@ -977,7 +977,7 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
                 
             	jedis = getResource();
 
-                //process revisible-set before getting from queue
+                // process revisible-set before getting from queue
                 
                 tryCheckAndProcessRevisibleSet(queue.getRelativeUrl(), shard, CMBProperties.getInstance().getRedisRevisibleSetFrequencySec());
 

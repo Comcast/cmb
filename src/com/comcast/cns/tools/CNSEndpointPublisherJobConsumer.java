@@ -29,6 +29,7 @@ import org.apache.http.conn.HttpHostConnectException;
 import org.apache.log4j.Logger;
 
 import com.amazonaws.AmazonClientException;
+import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.model.Message;
 import com.comcast.cmb.common.controller.CMBControllerServlet;
@@ -66,6 +67,8 @@ public class CNSEndpointPublisherJobConsumer implements CNSPublisherPartitionRun
     private static final RollingWindowCapture<BadEndpointEvent> badEndpointCounterWindow = new RollingWindowCapture<BadEndpointEvent>(60, 10000);
     
     public static final List<String> acceptableHttpResponseCodes = CMBProperties.getInstance().getCNSPublisherAcceptableHttpStatusCodes();
+    
+    private long processingDelayMillis = 10;
     
     public static class BadEndpointEvent extends RollingWindowCapture.PayLoad {
     	public final String endpointUrl;
@@ -262,10 +265,23 @@ public class CNSEndpointPublisherJobConsumer implements CNSPublisherPartitionRun
 	        
 	        String queueName = CNS_CONSUMER_QUEUE_NAME_PREFIX + partition;
 	        String queueUrl = CQSHandler.getQueueUrl(queueName);
-	        Message msg = CQSHandler.receiveMessage(queueUrl, 20);
+	        Message msg = null;
+	        
+	        if (CMBProperties.getInstance().isCQSLongPollEnabled()) {
+	        	msg = CQSHandler.receiveMessage(queueUrl, 20); 
+	        } else {
+	        	msg = CQSHandler.receiveMessage(queueUrl, 0); 
+	        }
+	        
     		CNSWorkerMonitor.getInstance().registerCQSServiceAvailable(true);
 
             if (msg != null) {   
+            	
+	        	// if long polling disabled and message found reset exponential backoff
+	        	
+	        	if (!CMBProperties.getInstance().isCQSLongPollEnabled()) {
+	        		processingDelayMillis = 10;
+	        	}
             	
                 messageFound = true;
                 
@@ -294,17 +310,29 @@ public class CNSEndpointPublisherJobConsumer implements CNSPublisherPartitionRun
                     }
                     
                 } catch (TopicNotFoundException e) {
-                    logger.error("event=run_exception exception=TopicNotFound action=skip_job");
+                    logger.error("event=topic_not_found action=skip_job");
                     CQSHandler.deleteMessage(queueUrl, msg.getReceiptHandle());
                 } catch (Exception e) {
-                    logger.error("event=run_exception action=wait_for_revisibility", e);
+                    logger.error("event=job_consumer_exception action=wait_for_revisibility", e);
                 }
                 
                 long tsFinal = System.currentTimeMillis();
-                logger.info("event=run_pass_done CNSCQSTimeMS=" + CMBControllerServlet.valueAccumulator.getCounter(AccumulatorName.CNSCQSTime) + " responseTimeMS=" + (tsFinal - ts0));
+                logger.info("event=processed_consumer_job cns_cqs_ms=" + CMBControllerServlet.valueAccumulator.getCounter(AccumulatorName.CNSCQSTime) + " resp_ms=" + (tsFinal - ts0));
                 
             } else {
-                logger.debug("event=run_pass_done");
+
+            	// if long polling disabled and no message found do exponential backoff
+	        	
+	        	if (!CMBProperties.getInstance().isCQSLongPollEnabled()) {
+	        		
+		        	if (processingDelayMillis < CMBProperties.getInstance().getCNSProducerProcessingMaxDelay()) {
+		        		processingDelayMillis *= 2;
+		        	}
+		        	
+		        	logger.info("sleeping_ms=" + processingDelayMillis);
+		        	
+	        		Thread.sleep(processingDelayMillis);
+	        	}
             }
 
         } catch (AmazonClientException ex) {
@@ -312,12 +340,15 @@ public class CNSEndpointPublisherJobConsumer implements CNSPublisherPartitionRun
 	    	if (ex.getCause() instanceof HttpHostConnectException) {
 	    		logger.error("event=cqs_service_unavailable", ex);
 	    		CNSWorkerMonitor.getInstance().registerCQSServiceAvailable(false);
-	    	} else {
-	        	try {
+	    	} else if (ex instanceof AmazonServiceException && ((AmazonServiceException)ex).getErrorCode().equals("NonExistentQueue")) {
+	    		try {
 	        		CQSHandler.ensureQueuesExist(CNS_CONSUMER_QUEUE_NAME_PREFIX, CMBProperties.getInstance().getCNSNumEndpointPublishJobQueues());
 	        	} catch (Exception e) {
 	        		logger.error("event=failed_to_check_consumer_queue_existence", e);
 	        	}
+	    	} else {
+	    		logger.error("event=cqs_service_failure", ex);
+	    		CNSWorkerMonitor.getInstance().registerCQSServiceAvailable(false);
 	    	}
 
         } catch (Exception ex) {

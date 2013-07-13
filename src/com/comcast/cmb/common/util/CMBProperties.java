@@ -192,7 +192,7 @@ public class CMBProperties {
         } else if (new File("cmb.properties").exists()) {
 			file = new File("cmb.properties");
         } else {
-            throw new IllegalArgumentException("Missing VM parameter cmb.propertyFile");
+            throw new IllegalArgumentException("Could not locate cmb.properties.");
         }
 		
 		log.info("event=loading_cmb_properties file=" + file.getAbsolutePath());
@@ -344,9 +344,9 @@ public class CMBProperties {
             useSubInfoCache = Boolean.parseBoolean(props.getProperty("cmb.cns.useSubInfoCache", "true"));
             fileStream.close();
 
-		} catch (Exception e) {
-            log.error("event=load_cmb_properties error_code=unable_to_load_file file="+System.getProperty("CMB.propertyFile"), e);
-            throw new RuntimeException("Unable to load CMB.propertyFile");
+		} catch (Exception ex) {
+            log.error("event=load_cmb_properties error_code=unable_to_load_file file=" + file.getAbsolutePath(), ex);
+            throw new RuntimeException("Could not load properties from " + file.getAbsolutePath());
 		}
 	}
 	
