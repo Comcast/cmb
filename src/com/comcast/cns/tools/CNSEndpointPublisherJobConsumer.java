@@ -329,7 +329,7 @@ public class CNSEndpointPublisherJobConsumer implements CNSPublisherPartitionRun
 		        		processingDelayMillis *= 2;
 		        	}
 		        	
-		        	logger.info("sleeping_ms=" + processingDelayMillis);
+		        	logger.debug("sleeping_ms=" + processingDelayMillis);
 		        	
 	        		Thread.sleep(processingDelayMillis);
 	        	}
