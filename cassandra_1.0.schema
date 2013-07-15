@@ -37,7 +37,6 @@ create column family CNSTopics
   and keys_cached = 200000.0
   and key_cache_save_period = 600
   and read_repair_chance = 0.1
-  and gc_grace = 5
   and min_compaction_threshold = 4
   and max_compaction_threshold = 32
   and replicate_on_write = true
@@ -68,7 +67,6 @@ create column family CNSTopicsByUserId
   and keys_cached = 200000.0
   and key_cache_save_period = 600
   and read_repair_chance = 0.1
-  and gc_grace = 5
   and min_compaction_threshold = 4
   and max_compaction_threshold = 32
   and replicate_on_write = true
@@ -94,8 +92,7 @@ create column family CNSTopicSubscriptions
   and row_cache_keys_to_save = 2147483647
   and keys_cached = 200000.0
   and key_cache_save_period = 600
-  and read_repair_chance = 1.0
-  and gc_grace = 5
+  and read_repair_chance = 0.1
   and min_compaction_threshold = 4
   and max_compaction_threshold = 32
   and replicate_on_write = true
@@ -139,7 +136,6 @@ create column family CNSTopicSubscriptionsIndex
   and keys_cached = 200000.0
   and key_cache_save_period = 600
   and read_repair_chance = 0.1
-  and gc_grace = 5
   and min_compaction_threshold = 4
   and max_compaction_threshold = 32
   and replicate_on_write = true
@@ -163,7 +159,6 @@ create column family CNSTopicSubscriptionsUserIndex
   and keys_cached = 200000.0
   and key_cache_save_period = 600
   and read_repair_chance = 0.1
-  and gc_grace = 5
   and min_compaction_threshold = 4
   and max_compaction_threshold = 32
   and replicate_on_write = true
@@ -187,7 +182,6 @@ create column family CNSTopicSubscriptionsTokenIndex
   and keys_cached = 200000.0
   and key_cache_save_period = 600
   and read_repair_chance = 0.1
-  and gc_grace = 5
   and min_compaction_threshold = 4
   and max_compaction_threshold = 32
   and replicate_on_write = true
@@ -211,7 +205,6 @@ create column family CNSTopicAttributes
   and keys_cached = 200000.0
   and key_cache_save_period = 600
   and read_repair_chance = 0.1
-  and gc_grace = 5
   and min_compaction_threshold = 4
   and max_compaction_threshold = 32
   and replicate_on_write = true
@@ -242,7 +235,6 @@ create column family CNSSubscriptionAttributes
   and keys_cached = 200000.0
   and key_cache_save_period = 600
   and read_repair_chance = 0.1
-  and gc_grace = 5
   and min_compaction_threshold = 4
   and max_compaction_threshold = 32
   and replicate_on_write = true
@@ -267,10 +259,9 @@ create column family CNSSubscriptionAttributes
 --
 
 create column family CNSTopicStats with default_validation_class=CounterColumnType 
-and key_validation_class=UTF8Type
-and key_cache_save_period=600
-and gc_grace=5 
-and comparator=UTF8Type; 
+  and key_validation_class=UTF8Type
+  and key_cache_save_period=600
+  and comparator=UTF8Type; 
 
 --
 -- CNSWorkers Column Family
@@ -289,7 +280,6 @@ create column family CNSWorkers
   and keys_cached = 200000.0
   and key_cache_save_period = 600
   and read_repair_chance = 0.1
-  and gc_grace = 5
   and min_compaction_threshold = 4
   and max_compaction_threshold = 32
   and replicate_on_write = true
@@ -313,7 +303,6 @@ create column family CNSAPIServers
   and keys_cached = 200000.0
   and key_cache_save_period = 600
   and read_repair_chance = 0.1
-  and gc_grace = 5
   and min_compaction_threshold = 4
   and max_compaction_threshold = 32
   and replicate_on_write = true
@@ -344,7 +333,6 @@ create column family CQSQueues
   and keys_cached = 200000.0
   and key_cache_save_period = 600
   and read_repair_chance = 0.1
-  and gc_grace = 5
   and min_compaction_threshold = 4
   and max_compaction_threshold = 32
   and replicate_on_write = true
@@ -393,7 +381,6 @@ create column family CQSQueuesByUserId
   and keys_cached = 200000.0
   and key_cache_save_period = 600
   and read_repair_chance = 0.1
-  and gc_grace = 5
   and min_compaction_threshold = 4
   and max_compaction_threshold = 32
   and replicate_on_write = true
@@ -417,7 +404,7 @@ create column family CQSQueuesByUserId
   and row_cache_keys_to_save = 2147483647
   and keys_cached = 0.0
   and key_cache_save_period = 14400
-  and read_repair_chance = 1.0
+  and read_repair_chance = 0.1
   and gc_grace = 5
   and min_compaction_threshold = 4
   and max_compaction_threshold = 32
@@ -458,7 +445,6 @@ create column family CQSAPIServers
   and keys_cached = 200000.0
   and key_cache_save_period = 600
   and read_repair_chance = 0.1
-  and gc_grace = 5
   and min_compaction_threshold = 4
   and max_compaction_threshold = 32
   and replicate_on_write = true
@@ -488,7 +474,6 @@ create column family Users
   and keys_cached = 200000.0
   and key_cache_save_period = 600
   and read_repair_chance = 0.1
-  and gc_grace = 5
   and min_compaction_threshold = 4
   and max_compaction_threshold = 32
   and replicate_on_write = true

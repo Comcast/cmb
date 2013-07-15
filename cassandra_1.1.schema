@@ -33,7 +33,6 @@ create column family CNSTopics
   and default_validation_class = 'UTF8Type'
   and key_validation_class = 'UTF8Type'
   and read_repair_chance = 0.1
-  and gc_grace = 5
   and min_compaction_threshold = 4
   and max_compaction_threshold = 32
   and replicate_on_write = true
@@ -58,7 +57,6 @@ create column family CNSTopicsByUserId
   and default_validation_class = 'UTF8Type'
   and key_validation_class = 'UTF8Type'
   and read_repair_chance = 0.1
-  and gc_grace = 5
   and min_compaction_threshold = 4
   and max_compaction_threshold = 32
   and replicate_on_write = true
@@ -77,8 +75,7 @@ create column family CNSTopicSubscriptions
   and subcomparator = 'UTF8Type'
   and default_validation_class = 'UTF8Type'
   and key_validation_class = 'UTF8Type'
-  and read_repair_chance = 1.0
-  and gc_grace = 5
+  and read_repair_chance = 0.1
   and min_compaction_threshold = 4
   and max_compaction_threshold = 32
   and replicate_on_write = true
@@ -116,7 +113,6 @@ create column family CNSTopicSubscriptionsIndex
   and default_validation_class = 'UTF8Type'
   and key_validation_class = 'UTF8Type'
   and read_repair_chance = 0.1
-  and gc_grace = 5
   and min_compaction_threshold = 4
   and max_compaction_threshold = 32
   and replicate_on_write = true
@@ -134,7 +130,6 @@ create column family CNSTopicSubscriptionsUserIndex
   and default_validation_class = 'UTF8Type'
   and key_validation_class = 'UTF8Type'
   and read_repair_chance = 0.1
-  and gc_grace = 5
   and min_compaction_threshold = 4
   and max_compaction_threshold = 32
   and replicate_on_write = true
@@ -152,7 +147,6 @@ create column family CNSTopicSubscriptionsTokenIndex
   and default_validation_class = 'UTF8Type'
   and key_validation_class = 'UTF8Type'
   and read_repair_chance = 0.1
-  and gc_grace = 5
   and min_compaction_threshold = 4
   and max_compaction_threshold = 32
   and replicate_on_write = true
@@ -170,7 +164,6 @@ create column family CNSTopicAttributes
   and default_validation_class = 'UTF8Type'
   and key_validation_class = 'UTF8Type'
   and read_repair_chance = 0.1
-  and gc_grace = 5
   and min_compaction_threshold = 4
   and max_compaction_threshold = 32
   and replicate_on_write = true
@@ -195,7 +188,6 @@ create column family CNSSubscriptionAttributes
   and default_validation_class = 'UTF8Type'
   and key_validation_class = 'UTF8Type'
   and read_repair_chance = 0.1
-  and gc_grace = 5
   and min_compaction_threshold = 4
   and max_compaction_threshold = 32
   and replicate_on_write = true
@@ -219,9 +211,8 @@ create column family CNSSubscriptionAttributes
 --
 
 create column family CNSTopicStats with default_validation_class=CounterColumnType 
-and key_validation_class=UTF8Type
-and gc_grace=5 
-and comparator=UTF8Type; 
+  and key_validation_class=UTF8Type
+  and comparator=UTF8Type; 
 
 --
 -- CNSWorkers Column Family
@@ -235,7 +226,6 @@ create column family CNSWorkers
   and default_validation_class = 'UTF8Type'
   and key_validation_class = 'UTF8Type'
   and read_repair_chance = 0.1
-  and gc_grace = 5
   and min_compaction_threshold = 4
   and max_compaction_threshold = 32
   and replicate_on_write = true
@@ -253,7 +243,6 @@ create column family CNSAPIServers
   and default_validation_class = 'UTF8Type'
   and key_validation_class = 'UTF8Type'
   and read_repair_chance = 0.1
-  and gc_grace = 5
   and min_compaction_threshold = 4
   and max_compaction_threshold = 32
   and replicate_on_write = true
@@ -278,7 +267,6 @@ create column family CQSQueues
   and default_validation_class = 'UTF8Type'
   and key_validation_class = 'UTF8Type'
   and read_repair_chance = 0.1
-  and gc_grace = 5
   and min_compaction_threshold = 4
   and max_compaction_threshold = 32
   and replicate_on_write = true
@@ -321,7 +309,6 @@ create column family CQSQueuesByUserId
   and default_validation_class = 'UTF8Type'
   and key_validation_class = 'UTF8Type'
   and read_repair_chance = 0.1
-  and gc_grace = 5
   and min_compaction_threshold = 4
   and max_compaction_threshold = 32
   and replicate_on_write = true
@@ -339,7 +326,7 @@ create column family CQSQueuesByUserId
   and subcomparator = 'UTF8Type'
   and default_validation_class = 'UTF8Type'
   and key_validation_class = 'UTF8Type'
-  and read_repair_chance = 1.0
+  and read_repair_chance = 0.1
   and gc_grace = 5
   and min_compaction_threshold = 4
   and max_compaction_threshold = 32
@@ -374,7 +361,6 @@ create column family CQSAPIServers
   and default_validation_class = 'UTF8Type'
   and key_validation_class = 'UTF8Type'
   and read_repair_chance = 0.1
-  and gc_grace = 5
   and min_compaction_threshold = 4
   and max_compaction_threshold = 32
   and replicate_on_write = true
@@ -398,7 +384,6 @@ create column family Users
   and default_validation_class = 'UTF8Type'
   and key_validation_class = 'UTF8Type'
   and read_repair_chance = 0.1
-  and gc_grace = 5
   and min_compaction_threshold = 4
   and max_compaction_threshold = 32
   and replicate_on_write = true
