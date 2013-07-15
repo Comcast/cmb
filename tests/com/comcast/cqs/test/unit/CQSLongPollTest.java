@@ -173,6 +173,7 @@ public class CQSLongPollTest {
 	        
 		} catch (Exception ex) {
 			ex.printStackTrace();
+			fail("failed long poll test: " + ex.getMessage());
 		}
     }
 

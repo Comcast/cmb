@@ -103,17 +103,19 @@ public class CQSReceiveMessageAction extends CQSAction {
         	
         if (waitTimeSeconds > 0) {
         	
+        	if (waitTimeSeconds < 1 || waitTimeSeconds > 20) {
+                throw new CMBException(CMBErrorCodes.InvalidParameterValue, CQSConstants.WAIT_TIME_SECONDS + " must be an integer number between 1 and 20.");
+        	}
+
         	// we are already setting wait time in main controller servlet, we are just doing
         	// this here again to throw appropriate error messages for invalid parameters
         	
         	if (!CMBProperties.getInstance().isCQSLongPollEnabled()) {
-                throw new CMBException(CMBErrorCodes.InvalidParameterValue, "Long polling not enabled.");
+                //throw new CMBException(CMBErrorCodes.InvalidParameterValue, "Long polling not enabled.");
+        		waitTimeSeconds = 0;
+        		logger.warn("event=invalid_parameter param=wait_time_seconds reason=long_polling_disabled action=force_to_zero");
         	}
 
-        	if (waitTimeSeconds < 1 || waitTimeSeconds > 20) {
-                throw new CMBException(CMBErrorCodes.InvalidParameterValue, CQSConstants.WAIT_TIME_SECONDS + " must be an integer number between 1 and 20.");
-        	}
-        	
         	//asyncContext.setTimeout(waitTimeSeconds * 1000);
             //request.setWaitTime(waitTimeSeconds * 1000);
         }
