@@ -67,7 +67,7 @@ public class SQSEndpointPublisher implements IEndpointPublisher {
 		if (com.comcast.cqs.util.Util.isValidQueueUrl(endpoint)) {
 			url = endpoint;
 		} else {
-			url = com.comcast.cqs.util.Util.getAbsoluteQueueUrlForArn(endpoint);
+			url = com.comcast.cqs.util.Util.getAbsoluteAWSQueueUrlForArn(endpoint);
 		}
 
 		try {

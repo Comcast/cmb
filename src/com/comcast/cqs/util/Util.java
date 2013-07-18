@@ -106,6 +106,29 @@ public class Util {
 		return url;
 	}
 
+	public static String getAbsoluteAWSQueueUrlForArn(String arn) {
+		
+		if (arn == null) {
+			return null;
+		}
+		
+		String elements[] = arn.split(":");
+		
+		if (elements.length != 6) {
+			return null;
+		}
+		
+		String url = "http://" + elements[2] + "." + elements[3] + ".amazonaws.com";
+		
+		if (!url.endsWith("/")) {
+			url += "/";
+		}
+		
+		url += elements[4] + "/" + elements[5];
+		
+		return url;
+	}
+
 	public static String getRelativeQueueUrlForArn(String arn) {
 		
 		if (arn == null) {
