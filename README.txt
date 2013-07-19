@@ -199,7 +199,7 @@ JMX using jconsole.
 
 CQS Metrics:
 
-  jconsole <cqs_host>:<jms_port> 
+  jconsole <cqs_host>:<jmx_port> 
 
 There is a CQSMonitor MBean exposing a number of CQS attributes including
 
@@ -232,9 +232,10 @@ There is a CNSMonitor MBean exposing a number of CNS attributes including
 
 Finally the admin UI provides a dashboard like view of 
 
-  - CQS API Server state
-  - CNS API Server state
+  - CQS API Server State
+  - CNS API Server State
   - CNS Publish Worker State
+  - API Call Statistics (if enabled in cmb.properties)
 
 --------------------------------------------------------------------------------------------
 - Multi-Data-Center Deployment and Failover (CQS)
@@ -275,7 +276,7 @@ http://primarycqsserviceurl/?Action=ClearCache&AWSAccessKeyId=someaccesskey
 1. CMB does not work with Cassandra versions prior to 1.0.10. Cassandra versions 1.1.X and
    1.2.X are ok.
    
-2. Compatibility with AWS SDK has been tested up to version 1.4.2.1.
+2. Compatibility with AWS SDK has been tested up to version 1.4.7
  
 2. AWS4 signatures are currently not supported (V1 and V2 ok).
 
