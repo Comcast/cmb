@@ -1,3 +1,24 @@
+CMB VERSION 2.2.33
+--------------------------------------------------------------------
+
+Note: When upgrading from 2.2.32 and prior releases all Redis shards
+need to be restarted or cleared out as there are slight changes to 
+the naming of data structures inside Redis which are not backward
+compatible. However, the Cassandra schema is not changing and 
+existing queues and topics will migrate smoothly.
+
+- introducing sharded queues: sharding queues across multiple Redis
+  shards trading order for throughput-performance, number of shards
+  is a new queue attribute which defaults to 1
+- moderate performance improvements for Redis code
+- minor performance tweaks for API code 
+- various Cassandra schema tunings (read repair chance, key cache,
+  row cache etc.)
+- bug fix for URL generation for SQS endpoints
+- CNS publish workers to fall back to exponential backoff if long
+  poll feature is disabled in CQS
+- increased max message size to 256 KB for CNS and CQS
+
 CMB VERSION 2.2.32
 --------------------------------------------------------------------
 
