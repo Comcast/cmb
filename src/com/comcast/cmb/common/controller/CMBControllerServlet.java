@@ -114,7 +114,7 @@ abstract public class CMBControllerServlet extends HttpServlet {
 
 				Util.initLog4j();
 				CMBProperties.getInstance();
-				workerPool = new ScheduledThreadPoolExecutor(CMBProperties.getInstance().getCNSNumPublisherDeliveryHandlers());
+				workerPool = new ScheduledThreadPoolExecutor(CMBProperties.getInstance().getCMBWorkerPoolSize());
 				initStats();
 				initialized = true;
 			}
