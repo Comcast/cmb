@@ -36,6 +36,8 @@ public class CMBProperties {
 	    SYNC, ASYNC 
 	}
 	
+	private final int cmbWorkerPoolSize;
+	
 	private final String cnsHttpProxy;
 	
 	private final boolean cmbEnableStats;
@@ -202,6 +204,8 @@ public class CMBProperties {
 			FileInputStream fileStream = new FileInputStream(file);
 			props.load(fileStream);
 			
+			cmbWorkerPoolSize = Integer.parseInt(props.getProperty("cmb.workerpool.size","256"));
+			
 			cnsHttpProxy = props.getProperty("cmb.cns.http.proxy", null);
 			
 			cmbDeploymentName = props.getProperty("cmb.deployment.name", "");
@@ -243,7 +247,7 @@ public class CMBProperties {
 			clusterName = props.getProperty("cmb.cassandra.clusterName");
 			clusterUrl = props.getProperty("cmb.cassandra.clusterUrl");
 			
-            hectorPoolSize = Integer.parseInt(props.getProperty("cmb.hector.pool.size", "50"));
+            hectorPoolSize = Integer.parseInt(props.getProperty("cmb.hector.pool.size", "75"));
             hectorAutoDiscoveryDelaySeconds = Integer.parseInt(props.getProperty("cmb.hector.autoDiscoveryDelaySeconds", "60"));
             hectorAutoDiscovery = Boolean.parseBoolean(props.getProperty("cmb.hector.autoDiscovery", "true"));
             hectorBalancingPolicy = props.getProperty("cmb.hector.balancingPolicy", "RoundRobinBalancingPolicy");
@@ -328,8 +332,8 @@ public class CMBProperties {
             numEPPubJobConsumers = Integer.parseInt(props.getProperty("cmb.cns.publisher.numConsumers", "4"));
             numPublishJobQs = Integer.parseInt(props.getProperty("cmb.cns.publisher.numPublishJobQs", "2"));
             numEPPublishJobQs = Integer.parseInt(props.getProperty("cmb.cns.publisher.numEPPublishJobQs", "4"));
-            numDeliveryHandlers = Integer.parseInt(props.getProperty("cmb.cns.publisher.numDeliveryHandlers", "256"));
-            numReDeliveryHandlers = Integer.parseInt(props.getProperty("cmb.cns.publisher.numReDeliveryHandlers", "256"));
+            numDeliveryHandlers = Integer.parseInt(props.getProperty("cmb.cns.publisher.numDeliveryHandlers", "128"));
+            numReDeliveryHandlers = Integer.parseInt(props.getProperty("cmb.cns.publisher.numReDeliveryHandlers", "128"));
             deliveryHandlerJobQueueLimit = Integer.parseInt(props.getProperty("cmb.cns.publisher.deliveryHandlerJobQueueLimit", "1000"));
             reDeliveryHandlerJobQueueLimit = Integer.parseInt(props.getProperty("cmb.cns.publisher.reDeliveryHandlerJobQueueLimit", "5000"));
             publishJobVTO = Integer.parseInt(props.getProperty("cmb.cns.publisher.publichJobVTO", "10"));
@@ -768,5 +772,9 @@ public class CMBProperties {
 
 	public String getCNSUserAccessSecret() {
 		return cnsUserAccessSecret;
+	}
+	
+	public int getCMBWorkerPoolSize() {
+		return cmbWorkerPoolSize;
 	}
 }
