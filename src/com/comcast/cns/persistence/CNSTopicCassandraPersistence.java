@@ -94,10 +94,6 @@ public class CNSTopicCassandraPersistence extends CassandraPersistence implement
 
 		String arn = Util.generateCnsTopicArn(name, CMBProperties.getInstance().getRegion(), userId);
 
-		if (!Util.isValidTopicName(name)) {
-			throw new CMBException(CNSErrorCodes.InvalidParameterValue, "Invalid parameter topic name.");
-		}
-
 		// disable user topic limit for now
 
 		/*List<CNSTopic> topics = listTopics(userId, null);

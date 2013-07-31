@@ -28,6 +28,7 @@ import com.comcast.cmb.common.util.CMBException;
 import com.comcast.cns.io.CNSTopicPopulator;
 import com.comcast.cns.model.CNSTopic;
 import com.comcast.cns.util.CNSErrorCodes;
+import com.comcast.cns.util.Util;
 
 /**
  * Create Topic
@@ -57,6 +58,7 @@ public class CNSCreateTopicAction extends CNSAction {
 		String name = request.getParameter("Name");
 	
 		String userId = user.getUserId();
+		
 		logger.debug("event=cns_topic_create name=" + name + " display_name=" + displayName + " user_id=" + userId);
 
 		if (name == null || userId == null) {
@@ -64,6 +66,10 @@ public class CNSCreateTopicAction extends CNSAction {
 			throw new CMBException(CNSErrorCodes.CNS_InvalidParameter,"request parameter does not comply with the associated constraints.");
 		}
 		
+		if (!Util.isValidTopicName(name)) {
+			throw new CMBException(CNSErrorCodes.InvalidParameterValue, "Invalid parameter topic name.");
+		}
+
 		CNSTopic newTopic;
 		newTopic = PersistenceFactory.getTopicPersistence().createTopic(name, displayName, userId);
 		String topicArn = newTopic.getArn();

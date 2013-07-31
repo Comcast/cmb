@@ -39,8 +39,6 @@ import com.comcast.cns.model.CNSRetryPolicy.CnsBackoffFunction;
  */
 public class Util {
 	
-    private static Logger logger = Logger.getLogger(Util.class);
-    
 	public static final int CNS_USER_TOPIC_LIMIT = 100; 
 	
 	public static String generateCnsTopicArn(String topicName, String region, String userId) {
@@ -72,18 +70,24 @@ public class Util {
 	 * @return <topic-arn>
 	 */
 	public static String getCnsTopicArn(String subArn) {
+		
 	    String []arr = subArn.split(":");
+	    
 	    if (arr.length < 2) {
 	        throw new IllegalArgumentException("Bad format for subscription. Expected <topic-arn>:UUID Got:" + subArn);
 	    }
+	    
         StringBuffer sb = new StringBuffer(arr[0]);
+        
         for (int i = 1; i < arr.length - 1; i++) {
             sb.append(":").append(arr[i]);
         }
+        
         return sb.toString();
 	}
 	
-	static final Pattern topicPattern = Pattern.compile("arn:cmb:cns:[A-Za-z0-9-]+:[A-Za-z0-9-]+:[A-Za-z0-9-]+"); 
+	private static final Pattern topicPattern = Pattern.compile("arn:cmb:cns:[A-Za-z0-9-_]+:[A-Za-z0-9-_]+:[A-Za-z0-9-_]+"); 
+	
 	public static boolean isValidTopicArn(String arn) {
 
 		if (arn == null) {
@@ -94,7 +98,6 @@ public class Util {
 		
 		return matcher.matches();
 	}
-	
 
 	public static String getUserIdFromTopicArn(String arn) {
 		
@@ -105,18 +108,21 @@ public class Util {
 		return arn.split(":")[4];
 	}
 	
-	static final Pattern subPattern = Pattern.compile("arn:cmb:cns:[A-Za-z0-9-]+:[A-Za-z0-9-]+:[A-Za-z0-9-]+:[A-Za-z0-9-]+"); 
+	private static final Pattern subPattern = Pattern.compile("arn:cmb:cns:[A-Za-z0-9-_]+:[A-Za-z0-9-_]+:[A-Za-z0-9-_]+:[A-Za-z0-9-_]+"); 
+	
 	public static boolean isValidSubscriptionArn(String arn) {
 		Matcher matcher = subPattern.matcher(arn);		
 		return matcher.matches();
 	}
 	
-	static final Pattern topicNamePattern = Pattern.compile("[A-Za-z0-9-]+"); 
+	private static final Pattern topicNamePattern = Pattern.compile("[A-Za-z0-9-_]+"); 
+	
 	public static boolean isValidTopicName(String name) {
 		
 		if (name == null || name.equals("") || name.contains(" ") || name.length() > 256) {
 			return false;
-		}		
+		}
+		
 		Matcher matcher = topicNamePattern.matcher(name);		
 		return matcher.matches();
 	}
@@ -133,14 +139,14 @@ public class Util {
 		Writer writer = new PrintWriter(out); 
     	JSONWriter jw = new JSONWriter(writer);
     	String cnsServiceLocation = CMBProperties.getInstance().getCNSServiceUrl();
-    	SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ"); //Time is in UTC zone. i,e no offset
+    	SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ"); // UTC, no offset
         Date now = new Date();
 
         Calendar st = Calendar.getInstance();
-        st.setTimeZone(TimeZone.getTimeZone("America/Los_Angeles"));//We should double check this.
+        st.setTimeZone(TimeZone.getTimeZone("America/Los_Angeles"));
         st.setTime(now);
         df.setCalendar(st);
-        df.setTimeZone(TimeZone.getTimeZone("America/Los_Angeles"));//?
+        df.setTimeZone(TimeZone.getTimeZone("America/Los_Angeles"));
     	
     	try {
 	    	jw = jw.object();
@@ -159,7 +165,8 @@ public class Util {
 	    		    	
     	} catch(Exception e) {
     		return "";
-    	}   	    	
+    	}   	
+    	
     	return out.toString();
     }	
     
@@ -186,7 +193,10 @@ public class Util {
         df.setCalendar(st);
         df.setTimeZone(TimeZone.getTimeZone("America/Los_Angeles"));//?
         String timeStamp = df.format(now);
-        if(subject == null) subject = "";
+        
+        if (subject == null) {
+        	subject = "";
+        }
     	
     	try {
 	    	jw = jw.object();
@@ -200,31 +210,32 @@ public class Util {
 	    	jw.key("TopicArn").value(arn);
 	    	jw.key("Type").value("Notification");
 	    	jw.key("UnSubscribeURL").value(cnsServiceLocation+"?Action=Unsubscribe&TopicArn="+arn);
-	    	
-	    	  	
 	    	jw.endObject();	    	    	
 	    	writer.flush();
-	    		    	
     	} catch(Exception e) {
     		return "";
-    	}   	    	
+    	} 
+    	
     	return out.toString();
     }	
 	
 	public static boolean isPhoneNumber(String phone) {
+		
 	    	int size = phone.length();
-	    	for(int i=0; i<size; i++) {
+	    	
+	    	for (int i=0; i<size; i++) {
+	    		
 	    		Character c = phone.charAt(i);
-	    		if((c == '-') || (c == '+') || (c == '.') || (c == '(') || (c == ')')) {
-	    			
+	    		
+	    		if ((c == '-') || (c == '+') || (c == '.') || (c == '(') || (c == ')')) {
+	    			//skip
 	    		} else if((c.compareTo('0') >= 0) && (c.compareTo('9') <= 0)) {
 	    			//skip
 	    		} else {
-	    			logger.debug("Not a phone number");
 	    			return false;
 	    		}
 	    	}
-	    	//System.out.println("phone number:"+ phone); 
+
 	    	return true;
 	    }
 
