@@ -137,13 +137,15 @@ public abstract class AdminServletBase extends HttpServlet {
 	}
 
 	/**
-     * Method to set the awsCredentials and the appt instances of sqs and sns interfaces
+     * Method to set the aws credentials for sqs and sns handlers
      * @param userId
      * @throws ServletException
      */
-    protected void connect(String userId) throws ServletException {
+    protected void connect(HttpServletRequest request) throws ServletException {
     	
-		IUserPersistence userHandler = PersistenceFactory.getUserPersistence();
+        String userId = request.getParameter("userId");
+        
+        IUserPersistence userHandler = PersistenceFactory.getUserPersistence();
 		
 		try {
 			user = userHandler.getUserById(userId);
@@ -153,6 +155,10 @@ public abstract class AdminServletBase extends HttpServlet {
 
         if (user == null) {	          
         	throw new ServletException("User " + userId + " does not exist");
+        }
+        
+        if (!user.getUserName().equals(getAuthenticatedUser(request).getUserName()) && !CMBProperties.getInstance().getCNSUserName().equals(getAuthenticatedUser(request).getUserName())) {
+        	throw new ServletException("Only admin may impersonate other users");
         }
 		
         awsCredentials = new BasicAWSCredentials(user.getAccessKey(), user.getAccessSecret());

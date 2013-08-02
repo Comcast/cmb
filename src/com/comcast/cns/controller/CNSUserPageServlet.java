@@ -51,7 +51,6 @@ public class CNSUserPageServlet extends AdminServletBase {
 
 	private static final long serialVersionUID = 1L;
 	private static Logger logger = Logger.getLogger(CNSUserPageServlet.class);
-	private String userId;
 	
 	@Override
 	public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -66,7 +65,7 @@ public class CNSUserPageServlet extends AdminServletBase {
 
 		Map<?, ?> parameters = request.getParameterMap();
 		
-		userId = request.getParameter("userId");
+		String userId = request.getParameter("userId");
 		String topicName = request.getParameter("topic");
 		String arn = request.getParameter("arn");
 		String displayName = request.getParameter("display");
@@ -74,7 +73,7 @@ public class CNSUserPageServlet extends AdminServletBase {
 		
         List<Topic> topics = new ArrayList<Topic>();
 		
-		connect(userId);
+		connect(request);
 
 		if (parameters.containsKey("Create")) {
 		

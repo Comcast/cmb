@@ -62,7 +62,7 @@ public class CQSQueuePermissionsPage extends AdminServletBase {
 		
 		String queueUrl = Util.getAbsoluteQueueUrlForName(queueName, userId);
 		
-		connect(userId);
+		connect(request);
 		
 		if (params.containsKey("Remove")) {
 			

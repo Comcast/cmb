@@ -59,7 +59,7 @@ public class CNSEditSubscriptionDeliveryPolicyPage extends AdminServletBase {
 		String userId = request.getParameter("userId");
 		Map<?, ?> params = request.getParameterMap();
 		
-		connect(userId);
+		connect(request);
 		
 		out.println("<html>");
 		

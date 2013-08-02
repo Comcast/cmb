@@ -52,7 +52,6 @@ public class CQSUserPageServlet extends AdminServletBase {
 	
 	private static final long serialVersionUID = 1L;
 	private static Logger logger = Logger.getLogger(CQSUserPageServlet.class);
-	private String userId;
 	
 	public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 
@@ -65,7 +64,7 @@ public class CQSUserPageServlet extends AdminServletBase {
 		PrintWriter out = response.getWriter();
 		
 		Map<?, ?> parameters = request.getParameterMap();
-		userId = request.getParameter("userId");
+		String userId = request.getParameter("userId");
 		String queueName = request.getParameter("queueName");
 		String queueUrl = request.getParameter("qUrl");
 		
@@ -75,7 +74,7 @@ public class CQSUserPageServlet extends AdminServletBase {
         boolean showQueuesWithMessagesOnly = false;
 		boolean useQueueNamePrefix = false;
         
-		connect(userId);
+		connect(request);
 		
 		if (parameters.containsKey("Search")) {
 			

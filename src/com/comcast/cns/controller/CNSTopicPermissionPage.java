@@ -59,7 +59,7 @@ public class CNSTopicPermissionPage extends AdminServletBase {
 		String labelSid = request.getParameter("sid");
 		Map<?, ?> params = request.getParameterMap();
 		
-		connect(userId);
+		connect(request);
 		
 		if (params.containsKey("Remove")) {
 			

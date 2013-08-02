@@ -56,7 +56,7 @@ public class CNSEditTopicDisplayNamePage extends AdminServletBase {
 		String userId =  request.getParameter("userId");
 		Map<?, ?> parameters = request.getParameterMap();
 		
-		connect(userId);
+		connect(request);
 		
 		out.println("<html>");
 		

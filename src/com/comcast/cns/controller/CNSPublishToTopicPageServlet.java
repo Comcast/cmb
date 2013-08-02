@@ -57,7 +57,7 @@ public class CNSPublishToTopicPageServlet extends AdminServletBase {
 		String subject = request.getParameter("subject");
 		Map<?, ?> parameters = request.getParameterMap();
 		
-		connect(userId);
+		connect(request);
 		
 		out.println("<html>");
 

@@ -55,7 +55,7 @@ public class CQSEditQueueAttributePage extends AdminServletBase {
 			String queueName = request.getParameter("queueName");
 			String queueUrl = Util.getAbsoluteQueueUrlForName(queueName, userId);
 			
-			connect(userId);
+			connect(request);
 			
 			out.println("<html>");
 			

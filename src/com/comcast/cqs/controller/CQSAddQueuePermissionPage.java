@@ -65,7 +65,7 @@ public class CQSAddQueuePermissionPage extends AdminServletBase {
 		String allActions = request.getParameter("allActions");
 		
 		String queueUrl = Util.getAbsoluteQueueUrlForName(queueName, userId);
-		connect(userId);
+		connect(request);
 		
 		List<String> usersList = null;
 		List<String> actionsList = null;

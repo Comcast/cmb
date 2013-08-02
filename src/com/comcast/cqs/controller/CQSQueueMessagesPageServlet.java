@@ -77,7 +77,7 @@ public class CQSQueueMessagesPageServlet extends AdminServletBase {
 
 		String queueUrl = Util.getAbsoluteQueueUrlForName(queueName, userId);
 
-		connect(userId);
+		connect(request);
 		
 		if (parameters.containsKey("Send")) {
 			

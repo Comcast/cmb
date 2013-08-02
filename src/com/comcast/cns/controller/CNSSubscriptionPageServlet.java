@@ -68,7 +68,7 @@ public class CNSSubscriptionPageServlet extends AdminServletBase {
 		String arn = request.getParameter("arn");
 		String nextToken = request.getParameter("nextToken");
 		
-		connect(userId);
+		connect(request);
 		
 		if (parameters.containsKey("Subscribe")) {
 			

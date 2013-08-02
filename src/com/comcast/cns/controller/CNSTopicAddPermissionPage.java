@@ -62,7 +62,7 @@ public class CNSTopicAddPermissionPage extends AdminServletBase {
 		String permAction = request.getParameter("permission");
 		String userId = request.getParameter("userId");
 
-		connect(userId);
+		connect(request);
 		
 		List<String> usersList = null;
 		List<String> actionsList = null;
