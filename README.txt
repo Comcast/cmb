@@ -7,6 +7,7 @@ with AWS SQS and SNS. This document covers these topics:
 
 - User Forum
 - Binaries for Download
+- Accessing CQS/CNS Using AWS SDK
 - Brief Tutorial
 - Quickstart Guide
 - Monitoring, Logging
@@ -28,6 +29,19 @@ https://groups.google.com/forum/#!forum/cmb-user-forum
 If you do not want to build from source you can download the latest stable build here:
 
 http://cmbdownloads.s3-website-us-west-1.amazonaws.com/
+
+--------------------------------------------------------------------------------------
+- Accessing CQS/CNS Using AWS SDK
+--------------------------------------------------------------------------------------
+
+If you prefer getting started by looking at some code, here's a complete end-to-end 
+client-side example for accessing CQS/CNS services using the AWS SDK:
+
+https://github.com/Comcast/cmb/blob/master/tests/com/comcast/cmb/test/tools/CMBTutorial.java
+
+In this example, we first create a queue and a topic. Next we subscribe the queue and 
+also an http endpoint to the topic and finally we publish, receive and delete messages. 
+Confirmation of pending subscriptions is also demonstrated.
 
 --------------------------------------------------------------------------------------
 - Brief Tutorial

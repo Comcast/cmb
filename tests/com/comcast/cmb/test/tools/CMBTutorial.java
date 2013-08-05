@@ -48,7 +48,6 @@ import com.amazonaws.services.sqs.model.Message;
 import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
 import com.amazonaws.services.sqs.model.ReceiveMessageResult;
 import com.comcast.cmb.common.util.Util;
-import com.comcast.cns.model.CNSSubscription.CnsSubscriptionProtocol;
 
 public class CMBTutorial {
 	
