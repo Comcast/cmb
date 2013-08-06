@@ -198,7 +198,6 @@ instructions below:
 
 7. Check if web UI is available at localhost:6059/webui/ (login with username 
    cns_internal and password cns_internal).
-
    
 --------------------------------------------------------------------------------------
 - Monitoring, Logging
@@ -277,17 +276,19 @@ data center.
 Every few seconds the global load balancer should call a health check API on the 
 currently active CQS service. 
 
-http://primarycqsserviceurl/?Action=HealthCheck&AWSAccessKeyId=someaccesskey
+http://primarycqsserviceurl/?Action=HealthCheck
 
 While the service is available this call will return some XML encoded information 
 along with HTTP 200. Should any of the service components (App Server, Redis or 
-Cassandra) fail the return code will change to HTTP 503. The global load balancer 
-should detect this and start directing all CQS traffic to the second data center. 
-Before sending CQS request to the fail-over data center, the global load balancer 
-should submit a clear cache request to make sure the Redis cache does not contain 
-any stale data.
+Cassandra) fail the return code will change to HTTP 503 (service unavailable). The 
+global load balancer should detect this and start directing all CQS traffic to the 
+second data center. 
 
-http://primarycqsserviceurl/?Action=ClearCache&AWSAccessKeyId=someaccesskey
+Before sending CQS request to the fail-over data center, the global load balancer 
+should also submit a clear cache request to make sure the Redis cache in the fail-over 
+data center does not contain any stale data.
+
+http://secondarycqsserviceurl/?Action=ManageService&Task=ClearCache&AWSAccessKeyId=<adminaccesskey>
 
 --------------------------------------------------------------------------------------
 - Known Limitations
