@@ -90,10 +90,7 @@ public class CNSEditTopicDisplayNamePage extends AdminServletBase {
 
 			out.println("<body>");
 			out.println("<h1>Edit Topic Display Name</h1>");
-			out.print("<form action=\"");
-            out.print(response.encodeURL("EditDisplayName") + "?topicArn="+topicArn);
-            out.print("\" ");
-            out.println("method=POST>");
+			out.println("<form action=\"/webui/cnsuser/editdisplayname?topicArn="+topicArn+"\" method=POST>");
             out.println("<input type='hidden' name='userId' value='"+ userId +"'>");
 			out.println("<p>The Display Name of a topic will be used, if present, in the \"From:\" field of any email notifications from the topic. It is also required and included in every SMS notification sent out.</p>");
 			out.println("<p><b>Display Name:</b> <input type='text' name='displayName' size='100' value= '" + (attributes.get("DisplayName") == null ? "" : attributes.get("DisplayName")) + "'></p>");
