@@ -49,16 +49,37 @@ public class CQSLongPollReceiver {
     
     private static ChannelFactory serverSocketChannelFactory;
 
-    //public static volatile ConcurrentHashMap<String,Object> queueMonitors; 
-    
     public static volatile ConcurrentHashMap<String, ConcurrentLinkedQueue<AsyncContext>> contextQueues;
 
 	//
-	// long poll design:
+	// current long poll design:
 	//
 	// http request handlers are now asynchronous: they offload action execution to a separate pool of worker threads
 	// there is one single long poll receiver thread per api server listening on a dedicated port for "message available" notifications using netty nio library (asynchronous i/o)
-	// each long polling receive() api call does a wait(timeout) on a monitor (one monitor per queue)
+    // use request wrapper to allow additional meta-data to travel with the async context, such as a timestamp when request was received etc.
+    // upon receive() do everything as usual up until reading messages from redis/cassandra
+    // if messages are found immediately, return these messages and complete the async context as usual 
+    // otherwise put async context on in-memory queue (e.g. ConcurrentLinkedQueue) and do NOT complete context (note: we need one in-mem queue per cqs queue, referenced via a concurrent hash map!)
+    // when any of the async events occurs (complete, timeout, error) we mark the async context as outdated
+    // when receiving an external send() notification we look up the correct in-mem queue and pull an async context from it
+    // if no context there we do nothing (nobody is currently long-polling)
+    // if a context is there but it's marked as outdated we simply discard it and check for further elements on the queue
+    // if an active async context is found we try to read messages
+    // if messages are found we generate a response and complete the context
+    // if no messages are found (and there is long poll time left) we put the context back on the queue
+    //
+    // optimizations:
+    //
+    // if send and receive happens on the same server, bypass async i/o and place the async context directly on the queue in memory (done)
+    // resue established netty channels instead of crerating new tcp connectiosn for every sendmessage() call (done)
+    // only send notifications to endpoints that are actually waiting for messages or have recently been waiting for messages
+    // reestablishing connections only on failure or after a set period of time (e.g. 1 hr), or send ping over connection every 60 sec 
+    // only send notifications if queue is empty or near empty (a full queue cannot have pending receivemessage() calls)
+    // tune tcp settings - keep-alive etc.
+    //
+    // old long poll design:
+    //
+    // each long polling receive() api call does a wait(timeout) on a monitor (one monitor per queue)
 	// when the long poll receiver thread receives a notification (which only consists of the queue arn that received a message) it will do a notify() on the monitor associated with the queue
 	// this wakes up at most one waiting receive() api call, which will then try to read and return messages from redis/cassandra as usual
 	// if no messages are found (race conditions etc.) and there is still long polling time left, receive will call wait() again
@@ -66,37 +87,12 @@ public class CQSLongPollReceiver {
 	// each api server will write a heart beat (timestamp, ip, port) to cassandra, maybe once a minute or so
 	// each api server will read the heart beat table once a minute or so to be aware of active api servers and their ip:port combinations
 	//
-	// known limitations:
+	// some known limitations:
 	//
-	// each long poll request occupies a waiting thread on the worker pool
-	// no short cut if send and receive happens on same api server (could add that as performance improvement)
-	// receive publishes to all api servers regardless of whether they are actually listening or not (to save management overhead)
+	// each long poll request occupies a waiting thread on the worker pool (only applies to old design)
+	// no short cut if send and receive happens on same api server (only applies to old design)
+	// receive broadcasts to all api servers regardless of whether they are actually listening or not 
 	// long poll receiver thread is single point of failure on api server
-    //
-    // redesign to allow for true async implementation:
-    //
-    // prerequisite: use application level request or response wrappers to allow additional meta-data to travel with the async context, such as: 
-    //   long requestReceivedMillis (timestamp when request was received)
-    //   boolean requestActive (true at first but false if request times out or ends in error, set by async event handlers)
-    //   boolean completed (only set to true by ReceiveMessage api as all other apis are just run in pseudo-asynchronous mode)
-    // upon receive() do everything as usual up until reading messages from redis/cassandra
-    // if messages are found immediately, return these messages and complete the async context as usual 
-    // otherwise put async context on in-memory queue (e.g. ConcurrentLinkedQueue) and do NOT complete context (note: we need one in-mem queue per cqs queue, referenced via a concurrent hash map!)
-    // when any of the async events occurs (complete, timeout, error) we mark the async context as outdated
-    // when receiving an external send() notification we look up the correct in-mem queue and pull an async context from it
-    //   if no context there we do nothing (nobody is currently long-polling)
-    //   if a context is there but it's marked as outdated we simply discard it and check for further elements on the queue
-    //   if an active async context is found we try to read messages
-    //     if messages are found we generate a response and complete the context, potentially we could keep going as long as we can find messages
-    //     if no messages are found (and there is long poll time left) we put the context back on the queue
-	//
-    // miscellaneous improvements:
-    //
-    // reuse established netty channels instead of creating new tcp connections for every lp sendmessage() call - use blocking queue and single 
-    // long poll sender process reestablishing connections only on failure or after a set period of time (e.g. 60 sec)
-    // long poll receivemessage() to check for messages on timeout
-    // only send notifications to service endpoints with receint lp receivemessage() calls
-    // sensible tcp default ettings for client and server
     //
     
 	private static class LongPollServerHandler extends SimpleChannelHandler {
@@ -120,13 +116,6 @@ public class CQSLongPollReceiver {
 			        
 			        queueArn = new StringBuffer("");
 					
-					/*if (monitor != null) {
-						synchronized (monitor) {
-							logger.info("event=notifying_thread");
-							monitor.notify();
-						}
-					}*/
-					
 				} else {
 					queueArn.append(c);
 				}
@@ -141,8 +130,6 @@ public class CQSLongPollReceiver {
 	}
 	
 	public static void processNotification(String queueArn, String remoteAddress) {
-		
-		//Object monitor = queueMonitors.get(queueArn);
 		
 		contextQueues.putIfAbsent(queueArn, new ConcurrentLinkedQueue<AsyncContext>());
 		ConcurrentLinkedQueue<AsyncContext> contextQueue = contextQueues.get(queueArn);
@@ -214,8 +201,6 @@ public class CQSLongPollReceiver {
 		
 		if (!initialized) {
 		
-	        //queueMonitors = new ConcurrentHashMap<String,Object>();
-	        
 	        contextQueues = new ConcurrentHashMap<String, ConcurrentLinkedQueue<AsyncContext>>();
 	
 			serverSocketChannelFactory = new NioServerSocketChannelFactory(Executors.newCachedThreadPool(), Executors.newCachedThreadPool());

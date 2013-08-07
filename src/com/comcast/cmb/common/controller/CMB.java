@@ -24,7 +24,7 @@ import com.comcast.cmb.common.util.Util;
 import com.comcast.cns.tools.CNSPublisher;
 import com.comcast.cqs.controller.CQSControllerServlet;
 import com.comcast.cqs.controller.CQSLongPollReceiver;
-import com.comcast.cqs.controller.CQSLongPollSenderNG;
+import com.comcast.cqs.controller.CQSLongPollSender;
 
 /**
  * Bootstrap class for cns, cqs service endpoint servlets and cns workers. Servlets
@@ -68,7 +68,7 @@ public class CMB {
 	        
     		if (CMBProperties.getInstance().isCQSLongPollEnabled()) {
 	    		CQSLongPollReceiver.listen();
-	            CQSLongPollSenderNG.init();
+	            CQSLongPollSender.init();
             }
     	}
     	

@@ -133,7 +133,7 @@ public class CQSSendMessageAction extends CQSAction {
         CQSMonitor.getInstance().addNumberOfMessagesReceived(queue.getRelativeUrl(), 1);
         
         try {
-        	CQSLongPollSenderNG.send(queue.getArn());
+        	CQSLongPollSender.send(queue.getArn());
         } catch (Exception ex) {
         	logger.warn("event=failed_to_send_longpoll_notification", ex);
         }

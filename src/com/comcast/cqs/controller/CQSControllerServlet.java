@@ -75,7 +75,7 @@ public class CQSControllerServlet extends CMBControllerServlet {
             try {
 	    		if (CMBProperties.getInstance().isCQSLongPollEnabled()) {
 		    		CQSLongPollReceiver.listen();
-		            CQSLongPollSenderNG.init();
+		            CQSLongPollSender.init();
 	            }
             } catch (Exception ex) {
             	logger.warn("event=failed_to_start_longpoll_module", ex);
@@ -258,7 +258,7 @@ public class CQSControllerServlet extends CMBControllerServlet {
             
             RedisCachedCassandraPersistence.executor.shutdown();
             RedisCachedCassandraPersistence.revisibilityExecutor.shutdown();
-            CQSLongPollSenderNG.shutdown();
+            CQSLongPollSender.shutdown();
             CQSLongPollReceiver.shutdown();
             
         } catch(Exception e) {

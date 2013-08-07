@@ -137,30 +137,6 @@ public class CQSReceiveMessageAction extends CQSAction {
 	            request.setIsQueuedForProcessing(true);
 			}
 			
-        	/*CQSLongPollReceiver.queueMonitors.putIfAbsent(queue.getArn(), new Object());
-        	Object monitor = CQSLongPollReceiver.queueMonitors.get(queue.getArn());
-        	long referenceTime = System.currentTimeMillis();
-        	
-        	synchronized (monitor) {
-        		
-        		while (messageList.size() == 0) {
-        		
-        			long now = System.currentTimeMillis();
-        			long waitPeriodMillis = waitTimeSeconds*1000 - (now-referenceTime); 
-        			
-        			if (waitPeriodMillis <= 0) {
-        				break;
-        			}
-        			
-        			logger.info("event=waiting_for_longpoll millis=" + waitPeriodMillis);
-        			
-        			monitor.wait(waitPeriodMillis);
-        			messageList = PersistenceFactory.getCQSMessagePersistence().receiveMessage(queue, msgParam);
-        		}
-        		
-    			logger.info("event=done_waiting");
-        	}*/
-
         } else {
 
             CQSMonitor.getInstance().addNumberOfMessagesReturned(queue.getRelativeUrl(), messageList.size());

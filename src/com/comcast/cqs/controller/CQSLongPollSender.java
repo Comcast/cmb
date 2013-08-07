@@ -15,12 +15,20 @@
  */
 package com.comcast.cqs.controller;
 
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.URL;
+import java.net.UnknownHostException;
 import java.nio.charset.Charset;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicLong;
+import com.comcast.cqs.model.CQSAPIStats;
 
 import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.hector.api.HConsistencyLevel;
@@ -49,20 +57,23 @@ import com.comcast.cmb.common.util.CMBProperties;
 public class CQSLongPollSender {
 	
     private static Logger logger = Logger.getLogger(CQSLongPollSender.class);
-    
-    private static ClientBootstrap clientBootstrap;
-    private static ChannelFactory clientSocketChannelFactory;
-	
-    // list of recently active cqs api servers, could be reduced to only list those servers recently
-    // doing long poll receives
-    
-    private static volatile ConcurrentHashMap<String, Long> activeCQSApiServers;
-    
+    private static LongPollSenderThread senderThread;
+    private static LongPollConnectionMaintainerThread connectionMaintainerThread;
+    private static volatile LinkedBlockingQueue<String> pendingNotifications;
     private static volatile boolean initialized = false;
+    private static volatile String localhost;
     
     // last minute long poll sender checked for api server heart beats
     
     public static volatile AtomicLong lastLPPingMinute = new AtomicLong(0);
+    
+    // list of recently active cqs api servers, could be reduced to only list those servers recently
+    // doing long poll receives
+
+    private static volatile ConcurrentHashMap<String, Channel> activeCQSApiServers;
+    
+    private static ClientBootstrap clientBootstrap;
+    private static ChannelFactory clientSocketChannelFactory;
 
 	private static class CQSLongPollClientHandler extends SimpleChannelHandler {
 
@@ -77,13 +88,15 @@ public class CQSLongPollSender {
 		}
 	}
 
-	public static void init() {
+	public static void init() throws UnknownHostException {
 		
 		if (!initialized) {
 	
-	        activeCQSApiServers = new ConcurrentHashMap<String, Long>();
+	    	activeCQSApiServers = new ConcurrentHashMap<String, Channel>();
+	
+	    	pendingNotifications = new LinkedBlockingQueue<String>();
 			
-			// launch client side
+	    	// launch client side
 			
 			clientSocketChannelFactory = new NioClientSocketChannelFactory(Executors.newCachedThreadPool(),	Executors.newCachedThreadPool());
 		
@@ -98,14 +111,240 @@ public class CQSLongPollSender {
 			clientBootstrap.setOption("connectTimeoutMillis", 2000);
 			clientBootstrap.setOption("tcpNoDelay", true);
 			clientBootstrap.setOption("keepAlive", true);
+	
+			senderThread = new LongPollSenderThread();
+			senderThread.start();
+	
+			connectionMaintainerThread = new LongPollConnectionMaintainerThread();
+			connectionMaintainerThread.start();
 			
+			localhost = InetAddress.getLocalHost().getHostAddress();
+	
 			initialized = true;
+
+			logger.info("event=longpoll_sender_service_initialized");
 		}
 	}
 	
 	public static void shutdown() {
-		if (clientSocketChannelFactory != null) {
+
+    	if (clientSocketChannelFactory != null) {
 			clientSocketChannelFactory.releaseExternalResources();
+		}
+	}
+	
+	private static class LongPollConnectionMaintainerThread extends Thread {
+		
+	    private static Logger logger = Logger.getLogger(LongPollSenderThread.class);
+	    
+	    public LongPollConnectionMaintainerThread() {
+	    }
+	    
+	    public void run() {
+	    	
+	    	while (true) {
+	    		
+	        	logger.info("event=reloading_active_cqs_api_server_list");
+	        	
+	        	try {
+
+	        		long now = System.currentTimeMillis();
+
+	        		// disconnect existing connections first 
+	        		
+					/*for (String endpoint : activeCQSApiServers.keySet()) {
+						Channel clientChannel = activeCQSApiServers.get(endpoint);
+						clientChannel.close();
+					}*/
+	        		
+	        		//activeCQSApiServers.clear();
+	        		
+	                // read all other pings but ensure we are data-center local and looking at a cqs service
+	        		
+	        		CassandraPersistence cassandraHandler = new CassandraPersistence(CMBProperties.getInstance().getCQSKeyspace());
+	                
+	        		List<Row<String, String, String>> rows = cassandraHandler.readNextNNonEmptyRows("CQSAPIServers", null, 1000, 10, new StringSerializer(), new StringSerializer(), new StringSerializer(), HConsistencyLevel.QUORUM);
+	        		
+	        		Map<String, CQSAPIStats> cqsAPIServers = new HashMap<String, CQSAPIStats>();
+	        		
+	        		if (rows != null) {
+	        			
+	        			for (Row<String, String, String> row : rows) {
+	        				
+	        				CQSAPIStats stats = new CQSAPIStats();
+	        				
+	        				String endpoint = row.getKey();
+	        				
+	    					stats.setIpAddress(endpoint);
+
+	        				String dataCenter = CMBProperties.getInstance().getCMBDataCenter();
+	        				long timestamp = 0;
+	        				int longpollPort = 0;
+	        				
+	        				if (row.getColumnSlice().getColumnByName("timestamp") != null) {
+	        					timestamp = (Long.parseLong(row.getColumnSlice().getColumnByName("timestamp").getValue()));
+	        					stats.setTimestamp(timestamp);
+	        				}
+	        				
+	        				if (row.getColumnSlice().getColumnByName("port") != null) {
+	        					longpollPort = Integer.parseInt(row.getColumnSlice().getColumnByName("port").getValue());
+	        					stats.setLongPollPort(longpollPort);
+	        				}
+	        				
+	        				if (row.getColumnSlice().getColumnByName("dataCenter") != null) {
+	        					dataCenter = row.getColumnSlice().getColumnByName("dataCenter").getValue();
+	        					stats.setDataCenter(dataCenter);
+	        				}
+	        				
+	        				if (now-timestamp < 5*60*1000 && dataCenter.equals(CMBProperties.getInstance().getCMBDataCenter()) && !endpoint.equals(localhost + ":" + (new URL(CMBProperties.getInstance().getCQSServiceUrl())).getPort())) {
+	        					cqsAPIServers.put(endpoint.substring(0, endpoint.indexOf(":")) + ":" + longpollPort, stats);
+		        				logger.info("event=found_active_cqs_endpoint endpoint=" + endpoint);
+	        				}
+	        			}
+	        		}    
+	        		
+	        		// remove dead endpoints from list
+	        		
+	        		Iterator<String> iter = activeCQSApiServers.keySet().iterator();
+	        		
+	        		while (iter.hasNext()) {
+	        			
+	        			String endpoint = iter.next();
+	        			
+	        			if (!cqsAPIServers.containsKey(endpoint)) {
+	        				activeCQSApiServers.remove(endpoint);
+	        				logger.info("event=removed_dead_endpoint_from_list endpoint=" + endpoint);
+	        			}
+	        		}
+	        		
+	        		// establish or reestablish connections
+	        		
+					for (String endpoint : cqsAPIServers.keySet()) {
+						
+    					final String host = endpoint.substring(0, endpoint.indexOf(":"));
+    					final int longpollPort = (int)cqsAPIServers.get(endpoint).getLongPollPort();
+    					final String dataCenter = cqsAPIServers.get(endpoint).getDataCenter();
+						final Channel oldClientChannel = activeCQSApiServers.get(endpoint);
+    					
+    					ChannelFuture channelFuture = clientBootstrap.connect(new InetSocketAddress(host, longpollPort));
+    					
+    					channelFuture.addListener(new ChannelFutureListener() {
+    					
+    						@Override
+    						public void operationComplete(ChannelFuture cf) throws Exception {
+    						
+    							if (cf.isSuccess()) {
+    							
+    								final Channel newClientChannel = cf.getChannel();
+    	        					activeCQSApiServers.put(host + ":" + longpollPort, newClientChannel);
+    	        					
+    	        					logger.info("event=established_new_connection host=" + host + " port=" + longpollPort + " data_center=" + dataCenter);
+
+    	    						if (oldClientChannel != null && oldClientChannel.isConnected()) {
+    	    						
+    	    							oldClientChannel.close();
+    	    							
+    	    							logger.info("event=closing_old_connection endpoint=" + host + ":" + longpollPort);
+    	    						}
+    							}
+    						}
+    					});
+					}
+	                
+	        	} catch (Exception ex) {
+	        		logger.warn("event=ping_glitch", ex);
+	        	}
+	        	
+	        	// sleep for 1 minute
+
+	        	try { 
+	    			Thread.sleep(60*1000); 
+	    		} catch (InterruptedException ex) {	
+	    			logger.error("event=thread_interrupted", ex);
+	    		}
+	    	}
+	    }
+	}
+	
+	private static class LongPollSenderThread extends Thread {
+		
+	    private static Logger logger = Logger.getLogger(LongPollSenderThread.class);
+	    
+	    public LongPollSenderThread() {
+	    }
+	    
+		public void run() {
+			
+			while (true) {
+				
+				String queueArn = null;
+				
+				// blocking wait for next pending notification
+				
+				try {
+					queueArn = pendingNotifications.take();
+				} catch (InterruptedException ex) {
+					logger.warn("event=taking_pending_notifcation_from_queue_failed");
+				}
+				
+				if (queueArn == null) {
+					
+					try { 
+						Thread.sleep(1000); 
+					} catch (InterruptedException ex) { 
+						logger.error("event=thread_interrupted", ex);
+					}
+					
+					continue;
+				}
+
+				// don't go through tcp stack for loopback
+
+				CQSLongPollReceiver.processNotification(queueArn, "localhost");
+				
+				logger.debug("event=longpoll_notification_sent endpoint=localhost queue_arn=" + queueArn);
+
+				// send notification on all other established channels to remote cqs api servers
+				
+				for (String endpoint : activeCQSApiServers.keySet()) {
+					
+					Channel clientChannel = activeCQSApiServers.get(endpoint);
+					
+					if (clientChannel.isConnected() && clientChannel.isOpen() && clientChannel.isWritable()) {
+						
+						ChannelBuffer buf = ChannelBuffers.copiedBuffer(queueArn + ";", Charset.forName("UTF-8"));
+						clientChannel.write(buf);
+					
+					} else {
+						
+						// if connection is dead attempt to reestablish
+						
+    					final String host = endpoint.substring(0, endpoint.indexOf(":"));
+    					final int longpollPort = Integer.parseInt(endpoint.substring(endpoint.indexOf(":")+1));
+    					
+    					ChannelFuture channelFuture = clientBootstrap.connect(new InetSocketAddress(host, longpollPort));
+    					
+    					channelFuture.addListener(new ChannelFutureListener() {
+    					
+    						@Override
+    						public void operationComplete(ChannelFuture cf) throws Exception {
+    						
+    							if (cf.isSuccess()) {
+    							
+    								final Channel newClientChannel = cf.getChannel();
+    	        					activeCQSApiServers.put(host + ":" + longpollPort, newClientChannel);
+    	        					logger.info("event=reestablished_bad_connection host=" + host + " port=" + longpollPort);
+    	        					
+    								ChannelBuffer buf = ChannelBuffers.copiedBuffer(newClientChannel + ";", Charset.forName("UTF-8"));
+    								newClientChannel.write(buf);
+    							}
+    						}
+    					});
+					}
+
+					logger.debug("event=longpoll_notification_sent endpoint=" + endpoint + " queue_arn=" + queueArn);
+				}
+			}
 		}
 	}
 
@@ -115,99 +354,6 @@ public class CQSLongPollSender {
 			return;
 		}
 		
-        long now = System.currentTimeMillis();
-        
-        if (lastLPPingMinute.getAndSet(now/(1000*60)) != now/(1000*60)) {
-
-        	logger.debug("event=reloading_active_cqs_api_server_list new_minute=" + now/(1000*60));
-        	
-        	try {
-
-        		activeCQSApiServers.clear();
-        		
-        		CassandraPersistence cassandraHandler = new CassandraPersistence(CMBProperties.getInstance().getCQSKeyspace());
-
-                // read all other pings but ensure we are data-center local and looking at a cqs service
-                
-        		List<Row<String, String, String>> rows = cassandraHandler.readNextNNonEmptyRows("CQSAPIServers", null, 1000, 10, new StringSerializer(), new StringSerializer(), new StringSerializer(), HConsistencyLevel.QUORUM);
-        		
-        		if (rows != null) {
-        			
-        			for (Row<String, String, String> row : rows) {
-        				
-        				String host = row.getKey();
-        				
-    					if (host.contains(":")) {
-    						host = host.substring(0, host.indexOf(":"));
-    					}
-        				
-        				String dataCenter = CMBProperties.getInstance().getCMBDataCenter();
-        				long timestamp = 0, port = 0;
-        				
-        				if (row.getColumnSlice().getColumnByName("timestamp") != null) {
-        					timestamp = (Long.parseLong(row.getColumnSlice().getColumnByName("timestamp").getValue()));
-        				}
-        				
-        				if (row.getColumnSlice().getColumnByName("port") != null) {
-        					port = Long.parseLong(row.getColumnSlice().getColumnByName("port").getValue());
-        				}
-        				
-        				if (row.getColumnSlice().getColumnByName("dataCenter") != null) {
-        					dataCenter = row.getColumnSlice().getColumnByName("dataCenter").getValue();
-        				}
-        				
-        				if (now-timestamp < 5*60*1000 && dataCenter.equals(CMBProperties.getInstance().getCMBDataCenter())) {
-        					activeCQSApiServers.put(host + ":" + port, new Long(0));
-        					logger.debug("event=found_active_api_server host=" + host + " port=" + port + " data_center=" + dataCenter + " last_minute=" + (timestamp/1000));
-        				}
-        			}
-        		}                
-                
-        	} catch (Exception ex) {
-        		logger.warn("event=ping_glitch", ex);
-        	}
-        }
-	
-		final String msg = queueArn;
-
-		for (String endpoint : activeCQSApiServers.keySet()) {
-		
-			String e[] = endpoint.split(":");
-			String host = e[0];
-			String port = e[1];
-			
-			ChannelFuture channelFuture = clientBootstrap.connect(new InetSocketAddress(host, Integer.parseInt(port)));
-			
-			final String h = host;
-			final int p = Integer.parseInt(port);
-			
-			channelFuture.addListener(new ChannelFutureListener() {
-	
-				@Override
-				public void operationComplete(ChannelFuture cf) throws Exception {
-					
-					if (cf.isSuccess()) {
-	
-						final Channel clientChannel = cf.getChannel();
-	
-						logger.debug("event=longpoll_notification_sent host=" + h + " port=" + p + " queue_arn=" + msg);
-						
-						if (clientChannel.isWritable()) {
-							
-							ChannelBuffer buf = ChannelBuffers.copiedBuffer(msg + ";", Charset.forName("UTF-8"));
-							cf = clientChannel.write(buf);
-							
-							cf.addListener(new ChannelFutureListener() {
-								
-								@Override
-								public void operationComplete(ChannelFuture cf) throws Exception {
-									clientChannel.disconnect();
-								}
-							});
-						}
-					}
-				}
-			});
-		}
+		pendingNotifications.add(queueArn);
 	}
 }
