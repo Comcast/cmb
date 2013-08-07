@@ -51,7 +51,6 @@ import com.comcast.cmb.common.persistence.IUserPersistence;
 import com.comcast.cmb.common.persistence.UserCassandraPersistence;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.Util;
-import com.comcast.cmb.test.tools.AWSCredentialsHolder;
 import com.comcast.cmb.test.tools.CMBTestingConstants;
 import com.comcast.cmb.test.tools.CNSTestingUtils;
 import com.comcast.cns.model.CNSSubscription;
@@ -222,7 +221,7 @@ public class CNSStressTest {
 				awsCredentials = new BasicAWSCredentials(user.getAccessKey(), user.getAccessSecret());
 			
 			} else {
-				awsCredentials = AWSCredentialsHolder.initAwsCredentials();
+				awsCredentials = new BasicAWSCredentials(CMBProperties.getInstance().getAwsAccessKey(), CMBProperties.getInstance().getAwsAccessSecret());
 			}
 			
 			ClientConfiguration clientConfiguration = new ClientConfiguration();
