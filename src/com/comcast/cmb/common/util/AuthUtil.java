@@ -223,7 +223,7 @@ public class AuthUtil {
         
         // account for apache http client omitting standard ports
 
-        if (url.getPort() != 80 && url.getPort() != 443) {
+        if (url.getPort() > 0 && url.getPort() != 80 && url.getPort() != 443) {
             normalizedUrl += ":" + url.getPort();
         }
 

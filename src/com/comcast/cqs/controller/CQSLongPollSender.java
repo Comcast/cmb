@@ -150,15 +150,6 @@ public class CQSLongPollSender {
 
 	        		long now = System.currentTimeMillis();
 
-	        		// disconnect existing connections first 
-	        		
-					/*for (String endpoint : activeCQSApiServers.keySet()) {
-						Channel clientChannel = activeCQSApiServers.get(endpoint);
-						clientChannel.close();
-					}*/
-	        		
-	        		//activeCQSApiServers.clear();
-	        		
 	                // read all other pings but ensure we are data-center local and looking at a cqs service
 	        		
 	        		CassandraPersistence cassandraHandler = new CassandraPersistence(CMBProperties.getInstance().getCQSKeyspace());
