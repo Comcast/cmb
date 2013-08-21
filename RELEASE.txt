@@ -1,3 +1,15 @@
+CMB VERSION 2.2.34
+--------------------------------------------------------------------
+
+New features and bug fixes:
+
+- Cassandra consistency level now a parameter in cmb.properties
+  and defaulting to local quorum
+- now accepting underscores in topic names
+- security fix: only admin may impersonate other users in web ui
+- bug fix for changing topic display name in web ui
+- bug fix for v2 signature generation
+
 CMB VERSION 2.2.33
 --------------------------------------------------------------------
 
