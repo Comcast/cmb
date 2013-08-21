@@ -55,8 +55,8 @@ public class CQSQueueCassandraPersistence extends CassandraPersistence implement
 
 	public CQSQueueCassandraPersistence() {
 		super(CMBProperties.getInstance().getCQSKeyspace());
-		queuesTemplateString = new ThriftColumnFamilyTemplate<String, String>(keyspaces.get(HConsistencyLevel.QUORUM), COLUMN_FAMILY_QUEUES, StringSerializer.get(), StringSerializer.get());
-		queuesByUserTemplateString = new ThriftColumnFamilyTemplate<String, String>(keyspaces.get(HConsistencyLevel.QUORUM), COLUMN_FAMILY_QUEUES_BY_USER, StringSerializer.get(), StringSerializer.get());
+		queuesTemplateString = new ThriftColumnFamilyTemplate<String, String>(keyspaces.get(CMBProperties.getInstance().getConsistencyLevel()), COLUMN_FAMILY_QUEUES, StringSerializer.get(), StringSerializer.get());
+		queuesByUserTemplateString = new ThriftColumnFamilyTemplate<String, String>(keyspaces.get(CMBProperties.getInstance().getConsistencyLevel()), COLUMN_FAMILY_QUEUES_BY_USER, StringSerializer.get(), StringSerializer.get());
 	}
 
 	@Override
@@ -81,14 +81,14 @@ public class CQSQueueCassandraPersistence extends CassandraPersistence implement
 		queueData.put(CQSConstants.COL_NUMBER_PARTITIONS, (new Long(queue.getNumberOfPartitions())).toString());
 		queueData.put(CQSConstants.COL_NUMBER_SHARDS, (new Long(queue.getNumberOfShards())).toString());
 
-		insertOrUpdateRow(queue.getRelativeUrl(), COLUMN_FAMILY_QUEUES, queueData, HConsistencyLevel.QUORUM);
+		insertOrUpdateRow(queue.getRelativeUrl(), COLUMN_FAMILY_QUEUES, queueData, CMBProperties.getInstance().getConsistencyLevel());
 		
 		update(queuesByUserTemplateString, queue.getOwnerUserId(), queue.getArn(), "", StringSerializer.get(), StringSerializer.get(), StringSerializer.get());
 	}
 	
 	@Override
 	public void updateQueueAttribute(String queueURL, Map<String, String> queueData) throws PersistenceException {
-		insertOrUpdateRow(queueURL, COLUMN_FAMILY_QUEUES, queueData, HConsistencyLevel.QUORUM);
+		insertOrUpdateRow(queueURL, COLUMN_FAMILY_QUEUES, queueData, CMBProperties.getInstance().getConsistencyLevel());
 	}
 
 	@Override
@@ -119,7 +119,7 @@ public class CQSQueueCassandraPersistence extends CassandraPersistence implement
 			
 			counter = 0;
 			
-			Row<String, String, String> row = readRow(COLUMN_FAMILY_QUEUES_BY_USER, userId, lastArn, null, 1000, new StringSerializer(), new StringSerializer(), new StringSerializer(), HConsistencyLevel.QUORUM);
+			Row<String, String, String> row = readRow(COLUMN_FAMILY_QUEUES_BY_USER, userId, lastArn, null, 1000, new StringSerializer(), new StringSerializer(), new StringSerializer(), CMBProperties.getInstance().getConsistencyLevel());
 			
 			if (row != null) {
 				
@@ -182,7 +182,7 @@ public class CQSQueueCassandraPersistence extends CassandraPersistence implement
 			
 			sliceSize = 0;
 			
-			Row<String, String, String> row = readRow(COLUMN_FAMILY_QUEUES_BY_USER, userId, lastArn, null, 10000, new StringSerializer(), new StringSerializer(), new StringSerializer(), HConsistencyLevel.QUORUM);
+			Row<String, String, String> row = readRow(COLUMN_FAMILY_QUEUES_BY_USER, userId, lastArn, null, 10000, new StringSerializer(), new StringSerializer(), new StringSerializer(), CMBProperties.getInstance().getConsistencyLevel());
 			
 			if (row != null && row.getColumnSlice().getColumns().size() > 0) {
 				sliceSize = row.getColumnSlice().getColumns().size();
@@ -241,7 +241,7 @@ public class CQSQueueCassandraPersistence extends CassandraPersistence implement
 
 	private CQSQueue getQueueByUrl(String queueUrl) {
 
-		Row<String, String, String> row = readRow(COLUMN_FAMILY_QUEUES, queueUrl, 15, StringSerializer.get(), StringSerializer.get(), StringSerializer.get(), HConsistencyLevel.QUORUM);
+		Row<String, String, String> row = readRow(COLUMN_FAMILY_QUEUES, queueUrl, 15, StringSerializer.get(), StringSerializer.get(), StringSerializer.get(), CMBProperties.getInstance().getConsistencyLevel());
 
 		if (row == null) {		    
 			return null;

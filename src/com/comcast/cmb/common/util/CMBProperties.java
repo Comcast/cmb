@@ -23,6 +23,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import me.prettyprint.hector.api.HConsistencyLevel;
+
 import org.apache.log4j.Logger;
 
 /**
@@ -35,6 +37,8 @@ public class CMBProperties {
 	public enum IO_MODE {
 	    SYNC, ASYNC 
 	}
+	
+	private final HConsistencyLevel consistencyLevel;
 	
 	private final int cmbWorkerPoolSize;
 	
@@ -203,6 +207,8 @@ public class CMBProperties {
 			
 			FileInputStream fileStream = new FileInputStream(file);
 			props.load(fileStream);
+			
+			consistencyLevel = HConsistencyLevel.valueOf(props.getProperty("cmb.cassandra.consistencyLevel","LOCAL_QUORUM"));
 			
 			cmbWorkerPoolSize = Integer.parseInt(props.getProperty("cmb.workerpool.size","256"));
 			
@@ -776,5 +782,9 @@ public class CMBProperties {
 	
 	public int getCMBWorkerPoolSize() {
 		return cmbWorkerPoolSize;
+	}
+	
+	public HConsistencyLevel getConsistencyLevel() {
+		return consistencyLevel;
 	}
 }

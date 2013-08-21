@@ -64,7 +64,7 @@ public class CQSMessagePartitionedCassandraPersistence extends CassandraPersiste
 	private SuperCfTemplate<String, Composite, String> initQueueMessagesTemplate() {
 		
 		return new ThriftSuperCfTemplate<String, Composite, String>(
-				keyspaces.get(HConsistencyLevel.QUORUM),
+				keyspaces.get(CMBProperties.getInstance().getConsistencyLevel()),
 				COLUMN_FAMILY_PARTITIONED_QUEUE_MESSAGES, StringSerializer.get(),
 				new CompositeSerializer(), StringSerializer.get());
 	}
@@ -106,7 +106,7 @@ public class CQSMessagePartitionedCassandraPersistence extends CassandraPersiste
 				StringSerializer.get(), superColumnName, ttl,
 				new CompositeSerializer(), Util.buildMessageMap(message),
 				StringSerializer.get(), StringSerializer.get(),
-				HConsistencyLevel.QUORUM);
+				CMBProperties.getInstance().getConsistencyLevel());
 
 		return message.getMessageId();
 	}
@@ -155,7 +155,7 @@ public class CQSMessagePartitionedCassandraPersistence extends CassandraPersiste
 		insertSuperColumns(COLUMN_FAMILY_PARTITIONED_QUEUE_MESSAGES, key,
 				StringSerializer.get(), messageDataMap, ttl,
 				new CompositeSerializer(), StringSerializer.get(),
-				StringSerializer.get(), HConsistencyLevel.QUORUM);
+				StringSerializer.get(), CMBProperties.getInstance().getConsistencyLevel());
 		
 		return ret;
 	}
@@ -264,7 +264,7 @@ public class CQSMessagePartitionedCassandraPersistence extends CassandraPersiste
 					COLUMN_FAMILY_PARTITIONED_QUEUE_MESSAGES, key, previousHandle,
 					nextHandle, length-messageList.size()+1, StringSerializer.get(),
 					new CompositeSerializer(), StringSerializer.get(),
-					StringSerializer.get(), HConsistencyLevel.QUORUM);
+					StringSerializer.get(), CMBProperties.getInstance().getConsistencyLevel());
 			
 			messageList.addAll(Util.readMessagesFromSuperColumns(length-messageList.size(), previousHandle, nextHandle, superSlice, true));
 			
@@ -337,7 +337,7 @@ public class CQSMessagePartitionedCassandraPersistence extends CassandraPersiste
 			HSuperColumn<Composite, String, String> superColumn = readColumnFromSuperColumnFamily(COLUMN_FAMILY_PARTITIONED_QUEUE_MESSAGES, 
 					idParts[0], superColumnName, StringSerializer.get(), 
 					new CompositeSerializer(), StringSerializer.get(),
-					StringSerializer.get(), HConsistencyLevel.QUORUM);
+					StringSerializer.get(), CMBProperties.getInstance().getConsistencyLevel());
 			
 			CQSMessage message = null;
 			
@@ -374,7 +374,7 @@ public class CQSMessagePartitionedCassandraPersistence extends CassandraPersiste
 					COLUMN_FAMILY_PARTITIONED_QUEUE_MESSAGES, queuePartition, new Composite(Arrays.asList(Long.parseLong(firstParts[0]), Long.parseLong(firstParts[1]))),
 					new Composite(Arrays.asList(Long.parseLong(lastParts[0]), Long.parseLong(lastParts[1]))), messageCount, StringSerializer.get(),
 					new CompositeSerializer(), StringSerializer.get(),
-					StringSerializer.get(), HConsistencyLevel.QUORUM);
+					StringSerializer.get(), CMBProperties.getInstance().getConsistencyLevel());
 			
 			List<CQSMessage> messageList = Util.readMessagesFromSuperColumns(messageCount, null, null, superSlice, false);
 			
@@ -503,7 +503,7 @@ public class CQSMessagePartitionedCassandraPersistence extends CassandraPersiste
                         COLUMN_FAMILY_PARTITIONED_QUEUE_MESSAGES, key, null, null, 1, 
                         StringSerializer.get(),
                         new CompositeSerializer(), StringSerializer.get(),
-                        StringSerializer.get(), HConsistencyLevel.QUORUM);
+                        StringSerializer.get(), CMBProperties.getInstance().getConsistencyLevel());
                
                 List<CQSMessage> messages = Util.readMessagesFromSuperColumns(1, null, null, superSlice, false);
                 numFound += messages.size();

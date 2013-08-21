@@ -47,18 +47,18 @@ public class CassandraTest {
 		
 		CassandraPersistence p = new CassandraPersistence(CMBProperties.getInstance().getCNSKeyspace());
 		
-		long i = p.getCounter("CNSTopicStats", "bla", "foo", StringSerializer.get(), StringSerializer.get(), HConsistencyLevel.QUORUM);
+		long i = p.getCounter("CNSTopicStats", "bla", "foo", StringSerializer.get(), StringSerializer.get(), CMBProperties.getInstance().getConsistencyLevel());
 		
 		while (i > 0) {
-			p.decrementCounter("CNSTopicStats", "bla", "foo", 1, StringSerializer.get(), StringSerializer.get(), HConsistencyLevel.QUORUM);
-			i = p.getCounter("CNSTopicStats", "bla", "foo", StringSerializer.get(), StringSerializer.get(), HConsistencyLevel.QUORUM);
+			p.decrementCounter("CNSTopicStats", "bla", "foo", 1, StringSerializer.get(), StringSerializer.get(), CMBProperties.getInstance().getConsistencyLevel());
+			i = p.getCounter("CNSTopicStats", "bla", "foo", StringSerializer.get(), StringSerializer.get(), CMBProperties.getInstance().getConsistencyLevel());
 		}
 		
-		p.incrementCounter("CNSTopicStats", "bla", "foo", 1, StringSerializer.get(), StringSerializer.get(), HConsistencyLevel.QUORUM);
-		p.incrementCounter("CNSTopicStats", "bla", "foo", 1, StringSerializer.get(), StringSerializer.get(), HConsistencyLevel.QUORUM);
-		p.incrementCounter("CNSTopicStats", "bla", "foo", 1, StringSerializer.get(), StringSerializer.get(), HConsistencyLevel.QUORUM);
+		p.incrementCounter("CNSTopicStats", "bla", "foo", 1, StringSerializer.get(), StringSerializer.get(), CMBProperties.getInstance().getConsistencyLevel());
+		p.incrementCounter("CNSTopicStats", "bla", "foo", 1, StringSerializer.get(), StringSerializer.get(), CMBProperties.getInstance().getConsistencyLevel());
+		p.incrementCounter("CNSTopicStats", "bla", "foo", 1, StringSerializer.get(), StringSerializer.get(), CMBProperties.getInstance().getConsistencyLevel());
 		
-		i = p.getCounter("CNSTopicStats", "bla", "foo", StringSerializer.get(), StringSerializer.get(), HConsistencyLevel.QUORUM);
+		i = p.getCounter("CNSTopicStats", "bla", "foo", StringSerializer.get(), StringSerializer.get(), CMBProperties.getInstance().getConsistencyLevel());
 		
 		assertTrue("Expected counter to be 3, instead found " + i, i == 3);
 	}

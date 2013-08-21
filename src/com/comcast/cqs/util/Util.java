@@ -560,7 +560,7 @@ public class Util {
 		
 		for (int i=0; i<numberOfPartitions; i++) {
 			String queueKey = queueHash + "_" + i;
-			long partitionCount = persistence.getCount("CQSPartitionedQueueMessages", queueKey, StringSerializer.get(), new CompositeSerializer(), HConsistencyLevel.QUORUM);
+			long partitionCount = persistence.getCount("CQSPartitionedQueueMessages", queueKey, StringSerializer.get(), new CompositeSerializer(), CMBProperties.getInstance().getConsistencyLevel());
 			messageCount += partitionCount;
 		}
 		
@@ -576,7 +576,7 @@ public class Util {
 		
 		for (int i=0; i<numberOfPartitions; i++) {
 			String queueKey = queueHash + "_" + i;
-			long partitionCount = persistence.getCount("CQSPartitionedQueueMessages", queueKey, StringSerializer.get(), new CompositeSerializer(), HConsistencyLevel.QUORUM);
+			long partitionCount = persistence.getCount("CQSPartitionedQueueMessages", queueKey, StringSerializer.get(), new CompositeSerializer(), CMBProperties.getInstance().getConsistencyLevel());
 			messageCounts.add(partitionCount);
 		}
 		
