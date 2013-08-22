@@ -19,11 +19,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
-import org.jfree.util.Log;
 import org.json.JSONObject;
 
 import me.prettyprint.cassandra.serializers.StringSerializer;
-import me.prettyprint.hector.api.HConsistencyLevel;
 import me.prettyprint.hector.api.beans.Row;
 
 import com.comcast.cmb.common.persistence.CassandraPersistence;
@@ -238,7 +236,6 @@ public class CNSAttributesCassandraPersistence extends CassandraPersistence impl
 			}
 			
 			subscriptionAttributes.setSubscriptionArn(subscriptionArn);
-			logger.info("subscriptionAttributes:" + subscriptionAttributes.toString());
 		}
 		
 		return subscriptionAttributes;

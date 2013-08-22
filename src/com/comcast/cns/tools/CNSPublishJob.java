@@ -197,31 +197,30 @@ public class CNSPublishJob implements Runnable {
         
         publisher.setEndpoint(endpoint);
         Boolean rawMessageDelivery = false;
-		if (subArn != null) {
+		
+        if (subArn != null) {
 			ICNSAttributesPersistence attributePers = PersistenceFactory.getCNSAttributePersistence();
             CNSSubscriptionAttributes subAttr = attributePers.getSubscriptionAttributes(subArn);
-			            
             if (subAttr != null) {
             	rawMessageDelivery = subAttr.getRawMessageDelivery();
             }
-            
 		}
+		
 		String msg = "";
-		if(rawMessageDelivery){
+		
+		if (rawMessageDelivery) {
 			publisher.setRawMessageDelivery(true);
 			msg = message.getProtocolSpecificProcessedRawMessage(protocol);
-			logger.info("event=run_common_message_raw protocol=" + protocol + " endpoint=" + endpoint + " sub_arn=" + subArn + " attempt=" + numRetries + " msg=" + msg + " subject=" + message.getSubject());
-			
-		}else{
+		} else {
 			msg = message.getProtocolSpecificProcessedMessage(protocol);
-			logger.info("event=run_common_message_normal protocol=" + protocol + " endpoint=" + endpoint + " sub_arn=" + subArn + " attempt=" + numRetries + " msg=" + msg + " subject=" + message.getSubject());
 		}
+		
         publisher.setMessage(msg);
         publisher.setSubject(message.getSubject());            
         publisher.setUser(user);
         publisher.send();
         
-        logger.info("event=successful_delivery protocol=" + protocol + " endpoint=" + endpoint + " sub_arn=" + subArn + " attempt=" + numRetries);
+        logger.debug("event=successful_delivery protocol=" + protocol + " endpoint=" + endpoint + " sub_arn=" + subArn + " attempt=" + numRetries + " raw=" + rawMessageDelivery);
 
         long ts2 = System.currentTimeMillis();
         

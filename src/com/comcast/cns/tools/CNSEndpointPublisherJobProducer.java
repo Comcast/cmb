@@ -213,7 +213,7 @@ public class CNSEndpointPublisherJobProducer implements CNSPublisherPartitionRun
 	            CQSHandler.deleteMessage(queueUrl, msg);
 	            
 	            long ts2 = System.currentTimeMillis();
-	            logger.info("event=processed_producer_job cns_cqs_ms=" + CMBControllerServlet.valueAccumulator.getCounter(AccumulatorName.CNSCQSTime) + " res_ts=" + (ts2 - ts1));
+	            logger.info("event=processed_producer_job cns_cqs_ms=" + CMBControllerServlet.valueAccumulator.getCounter(AccumulatorName.CNSCQSTime) + " resp_ms=" + (ts2 - ts1));
 
 	        } else {
 	        	
