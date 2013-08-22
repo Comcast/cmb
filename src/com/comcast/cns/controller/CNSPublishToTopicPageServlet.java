@@ -108,7 +108,7 @@ public class CNSPublishToTopicPageServlet extends AdminServletBase {
 				out.println("<tr><td>&nbsp;</td><td>&nbsp;</td></tr>");
 				out.println("<tr><td valign=top><b>Subject:</b></td><td valign=top><input type='text' size='90' name='subject'><br/><I><font color='grey'>Up to 100 printable ASCII characters (optional)</font></I></td></tr>");
 				out.println("<tr><td>&nbsp;</td><td>&nbsp;</td></tr>");
-				out.println("<tr><td valign=top><b>Message:</b></td><td valign=top><textarea name='message' cols = '70' rows='8' id='message' ></textarea><br/><I><font color='grey'>Up to 8KB of Unicode text</font></I></td></tr>");
+				out.println("<tr><td valign=top><b>Message:</b></td><td valign=top><textarea name='message' cols = '70' rows='8' id='message' ></textarea><br/><I><font color='grey'>Up to 256 KB of Unicode text</font></I></td></tr>");
 				out.println("<tr><td>&nbsp;</td><td>&nbsp;</td></tr>");
 				out.println("<tr><td>&nbsp;</td><td><input type='radio' name='msgType' value='same' checked='checked' onclick='changeMsgStructure(this.value)'/>Use same message body for all protocols</br/>");
 				out.println("<input type='radio' name='msgType' value='json' onclick='changeMsgStructure(this.value)'/>Use different message body for different protocols</td></tr>");

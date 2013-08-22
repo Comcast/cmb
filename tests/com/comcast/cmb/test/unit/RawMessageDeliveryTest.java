@@ -38,6 +38,10 @@ import com.amazonaws.services.sns.model.PublishRequest;
 import com.amazonaws.services.sns.model.SetSubscriptionAttributesRequest;
 import com.amazonaws.services.sns.model.SubscribeRequest;
 import com.amazonaws.services.sns.model.SubscribeResult;
+import com.comcast.cmb.common.model.User;
+import com.comcast.cmb.common.persistence.IUserPersistence;
+import com.comcast.cmb.common.persistence.UserCassandraPersistence;
+import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.Util;
 import com.comcast.cmb.test.tools.CMBTestingConstants;
 import static org.junit.Assert.*;
@@ -81,150 +85,151 @@ public class RawMessageDeliveryTest {
 	}
 	
 	@Test
-	public void testRawMessageDelivery(){
+	public void testRawMessageDelivery() throws Exception {
 		
-    	try {
-    		
-            Util.initLog4jTest();
-            Random randomGenerator = new Random();
-            BasicAWSCredentials userCredentials = new BasicAWSCredentials("OIGZ2IHRZ412Q7S351O6", "7Tvxwm6H4YB4LgKabKd9F3uTXj3dylky6rUiS57u");
-            String cnsServerUrl = "http://localhost:6061";
-            
-            AmazonSNS sns = new AmazonSNSClient(userCredentials);
-            sns.setEndpoint(cnsServerUrl);
-        
-	        // create topic
-	        String topicName = "RAWTEST_" + randomGenerator.nextLong();
-			CreateTopicRequest createTopicRequest = new CreateTopicRequest(topicName);
-			CreateTopicResult createTopicResult = sns.createTopic(createTopicRequest);
-			String topicArn = createTopicResult.getTopicArn();
-			
-			
-			// subscribe and confirm http endpoint to receive raw message
-			String id = randomGenerator.nextLong() + "";
-			
-			String rawEndPointUrl = CMBTestingConstants.HTTP_ENDPOINT_BASE_URL + "recv/" + id;
-			String rawEndPointLastMessageUrl = CMBTestingConstants.HTTP_ENDPOINT_BASE_URL + "info/" + id + "?showLast=true";
-			
-			SubscribeRequest rawEndPointSubscribeRequest = new SubscribeRequest();
-			rawEndPointSubscribeRequest.setEndpoint(rawEndPointUrl);
-			rawEndPointSubscribeRequest.setProtocol("http");
-			rawEndPointSubscribeRequest.setTopicArn(topicArn);
-			SubscribeResult subscribeResult = sns.subscribe(rawEndPointSubscribeRequest);
-			String rawEndPointsubscriptionArn = subscribeResult.getSubscriptionArn();
-			
-			if (rawEndPointsubscriptionArn.equals("pending confirmation")) {
-				
-				Thread.sleep(500);				
-				String response = httpGet(rawEndPointLastMessageUrl);
-				logger.info(response);
-    			JSONObject o = new JSONObject(response);
-    			if (!o.has("SubscribeURL")) {
-    				throw new Exception("message is not a confirmation messsage");
-    			}
-    			String subscriptionUrl = o.getString("SubscribeURL");
-    			response = httpGet(subscriptionUrl);
-    			
-    			String startTag = "<SubscriptionArn>";
-    			String endTag = "</SubscriptionArn>";
-    			int startIndex = response.indexOf(startTag);
-    			int endIndex = response.indexOf(endTag);
-    			String subArn = response.substring(startIndex + startTag.length(), endIndex);
-    			if(subArn != null && !subArn.isEmpty()){
-    				rawEndPointsubscriptionArn = subArn;
-    			}
-			}
-			
-			// set subscription attribute for raw message delivery
-			
-			Boolean rawMessageDelivery = true;
-			try {
-				SetSubscriptionAttributesRequest setSubscriptionAttributesRequest = new SetSubscriptionAttributesRequest(rawEndPointsubscriptionArn, "RawMessageDelivery", rawMessageDelivery.toString());
-				sns.setSubscriptionAttributes(setSubscriptionAttributesRequest);
-				
-				Map<String, String> attributes = null;
-				GetSubscriptionAttributesRequest getSubscriptionAttributesRequest = new GetSubscriptionAttributesRequest(rawEndPointsubscriptionArn);
-				GetSubscriptionAttributesResult getSubscriptionAttributesResult = sns.getSubscriptionAttributes(getSubscriptionAttributesRequest);
-				attributes = getSubscriptionAttributesResult.getAttributes();
-				String rawMessageDeliveryStr = attributes.get("RawMessageDelivery");
-				if(rawMessageDeliveryStr != null && !rawMessageDeliveryStr.isEmpty()){
-					Boolean rawMessagePolicyReturn = Boolean.parseBoolean(rawMessageDeliveryStr);
-					assertTrue("Set raw message delivery successful", rawMessagePolicyReturn);
-				}
-			} catch (Exception ex) {
-				throw new Exception("Can't set raw message delivery attribute to subscription arn " + rawEndPointsubscriptionArn);
-			}
-			
-			// subscribe and confirm http endpoint to receive JSON message
-			id = randomGenerator.nextLong() + "";
-			String jsonEndPointUrl = CMBTestingConstants.HTTP_ENDPOINT_BASE_URL + "recv/" + id;
-			String jsonEndPointLastMessageUrl = CMBTestingConstants.HTTP_ENDPOINT_BASE_URL + "info/" + id + "?showLast=true";
-			
-			SubscribeRequest jsonEndPointSubscribeRequest = new SubscribeRequest();
-			jsonEndPointSubscribeRequest.setEndpoint(jsonEndPointUrl);
-			jsonEndPointSubscribeRequest.setProtocol("http");
-			jsonEndPointSubscribeRequest.setTopicArn(topicArn);
-			SubscribeResult jsonSubscribeResult = sns.subscribe(jsonEndPointSubscribeRequest);
-			String jsonEndPointsubscriptionArn = jsonSubscribeResult.getSubscriptionArn();
-			
-			if (jsonEndPointsubscriptionArn.equals("pending confirmation")) {
-				
-				Thread.sleep(500);				
-				String response = httpGet(jsonEndPointLastMessageUrl);
-    			JSONObject o = new JSONObject(response);
-    			if (!o.has("SubscribeURL")) {
-    				throw new Exception("message is not a confirmation messsage");
-    			}
-    			String subscriptionUrl = o.getString("SubscribeURL");
-    			response = httpGet(subscriptionUrl);
-    			
-    			String startTag = "<SubscriptionArn>";
-    			String endTag = "</SubscriptionArn>";
-    			int startIndex = response.indexOf(startTag);
-    			int endIndex = response.indexOf(endTag);
-    			String subArn = response.substring(startIndex + startTag.length(), endIndex);
-    			if(subArn != null && !subArn.isEmpty()){
-    				jsonEndPointsubscriptionArn = subArn;
-    			}
-			}
-			
-			
-			// publish and receive message
-			
-			String messageText = "Pulish a raw message";
-			PublishRequest publishRequest = new PublishRequest();
-			publishRequest.setMessage(messageText);
-			publishRequest.setSubject("unit test raw message");
-			publishRequest.setTopicArn(topicArn);
-			sns.publish(publishRequest);
-			
-			Thread.sleep(500);
+        Util.initLog4jTest();
+        Random randomGenerator = new Random();
 
-			// check raw message is received			
+        IUserPersistence userPersistence = new UserCassandraPersistence();
+        
+        User user = userPersistence.getUserByName("cns_unit_test");
+
+        if (user == null) {
+            user = userPersistence.createUser("cns_unit_test", "cns_unit_test");
+        }
+
+        BasicAWSCredentials credentialsUser = new BasicAWSCredentials(user.getAccessKey(), user.getAccessSecret());
+    
+        AmazonSNSClient sns = new AmazonSNSClient(credentialsUser);
+        sns.setEndpoint(CMBProperties.getInstance().getCNSServiceUrl());
+
+        // create topic
+        String topicName = "RAWTEST_" + randomGenerator.nextLong();
+		CreateTopicRequest createTopicRequest = new CreateTopicRequest(topicName);
+		CreateTopicResult createTopicResult = sns.createTopic(createTopicRequest);
+		String topicArn = createTopicResult.getTopicArn();
+		
+		// subscribe and confirm http endpoint to receive raw message
+		String id = randomGenerator.nextLong() + "";
+		
+		String rawEndPointUrl = CMBTestingConstants.HTTP_ENDPOINT_BASE_URL + "recv/" + id;
+		String rawEndPointLastMessageUrl = CMBTestingConstants.HTTP_ENDPOINT_BASE_URL + "info/" + id + "?showLast=true";
+		
+		SubscribeRequest rawEndPointSubscribeRequest = new SubscribeRequest();
+		rawEndPointSubscribeRequest.setEndpoint(rawEndPointUrl);
+		rawEndPointSubscribeRequest.setProtocol("http");
+		rawEndPointSubscribeRequest.setTopicArn(topicArn);
+		SubscribeResult subscribeResult = sns.subscribe(rawEndPointSubscribeRequest);
+		String rawEndPointsubscriptionArn = subscribeResult.getSubscriptionArn();
+		
+		if (rawEndPointsubscriptionArn.equals("pending confirmation")) {
+			
+			Thread.sleep(500);				
 			String response = httpGet(rawEndPointLastMessageUrl);
-			if (response != null && response.length() > 0) {
-				assertEquals("Receive raw message", response, messageText);				
-			} else {
-				throw new Exception("no messages found");
+			logger.info(response);
+			JSONObject o = new JSONObject(response);
+			if (!o.has("SubscribeURL")) {
+				throw new Exception("message is not a confirmation messsage");
 			}
+			String subscriptionUrl = o.getString("SubscribeURL");
+			response = httpGet(subscriptionUrl);
 			
-			// check json message is received
-			response = httpGet(jsonEndPointLastMessageUrl);
-			if (response != null && response.length() > 0) {
-				JSONObject obj = new JSONObject(response);
-				assertNotNull("Received JSON message", obj);
-			} else {
-				throw new Exception("no messages found");
+			String startTag = "<SubscriptionArn>";
+			String endTag = "</SubscriptionArn>";
+			int startIndex = response.indexOf(startTag);
+			int endIndex = response.indexOf(endTag);
+			String subArn = response.substring(startIndex + startTag.length(), endIndex);
+			if(subArn != null && !subArn.isEmpty()){
+				rawEndPointsubscriptionArn = subArn;
 			}
+		}
+		
+		// set subscription attribute for raw message delivery
+		
+		Boolean rawMessageDelivery = true;
+		try {
+			SetSubscriptionAttributesRequest setSubscriptionAttributesRequest = new SetSubscriptionAttributesRequest(rawEndPointsubscriptionArn, "RawMessageDelivery", rawMessageDelivery.toString());
+			sns.setSubscriptionAttributes(setSubscriptionAttributesRequest);
 			
-			// delete topic
-			DeleteTopicRequest  deleteTopicRequest = new DeleteTopicRequest(topicArn);
-			sns.deleteTopic(deleteTopicRequest);
-        	
-        	System.out.println("OK");
+			Map<String, String> attributes = null;
+			GetSubscriptionAttributesRequest getSubscriptionAttributesRequest = new GetSubscriptionAttributesRequest(rawEndPointsubscriptionArn);
+			GetSubscriptionAttributesResult getSubscriptionAttributesResult = sns.getSubscriptionAttributes(getSubscriptionAttributesRequest);
+			attributes = getSubscriptionAttributesResult.getAttributes();
+			String rawMessageDeliveryStr = attributes.get("RawMessageDelivery");
+			if(rawMessageDeliveryStr != null && !rawMessageDeliveryStr.isEmpty()){
+				Boolean rawMessagePolicyReturn = Boolean.parseBoolean(rawMessageDeliveryStr);
+				assertTrue("Set raw message delivery successful", rawMessagePolicyReturn);
+			}
+		} catch (Exception ex) {
+			throw new Exception("Can't set raw message delivery attribute to subscription arn " + rawEndPointsubscriptionArn);
+		}
+		
+		// subscribe and confirm http endpoint to receive JSON message
+		id = randomGenerator.nextLong() + "";
+		String jsonEndPointUrl = CMBTestingConstants.HTTP_ENDPOINT_BASE_URL + "recv/" + id;
+		String jsonEndPointLastMessageUrl = CMBTestingConstants.HTTP_ENDPOINT_BASE_URL + "info/" + id + "?showLast=true";
+		
+		SubscribeRequest jsonEndPointSubscribeRequest = new SubscribeRequest();
+		jsonEndPointSubscribeRequest.setEndpoint(jsonEndPointUrl);
+		jsonEndPointSubscribeRequest.setProtocol("http");
+		jsonEndPointSubscribeRequest.setTopicArn(topicArn);
+		SubscribeResult jsonSubscribeResult = sns.subscribe(jsonEndPointSubscribeRequest);
+		String jsonEndPointsubscriptionArn = jsonSubscribeResult.getSubscriptionArn();
+		
+		if (jsonEndPointsubscriptionArn.equals("pending confirmation")) {
 			
-    	} catch (Exception ex) {
-    		ex.printStackTrace();
-    	}
+			Thread.sleep(500);				
+			String response = httpGet(jsonEndPointLastMessageUrl);
+			JSONObject o = new JSONObject(response);
+			if (!o.has("SubscribeURL")) {
+				throw new Exception("message is not a confirmation messsage");
+			}
+			String subscriptionUrl = o.getString("SubscribeURL");
+			response = httpGet(subscriptionUrl);
+			
+			String startTag = "<SubscriptionArn>";
+			String endTag = "</SubscriptionArn>";
+			int startIndex = response.indexOf(startTag);
+			int endIndex = response.indexOf(endTag);
+			String subArn = response.substring(startIndex + startTag.length(), endIndex);
+			if(subArn != null && !subArn.isEmpty()){
+				jsonEndPointsubscriptionArn = subArn;
+			}
+		}
+		
+		
+		// publish and receive message
+		
+		String messageText = "Pulish a raw message";
+		PublishRequest publishRequest = new PublishRequest();
+		publishRequest.setMessage(messageText);
+		publishRequest.setSubject("unit test raw message");
+		publishRequest.setTopicArn(topicArn);
+		sns.publish(publishRequest);
+		
+		Thread.sleep(500);
+
+		// check raw message is received			
+		String response = httpGet(rawEndPointLastMessageUrl);
+		if (response != null && response.length() > 0) {
+			assertEquals("Receive raw message", response, messageText);				
+		} else {
+			throw new Exception("no messages found");
+		}
+		
+		// check json message is received
+		response = httpGet(jsonEndPointLastMessageUrl);
+		if (response != null && response.length() > 0) {
+			JSONObject obj = new JSONObject(response);
+			assertNotNull("Received JSON message", obj);
+		} else {
+			throw new Exception("no messages found");
+		}
+		
+		// delete topic
+		DeleteTopicRequest  deleteTopicRequest = new DeleteTopicRequest(topicArn);
+		sns.deleteTopic(deleteTopicRequest);
+    	
+    	System.out.println("OK");
 	}
 }
