@@ -17,7 +17,6 @@ package com.comcast.cns.io;
 
 import org.apache.log4j.Logger;
 
-import com.comcast.cmb.common.model.User;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cns.util.MailWrapper;
 

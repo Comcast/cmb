@@ -24,17 +24,12 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.log4j.Logger;
-import org.json.JSONObject;
 
 import com.amazonaws.services.sns.model.GetSubscriptionAttributesRequest;
 import com.amazonaws.services.sns.model.GetSubscriptionAttributesResult;
 import com.amazonaws.services.sns.model.SetSubscriptionAttributesRequest;
 import com.comcast.cmb.common.controller.AdminServletBase;
 import com.comcast.cmb.common.controller.CMBControllerServlet;
-import com.comcast.cns.model.CNSRetryPolicy;
-import com.comcast.cns.model.CNSSubscriptionDeliveryPolicy;
-import com.comcast.cns.model.CNSThrottlePolicy;
-import com.comcast.cns.model.CNSRetryPolicy.CnsBackoffFunction;
 
 /**
  * Admin page for editing subscription delivery policy

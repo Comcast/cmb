@@ -16,7 +16,6 @@
 package com.comcast.cns.controller;
 
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 import com.comcast.cmb.common.controller.CMBControllerServlet;

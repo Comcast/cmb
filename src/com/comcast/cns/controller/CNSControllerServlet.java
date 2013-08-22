@@ -30,8 +30,6 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.apache.log4j.Logger;
 
-import me.prettyprint.hector.api.HConsistencyLevel;
-
 import com.comcast.cmb.common.controller.Action;
 import com.comcast.cmb.common.controller.CMBControllerServlet;
 import com.comcast.cmb.common.controller.HealthCheckShallow;

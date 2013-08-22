@@ -23,11 +23,9 @@ import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
-import org.apache.commons.codec.binary.Base64;
 
 import com.comcast.cmb.common.util.Util;
 import com.comcast.cqs.util.CQSConstants;

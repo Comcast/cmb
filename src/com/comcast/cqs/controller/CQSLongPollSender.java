@@ -31,7 +31,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import com.comcast.cqs.model.CQSAPIStats;
 
 import me.prettyprint.cassandra.serializers.StringSerializer;
-import me.prettyprint.hector.api.HConsistencyLevel;
 import me.prettyprint.hector.api.beans.Row;
 
 import org.apache.log4j.Logger;

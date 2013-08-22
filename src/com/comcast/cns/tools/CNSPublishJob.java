@@ -15,16 +15,11 @@
  */
 package com.comcast.cns.tools;
 
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import javax.servlet.ServletException;
-
 import org.apache.log4j.Logger;
 
-import com.amazonaws.services.sns.model.GetSubscriptionAttributesRequest;
-import com.amazonaws.services.sns.model.GetSubscriptionAttributesResult;
 import com.comcast.cmb.common.controller.CMBControllerServlet;
 import com.comcast.cmb.common.model.User;
 import com.comcast.cmb.common.persistence.PersistenceFactory;
@@ -38,9 +33,7 @@ import com.comcast.cns.model.CNSMessage;
 import com.comcast.cns.model.CNSRetryPolicy;
 import com.comcast.cns.model.CNSSubscriptionAttributes;
 import com.comcast.cns.model.CNSSubscriptionDeliveryPolicy;
-import com.comcast.cns.model.CNSEndpointPublishJob.CNSEndpointSubscriptionInfo;
 import com.comcast.cns.model.CNSSubscription.CnsSubscriptionProtocol;
-import com.comcast.cns.persistence.CNSCachedEndpointPublishJob;
 import com.comcast.cns.persistence.ICNSAttributesPersistence;
 import com.comcast.cns.persistence.SubscriberNotFoundException;
 import com.comcast.cns.util.Util;

@@ -23,8 +23,6 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import me.prettyprint.hector.api.HConsistencyLevel;
-
 import org.apache.http.conn.HttpHostConnectException;
 import org.apache.log4j.Logger;
 

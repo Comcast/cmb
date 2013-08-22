@@ -22,8 +22,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-import me.prettyprint.hector.api.HConsistencyLevel;
-
 import org.apache.http.conn.HttpHostConnectException;
 import org.apache.log4j.Logger;
 

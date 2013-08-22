@@ -52,7 +52,6 @@ import org.apache.http.protocol.RequestUserAgent;
 import org.apache.log4j.Logger;
 
 import com.comcast.cmb.common.controller.CMBControllerServlet;
-import com.comcast.cmb.common.model.User;
 import com.comcast.cmb.common.util.CMBProperties;
 
 /**

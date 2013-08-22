@@ -33,7 +33,6 @@ import me.prettyprint.cassandra.serializers.CompositeSerializer;
 import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.cassandra.service.template.SuperCfTemplate;
 import me.prettyprint.cassandra.service.template.ThriftSuperCfTemplate;
-import me.prettyprint.hector.api.HConsistencyLevel;
 import me.prettyprint.hector.api.beans.Composite;
 import me.prettyprint.hector.api.beans.HSuperColumn;
 import me.prettyprint.hector.api.beans.SuperSlice;
