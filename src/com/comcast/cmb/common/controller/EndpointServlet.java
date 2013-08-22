@@ -41,6 +41,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -99,6 +100,7 @@ public class EndpointServlet extends HttpServlet {
         public String url;
         public String method;
         public String msg;
+        public String httpHeader;
         //public boolean failure = false;
     }
     
@@ -642,6 +644,14 @@ public class EndpointServlet extends HttpServlet {
         		return;
         	}
         }*/
+    	
+    	Enumeration<String> headerNames = request.getHeaderNames();
+        String header = "";
+        while(headerNames.hasMoreElements()) {
+          String headerName = (String)headerNames.nextElement();
+          header += headerName + ":" + request.getHeader(headerName) + "\n";
+        }
+        msg.httpHeader = header;
 
     	addMessage(msg);
         //logger.info("event=received_message status_code=200 msg_id=" + msg.id);
@@ -695,6 +705,8 @@ public class EndpointServlet extends HttpServlet {
                 output += "Url: "+msg.url+"<br/>";
                 output += "Method: "+msg.method+"<br/>";
                 output += "Host: "+msg.host+"<br/>";
+                output += "<b>Header</b><br/>";
+                output += msg.httpHeader.replace("\n", "<br/>");
                 
                 /*if (msg.failure) {
                 	output += "FAILED (HTTP " + failureConfigMap.get(msg.id).httpErrorCode + ")<br/>";

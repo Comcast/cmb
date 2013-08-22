@@ -323,6 +323,15 @@ public final class CNSMessage {
         return protocolToProcessedMessage.get(protocol);
     }   
     
+    public String getProtocolSpecificProcessedRawMessage(CnsSubscriptionProtocol protocol) {
+		try {
+			String msg = getProtocolSpecificMessage(protocol, this);
+			return msg;
+		} catch (CMBException e) {
+			return "";
+		}
+	}
+    
     /**
      * 
      * @return a Unicode string representing the entire job

@@ -53,6 +53,12 @@ public class CNSAttributePopulator {
 		}
 
 		out.append("\t\t\t</entry>\n");
+		
+		out.append("\t\t\t<entry>\n");
+		out.append("\t\t\t\t<key>RawMessageDelivery</key>\n"); 
+		out.append("\t\t\t\t<value>" + attr.getRawMessageDelivery() + "</value>\n");
+		out.append("\t\t\t</entry>\n");
+		
 		out.append("\t\t\t<entry>\n");
 		out.append("\t\t\t\t<key>TopicArn</key>\n");
 		out.append("\t\t\t\t<value>" + attr.getTopicArn() + "</value>\n");

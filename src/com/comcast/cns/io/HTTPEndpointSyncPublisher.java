@@ -19,6 +19,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 
 import org.apache.http.HttpEntity;
+import org.apache.http.HttpHeaders;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpVersion;
@@ -39,7 +40,6 @@ import org.apache.http.params.HttpProtocolParams;
 import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
 
-import com.comcast.cmb.common.model.User;
 import com.comcast.cmb.common.util.CMBErrorCodes;
 import com.comcast.cmb.common.util.CMBException;
 import com.comcast.cmb.common.util.CMBProperties;
@@ -48,7 +48,7 @@ import com.comcast.cmb.common.util.CMBProperties;
  * Following class uses the HttpClient library version 4.2.1 
  * @author aseem, bwolf
  */
-public class HTTPEndpointSyncPublisher implements IEndpointPublisher {
+public class HTTPEndpointSyncPublisher extends AbstractEndpointPublisher {
 
 	private final static SchemeRegistry schemeRegistry = new SchemeRegistry();
 	private final static PoolingClientConnectionManager cm;
@@ -84,59 +84,17 @@ public class HTTPEndpointSyncPublisher implements IEndpointPublisher {
 
 		httpClient = new DefaultHttpClient(cm, params);
 	}
-
-	private String endpoint;
-	private String message;
-	private User user;
+	
 	private static Logger logger = Logger.getLogger(HTTPEndpointSyncPublisher.class);
 
 	public static int getNumConnectionsInPool() {
 		return cm.getTotalStats().getAvailable();
 	}
-	
-	@Override
-	public void setEndpoint(String endpoint) {
-		this.endpoint = endpoint;
-	}
-
-	@Override
-	public void setMessage(String message) {
-		this.message = message;     
-	}
-
-	@Override
-	public String getEndpoint() {
-		return endpoint;
-	}
-
-	@Override
-	public String getMessage() {        
-		return message;
-	}
-
-	@Override
-	public void setUser(User user) {
-		this.user = user;       
-	}
-
-	@Override
-	public User getUser() {
-		return user;
-	}
-
-	@Override
-	public void setSubject(String subject) {
-	}
-
-	@Override
-	public String getSubject() {
-		return null;
-	}
 
 	@Override
 	public void send() throws Exception {
 
-		logger.debug("event=send_http_request endpoint=" + endpoint + "\" message=\"" + message + "\"");
+		logger.info("event=send_sync_http_request endpoint=" + endpoint + "\" message=\"" + message + "\"");
 
 		if ((message == null) || (endpoint == null)) {
 			logger.debug("event=send_http_request error_code=MissingParameters endpoint=" + endpoint + "\" message=\"" + message + "\"");
@@ -144,8 +102,13 @@ public class HTTPEndpointSyncPublisher implements IEndpointPublisher {
 		}
 
 		HttpPost httpPost = new HttpPost(endpoint);
+		//TODO check raw message condition		
 		StringEntity stringEntity = new StringEntity(message);
 		httpPost.setEntity(stringEntity);
+		if(this.getRawMessageDelivery()){
+			httpPost.setHeader("x-amz-raw-message", "true");
+		}
+		
 
 		HttpResponse response = httpClient.execute(httpPost);
 		int statusCode = response.getStatusLine().getStatusCode();

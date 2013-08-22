@@ -18,6 +18,8 @@ package com.comcast.cns.persistence;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.log4j.Logger;
+import org.jfree.util.Log;
 import org.json.JSONObject;
 
 import me.prettyprint.cassandra.serializers.StringSerializer;
@@ -43,6 +45,7 @@ public class CNSAttributesCassandraPersistence extends CassandraPersistence impl
 	private static final String columnFamilyTopicAttributes = "CNSTopicAttributes";
 	private static final String columnFamilySubscriptionAttributes = "CNSSubscriptionAttributes";
 	private static final String columnFamilyTopicStats = "CNSTopicStats";
+	private static Logger logger = Logger.getLogger(CNSAttributesCassandraPersistence.class);
 	
 	public CNSAttributesCassandraPersistence() {
 		super(CMBProperties.getInstance().getCNSKeyspace());	
@@ -156,6 +159,8 @@ public class CNSAttributesCassandraPersistence extends CassandraPersistence impl
 			colVals.put("deliveryPolicy", subscriptionAtributes.getDeliveryPolicy().toString());
 		}
 		
+		colVals.put("rawMessageDelivery", subscriptionAtributes.getRawMessageDelivery().toString());
+		
 		// currently only accept delivery policy parameter, fill up with defaults if elements are missing and return as both delivery policy and effective delivery policy
 		
 		/*if (subscriptionAtributes.getEffectiveDeliveryPolicy() != null) {
@@ -195,6 +200,10 @@ public class CNSAttributesCassandraPersistence extends CassandraPersistence impl
 				subscriptionAttributes.setDeliveryPolicy(new CNSSubscriptionDeliveryPolicy(new JSONObject(row.getColumnSlice().getColumnByName("deliveryPolicy").getValue())));
 			}
 			
+			if (row.getColumnSlice().getColumnByName("rawMessageDelivery") != null) {
+				subscriptionAttributes.setRawMessageDelivery(new Boolean(row.getColumnSlice().getColumnByName("rawMessageDelivery").getValue()));
+			}
+			
 			// if "ignore subscription override" is checked, get effective delivery policy from topic delivery policy, otherwise 
 			// get effective delivery policy from subscription delivery policy
 			
@@ -229,6 +238,7 @@ public class CNSAttributesCassandraPersistence extends CassandraPersistence impl
 			}
 			
 			subscriptionAttributes.setSubscriptionArn(subscriptionArn);
+			logger.info("subscriptionAttributes:" + subscriptionAttributes.toString());
 		}
 		
 		return subscriptionAttributes;

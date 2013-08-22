@@ -69,6 +69,15 @@
     	<url-pattern>/webui/cnsuser/subscription/editdeliverypolicy/*</url-pattern>
     </servlet-mapping>
     
+     <servlet>
+    	<servlet-name>CNSRawMessageDeliveryPolicyPage</servlet-name>
+    	<servlet-class>com.comcast.cns.controller.CNSRawMessageDeliveryPolicyPage</servlet-class>
+    </servlet>
+    <servlet-mapping>
+    	<servlet-name>CNSRawMessageDeliveryPolicyPage</servlet-name>
+    	<url-pattern>/webui/cnsuser/subscription/rawmessagedeliverypolicy/*</url-pattern>
+    </servlet-mapping>
+    
     <servlet>
     	<servlet-name>CNSTopicPermissionPage</servlet-name>
     	<servlet-class>com.comcast.cns.controller.CNSTopicPermissionPage</servlet-class>

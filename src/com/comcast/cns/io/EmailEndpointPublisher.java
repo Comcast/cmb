@@ -26,23 +26,8 @@ import com.comcast.cns.util.MailWrapper;
  * @author bwolf, jorge
  *
  */
-public class EmailEndpointPublisher implements IEndpointPublisher{
-	protected String message;
-	protected String endpoint;
-	protected String subject;
-	
+public class EmailEndpointPublisher extends AbstractEndpointPublisher {
 	protected static Logger logger = Logger.getLogger(EmailEndpointPublisher.class);
-	
-	@Override
-	public void setEndpoint(String endpoint) {
-		logger.debug("event=email_set_endpoint endpoint=" + endpoint);
-		this.endpoint = endpoint;
-	}
-
-	@Override
-	public void setMessage(String message) {
-		this.message = message;
-	}
 
 	@Override
 	public void send() throws Exception {
@@ -56,34 +41,5 @@ public class EmailEndpointPublisher implements IEndpointPublisher{
 		
 		MailWrapper mailAgent = new MailWrapper(); 
 		mailAgent.postMail(new String [] { endpoint }, subject, message, CMBProperties.getInstance().getSmtpReplyAddress());
-	}
-	
-	@Override
-	public String getEndpoint() {
-		return endpoint;
-	}
-
-	@Override
-	public String getMessage() {
-		return message;
-	}
-
-	@Override
-	public void setUser(User user) {
-	}
-
-	@Override
-	public User getUser() {
-		return null;
-	}
-
-	@Override
-	public void setSubject(String subject) {
-		this.subject = subject;
-	}
-
-	@Override
-	public String getSubject() {
-		return subject;
 	}
 }

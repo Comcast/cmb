@@ -74,7 +74,10 @@ public class CNSSetSubscriptionAttributesAction extends CNSAction {
     		JSONObject json = new JSONObject(attributeValue);   		
     		CNSSubscriptionDeliveryPolicy deliveryPolicy = new CNSSubscriptionDeliveryPolicy(json);
     		subscriptionAttributes.setDeliveryPolicy(deliveryPolicy);
-    	} else {
+    	} else if (attributeName.equals("RawMessageDelivery")){
+    		subscriptionAttributes.setRawMessageDelivery(Boolean.parseBoolean(attributeValue));
+    	}
+    	else {
     		logger.error("event=cns_set_subscription_attributes error_code=InvalidParameters attribute_name=" + attributeName + " attribute_value=" + attributeValue + " subscription_arn=" + subscriptionArn + " user_id=" + userId);
 			throw new CMBException(CNSErrorCodes.CNS_InvalidParameter,"AttributeName: " + attributeName + " is not a valid value");
     	}

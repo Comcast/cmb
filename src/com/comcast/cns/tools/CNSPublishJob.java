@@ -15,11 +15,16 @@
  */
 package com.comcast.cns.tools;
 
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import javax.servlet.ServletException;
+
 import org.apache.log4j.Logger;
 
+import com.amazonaws.services.sns.model.GetSubscriptionAttributesRequest;
+import com.amazonaws.services.sns.model.GetSubscriptionAttributesResult;
 import com.comcast.cmb.common.controller.CMBControllerServlet;
 import com.comcast.cmb.common.model.User;
 import com.comcast.cmb.common.persistence.PersistenceFactory;
@@ -33,7 +38,9 @@ import com.comcast.cns.model.CNSMessage;
 import com.comcast.cns.model.CNSRetryPolicy;
 import com.comcast.cns.model.CNSSubscriptionAttributes;
 import com.comcast.cns.model.CNSSubscriptionDeliveryPolicy;
+import com.comcast.cns.model.CNSEndpointPublishJob.CNSEndpointSubscriptionInfo;
 import com.comcast.cns.model.CNSSubscription.CnsSubscriptionProtocol;
+import com.comcast.cns.persistence.CNSCachedEndpointPublishJob;
 import com.comcast.cns.persistence.ICNSAttributesPersistence;
 import com.comcast.cns.persistence.SubscriberNotFoundException;
 import com.comcast.cns.util.Util;
@@ -189,7 +196,27 @@ public class CNSPublishJob implements Runnable {
         long ts1 = System.currentTimeMillis();
         
         publisher.setEndpoint(endpoint);
-        publisher.setMessage(message.getProtocolSpecificProcessedMessage(protocol));
+        Boolean rawMessageDelivery = false;
+		if (subArn != null) {
+			ICNSAttributesPersistence attributePers = PersistenceFactory.getCNSAttributePersistence();
+            CNSSubscriptionAttributes subAttr = attributePers.getSubscriptionAttributes(subArn);
+			            
+            if (subAttr != null) {
+            	rawMessageDelivery = subAttr.getRawMessageDelivery();
+            }
+            
+		}
+		String msg = "";
+		if(rawMessageDelivery){
+			publisher.setRawMessageDelivery(true);
+			msg = message.getProtocolSpecificProcessedRawMessage(protocol);
+			logger.info("event=run_common_message_raw protocol=" + protocol + " endpoint=" + endpoint + " sub_arn=" + subArn + " attempt=" + numRetries + " msg=" + msg + " subject=" + message.getSubject());
+			
+		}else{
+			msg = message.getProtocolSpecificProcessedMessage(protocol);
+			logger.info("event=run_common_message_normal protocol=" + protocol + " endpoint=" + endpoint + " sub_arn=" + subArn + " attempt=" + numRetries + " msg=" + msg + " subject=" + message.getSubject());
+		}
+        publisher.setMessage(msg);
         publisher.setSubject(message.getSubject());            
         publisher.setUser(user);
         publisher.send();
@@ -229,6 +256,7 @@ public class CNSPublishJob implements Runnable {
             }
         
         } catch (Exception ex) {
+        	logger.warn("event=failed_to_deliver_message ex=" + ex);
         	
     		CNSEndpointPublisherJobConsumer.addBadResponseEvent(endpoint);
         
@@ -297,7 +325,12 @@ public class CNSPublishJob implements Runnable {
         runCommonAndRetry(pub, protocol, endpoint, subArn);
         
         long ts2 = System.currentTimeMillis();            
-        logger.debug("event=metrics endpoint=" + endpoint + " protocol=" + protocol.name() + " message_length=" + message.getMessage().length() + (user == null ?"":" " + user.getUserName()) + " responseTimeMS=" + (ts2 - ts1) + " CassandraTimeMS=" + CMBControllerServlet.valueAccumulator.getCounter(AccumulatorName.CassandraTime) + " publishTimeMS=" + CMBControllerServlet.valueAccumulator.getCounter(AccumulatorName.CNSPublishSendTime) + " CNSCQSTimeMS=" + CMBControllerServlet.valueAccumulator.getCounter(AccumulatorName.CNSCQSTime));
+        logger.debug("event=metrics endpoint=" + endpoint + " protocol=" + protocol.name() + 
+        		" message_length=" + message.getMessage().length() + (user == null ?"":" " + user.getUserName()) + 
+        		" responseTimeMS=" + (ts2 - ts1) + 
+        		" CassandraTimeMS=" + CMBControllerServlet.valueAccumulator.getCounter(AccumulatorName.CassandraTime) + 
+        		" publishTimeMS=" + CMBControllerServlet.valueAccumulator.getCounter(AccumulatorName.CNSPublishSendTime) + 
+        		" CNSCQSTimeMS=" + CMBControllerServlet.valueAccumulator.getCounter(AccumulatorName.CNSCQSTime));
         CMBControllerServlet.valueAccumulator.deleteAllCounters();
     }        
 }

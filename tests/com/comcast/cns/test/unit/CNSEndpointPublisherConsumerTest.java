@@ -63,6 +63,7 @@ import com.comcast.cmb.common.model.User;
 import com.comcast.cmb.common.persistence.PersistenceFactory;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.Util;
+import com.comcast.cns.io.AbstractEndpointPublisher;
 import com.comcast.cns.io.IEndpointPublisher;
 import com.comcast.cns.model.CNSEndpointPublishJob;
 import com.comcast.cns.model.CNSMessage;
@@ -283,7 +284,7 @@ public class CNSEndpointPublisherConsumerTest {
 		}
     }
     
-    public static class TestEndpointPublisher implements IEndpointPublisher {
+    public static class TestEndpointPublisher extends AbstractEndpointPublisher{
 
         public volatile boolean error = false;
         public volatile int totalSent = 0;

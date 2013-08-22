@@ -61,11 +61,8 @@ import com.comcast.cmb.common.util.CMBProperties;
  * This example demonstrates how HttpCore NIO can be used to execute multiple HTTP requests asynchronously using only one I/O thread.
  */
 
-public class HTTPEndpointAsyncPublisher implements IEndpointPublisher {
+public class HTTPEndpointAsyncPublisher extends AbstractEndpointPublisher{
 	
-	private String endpoint;
-	private String message;
-	private User user;
 	private IPublisherCallback callback;
 	
 	private static HttpProcessor httpProcessor;
@@ -126,52 +123,18 @@ public class HTTPEndpointAsyncPublisher implements IEndpointPublisher {
 	}
 	
 	@Override
-	public void setEndpoint(String endpoint) {
-		this.endpoint = endpoint;
-	}
-
-	@Override
-	public void setMessage(String message) {
-		this.message = message;     
-	}
-
-	@Override
-	public String getEndpoint() {
-		return endpoint;
-	}
-
-	@Override
-	public String getMessage() {        
-		return message;
-	}
-
-	@Override
-	public void setUser(User user) {
-		this.user = user;       
-	}
-
-	@Override
-	public User getUser() {
-		return user;
-	}
-
-	@Override
-	public void setSubject(String subject) {
-	}
-
-	@Override
-	public String getSubject() {
-		return null;
-	}
-
-	@Override
 	public void send() throws Exception {
+		logger.info("event=send_async_http_request endpoint=" + endpoint + "\" message=\"" + message + "\"");
 		
         HttpAsyncRequester requester = new HttpAsyncRequester(httpProcessor, new DefaultConnectionReuseStrategy(), httpParams);
         final URL url = new URL(endpoint);
         final HttpHost target = new HttpHost(url.getHost(), url.getPort(), url.getProtocol());
         
         BasicHttpEntityEnclosingRequest request = new BasicHttpEntityEnclosingRequest("POST", url.getPath() + (url.getQuery() == null ? "" : "?" + url.getQuery()));
+		//TODO check raw message condition        
+        if(this.getRawMessageDelivery()){
+        	request.setHeader("x-amz-raw-message", "true");
+        }
         request.setEntity(new NStringEntity(message));
 
         requester.execute(

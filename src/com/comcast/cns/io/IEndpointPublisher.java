@@ -69,4 +69,10 @@ public interface IEndpointPublisher {
 	  * The response can be retrieved in the callback.
 	  */
 	 public void send() throws Exception;
+	 
+	 /**
+	  * Setter and getter of rawMessageDelivery
+	  */
+	 public void setRawMessageDelivery(Boolean rawMessageDelivery);
+	 public Boolean getRawMessageDelivery();
 }

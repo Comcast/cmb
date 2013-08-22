@@ -31,26 +31,13 @@ import com.comcast.cns.util.CNSErrorCodes;
  * @author bwolf
  *
  */
-public class SQSEndpointPublisher implements IEndpointPublisher {
+public class SQSEndpointPublisher  extends AbstractEndpointPublisher {
 
 	private static Logger logger = Logger.getLogger(CQSEndpointPublisher.class);
 
-	private String endpoint;
-	private String message;
-	private User user;
 	
     private BasicAWSCredentials awsCredentials;
     private AmazonSQS sqs;
-	
-	@Override
-	public void setEndpoint(String endpoint) {
-		this.endpoint = endpoint;
-	}
-
-	@Override
-	public void setMessage(String message) {
-		this.message = message;
-	}
 	
 	@Override
 	public void send() throws Exception {
@@ -71,6 +58,7 @@ public class SQSEndpointPublisher implements IEndpointPublisher {
 		}
 
 		try {
+			logger.info("event=send_sqs_message endpoint=" + endpoint + "\" message=\"" + message);
 			sqs.sendMessage(new SendMessageRequest(url, message));			
 		} catch(Exception ex) {
 			logger.warn("event=send_sqs_message endpoint=" + endpoint + "\" message=\"" + message, ex);
@@ -78,34 +66,5 @@ public class SQSEndpointPublisher implements IEndpointPublisher {
 		}
 
 		logger.debug("event=send_sqs_message endpoint=" + endpoint + " message=\"" + message + "\"");
-	}
-
-	@Override
-	public String getEndpoint() {
-		return endpoint;
-	}
-
-	@Override
-	public String getMessage() {
-		return message;
-	}
-
-	@Override
-	public void setUser(User user) {
-		this.user = user;
-	}
-
-	@Override
-	public User getUser() {
-		return user;
-	}
-
-	@Override
-	public void setSubject(String subject) {
-	}
-
-	@Override
-	public String getSubject() {
-		return null;
 	}
 }

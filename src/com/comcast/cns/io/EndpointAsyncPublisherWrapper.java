@@ -24,7 +24,7 @@ import com.comcast.cmb.common.util.CMBProperties;
  * @author bwolf
  *
  */
-public class EndpointAsyncPublisherWrapper implements IEndpointPublisher {
+public class EndpointAsyncPublisherWrapper extends AbstractEndpointPublisher{
 	
 	private final IPublisherCallback callback;
     private final IEndpointPublisher publisher;

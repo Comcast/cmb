@@ -157,6 +157,8 @@ public class CNSSubscriptionPageServlet extends AdminServletBase {
 		out.println("<th>Arn</th>");
 		out.println("<th>Protocol</th>");
 		out.println("<th>End Point</th>");
+		out.println("<th>Subscription Attributes</th>");
+		out.println("<th>Raw Message Delivery</th>");
 		out.println("<th>&nbsp;</th>");
 		out.println("<th>&nbsp;</th></tr>");
 
@@ -170,7 +172,15 @@ public class CNSSubscriptionPageServlet extends AdminServletBase {
         	out.println("<td>"+s.getEndpoint()+"</td>");
         	
         	if (s.getProtocol().toString().equals("http") && !s.getSubscriptionArn().equals("PendingConfirmation")) {
-        		out.println("<td><a href='' onclick=\"window.open('/webui/cnsuser/subscription/editdeliverypolicy?subscriptionArn="+ s.getSubscriptionArn() + "&userId=" + userId + "', 'EditDeliveryPolicy', 'height=630,width=580,toolbar=no')\">View/Edit Delivery Policy</a></td>");
+        		out.println("<td><a href='#' onclick=\"window.open('/webui/cnsuser/subscription/editdeliverypolicy?subscriptionArn="+ s.getSubscriptionArn() + "&userId=" + userId + "', 'EditDeliveryPolicy', 'height=630,width=580,toolbar=no')\">View/Edit Delivery Policy</a></td>");
+        	} else {
+        		out.println("<td>&nbsp;</td>");
+        	}
+        	
+        	if ((s.getProtocol().toString().equals("http") || s.getProtocol().toString().equals("cqs") || s.getProtocol().toString().equals("sqs"))
+        			&& !s.getSubscriptionArn().equals("PendingConfirmation")) {
+        		String url = "/webui/cnsuser/subscription/rawmessagedeliverypolicy/?subscriptionArn="+ s.getSubscriptionArn() + "&userId=" + userId;
+        		out.println("<td><a href='#' onclick=\"window.open('" + url + "', 'RawMessageDelivery', 'height=200,width=580,toolbar=no')\">Raw Message Delivery</a></td>");
         	} else {
         		out.println("<td>&nbsp;</td>");
         	}
