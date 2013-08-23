@@ -60,6 +60,7 @@ public class CNSPublishJob implements Runnable {
     private final String queueUrl;
     private final String receiptHandle;
     private final AtomicInteger endpointPublishJobCount;
+    private final boolean rawDelivery;
 
     public static volatile IEndpointPublisher testPublisher = null; //set and used for unit-testing
     
@@ -83,7 +84,7 @@ public class CNSPublishJob implements Runnable {
     /**
      * Call this method only in retry mode for a single sub
      */
-    public void doRetry(IEndpointPublisher pub, CnsSubscriptionProtocol protocol, String endpoint, String subArn) {
+    public void doRetry(IEndpointPublisher pub, CnsSubscriptionProtocol protocol, String endpoint, String subArn, boolean rawDelivery) {
         
         try {
             
@@ -107,7 +108,7 @@ public class CNSPublishJob implements Runnable {
                 
                 try {
                     numRetries++;
-                    runCommon(pub, protocol, endpoint, subArn);
+                    runCommon(pub, protocol, endpoint, subArn, rawDelivery);
                     return; //suceeded.
                 } catch (Exception e) {
                     logger.info("event=retry_failed phase=" + RetryPhase.ImmediateRetry.name() + " attempt=" + numRetries);
@@ -184,24 +185,15 @@ public class CNSPublishJob implements Runnable {
      * @param subArn
      * @throws Exception
      */
-    private void runCommon(IEndpointPublisher publisher, CnsSubscriptionProtocol protocol, String endpoint, String subArn) throws Exception {
+    private void runCommon(IEndpointPublisher publisher, CnsSubscriptionProtocol protocol, String endpoint, String subArn, boolean rawDelivery) throws Exception {
     	
         long ts1 = System.currentTimeMillis();
         
         publisher.setEndpoint(endpoint);
-        Boolean rawMessageDelivery = false;
-		
-        if (subArn != null) {
-			ICNSAttributesPersistence attributePers = PersistenceFactory.getCNSAttributePersistence();
-            CNSSubscriptionAttributes subAttr = attributePers.getSubscriptionAttributes(subArn);
-            if (subAttr != null) {
-            	rawMessageDelivery = subAttr.getRawMessageDelivery();
-            }
-		}
 		
 		String msg = "";
 		
-		if (rawMessageDelivery) {
+		if (rawDelivery) {
 			publisher.setRawMessageDelivery(true);
 			msg = message.getProtocolSpecificProcessedRawMessage(protocol);
 		} else {
@@ -213,7 +205,7 @@ public class CNSPublishJob implements Runnable {
         publisher.setUser(user);
         publisher.send();
         
-        logger.debug("event=successful_delivery protocol=" + protocol + " endpoint=" + endpoint + " sub_arn=" + subArn + " attempt=" + numRetries + " raw=" + rawMessageDelivery);
+        logger.debug("event=successful_delivery protocol=" + protocol + " endpoint=" + endpoint + " sub_arn=" + subArn + " attempt=" + numRetries + " raw=" + rawDelivery);
 
         long ts2 = System.currentTimeMillis();
         
@@ -226,7 +218,7 @@ public class CNSPublishJob implements Runnable {
         CNSWorkerMonitor.getInstance().registerPublishMessage();
     }
     
-    private void runCommonAndRetry(IEndpointPublisher pub, CnsSubscriptionProtocol protocol, String endpoint, String subArn) {
+    private void runCommonAndRetry(IEndpointPublisher pub, CnsSubscriptionProtocol protocol, String endpoint, String subArn, boolean rawDelivery) {
         
         try {
         
@@ -244,10 +236,11 @@ public class CNSPublishJob implements Runnable {
             	letMessageDieForEndpoint();
             	
             } else {
-            	runCommon(pub, protocol, endpoint, subArn);
+            	runCommon(pub, protocol, endpoint, subArn, rawDelivery);
             }
         
         } catch (Exception ex) {
+        	
         	logger.warn("event=failed_to_deliver_message ex=" + ex);
         	
     		CNSEndpointPublisherJobConsumer.addBadResponseEvent(endpoint);
@@ -275,7 +268,7 @@ public class CNSPublishJob implements Runnable {
                 	logger.warn("event=failed_to_deliver_message action=retry status_code=" + errorCode + " endpoint=" + endpoint);
 
                 	CNSWorkerMonitor.getInstance().registerBadEndpoint(endpoint, 1, 1, message.getTopicArn());
-	            	doRetry(pub, protocol, endpoint, subArn);
+	            	doRetry(pub, protocol, endpoint, subArn, rawDelivery);
                 }
             
             } else {
@@ -289,7 +282,7 @@ public class CNSPublishJob implements Runnable {
         }            
     }        
     
-    public CNSPublishJob(CNSMessage message, User user, CnsSubscriptionProtocol protocol, String endpoint, String subArn, String queueUrl, String receiptHandle, AtomicInteger endpointPublishJobCount) {
+    public CNSPublishJob(CNSMessage message, User user, CnsSubscriptionProtocol protocol, String endpoint, String subArn, boolean rawDelivery, String queueUrl, String receiptHandle, AtomicInteger endpointPublishJobCount) {
     	
     	this.message = message; 
         this.user = user;
@@ -299,6 +292,7 @@ public class CNSPublishJob implements Runnable {
         this.queueUrl = queueUrl;
         this.receiptHandle = receiptHandle;
         this.endpointPublishJobCount = endpointPublishJobCount;
+        this.rawDelivery = rawDelivery;
     }
 
     @Override
@@ -314,10 +308,10 @@ public class CNSPublishJob implements Runnable {
         }
         
         IEndpointPublisher pub = (testPublisher == null ? EndpointPublisherFactory.getPublisherInstance(protocol) : testPublisher);
-        runCommonAndRetry(pub, protocol, endpoint, subArn);
+        runCommonAndRetry(pub, protocol, endpoint, subArn, rawDelivery);
         
         long ts2 = System.currentTimeMillis();            
-        logger.debug("event=metrics endpoint=" + endpoint + " protocol=" + protocol.name() + 
+        logger.debug("event=metrics endpoint=" + endpoint + " protocol=" + protocol.name() + " raw_delivery=" + rawDelivery + 
         		" message_length=" + message.getMessage().length() + (user == null ?"":" " + user.getUserName()) + 
         		" responseTimeMS=" + (ts2 - ts1) + 
         		" CassandraTimeMS=" + CMBControllerServlet.valueAccumulator.getCounter(AccumulatorName.CassandraTime) + 

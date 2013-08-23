@@ -33,6 +33,7 @@ import com.comcast.cns.model.CNSEndpointPublishJob;
 import com.comcast.cns.model.CNSMessage;
 import com.comcast.cns.model.CNSSubscription;
 import com.comcast.cns.model.CNSSubscription.CnsSubscriptionProtocol;
+import com.comcast.cns.model.CNSSubscriptionAttributes;
 import com.comcast.cns.util.Util;
 
 /**
@@ -45,8 +46,8 @@ import com.comcast.cns.util.Util;
  * Class is thread-safe
  */
 public class CNSCachedEndpointPublishJob extends CNSEndpointPublishJob {
+	
     private static Logger logger = Logger.getLogger(CNSCachedEndpointPublishJob.class);
-
     private static final ExpiringCache<String, LinkedHashMap<String, CNSCachedEndpointSubscriptionInfo>> cache = new ExpiringCache<String, LinkedHashMap<String,CNSCachedEndpointSubscriptionInfo>>(1000);
     
     /**
@@ -74,11 +75,12 @@ public class CNSCachedEndpointPublishJob extends CNSEndpointPublishJob {
     
     public static class CNSCachedEndpointSubscriptionInfo extends CNSEndpointSubscriptionInfo {
 
-        public CNSCachedEndpointSubscriptionInfo(CnsSubscriptionProtocol protocol, String endpoint, String subArn) {
-            super(protocol, endpoint, subArn);
+        public CNSCachedEndpointSubscriptionInfo(CnsSubscriptionProtocol protocol, String endpoint, String subArn, boolean rawDelivery) {
+            super(protocol, endpoint, subArn, rawDelivery);
         }
+        
         public CNSCachedEndpointSubscriptionInfo(CNSEndpointSubscriptionInfo info) {
-            super(info.protocol, info.endpoint, info.subArn);
+            super(info.protocol, info.endpoint, info.subArn, info.rawDelivery);
         }
         
         @Override
@@ -98,11 +100,14 @@ public class CNSCachedEndpointPublishJob extends CNSEndpointPublishJob {
          * @throws Exception 
          */
         public static List<CNSCachedEndpointSubscriptionInfo> parseInstances(String topicArn, String []arr, int idx, int count, boolean useCache) throws Exception {
-            if (count == 0) return Collections.emptyList();
+
+        	if (count == 0) {
+            	return Collections.emptyList();
+            }
             
             List<CNSCachedEndpointSubscriptionInfo> infos = new LinkedList<CNSCachedEndpointPublishJob.CNSCachedEndpointSubscriptionInfo>();
+
             if (useCache) {
-                
                 HashMap<String, CNSCachedEndpointSubscriptionInfo> arnToSubInfo;
                 try {
                     arnToSubInfo = cache.getAndSetIfNotPresent(topicArn, new CachePopulator(topicArn), 60000);
@@ -129,14 +134,21 @@ public class CNSCachedEndpointPublishJob extends CNSEndpointPublishJob {
                 }                
             } else {
                 //get from Cassandra                
-                ICNSSubscriptionPersistence pers = PersistenceFactory.getSubscriptionPersistence();
+                ICNSSubscriptionPersistence subscriptionPersistence = PersistenceFactory.getSubscriptionPersistence();
+                ICNSAttributesPersistence attributePersistence = PersistenceFactory.getCNSAttributePersistence();
                 for (int i = idx; i < idx + count ; i++) {
                     String subArn = arr[i];
-                    CNSSubscription sub = pers.getSubscription(subArn);
+                    CNSSubscription sub = subscriptionPersistence.getSubscription(subArn);
+                	//TODO: store raw delivery flag as part of the subscription for better performance
+                    CNSSubscriptionAttributes attrib = attributePersistence.getSubscriptionAttributes(subArn);
+                    boolean rawDelivery = false;
+                    if (attrib != null) {
+                    	rawDelivery = attrib.getRawMessageDelivery();
+                    }
                     if (sub == null) {
                         logger.warn("event=subscription_info_not_found arn=" + subArn + " topic_arn=" + topicArn);
                     } else {
-                        infos.add(new CNSCachedEndpointSubscriptionInfo(sub.getProtocol(), sub.getEndpoint(), sub.getArn()));
+                        infos.add(new CNSCachedEndpointSubscriptionInfo(sub.getProtocol(), sub.getEndpoint(), sub.getArn(), rawDelivery));
                     }
                 }                
             }
@@ -148,11 +160,10 @@ public class CNSCachedEndpointPublishJob extends CNSEndpointPublishJob {
         super(message, subInfos);
     }
     
-    
     /**
      * Class responsible for returning the contents of the cache if cache miss occurs
      */
-    static class CachePopulator implements Callable<LinkedHashMap<String,CNSCachedEndpointSubscriptionInfo>> {
+    private static class CachePopulator implements Callable<LinkedHashMap<String,CNSCachedEndpointSubscriptionInfo>> {
         final String topicArn;
         public CachePopulator(String topicArn) {
             this.topicArn = topicArn;
@@ -160,12 +171,19 @@ public class CNSCachedEndpointPublishJob extends CNSEndpointPublishJob {
         @Override
         public LinkedHashMap<String, CNSCachedEndpointSubscriptionInfo> call() throws Exception {
             long ts1 = System.currentTimeMillis();
-            ICNSSubscriptionPersistence pers = PersistenceFactory.getSubscriptionPersistence();
-            List<CNSSubscription> subs = pers.listSubscriptionsByTopic(null, topicArn, null, Integer.MAX_VALUE); //get all in one call
+            ICNSSubscriptionPersistence subscriptionPersistence = PersistenceFactory.getSubscriptionPersistence();
+            ICNSAttributesPersistence attributePersistence = PersistenceFactory.getCNSAttributePersistence();
+            List<CNSSubscription> subs = subscriptionPersistence.listSubscriptionsByTopic(null, topicArn, null, Integer.MAX_VALUE); //get all in one call
             LinkedHashMap<String, CNSCachedEndpointSubscriptionInfo> val = new LinkedHashMap<String, CNSCachedEndpointPublishJob.CNSCachedEndpointSubscriptionInfo>();
             for (CNSSubscription sub : subs) {
                 if (!sub.getArn().equals("PendingConfirmation")) {
-                    val.put(sub.getArn(), new CNSCachedEndpointSubscriptionInfo(sub.getProtocol(), sub.getEndpoint(), sub.getArn()));
+                	boolean rawDelivery = false;
+                	//TODO: store raw delivery flag as part of the subscription for better performance
+                	CNSSubscriptionAttributes attrib = attributePersistence.getSubscriptionAttributes(sub.getArn());
+                	if (attrib != null) {
+                		rawDelivery = attrib.getRawMessageDelivery();
+                	}
+                    val.put(sub.getArn(), new CNSCachedEndpointSubscriptionInfo(sub.getProtocol(), sub.getEndpoint(), sub.getArn(), rawDelivery));
                 }
             }
             long ts2 = System.currentTimeMillis();

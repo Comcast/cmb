@@ -61,6 +61,7 @@ public class CNSAsyncPublishJob implements Runnable, IPublisherCallback {
     private final String queueUrl;
     private final String receiptHandle;
     private final AtomicInteger endpointPublishJobCount;
+    private final boolean rawDelivery;
 
     private IEndpointPublisher publisher;
     
@@ -188,8 +189,15 @@ public class CNSAsyncPublishJob implements Runnable, IPublisherCallback {
     private void runCommon() throws Exception {
 
     	publisher.setEndpoint(endpoint);
-        publisher.setMessage(message.getProtocolSpecificProcessedMessage(protocol));
-        publisher.setSubject(message.getSubject());            
+    	
+		if (rawDelivery) {
+			publisher.setRawMessageDelivery(true);
+			publisher.setMessage(message.getProtocolSpecificProcessedRawMessage(protocol));
+		} else {
+			publisher.setMessage(message.getProtocolSpecificProcessedMessage(protocol));
+		}
+
+		publisher.setSubject(message.getSubject());            
         publisher.setUser(user);
         publisher.send(); // this will most likely not fail because we call asynchronously
     }
@@ -220,7 +228,7 @@ public class CNSAsyncPublishJob implements Runnable, IPublisherCallback {
         }            
     }        
     
-    public CNSAsyncPublishJob(CNSMessage message, User user, CnsSubscriptionProtocol protocol, String endpoint, String subArn, String queueUrl, String receiptHandle, AtomicInteger endpointPublishJobCount) {
+    public CNSAsyncPublishJob(CNSMessage message, User user, CnsSubscriptionProtocol protocol, String endpoint, String subArn, boolean rawDelivery, String queueUrl, String receiptHandle, AtomicInteger endpointPublishJobCount) {
     	
     	this.message = message; 
         this.user = user;
@@ -230,6 +238,7 @@ public class CNSAsyncPublishJob implements Runnable, IPublisherCallback {
         this.queueUrl = queueUrl;
         this.receiptHandle = receiptHandle;
         this.endpointPublishJobCount = endpointPublishJobCount;
+        this.rawDelivery = rawDelivery;
     }
 
     @Override

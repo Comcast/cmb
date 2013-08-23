@@ -299,9 +299,9 @@ public class CNSEndpointPublisherJobConsumer implements CNSPublisherPartitionRun
                     	Runnable publishJob = null;
                         
                         if (CMBProperties.getInstance().getCNSIOMode() == IO_MODE.SYNC) {
-                        	publishJob = new CNSPublishJob(endpointPublishJob.getMessage(), pubUser, sub.protocol, sub.endpoint, sub.subArn, queueUrl, msg.getReceiptHandle(), endpointPublishJobCount);
+                        	publishJob = new CNSPublishJob(endpointPublishJob.getMessage(), pubUser, sub.protocol, sub.endpoint, sub.subArn, sub.rawDelivery, queueUrl, msg.getReceiptHandle(), endpointPublishJobCount);
                         } else {
-                        	publishJob = new CNSAsyncPublishJob(endpointPublishJob.getMessage(), pubUser, sub.protocol, sub.endpoint, sub.subArn, queueUrl, msg.getReceiptHandle(), endpointPublishJobCount);
+                        	publishJob = new CNSAsyncPublishJob(endpointPublishJob.getMessage(), pubUser, sub.protocol, sub.endpoint, sub.subArn, sub.rawDelivery, queueUrl, msg.getReceiptHandle(), endpointPublishJobCount);
                         }
 
                         deliveryHandlers.submit(publishJob);

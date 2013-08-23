@@ -37,8 +37,10 @@ import com.comcast.cmb.common.util.ValueAccumulator.AccumulatorName;
 import com.comcast.cns.model.CNSEndpointPublishJob;
 import com.comcast.cns.model.CNSMessage;
 import com.comcast.cns.model.CNSSubscription;
+import com.comcast.cns.model.CNSSubscriptionAttributes;
 import com.comcast.cns.model.CNSEndpointPublishJob.CNSEndpointSubscriptionInfo;
 import com.comcast.cns.persistence.CNSCachedEndpointPublishJob;
+import com.comcast.cns.persistence.ICNSAttributesPersistence;
 import com.comcast.cns.persistence.ICNSSubscriptionPersistence;
 import com.comcast.cns.persistence.TopicNotFoundException;
 
@@ -59,7 +61,8 @@ public class CNSEndpointPublisherJobProducer implements CNSPublisherPartitionRun
     private static volatile boolean initialized = false; 
     
     private static volatile ICNSSubscriptionPersistence subscriptionPersistence = PersistenceFactory.getSubscriptionPersistence(); 
-    
+    private static volatile ICNSAttributesPersistence attributePersistence = PersistenceFactory.getCNSAttributePersistence();
+
     private long processingDelayMillis = 10;
 
     public static class TestInterface {
@@ -280,7 +283,13 @@ public class CNSEndpointPublisherJobProducer implements CNSPublisherPartitionRun
     	        
     				if (!subscription.getArn().equals("PendingConfirmation")) {
     	                allPendingConfirmation = false;
-    	                subInfoList.add(new CNSEndpointPublishJob.CNSEndpointSubscriptionInfo(subscription.getProtocol(), subscription.getEndpoint(), subscription.getArn()));
+                    	//TODO: store raw delivery flag as part of the subscription for better performance
+                        CNSSubscriptionAttributes attrib = attributePersistence.getSubscriptionAttributes(subscription.getArn());
+                        boolean rawDelivery = false;
+                        if (attrib != null) {
+                        	rawDelivery = attrib.getRawMessageDelivery();
+                        }
+    	                subInfoList.add(new CNSEndpointPublishJob.CNSEndpointSubscriptionInfo(subscription.getProtocol(), subscription.getEndpoint(), subscription.getArn(), rawDelivery));
     	                nextToken = subscription.getArn();
     	            }
     	        }
@@ -313,9 +322,9 @@ public class CNSEndpointPublisherJobProducer implements CNSPublisherPartitionRun
 	    			CNSEndpointSubscriptionInfo subInfo;
 	    		    
 	    			if (CMBProperties.getInstance().isCNSUseSubInfoCache()) {
-	    		        subInfo = new CNSCachedEndpointPublishJob.CNSCachedEndpointSubscriptionInfo(subscriptions.get(subIndex).protocol, subscriptions.get(subIndex).endpoint, subscriptions.get(subIndex).subArn);
+	    		        subInfo = new CNSCachedEndpointPublishJob.CNSCachedEndpointSubscriptionInfo(subscriptions.get(subIndex).protocol, subscriptions.get(subIndex).endpoint, subscriptions.get(subIndex).subArn, subscriptions.get(subIndex).rawDelivery);
 	    		    } else {
-	    		        subInfo = new CNSEndpointSubscriptionInfo(subscriptions.get(subIndex).protocol, subscriptions.get(subIndex).endpoint, subscriptions.get(subIndex).subArn);
+	    		        subInfo = new CNSEndpointSubscriptionInfo(subscriptions.get(subIndex).protocol, subscriptions.get(subIndex).endpoint, subscriptions.get(subIndex).subArn, subscriptions.get(subIndex).rawDelivery);
 	    		    }
 	    		     
 	    			epPublishJobSubscriptions.add(subInfo);

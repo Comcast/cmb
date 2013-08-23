@@ -50,11 +50,13 @@ public class CNSEndpointPublishJob {
         public final CnsSubscriptionProtocol protocol;
         public final String endpoint;
         public final String subArn;
+        public final boolean rawDelivery;
         
-        public CNSEndpointSubscriptionInfo(CnsSubscriptionProtocol protocol, String endpoint, String subArn) {
+        public CNSEndpointSubscriptionInfo(CnsSubscriptionProtocol protocol, String endpoint, String subArn, boolean rawDelivery) {
             this.protocol = protocol;
             this.endpoint = endpoint;
             this.subArn = subArn;
+            this.rawDelivery = rawDelivery;
         }
         
         /**
@@ -63,7 +65,7 @@ public class CNSEndpointPublishJob {
          */
         public String serialize() {
             StringBuffer sb = new StringBuffer();
-            sb.append(protocol.ordinal()).append("|").append(endpoint).append("|").append(subArn);
+            sb.append(protocol.ordinal()).append("|").append(endpoint).append("|").append(subArn).append("|").append(rawDelivery);
             return sb.toString();
         }
         
@@ -74,10 +76,11 @@ public class CNSEndpointPublishJob {
          */
         public static CNSEndpointSubscriptionInfo parseInstance(String str) {
             String arr[] = str.split("\\|");
-            if (arr.length != 3) {
-                throw new IllegalArgumentException("Expected format for SubInfo is <protocol-ord>|<endpoint>|<subArn> got:" + str);
+            if (arr.length != 4) {
+                throw new IllegalArgumentException("Expected format for SubInfo is <protocol-ord>|<endpoint>|<subArn>|<rawDelivery> got:" + str);
             }
-            return new CNSEndpointSubscriptionInfo(CnsSubscriptionProtocol.values()[Integer.parseInt(arr[0])], arr[1], arr[2]);
+            //TODO: store raw flag as "0" or "1" instead of "true" or "false" for efficiency
+            return new CNSEndpointSubscriptionInfo(CnsSubscriptionProtocol.values()[Integer.parseInt(arr[0])], arr[1], arr[2], Boolean.parseBoolean(arr[3]));
         }
         
         @Override
@@ -88,12 +91,12 @@ public class CNSEndpointPublishJob {
             CNSEndpointSubscriptionInfo o = (CNSEndpointSubscriptionInfo) obj;
             if (Util.isEqual(protocol, o.protocol) &&
                     Util.isEqual(endpoint, o.endpoint) &&
-                    Util.isEqual(subArn, o.subArn)) {
+                    Util.isEqual(subArn, o.subArn) &&
+                    Util.isEqual(rawDelivery, o.rawDelivery)) {
                 return true;
             } else {
                 return false;
             }
-   
         }
     }
     
@@ -164,7 +167,6 @@ public class CNSEndpointPublishJob {
         } else {
             return false;
         }        
-        
     }
     
     @Override

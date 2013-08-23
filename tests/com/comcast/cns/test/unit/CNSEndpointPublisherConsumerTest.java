@@ -64,7 +64,6 @@ import com.comcast.cmb.common.persistence.PersistenceFactory;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.Util;
 import com.comcast.cns.io.AbstractEndpointPublisher;
-import com.comcast.cns.io.IEndpointPublisher;
 import com.comcast.cns.model.CNSEndpointPublishJob;
 import com.comcast.cns.model.CNSMessage;
 import com.comcast.cns.model.CNSRetryPolicy;
@@ -420,7 +419,7 @@ public class CNSEndpointPublisherConsumerTest {
         msg.setSubject("test subject"); //will only be applicable for email
         msg.setTopicArn("testTopicArm");
 
-        CNSEndpointSubscriptionInfo subInfo = new CNSEndpointSubscriptionInfo(CnsSubscriptionProtocol.http, "test-endpointOnePass", "test-sub-arn");
+        CNSEndpointSubscriptionInfo subInfo = new CNSEndpointSubscriptionInfo(CnsSubscriptionProtocol.http, "test-endpointOnePass", "test-sub-arn", false);
         CNSEndpointPublishJob epPubJob = new CNSEndpointPublishJob(msg, Arrays.asList(subInfo));
         
         HashMap<String, String> endpointtToMsg = new HashMap<String, String>();
@@ -504,7 +503,7 @@ public class CNSEndpointPublisherConsumerTest {
         msg.setSubject("test subject"); //will only be applicable for email
         msg.setTopicArn("testTopicArm");
 
-        CNSEndpointSubscriptionInfo subInfo = new CNSEndpointSubscriptionInfo(CnsSubscriptionProtocol.http, "test-endpointOnePassOverloaded", "test-sub-arn");
+        CNSEndpointSubscriptionInfo subInfo = new CNSEndpointSubscriptionInfo(CnsSubscriptionProtocol.http, "test-endpointOnePassOverloaded", "test-sub-arn", false);
         CNSEndpointPublishJob epPubJob = new CNSEndpointPublishJob(msg, Arrays.asList(subInfo));
         
         HashMap<String, String> endpointtToMsg = new HashMap<String, String>();
@@ -581,8 +580,8 @@ public class CNSEndpointPublisherConsumerTest {
         testPub.numFailuresBeforeSuccess = 2;
 
         AtomicInteger endpointPublishJobCount = new AtomicInteger(100);
-        CNSPublishJob job = new CNSPublishJob(msg, user, CnsSubscriptionProtocol.http, "http://bogus", "test-sub-arn", "test-queue-url", "test-receipt-handle", endpointPublishJobCount);
-        job.doRetry(testPub, CnsSubscriptionProtocol.http, "http://bogus", "test-sub-arn");
+        CNSPublishJob job = new CNSPublishJob(msg, user, CnsSubscriptionProtocol.http, "http://bogus", "test-sub-arn", false, "test-queue-url", "test-receipt-handle", endpointPublishJobCount);
+        job.doRetry(testPub, CnsSubscriptionProtocol.http, "http://bogus", "test-sub-arn", false);
 
         if (testPub.totalSent != 1) {
             fail("should have sent one right away. But didn't");
@@ -592,7 +591,7 @@ public class CNSEndpointPublisherConsumerTest {
         testPub.dontCareEndPointToMessage = true;
         testPub.numFailuresBeforeSuccess = 3; //set num-failures past the numRetries and see publisher declare failure and give up
 
-        job.doRetry(testPub, CnsSubscriptionProtocol.http, "http://bogus", "test-sub-arn");
+        job.doRetry(testPub, CnsSubscriptionProtocol.http, "http://bogus", "test-sub-arn", false);
 
         if (testPub.totalSent != 0) {
             fail("should have sent one right away. But didn't");
@@ -641,8 +640,8 @@ public class CNSEndpointPublisherConsumerTest {
         User user = new User("test-user-id", "test-user-name", "test-hashed-password", "test-access-key", "test-access-secret");
 
         AtomicInteger endpointPublishJobCount = new AtomicInteger(100); //never delete
-        CNSPublishJob job = new CNSPublishJob(msg, user, CnsSubscriptionProtocol.http, "http://bogus", "test-sub-arn", "test-queue-url", "test-receipt-handle", endpointPublishJobCount);
-        job.doRetry(testPub, CnsSubscriptionProtocol.http, "http://bogus", "test-sub-arn");
+        CNSPublishJob job = new CNSPublishJob(msg, user, CnsSubscriptionProtocol.http, "http://bogus", "test-sub-arn", false, "test-queue-url", "test-receipt-handle", endpointPublishJobCount);
+        job.doRetry(testPub, CnsSubscriptionProtocol.http, "http://bogus", "test-sub-arn", false);
         
         Thread.sleep(5000);
         
@@ -834,9 +833,9 @@ public class CNSEndpointPublisherConsumerTest {
         CNSPublishJob.testPublisher = testPub;
 
         AtomicInteger endpointPublishJobCount = new AtomicInteger(100); //never delete
-        CNSPublishJob job = new CNSPublishJob(msg, user, CnsSubscriptionProtocol.http, "http://bogusBackoff", "test-sub-arn", "test-queue-url", "test-receipt-handle", endpointPublishJobCount);
+        CNSPublishJob job = new CNSPublishJob(msg, user, CnsSubscriptionProtocol.http, "http://bogusBackoff", "test-sub-arn", false, "test-queue-url", "test-receipt-handle", endpointPublishJobCount);
 
-        job.doRetry(testPub, CnsSubscriptionProtocol.http, "http://bogusBackoff", "test-sub-arn");
+        job.doRetry(testPub, CnsSubscriptionProtocol.http, "http://bogusBackoff", "test-sub-arn", false);
         
         Thread.sleep(25000);                
         
