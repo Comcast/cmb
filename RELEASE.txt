@@ -1,3 +1,12 @@
+CMB VERSION 2.2.35
+--------------------------------------------------------------------
+
+New features and bug fixes:
+
+- bug fix to allow maximum request length to be double the size
+  of the maximum message length (500 kb by default)
+- raw message delivery for CNS
+
 CMB VERSION 2.2.34
 --------------------------------------------------------------------
 

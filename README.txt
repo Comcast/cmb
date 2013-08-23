@@ -294,13 +294,14 @@ http://secondarycqsserviceurl/?Action=ManageService&Task=ClearCache&AWSAccessKey
 - Known Limitations
 --------------------------------------------------------------------------------------
 
-1. CMB does not work with Cassandra versions prior to 1.0.10. Cassandra versions 
-   1.1.X and 1.2.X are ok.
-   
-2. Compatibility with AWS SDK has been tested up to version 1.4.7
+1. Compatibility with AWS SDK has been tested up to version 1.4.7.
  
 2. AWS4 signatures are currently not supported (V1 and V2 ok).
 
 3. CNS does not support SMS protocol.
 
 4. CNS does not support Throttle Policy.
+
+5. CNS does not support push notifications to mobile endpoints.
+
+

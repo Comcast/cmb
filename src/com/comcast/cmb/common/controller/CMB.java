@@ -35,7 +35,10 @@ import com.comcast.cqs.controller.CQSLongPollSender;
 public class CMB {
 	
 	private static Logger logger = Logger.getLogger(CMB.class);
-	private static final int MAX_REQUEST_LENGTH = 500000;
+	
+	private static final int MAX_REQUEST_LENGTH = 
+			CMBProperties.getInstance().getCNSMaxMessageSize()*2 > CMBProperties.getInstance().getCNSMaxMessageSize()*2 ? 
+			CMBProperties.getInstance().getCNSMaxMessageSize()*2 : CMBProperties.getInstance().getCNSMaxMessageSize()*2;
 	 
     public static void main(String argv[]) throws Exception {
     	
@@ -64,7 +67,7 @@ public class CMB {
 	        cqsServer.setHandler(cqsWebContext);
 	        cqsServer.start();
 	        
-	        logger.info("event=launched_cqs_service_endpoint port=" + CMBProperties.getInstance().getCQSServerPort());
+	        logger.info("event=launched_cqs_service_endpoint port=" + CMBProperties.getInstance().getCQSServerPort() + " max_request_length=" + MAX_REQUEST_LENGTH);
 	        
 	        CQSControllerServlet.writeHeartBeat();
 	        
@@ -92,7 +95,7 @@ public class CMB {
 	        cnsServer.setHandler(cnsWebContext);
 	        cnsServer.start();
 
-	        logger.info("event=launched_cns_service_endpoint port=" + CMBProperties.getInstance().getCNSServerPort());
+	        logger.info("event=launched_cns_service_endpoint port=" + CMBProperties.getInstance().getCNSServerPort() + " max_request_length=" + MAX_REQUEST_LENGTH);
     	}
     	
     	// launch cns publish worker if enabled
