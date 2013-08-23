@@ -35,6 +35,7 @@ import com.comcast.cqs.controller.CQSLongPollSender;
 public class CMB {
 	
 	private static Logger logger = Logger.getLogger(CMB.class);
+	private static final int MAX_REQUEST_LENGTH = 500000;
 	 
     public static void main(String argv[]) throws Exception {
     	
@@ -50,6 +51,7 @@ public class CMB {
     	if (CMBProperties.getInstance().getCQSServiceEnabled()) {
         	
         	Server cqsServer = new Server(CMBProperties.getInstance().getCQSServerPort());
+        	cqsServer.setAttribute("org.eclipse.jetty.server.Request.maxFormContentSize", MAX_REQUEST_LENGTH);
 
         	WebAppContext cqsWebContext = new WebAppContext();
 	
@@ -77,6 +79,7 @@ public class CMB {
     	if (CMBProperties.getInstance().getCNSServiceEnabled()) {
 
         	Server cnsServer = new Server(CMBProperties.getInstance().getCNSServerPort());
+        	cnsServer.setAttribute("org.eclipse.jetty.server.Request.maxFormContentSize", MAX_REQUEST_LENGTH);
 	    	
 	        WebAppContext cnsWebContext = new WebAppContext();
 	

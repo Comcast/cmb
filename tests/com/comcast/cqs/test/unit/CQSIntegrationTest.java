@@ -1094,6 +1094,99 @@ public class CQSIntegrationTest {
     }
     
     @Test
+    public void testSendDeleteLargeMessage() throws InterruptedException, PersistenceException, NoSuchAlgorithmException, UnsupportedEncodingException {
+    	
+        try {
+        	
+            String queueName = QUEUE_PREFIX + randomGenerator.nextLong();
+            CreateQueueRequest createQueueRequest = new CreateQueueRequest(queueName);
+            createQueueRequest.setAttributes(attributeParams);
+            String queueUrl = sqs.createQueue(createQueueRequest).getQueueUrl();
+            randomQueueUrls.add(queueUrl);
+            
+            ICQSMessagePersistence messagePersistence = RedisCachedCassandraPersistence.getInstance();
+            messagePersistence.clearQueue(queueUrl, 0);
+
+            // send a batch of messages
+            
+            Thread.sleep(1000);
+            
+            StringBuffer msg256k = new StringBuffer("");
+            
+            // 256k msg
+            
+            for (int i=0; i<256000; i++) {
+            	msg256k.append("X");
+            }
+
+            logger.info("Sending large message to " + queueUrl);
+            SendMessageRequest sendMessageRequest = new SendMessageRequest(queueUrl, msg256k.toString());
+            SendMessageResult sendResult = sqs.sendMessage(sendMessageRequest);
+            
+            assertNotNull("Message id is null", sendResult.getMessageId());
+
+            StringBuffer msg280k = new StringBuffer("");
+            
+            // 280k msg
+            
+            for (int i=0; i<280000; i++) {
+            	msg280k.append("X");
+            }
+
+            try {
+	            logger.info("Sending too large message to " + queueUrl);
+	            sendMessageRequest = new SendMessageRequest(queueUrl, msg280k.toString());
+	            sendResult = sqs.sendMessage(sendMessageRequest);
+	            fail("should not accept messages > 256k");
+            } catch (Exception ex) {
+            	assertTrue("wrong error, expected message too long", ex.getMessage().contains("body must be shorter than"));
+            }
+
+            Thread.sleep(1000);
+
+            // receive messages
+            
+            logger.info("Receiving messages from " + queueUrl);
+
+            ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest(queueUrl);
+
+            List<Message> messages = new ArrayList<Message>();
+            receiveMessageRequest.setVisibilityTimeout(60);
+            receiveMessageRequest.setMaxNumberOfMessages(1);
+            messages = sqs.receiveMessage(receiveMessageRequest).getMessages();
+            
+            assertTrue("Expected one message, instead got " + messages.size(), messages.size() == 1);
+
+            for (Message message : messages) {
+            	
+                logger.info("  Message");
+                logger.info("    MessageId:     " + message.getMessageId());
+                logger.info("    ReceiptHandle: " + message.getReceiptHandle());
+                logger.info("    MD5OfBody:     " + message.getMD5OfBody());
+                logger.info("    Body:          " + message.getBody());
+                
+                for (Entry<String, String> entry : message.getAttributes().entrySet()) {
+                    logger.info("  Attribute");
+                    logger.info("    Name:  " + entry.getKey());
+                    logger.info("    Value: " + entry.getValue());
+                }
+            }
+            
+            DeleteMessageRequest deleteMessageRequest = new DeleteMessageRequest(queueUrl, messages.get(0).getReceiptHandle());
+            sqs.deleteMessage(deleteMessageRequest);
+            
+        	DeleteQueueRequest deleteQueueRequest = new DeleteQueueRequest();
+            deleteQueueRequest.setQueueUrl(queueUrl);
+            sqs.deleteQueue(deleteQueueRequest);
+            
+            randomQueueUrls.remove(queueUrl);
+
+        } catch (AmazonServiceException ase) {
+            fail(ase.toString());
+        }
+    }
+
+    @Test
     public void testSendDeleteMessage() throws InterruptedException, PersistenceException, NoSuchAlgorithmException, UnsupportedEncodingException {
     	
         try {
@@ -1111,7 +1204,7 @@ public class CQSIntegrationTest {
             
             Thread.sleep(1000);
 
-            logger.info("Sending batch messages to " + queueUrl);
+            logger.info("Sending message to " + queueUrl);
             SendMessageRequest sendMessageRequest = new SendMessageRequest(queueUrl, "This is a test message");
             SendMessageResult sendResult = sqs.sendMessage(sendMessageRequest);
             
