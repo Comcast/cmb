@@ -29,7 +29,6 @@ import java.util.Random;
 
 import me.prettyprint.cassandra.serializers.CompositeSerializer;
 import me.prettyprint.cassandra.serializers.StringSerializer;
-import me.prettyprint.hector.api.HConsistencyLevel;
 
 import org.apache.log4j.Logger;
 import org.junit.After;

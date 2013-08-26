@@ -23,7 +23,6 @@ import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.Util;
 
 import me.prettyprint.cassandra.serializers.StringSerializer;
-import me.prettyprint.hector.api.HConsistencyLevel;
 
 import org.apache.log4j.Logger;
 import org.junit.After;

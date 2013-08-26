@@ -20,7 +20,6 @@ import java.security.NoSuchAlgorithmException;
 
 import me.prettyprint.cassandra.serializers.CompositeSerializer;
 import me.prettyprint.cassandra.serializers.StringSerializer;
-import me.prettyprint.hector.api.HConsistencyLevel;
 
 import com.comcast.cmb.common.persistence.CassandraPersistence;
 import com.comcast.cmb.common.util.CMBProperties;

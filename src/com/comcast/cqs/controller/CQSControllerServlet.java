@@ -27,8 +27,6 @@ import javax.servlet.AsyncContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 
-import me.prettyprint.hector.api.HConsistencyLevel;
-
 import org.apache.log4j.Logger;
 
 import com.comcast.cmb.common.controller.CMBControllerServlet;
