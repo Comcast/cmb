@@ -208,7 +208,7 @@ public class CMBProperties {
 			FileInputStream fileStream = new FileInputStream(file);
 			props.load(fileStream);
 			
-			consistencyLevel = HConsistencyLevel.valueOf(props.getProperty("cmb.cassandra.consistencyLevel","LOCAL_QUORUM"));
+			consistencyLevel = HConsistencyLevel.valueOf(props.getProperty("cmb.cassandra.consistencyLevel","QUORUM"));
 			
 			cmbWorkerPoolSize = Integer.parseInt(props.getProperty("cmb.workerpool.size","256"));
 			
