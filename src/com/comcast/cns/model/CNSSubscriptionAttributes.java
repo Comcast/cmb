@@ -26,7 +26,7 @@ public class CNSSubscriptionAttributes {
 	private CNSSubscriptionDeliveryPolicy effectiveDeliveryPolicy;
 
 	private CNSSubscriptionDeliveryPolicy deliveryPolicy;
-	private Boolean  rawMessageDelivery;
+	private boolean rawMessageDelivery;
 
 	private String userId;
 	
@@ -37,6 +37,7 @@ public class CNSSubscriptionAttributes {
 	private String subscriptionArn;
 	
 	public CNSSubscriptionAttributes() {
+		this.rawMessageDelivery = false;
 	}
 	
 	public CNSSubscriptionAttributes(String topicArn, String subscriptionArn, String userId) {
@@ -105,14 +106,11 @@ public class CNSSubscriptionAttributes {
 				" rawMessagePolicy=" + rawMessageDelivery;
 	}
 
-	
-
-	public Boolean getRawMessageDelivery() {
+	public boolean getRawMessageDelivery() {
 		return rawMessageDelivery;
 	}
 
-	public void setRawMessageDelivery(Boolean rawMessageDelivery) {
+	public void setRawMessageDelivery(boolean rawMessageDelivery) {
 		this.rawMessageDelivery = rawMessageDelivery;
 	}
-
 }
