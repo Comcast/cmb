@@ -75,4 +75,17 @@ public interface IEndpointPublisher {
 	  */
 	 public void setRawMessageDelivery(Boolean rawMessageDelivery);
 	 public Boolean getRawMessageDelivery();
+	 
+	 public String getMessageType();
+	 public void setMessageType(String messageType);
+
+	 public String getMessageId();
+	 public void setMessageId(String messageId);
+
+	 public String getTopicArn();
+	 public void setTopicArn(String topicArn);
+
+	 public String getSubscriptionArn();
+	 public void setSubscriptionArn(String subscriptionArn);
+
 }

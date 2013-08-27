@@ -18,12 +18,14 @@ package com.comcast.cns.io;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 
+import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpVersion;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.conn.params.ConnRoutePNames;
 import org.apache.http.conn.scheme.PlainSocketFactory;
 import org.apache.http.conn.scheme.Scheme;
@@ -101,12 +103,9 @@ public class HTTPEndpointSyncPublisher extends AbstractEndpointPublisher {
 		}
 
 		HttpPost httpPost = new HttpPost(endpoint);
-		//TODO check raw message condition		
 		StringEntity stringEntity = new StringEntity(message);
 		httpPost.setEntity(stringEntity);
-		if(this.getRawMessageDelivery()){
-			httpPost.setHeader("x-amz-raw-message", "true");
-		}
+		composeHeader(httpPost);
 		
 
 		HttpResponse response = httpClient.execute(httpPost);
@@ -143,5 +142,16 @@ public class HTTPEndpointSyncPublisher extends AbstractEndpointPublisher {
 				EntityUtils.consume(entity);
 			}
 		}
+	}
+
+	private void composeHeader(HttpRequestBase httpRequest) {		
+		httpRequest.setHeader("x-amz-sns-message-type", this.getMessageType());
+		httpRequest.setHeader("x-amz-sns-message-id", this.getMessageId());
+		httpRequest.setHeader("x-amz-sns-topic-arn", this.getTopicArn());
+		httpRequest.setHeader("x-amz-sns-subscription-arn", this.getSubscriptionArn());
+		if(this.getRawMessageDelivery()){
+			httpRequest.addHeader("x-amz-raw-message", "true");
+		}
+		
 	}
 }

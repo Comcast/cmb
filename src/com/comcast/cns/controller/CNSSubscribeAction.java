@@ -15,6 +15,8 @@
  */
 package com.comcast.cns.controller;
 
+import java.util.UUID;
+
 import javax.servlet.AsyncContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -97,12 +99,13 @@ public class CNSSubscribeAction extends CNSAction {
     		subscriptionArn = sub.getArn();
     	} else {
     		subscriptionArn = "pending confirmation";
-    		String json =  Util.generateConfirmationJson(topicArn, sub.getToken());
+    		String messageId = UUID.randomUUID().toString();
+    		String json =  Util.generateConfirmationJson(topicArn, sub.getToken(), messageId);
     		String ownerUserId = PersistenceFactory.getTopicPersistence().getTopic(topicArn).getUserId();
     		User topicOwner = PersistenceFactory.getUserPersistence().getUserById(ownerUserId);   		
     		
     		try {
-    			CommunicationUtils.sendMessage(topicOwner, subProtocol, endpoint, json);
+    			CommunicationUtils.sendMessage(topicOwner, subProtocol, endpoint, json, messageId, topicArn, sub.getArn());
     		} catch (Exception ex) {
     			PersistenceFactory.getSubscriptionPersistence().unsubscribe(sub.getArn());
     			if (ex instanceof CMBException) {

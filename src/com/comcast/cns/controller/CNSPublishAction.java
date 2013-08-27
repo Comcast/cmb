@@ -47,6 +47,7 @@ import com.comcast.cns.model.CNSEndpointPublishJob;
 import com.comcast.cns.model.CNSMessage;
 import com.comcast.cns.model.CNSTopic;
 import com.comcast.cns.model.CNSTopicAttributes;
+import com.comcast.cns.model.CNSMessage.CNSMessageType;
 import com.comcast.cns.tools.CNSEndpointPublisherJobProducer;
 import com.comcast.cns.util.CNSErrorCodes;
 import com.comcast.cns.util.Util;
@@ -152,6 +153,7 @@ public class CNSPublishAction extends CNSAction {
 		
     	cnsMessage.setUserId(topic.getUserId());
     	cnsMessage.setTopicArn(topicArn);
+    	cnsMessage.setMessageType(CNSMessageType.Notification);
     	
     	cnsMessage.checkIsValid();
     	cnsMessage.processMessageToProtocols();
