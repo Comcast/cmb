@@ -124,7 +124,7 @@ public class CNSEndpointPublisherConsumerTest {
         @Override
         public void setEndpoint(String endpoint)
                 throws IllegalArgumentException {
-            // TODO Auto-generated method stub
+            
             
         }
 
@@ -132,7 +132,7 @@ public class CNSEndpointPublisherConsumerTest {
         public void setQueueAttributes(
                 SetQueueAttributesRequest setQueueAttributesRequest)
                 throws AmazonServiceException, AmazonClientException {
-            // TODO Auto-generated method stub
+            
             
         }
 
@@ -140,7 +140,7 @@ public class CNSEndpointPublisherConsumerTest {
         public ChangeMessageVisibilityBatchResult changeMessageVisibilityBatch(
                 ChangeMessageVisibilityBatchRequest changeMessageVisibilityBatchRequest)
                 throws AmazonServiceException, AmazonClientException {
-            // TODO Auto-generated method stub
+            
             return null;
         }
 
@@ -166,7 +166,7 @@ public class CNSEndpointPublisherConsumerTest {
         public void removePermission(
                 RemovePermissionRequest removePermissionRequest)
                 throws AmazonServiceException, AmazonClientException {
-            // TODO Auto-generated method stub
+            
             
         }
 
@@ -174,7 +174,7 @@ public class CNSEndpointPublisherConsumerTest {
         public GetQueueAttributesResult getQueueAttributes(
                 GetQueueAttributesRequest getQueueAttributesRequest)
                 throws AmazonServiceException, AmazonClientException {
-            // TODO Auto-generated method stub
+            
             return null;
         }
 
@@ -182,14 +182,14 @@ public class CNSEndpointPublisherConsumerTest {
         public SendMessageBatchResult sendMessageBatch(
                 SendMessageBatchRequest sendMessageBatchRequest)
                 throws AmazonServiceException, AmazonClientException {
-            // TODO Auto-generated method stub
+            
             return null;
         }
 
         @Override
         public void deleteQueue(DeleteQueueRequest deleteQueueRequest)
                 throws AmazonServiceException, AmazonClientException {
-            // TODO Auto-generated method stub
+            
             
         }
 
@@ -197,7 +197,7 @@ public class CNSEndpointPublisherConsumerTest {
         public SendMessageResult sendMessage(
                 SendMessageRequest sendMessageRequest)
                 throws AmazonServiceException, AmazonClientException {
-            // TODO Auto-generated method stub
+            
             return null;
         }
 
@@ -225,7 +225,7 @@ public class CNSEndpointPublisherConsumerTest {
         @Override
         public ListQueuesResult listQueues(ListQueuesRequest listQueuesRequest)
                 throws AmazonServiceException, AmazonClientException {
-            // TODO Auto-generated method stub
+            
             return null;
         }
 
@@ -233,7 +233,7 @@ public class CNSEndpointPublisherConsumerTest {
         public DeleteMessageBatchResult deleteMessageBatch(
                 DeleteMessageBatchRequest deleteMessageBatchRequest)
                 throws AmazonServiceException, AmazonClientException {
-            // TODO Auto-generated method stub
+            
             return null;
         }
 
@@ -241,14 +241,14 @@ public class CNSEndpointPublisherConsumerTest {
         public CreateQueueResult createQueue(
                 CreateQueueRequest createQueueRequest)
                 throws AmazonServiceException, AmazonClientException {
-            // TODO Auto-generated method stub
+            
             return null;
         }
 
         @Override
         public void addPermission(AddPermissionRequest addPermissionRequest)
                 throws AmazonServiceException, AmazonClientException {
-            // TODO Auto-generated method stub
+            
             
         }
 
@@ -260,26 +260,26 @@ public class CNSEndpointPublisherConsumerTest {
         @Override
         public ListQueuesResult listQueues() throws AmazonServiceException,
                 AmazonClientException {
-            // TODO Auto-generated method stub
+            
             return null;
         }
 
         @Override
         public void shutdown() {
-            // TODO Auto-generated method stub
+            
             
         }
 
         @Override
         public ResponseMetadata getCachedResponseMetadata(
                 AmazonWebServiceRequest request) {
-            // TODO Auto-generated method stub
+            
             return null;
         }
 
 		@Override
 		public void setRegion(Region arg0) throws IllegalArgumentException {
-			// TODO Auto-generated method stub
+			
 		}
     }
     
@@ -327,13 +327,13 @@ public class CNSEndpointPublisherConsumerTest {
 
         @Override
         public void setUser(User user) {
-            // TODO Auto-generated method stub
+            
             
         }
 
         @Override
         public User getUser() {
-            // TODO Auto-generated method stub
+            
             return null;
         }
 

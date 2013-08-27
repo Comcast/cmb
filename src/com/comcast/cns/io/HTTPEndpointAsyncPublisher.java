@@ -23,6 +23,7 @@ import java.net.URL;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpRequestInterceptor;
 import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.concurrent.FutureCallback;
 import org.apache.http.impl.DefaultConnectionReuseStrategy;
 import org.apache.http.impl.nio.DefaultHttpClientIODispatch;
@@ -130,10 +131,7 @@ public class HTTPEndpointAsyncPublisher extends AbstractEndpointPublisher{
         final HttpHost target = new HttpHost(url.getHost(), url.getPort(), url.getProtocol());
         
         BasicHttpEntityEnclosingRequest request = new BasicHttpEntityEnclosingRequest("POST", url.getPath() + (url.getQuery() == null ? "" : "?" + url.getQuery()));
-		//TODO check raw message condition        
-        if(this.getRawMessageDelivery()){
-        	request.setHeader("x-amz-raw-message", "true");
-        }
+        composeHeader(request);
         request.setEntity(new NStringEntity(message));
 
         requester.execute(
@@ -168,4 +166,15 @@ public class HTTPEndpointAsyncPublisher extends AbstractEndpointPublisher{
 		            }
                 });
     }
+	
+	private void composeHeader(BasicHttpEntityEnclosingRequest request) {		
+		request.setHeader("x-amz-sns-message-type", this.getMessageType());
+		request.setHeader("x-amz-sns-message-id", this.getMessageId());
+		request.setHeader("x-amz-sns-topic-arn", this.getTopicArn());
+		request.setHeader("x-amz-sns-subscription-arn", this.getSubscriptionArn());
+		if(this.getRawMessageDelivery()){
+			request.addHeader("x-amz-raw-message", "true");
+		}
+		
+	}
 }

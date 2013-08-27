@@ -34,7 +34,6 @@ public class CQSTestUtils {
 	 * @throws NoSuchAlgorithmException 
 	 */
 	public static void main(String[] args) throws NoSuchAlgorithmException, UnsupportedEncodingException {
-		// TODO Auto-generated method stub
 		if (args == null) {
 			System.out.println("Usage: <action> <args>.  Valid actions are GetQueueCount with the queue url");
 		}

@@ -30,6 +30,7 @@ import com.comcast.cmb.common.util.ValueAccumulator.AccumulatorName;
 import com.comcast.cns.io.EndpointPublisherFactory;
 import com.comcast.cns.io.IEndpointPublisher;
 import com.comcast.cns.model.CNSMessage;
+import com.comcast.cns.model.CNSMessage.CNSMessageType;
 import com.comcast.cns.model.CNSRetryPolicy;
 import com.comcast.cns.model.CNSSubscriptionAttributes;
 import com.comcast.cns.model.CNSSubscriptionDeliveryPolicy;
@@ -203,6 +204,10 @@ public class CNSPublishJob implements Runnable {
         publisher.setMessage(msg);
         publisher.setSubject(message.getSubject());            
         publisher.setUser(user);
+        publisher.setMessageType(this.message.getMessageType().toString());
+        publisher.setMessageId(this.message.getMessageId());
+        publisher.setTopicArn(this.message.getTopicArn());
+        publisher.setSubscriptionArn(this.subArn);
         publisher.send();
         
         logger.debug("event=successful_delivery protocol=" + protocol + " endpoint=" + endpoint + " sub_arn=" + subArn + " attempt=" + numRetries + " raw=" + rawDelivery);

@@ -108,7 +108,7 @@ public class PublishCMBTest {
 			
 			logger.info("Sending message");
 
-			CommunicationUtils.sendMessage(user1, protocol, endPoint, message);
+			CommunicationUtils.sendMessage(user1, protocol, endPoint, message, "", "", "");
 
 			Thread.sleep(500);
 			
@@ -137,7 +137,7 @@ public class PublishCMBTest {
 		CNSSubscription.CnsSubscriptionProtocol protocol = CNSSubscription.CnsSubscriptionProtocol.http;
 		String endPoint = CMBTestingConstants.HTTP_ENDPOINT_BASE_URL + "recv/252910";
 		String message = "test_abc";
-		CommunicationUtils.sendMessage(user1, protocol, endPoint, message);
+		CommunicationUtils.sendMessage(user1, protocol, endPoint, message, "", "", "");
 		String lastMessageUrl = CMBTestingConstants.HTTP_ENDPOINT_BASE_URL + "info/252910?showLast=true";
 		String resp = CNSTestingUtils.sendHttpMessage(lastMessageUrl, "");
 
@@ -150,12 +150,12 @@ public class PublishCMBTest {
 		CNSSubscription.CnsSubscriptionProtocol protocol = CNSSubscription.CnsSubscriptionProtocol.email;
 		String endPoint = CMBTestingConstants.EMAIL_ENDPOINT;
 		String message = "test email";
-		CommunicationUtils.sendMessage(user1, protocol, endPoint, message);
+		CommunicationUtils.sendMessage(user1, protocol, endPoint, message, "", "", "");
 		
 		protocol = CNSSubscription.CnsSubscriptionProtocol.email_json;
 		endPoint = CMBTestingConstants.EMAIL_ENDPOINT;
 		message = "test email";
-		CommunicationUtils.sendMessage(user1, protocol, endPoint, message);
+		CommunicationUtils.sendMessage(user1, protocol, endPoint, message, "", "", "");
 	}
 
 	@Test

@@ -9,6 +9,10 @@ public abstract class AbstractEndpointPublisher implements IEndpointPublisher {
 	protected User user;
 	protected String subject;
 	protected Boolean rawMessageDelivery = false;
+	protected String messageType;
+	protected String messageId;
+	protected String topicArn;
+	protected String subscriptionArn;
 	
 
 	@Override
@@ -58,6 +62,46 @@ public abstract class AbstractEndpointPublisher implements IEndpointPublisher {
 	@Override
 	public Boolean getRawMessageDelivery(){
 		return this.rawMessageDelivery;
+	}
+	
+	@Override
+	public String getMessageType() {
+		return messageType;
+	}
+
+	@Override
+	public void setMessageType(String messageType) {
+		this.messageType = messageType;
+	}
+
+	@Override
+	public String getMessageId() {
+		return messageId;
+	}
+
+	@Override
+	public void setMessageId(String messageId) {
+		this.messageId = messageId;
+	}
+
+	@Override
+	public String getTopicArn() {
+		return topicArn;
+	}
+
+	@Override
+	public void setTopicArn(String topicArn) {
+		this.topicArn = topicArn;
+	}
+
+	@Override
+	public String getSubscriptionArn() {
+		return subscriptionArn;
+	}
+	
+	@Override
+	public void setSubscriptionArn(String subscriptionArn) {
+		this.subscriptionArn = subscriptionArn;
 	}
 
 	@Override

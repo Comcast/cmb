@@ -120,7 +120,7 @@ public class CNSEndpointPublisherProducerTest {
          @Override
          public void setEndpoint(String endpoint)
                  throws IllegalArgumentException {
-             // TODO Auto-generated method stub
+             
              
          }
 
@@ -128,7 +128,7 @@ public class CNSEndpointPublisherProducerTest {
          public void setQueueAttributes(
                  SetQueueAttributesRequest setQueueAttributesRequest)
                  throws AmazonServiceException, AmazonClientException {
-             // TODO Auto-generated method stub
+             
              
          }
 
@@ -136,7 +136,7 @@ public class CNSEndpointPublisherProducerTest {
          public ChangeMessageVisibilityBatchResult changeMessageVisibilityBatch(
                  ChangeMessageVisibilityBatchRequest changeMessageVisibilityBatchRequest)
                  throws AmazonServiceException, AmazonClientException {
-             // TODO Auto-generated method stub
+             
              return null;
          }
 
@@ -144,7 +144,7 @@ public class CNSEndpointPublisherProducerTest {
          public void changeMessageVisibility(
                  ChangeMessageVisibilityRequest changeMessageVisibilityRequest)
                  throws AmazonServiceException, AmazonClientException {
-             // TODO Auto-generated method stub
+             
              
          }
 
@@ -162,7 +162,7 @@ public class CNSEndpointPublisherProducerTest {
          public void removePermission(
                  RemovePermissionRequest removePermissionRequest)
                  throws AmazonServiceException, AmazonClientException {
-             // TODO Auto-generated method stub
+             
              
          }
 
@@ -170,7 +170,7 @@ public class CNSEndpointPublisherProducerTest {
          public GetQueueAttributesResult getQueueAttributes(
                  GetQueueAttributesRequest getQueueAttributesRequest)
                  throws AmazonServiceException, AmazonClientException {
-             // TODO Auto-generated method stub
+             
              return null;
          }
 
@@ -178,14 +178,14 @@ public class CNSEndpointPublisherProducerTest {
          public SendMessageBatchResult sendMessageBatch(
                  SendMessageBatchRequest sendMessageBatchRequest)
                  throws AmazonServiceException, AmazonClientException {
-             // TODO Auto-generated method stub
+             
              return null;
          }
 
          @Override
          public void deleteQueue(DeleteQueueRequest deleteQueueRequest)
                  throws AmazonServiceException, AmazonClientException {
-             // TODO Auto-generated method stub
+             
 
          }
 
@@ -193,7 +193,7 @@ public class CNSEndpointPublisherProducerTest {
          public SendMessageResult sendMessage(
                  SendMessageRequest sendMessageRequest)
                  throws AmazonServiceException, AmazonClientException {
-             // TODO Auto-generated method stub
+             
         	 String messageId = Integer.toString(messageSeq.incrementAndGet());
         	 Map<String, String> jobQ = null;
              if (sendMessageRequest.getQueueUrl().startsWith(publishQNamePrefix)) {
@@ -236,7 +236,7 @@ public class CNSEndpointPublisherProducerTest {
          @Override
          public ListQueuesResult listQueues(ListQueuesRequest listQueuesRequest)
                  throws AmazonServiceException, AmazonClientException {
-             // TODO Auto-generated method stub
+             
              return null;
          }
 
@@ -244,7 +244,7 @@ public class CNSEndpointPublisherProducerTest {
          public DeleteMessageBatchResult deleteMessageBatch(
                  DeleteMessageBatchRequest deleteMessageBatchRequest)
                  throws AmazonServiceException, AmazonClientException {
-             // TODO Auto-generated method stub
+             
              return null;
          }
 
@@ -252,14 +252,14 @@ public class CNSEndpointPublisherProducerTest {
          public CreateQueueResult createQueue(
                  CreateQueueRequest createQueueRequest)
                  throws AmazonServiceException, AmazonClientException {
-             // TODO Auto-generated method stub
+             
              return null;
          }
 
          @Override
          public void addPermission(AddPermissionRequest addPermissionRequest)
                  throws AmazonServiceException, AmazonClientException {
-             // TODO Auto-generated method stub
+             
              
          }
 
@@ -277,26 +277,26 @@ public class CNSEndpointPublisherProducerTest {
          @Override
          public ListQueuesResult listQueues() throws AmazonServiceException,
                  AmazonClientException {
-             // TODO Auto-generated method stub
+             
              return null;
          }
 
          @Override
          public void shutdown() {
-             // TODO Auto-generated method stub
+             
              
          }
 
          @Override
          public ResponseMetadata getCachedResponseMetadata(
                  AmazonWebServiceRequest request) {
-             // TODO Auto-generated method stub
+             
              return null;
          }
 
 		@Override
 		public void setRegion(Region arg0) throws IllegalArgumentException {
-			// TODO Auto-generated method stub
+			
 			
 		}
          
@@ -318,13 +318,13 @@ public class CNSEndpointPublisherProducerTest {
 		public CNSSubscription subscribe(String endpoint,
 				CnsSubscriptionProtocol protocol, String topicArn, String userId)
 				throws Exception {
-			// TODO Auto-generated method stub
+			
 			return null;
 		}
 
 		@Override
 		public CNSSubscription getSubscription(String arn) throws Exception {
-			// TODO Auto-generated method stub
+			
 			return null;
 		}
 
@@ -332,7 +332,7 @@ public class CNSEndpointPublisherProducerTest {
 		public List<CNSSubscription> listSubscriptions(String nextToken,
 				CnsSubscriptionProtocol protocol, String userId)
 				throws Exception {
-			// TODO Auto-generated method stub
+			
 			return null;
 		}
 
@@ -340,7 +340,7 @@ public class CNSEndpointPublisherProducerTest {
 		public List<CNSSubscription> listAllSubscriptions(String nextToken,
 				CnsSubscriptionProtocol protocol, String userId)
 				throws Exception {
-			// TODO Auto-generated method stub
+			
 			return null;
 		}
 
@@ -374,26 +374,26 @@ public class CNSEndpointPublisherProducerTest {
 		public CNSSubscription confirmSubscription(
 				boolean authenticateOnUnsubscribe, String token, String topicArn)
 				throws Exception {
-			// TODO Auto-generated method stub
+			
 			return null;
 		}
 
 		@Override
 		public void unsubscribe(String arn) throws Exception {
-			// TODO Auto-generated method stub
+			
 			
 		}
 
 		@Override
 		public void unsubscribeAll(String topicArn) throws Exception {
-			// TODO Auto-generated method stub
+			
 			
 		}
 
 		@Override
 		public long getCountSubscription(String topicArn, String columnName)
 				throws Exception {
-			// TODO Auto-generated method stub
+			
 			return 0;
 		}
     	
