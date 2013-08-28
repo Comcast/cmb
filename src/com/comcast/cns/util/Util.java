@@ -197,7 +197,6 @@ public class Util {
         df.setCalendar(st);
         df.setTimeZone(TimeZone.getTimeZone("America/Los_Angeles"));//?
         String timestamp = df.format(cnsMessage.getTimestamp());		
-        
     	try {
     		String message = cnsMessage.getProtocolSpecificMessage(prot);
 	    	jw = jw.object();
@@ -214,7 +213,7 @@ public class Util {
 	    	jw.endObject();	    	    	
 	    	writer.flush();
     	} catch(Exception e) {
-    		return "";
+    		return e.toString();
     	} 
     	
     	return out.toString();
