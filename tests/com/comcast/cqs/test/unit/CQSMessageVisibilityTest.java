@@ -158,7 +158,10 @@ public class CQSMessageVisibilityTest {
 	    		ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest();
 				receiveMessageRequest.setQueueUrl(queueUrl);
 				receiveMessageRequest.setMaxNumberOfMessages(1);
+				// use long poll style requests
 				receiveMessageRequest.setWaitTimeSeconds(20);
+				// set initial vto to 20 sec
+				receiveMessageRequest.setVisibilityTimeout(20);
 				
 				ReceiveMessageResult receiveMessageResult = sqs.receiveMessage(receiveMessageRequest);
 
@@ -167,12 +170,12 @@ public class CQSMessageVisibilityTest {
 					assertTrue("wrong message content", receiveMessageResult.getMessages().get(0).getBody().equals(message));
 					logger.info("message found for first time");
 					
-					ep.submit(new MessageReceiver(60));
+					ep.submit(new MessageReceiver(50));
 					
 					// push message out 11 sec
 					
-					logger.info("sleeping for 29 sec");
-					Thread.sleep(29*1000);
+					logger.info("sleeping for 19 sec");
+					Thread.sleep(19*1000);
 					ChangeMessageVisibilityRequest changeMessageVisibilityRequest = new ChangeMessageVisibilityRequest();
 					changeMessageVisibilityRequest.setVisibilityTimeout(11);
 					changeMessageVisibilityRequest.setReceiptHandle(receiveMessageResult.getMessages().get(0).getReceiptHandle());

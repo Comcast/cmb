@@ -92,6 +92,10 @@ public class CNSScaleSubscriptionsTest {
     	CreateNSubscriptions(250);
     }
 
+    @Test
+    public void Create1200Subscriptions() {
+    	CreateNSubscriptions(1200);
+    }
 	
     private void CreateNSubscriptions(long n) {
 
@@ -142,7 +146,7 @@ public class CNSScaleSubscriptionsTest {
 	            }
     		}
     		
-    		Thread.sleep(1000);
+    		Thread.sleep(5000);
 
             try {
     			sns.publish(new PublishRequest(topicArn, "test message"));
@@ -151,7 +155,7 @@ public class CNSScaleSubscriptionsTest {
 				logger.error("publish failure", ex);
             }
     		
-    		Thread.sleep(5000);
+    		Thread.sleep(20000);
     		
 			try {
             	sns.deleteTopic(new DeleteTopicRequest(topicArn));
