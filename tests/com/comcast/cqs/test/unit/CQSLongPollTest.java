@@ -58,8 +58,8 @@ public class CQSLongPollTest {
     
     //todo: put url of primary and alternate cqs service here
     
-    private String alternateCqsServiceUrl = "http://localhost:7059/";
-    private String cqsServiceUrl = "http://localhost:6059/";
+    private String alternateCqsServiceUrl = null;
+    private String cqsServiceUrl = CMBProperties.getInstance().getCQSServiceUrl();
 
     private AmazonSQS alternateSqs = null;
     
@@ -230,7 +230,7 @@ public class CQSLongPollTest {
     	testLongPoll(sqs);
     }
     
-    @Test
+    //@Test
     public void testLongPollWithLoadBalancer() {
     	
     	if (alternateSqs == null) {
@@ -440,7 +440,7 @@ public class CQSLongPollTest {
 			
 			assertTrue("Didn't fail", failed);
 			
-			receiveMessageRequest.setWaitTimeSeconds(0);
+			receiveMessageRequest.setWaitTimeSeconds(-1);
 			
 			failed = false;
 			
@@ -525,7 +525,7 @@ public class CQSLongPollTest {
     	testConcurrentLPRequests(sqs);
     }
 
-    @Test
+    //@Test
     public void testConcurrentLPRequestsLoadBalancer() {
 
     	if (alternateSqs == null) {

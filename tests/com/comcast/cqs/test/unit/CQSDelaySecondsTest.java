@@ -39,6 +39,7 @@ import com.comcast.cmb.common.model.User;
 import com.comcast.cmb.common.persistence.IUserPersistence;
 import com.comcast.cmb.common.persistence.PersistenceFactory;
 import com.comcast.cmb.common.persistence.UserCassandraPersistence;
+import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.Util;
 import com.comcast.cqs.persistence.ICQSMessagePersistence;
 import com.comcast.cqs.persistence.RedisCachedCassandraPersistence;
@@ -49,7 +50,7 @@ public class CQSDelaySecondsTest {
 
     private AmazonSQS sqs = null;
     
-    private String cqsServiceUrl = "http://localhost:6059/";
+    private String cqsServiceUrl = CMBProperties.getInstance().getCQSServiceUrl();
 
     private HashMap<String, String> attributeParams = new HashMap<String, String>();
     private User user = null;
