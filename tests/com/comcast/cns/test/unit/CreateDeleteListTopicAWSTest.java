@@ -25,7 +25,6 @@ import com.comcast.cmb.common.model.User;
 import com.comcast.cmb.common.persistence.*;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.Util;
-import com.comcast.cmb.test.tools.CMBTestingConstants;
 
 import org.apache.log4j.Logger;
 import org.junit.* ;
@@ -448,7 +447,7 @@ public class CreateDeleteListTopicAWSTest {
 			Thread.sleep(500);
 			
 			SubscribeRequest subscribeRequest3 = new SubscribeRequest();
-			subscribeRequest3.setEndpoint(queueUrl);
+			subscribeRequest3.setEndpoint(com.comcast.cqs.util.Util.getArnForAbsoluteQueueUrl(queueUrl));
 			subscribeRequest3.setProtocol("cqs");
 			subscribeRequest3.setTopicArn(topicArn);
 			

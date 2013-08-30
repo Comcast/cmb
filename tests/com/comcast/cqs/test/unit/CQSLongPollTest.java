@@ -230,11 +230,12 @@ public class CQSLongPollTest {
     	testLongPoll(sqs);
     }
     
-    //@Test
+    @Test
     public void testLongPollWithLoadBalancer() {
     	
     	if (alternateSqs == null) {
-    		fail("must configure alternate cqs service endpoint for this test");
+    		logger.info("skipping load balanced long poll test due to missing alternate sqs service url");
+    		return;
     	}
     	
     	testLongPoll(alternateSqs);
@@ -525,11 +526,12 @@ public class CQSLongPollTest {
     	testConcurrentLPRequests(sqs);
     }
 
-    //@Test
+    @Test
     public void testConcurrentLPRequestsLoadBalancer() {
 
     	if (alternateSqs == null) {
-    		fail("must configure alternate cqs service endpoint for this test");
+    		logger.info("skipping concurrent load balanced long poll test due to missing alternate sqs service url");
+    		return;
     	}
     	
     	testConcurrentLPRequests(alternateSqs);

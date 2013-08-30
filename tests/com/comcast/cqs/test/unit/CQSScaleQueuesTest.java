@@ -295,17 +295,17 @@ public class CQSScaleQueuesTest {
 		CreateNQueues(100, true);
 	}
 
-	@Test
+	//@Test
 	public void Create1000Queues() {
 		CreateNQueues(1000, true);
 	}
 
-	@Test
+	//@Test
 	public void Create10000Queues() {
 		CreateNQueues(10000, true);
 	}
 
-	@Test
+	//@Test
 	public void Create100000Queues() {
 		CreateNQueues(100000, true);
 	}
@@ -314,7 +314,7 @@ public class CQSScaleQueuesTest {
 	public void CreateQueuesConcurrent() {
 		//queueName = "myqueue";
 		//messageLength = 100;
-		CreateQueuesConcurrent(2, 1000, 20, 100, 1);
+		CreateQueuesConcurrent(2, 100, 20, 100, 1);
 	}
 	
 	private void CreateQueuesConcurrent(long numQueuesPerThread, long numMessagesPerQueue, int numThreads, int numPartitions, int numShards) {

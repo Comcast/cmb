@@ -92,7 +92,7 @@ public class CNSScaleTopicsTest {
     	//sqs.deleteQueue(new DeleteQueueRequest(queueUrl));
     }
     
-    @Test
+    //@Test
     public void Create1000Topics() {
     	CreateNTopics(1000);
     }
