@@ -26,6 +26,7 @@ public class CNSSubscriptionAttributes {
 	private CNSSubscriptionDeliveryPolicy effectiveDeliveryPolicy;
 
 	private CNSSubscriptionDeliveryPolicy deliveryPolicy;
+
 	private boolean rawMessageDelivery;
 
 	private String userId;

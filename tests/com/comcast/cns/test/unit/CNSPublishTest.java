@@ -18,7 +18,6 @@ package com.comcast.cns.test.unit;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import java.io.ByteArrayOutputStream;
 import java.util.Random;
 
 import org.apache.log4j.Logger;
@@ -27,7 +26,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.amazonaws.ClientConfiguration;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.sns.AmazonSNS;
@@ -52,10 +50,6 @@ import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.Util;
 import com.comcast.cmb.test.tools.CMBTestingConstants;
 import com.comcast.cmb.test.tools.CNSTestingUtils;
-import com.comcast.cns.controller.CNSControllerServlet;
-import com.comcast.cns.io.CommunicationUtils;
-import com.comcast.cns.model.CNSSubscription;
-import com.comcast.cqs.controller.CQSControllerServlet;
 
 public class CNSPublishTest {
 	
@@ -120,33 +114,6 @@ public class CNSPublishTest {
 	@After
 	public void tearDown() {
 		CMBControllerServlet.valueAccumulator.deleteAllCounters();
-	}
-	
-	@Test
-	public void testHttpEndpoint() throws Exception {
-
-		CNSSubscription.CnsSubscriptionProtocol protocol = CNSSubscription.CnsSubscriptionProtocol.http;
-		String endPoint = CMBTestingConstants.HTTP_ENDPOINT_BASE_URL + "recv/252910";
-		String message = "test_abc";
-		CommunicationUtils.sendMessage(user1, protocol, endPoint, message);
-		String lastMessageUrl = CMBTestingConstants.HTTP_ENDPOINT_BASE_URL + "info/252910?showLast=true";
-		String resp = CNSTestingUtils.sendHttpMessage(lastMessageUrl, "");
-
-		assertTrue("Endpoint " + CMBTestingConstants.HTTP_ENDPOINT_BASE_URL + " is down", resp.equals(message));
-	}
-
-	@Test
-	public void testEmailPublisher() throws Exception {
-		
-		CNSSubscription.CnsSubscriptionProtocol protocol = CNSSubscription.CnsSubscriptionProtocol.email;
-		String endPoint = CMBTestingConstants.EMAIL_ENDPOINT;
-		String message = "test email";
-		CommunicationUtils.sendMessage(user1, protocol, endPoint, message);
-		
-		protocol = CNSSubscription.CnsSubscriptionProtocol.email_json;
-		endPoint = CMBTestingConstants.EMAIL_ENDPOINT;
-		message = "test email";
-		CommunicationUtils.sendMessage(user1, protocol, endPoint, message);
 	}
 
 	@Test

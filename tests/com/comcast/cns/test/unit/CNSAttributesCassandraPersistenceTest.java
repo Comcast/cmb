@@ -93,9 +93,6 @@ public class CNSAttributesCassandraPersistenceTest {
 		CNSTopicAttributes topicAttributes = new CNSTopicAttributes();
 		topicAttributes.setTopicArn(topic.getArn());
 		topicAttributes.setUserId(user.getUserId());
-		topicAttributes.setSubscriptionsPending(0);
-		topicAttributes.setSubscriptionsConfirmed(5);
-		topicAttributes.setSubscriptionsDeleted(3);
 
 		CNSTopicDeliveryPolicy deliveryPolicy = new CNSTopicDeliveryPolicy();
 		CNSRetryPolicy defaultHealthyRetryPolicy = new CNSRetryPolicy();
@@ -115,9 +112,8 @@ public class CNSAttributesCassandraPersistenceTest {
 
 		assertEquals("Topic attributes do not match", topicAttributes2.getDeliveryPolicy().toString(), deliveryPolicy.toString());
 		assertEquals("Topic attributes do not match", topicAttributes2.getEffectiveDeliveryPolicy().toString(), deliveryPolicy.toString());
-		assertEquals("Topic attributes do not match", topicAttributes2.getSubscriptionsConfirmed(), 5);
-		assertEquals("Topic attributes do not match", topicAttributes2.getSubscriptionsDeleted(), 3);
-		assertEquals("Topic attributes do not match", topicAttributes2.getSubscriptionsPending(), 0);
+		assertEquals("Topic attributes do not match", topicAttributes2.getSubscriptionsConfirmed(), 0);
+		assertEquals("Topic attributes do not match", topicAttributes2.getSubscriptionsDeleted(), 0);
 		assertEquals("Topic attributes do not match", topicAttributes2.getTopicArn(), topic.getArn());
 		assertEquals("Topic attributes do not match", topicAttributes2.getUserId(), user.getUserId());
 	}

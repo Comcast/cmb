@@ -203,6 +203,10 @@ public class CNSPublishJob implements Runnable {
         publisher.setMessage(msg);
         publisher.setSubject(message.getSubject());            
         publisher.setUser(user);
+        publisher.setMessageType(this.message.getMessageType().toString());
+        publisher.setMessageId(this.message.getMessageId());
+        publisher.setTopicArn(this.message.getTopicArn());
+        publisher.setSubscriptionArn(this.subArn);
         publisher.send();
         
         logger.debug("event=successful_delivery protocol=" + protocol + " endpoint=" + endpoint + " sub_arn=" + subArn + " attempt=" + numRetries + " raw=" + rawDelivery);

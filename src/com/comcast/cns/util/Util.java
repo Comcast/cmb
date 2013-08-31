@@ -26,11 +26,13 @@ import java.util.UUID;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 
-import org.apache.log4j.Logger;
 import org.json.JSONWriter;
 
 import com.comcast.cmb.common.util.CMBProperties;
+import com.comcast.cns.model.CNSMessage;
+import com.comcast.cns.model.CNSMessage.CNSMessageType;
 import com.comcast.cns.model.CNSRetryPolicy.CnsBackoffFunction;
+import com.comcast.cns.model.CNSSubscription.CnsSubscriptionProtocol;
 
 /**
  * Utility functions for cns
@@ -133,7 +135,7 @@ public class Util {
      * @param token the token for confirming the subscription
      * @return the Json String 
      */
-    public static String generateConfirmationJson(String topicArn, String token) {
+    public static String generateConfirmationJson(String topicArn, String token, String messageId) {
 
     	ByteArrayOutputStream out = new ByteArrayOutputStream();
 		Writer writer = new PrintWriter(out); 
@@ -150,8 +152,8 @@ public class Util {
     	
     	try {
 	    	jw = jw.object();
-	    	jw.key("Type").value("SubscriptionConfirmation");
-	    	jw.key("MessageId").value(UUID.randomUUID().toString());
+	    	jw.key("Type").value(CNSMessageType.SubscriptionConfirmation);
+	    	jw.key("MessageId").value(messageId);
 	    	jw.key("Token").value(token);
 	    	jw.key("TopicArn").value(topicArn);
 	    	jw.key("Message").value("You have chosen to subscribe to the topic "+topicArn+"\\nTo confirm the subscription, visit the SubscribeURL included in this message.");
@@ -178,38 +180,34 @@ public class Util {
      * @param subject the subject to send, also included as the subject in email-json
      * @return the Json String 
      */
-    public static String generateMessageJson(String arn, String message, String subject) {
+    public static String generateMessageJson(CNSMessage cnsMessage, CnsSubscriptionProtocol prot) {
 
     	ByteArrayOutputStream out = new ByteArrayOutputStream();
 		Writer writer = new PrintWriter(out); 
     	JSONWriter jw = new JSONWriter(writer);
     	String cnsServiceLocation = CMBProperties.getInstance().getCNSServiceUrl();
     	SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ"); //Time is in UTC zone. i,e no offset
-        Date now = new Date();
 
         Calendar st = Calendar.getInstance();
         st.setTimeZone(TimeZone.getTimeZone("America/Los_Angeles"));//We should double check this.
-        st.setTime(now);
+        st.setTime(cnsMessage.getTimestamp());
         df.setCalendar(st);
         df.setTimeZone(TimeZone.getTimeZone("America/Los_Angeles"));//?
-        String timeStamp = df.format(now);
+        String timestamp = df.format(cnsMessage.getTimestamp());
         
-        if (subject == null) {
-        	subject = "";
-        }
-    	
     	try {
+    		String message = cnsMessage.getProtocolSpecificMessage(prot);
 	    	jw = jw.object();
 	    	jw.key("Message").value(message);
-	    	jw.key("MessageId").value(UUID.randomUUID().toString()); //TODO get message ID
+	    	jw.key("MessageId").value(cnsMessage.getMessageId());
 	    	jw.key("Signature").value("");
 	    	jw.key("SignatureVersion").value("1");
 	    	jw.key("SigningCertURL").value("");
-	    	jw.key("Subject").value(subject);
-	    	jw.key("Timestamp").value(timeStamp);
-	    	jw.key("TopicArn").value(arn);
-	    	jw.key("Type").value("Notification");
-	    	jw.key("UnSubscribeURL").value(cnsServiceLocation+"?Action=Unsubscribe&TopicArn="+arn);
+	    	jw.key("Subject").value(cnsMessage.getSubject());
+	    	jw.key("Timestamp").value(timestamp);
+	    	jw.key("TopicArn").value(cnsMessage.getTopicArn());
+	    	jw.key("Type").value(cnsMessage.getMessageType().toString());
+	    	jw.key("UnSubscribeURL").value(cnsServiceLocation+"?Action=Unsubscribe&TopicArn="+cnsMessage.getTopicArn());
 	    	jw.endObject();	    	    	
 	    	writer.flush();
     	} catch(Exception e) {

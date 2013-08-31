@@ -42,6 +42,10 @@ public final class CNSMessage {
         json;
     }
     
+    public enum CNSMessageType {
+    	SubscriptionConfirmation, Notification, UnsubscribeConfirmation;
+    }
+    
     /**
      * The message to send to the topic. 
      * If you want to send the same message to all transport protocols, include the text of the message as a String value
@@ -83,6 +87,11 @@ public final class CNSMessage {
      * Time when the message was received.
      */
     private volatile Date timestamp;
+    
+    /**
+     * Type of message, default value is Notification
+     */
+    private volatile CNSMessageType messageType = CNSMessageType.Notification;
     
 	private volatile Map<CnsSubscriptionProtocol, String> protocolToProcessedMessage = new HashMap<CnsSubscriptionProtocol, String>();
 	
@@ -301,6 +310,10 @@ public final class CNSMessage {
         }     
         return msg;
     }
+    
+    public String getProtocolSpecificMessage(CnsSubscriptionProtocol prot) throws CMBException {
+		return CNSMessage.getProtocolSpecificMessage(prot, this);
+    }
 
     /**
      * Method processes this message object by protocol so its easier and quicker to access
@@ -309,10 +322,10 @@ public final class CNSMessage {
      * Note: Must call this method before getting messages-per-protocol
      * @throws CMBException 
      */
-    public void processMessageToProtocols() throws CMBException {
+    public void processMessageToProtocols() throws CMBException {    	
         for (CnsSubscriptionProtocol prot : CnsSubscriptionProtocol.values()) {
             if (prot != CnsSubscriptionProtocol.email) {
-                protocolToProcessedMessage.put(prot, com.comcast.cns.util.Util.generateMessageJson(topicArn, getProtocolSpecificMessage(prot, this), subject));
+                protocolToProcessedMessage.put(prot, com.comcast.cns.util.Util.generateMessageJson(this, prot));
             } else {
                 protocolToProcessedMessage.put(prot, getProtocolSpecificMessage(prot, this));
             }
@@ -358,7 +371,13 @@ public final class CNSMessage {
         	sb.append("*\n");
         }
         
-        sb.append(topicArn).append("\n").append(timestamp.getTime()).append("\n").append(userId).append("\n").append(messageId).append("\n").append(message);
+        sb.append(topicArn).append("\n")
+	        .append(timestamp.getTime()).append("\n")
+	        .append(userId).append("\n")
+	        .append(messageId).append("\n")
+	        .append(messageType.toString()).append("\n")
+	        .append(message);
+	        
         
         return sb.toString();
     }
@@ -395,6 +414,7 @@ public final class CNSMessage {
         msg.setTimestamp(new Date(Long.parseLong(arr[i++])));
         msg.setUserId(arr[i++]);
         msg.setMessageId(arr[i++]);
+        msg.setMessageType(CNSMessageType.valueOf(arr[i++]));
         
         StringBuffer sb = new StringBuffer("");
         
@@ -412,5 +432,13 @@ public final class CNSMessage {
         
         return msg;
     }
+
+	public CNSMessageType getMessageType() {
+		return messageType;
+	}
+
+	public void setMessageType(CNSMessageType messageType) {
+		this.messageType = messageType;
+	}
 }
 

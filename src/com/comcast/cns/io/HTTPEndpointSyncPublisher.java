@@ -24,6 +24,7 @@ import org.apache.http.HttpResponse;
 import org.apache.http.HttpVersion;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.conn.params.ConnRoutePNames;
 import org.apache.http.conn.scheme.PlainSocketFactory;
 import org.apache.http.conn.scheme.Scheme;
@@ -54,11 +55,11 @@ public class HTTPEndpointSyncPublisher extends AbstractEndpointPublisher {
 	private final static HttpClient httpClient;
 
 	static {
-		
+
 		int timeoutMillis = CMBProperties.getInstance().getCNSPublisherHttpTimeoutSeconds() * 1000;
 
 		HttpParams params = new BasicHttpParams();
-		
+
 		if (CMBProperties.getInstance().getCNSHttpProxy() != null && !CMBProperties.getInstance().getCNSHttpProxy().equals("")) {
 			String p[] = CMBProperties.getInstance().getCNSHttpProxy().split(":");
 			if (p.length == 2) {
@@ -66,7 +67,7 @@ public class HTTPEndpointSyncPublisher extends AbstractEndpointPublisher {
 				params.setParameter(ConnRoutePNames.DEFAULT_PROXY, proxy);
 			}
 		}
-		
+
 		HttpProtocolParams.setVersion(params, HttpVersion.HTTP_1_1); 
 
 		schemeRegistry.register(new Scheme("http", 80, PlainSocketFactory.getSocketFactory()));
@@ -83,7 +84,7 @@ public class HTTPEndpointSyncPublisher extends AbstractEndpointPublisher {
 
 		httpClient = new DefaultHttpClient(cm, params);
 	}
-	
+
 	private static Logger logger = Logger.getLogger(HTTPEndpointSyncPublisher.class);
 
 	public static int getNumConnectionsInPool() {
@@ -101,13 +102,10 @@ public class HTTPEndpointSyncPublisher extends AbstractEndpointPublisher {
 		}
 
 		HttpPost httpPost = new HttpPost(endpoint);
-		//TODO check raw message condition		
 		StringEntity stringEntity = new StringEntity(message);
 		httpPost.setEntity(stringEntity);
-		if(this.getRawMessageDelivery()){
-			httpPost.setHeader("x-amz-raw-message", "true");
-		}
-		
+		composeHeader(httpPost);
+
 
 		HttpResponse response = httpClient.execute(httpPost);
 		int statusCode = response.getStatusLine().getStatusCode();
@@ -115,7 +113,7 @@ public class HTTPEndpointSyncPublisher extends AbstractEndpointPublisher {
 		HttpEntity entity = response.getEntity();
 
 		// accept all 2xx status codes
-		
+
 		if (statusCode > 200 || statusCode >= 300) {
 
 			if (entity != null) {
@@ -142,6 +140,19 @@ public class HTTPEndpointSyncPublisher extends AbstractEndpointPublisher {
 			if (entity != null) {
 				EntityUtils.consume(entity);
 			}
+		}
+	}
+
+	private void composeHeader(HttpRequestBase httpRequest) {		
+
+		httpRequest.setHeader("x-amz-sns-message-type", this.getMessageType());
+		httpRequest.setHeader("x-amz-sns-message-id", this.getMessageId());
+		httpRequest.setHeader("x-amz-sns-topic-arn", this.getTopicArn());
+		httpRequest.setHeader("x-amz-sns-subscription-arn", this.getSubscriptionArn());
+		httpRequest.setHeader("User-Agent", "Cloud Notification Service Agent");
+
+		if (this.getRawMessageDelivery()) {
+			httpRequest.addHeader("x-amz-raw-message", "true");
 		}
 	}
 }

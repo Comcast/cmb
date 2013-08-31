@@ -61,111 +61,121 @@ import com.comcast.cmb.common.util.CMBProperties;
  */
 
 public class HTTPEndpointAsyncPublisher extends AbstractEndpointPublisher{
-	
+
 	private IPublisherCallback callback;
-	
+
 	private static HttpProcessor httpProcessor;
 	private static HttpParams httpParams;
 	private static BasicNIOConnPool connectionPool;
-	
+
 	private static Logger logger = Logger.getLogger(HTTPEndpointAsyncPublisher.class);
 
 	static {
-		
+
 		try {
-			
-	        httpParams = new SyncBasicHttpParams();
-	        httpParams
-	            .setIntParameter(CoreConnectionPNames.SO_TIMEOUT, CMBProperties.getInstance().getCNSPublisherHttpTimeoutSeconds() * 1000)
-	            .setIntParameter(CoreConnectionPNames.CONNECTION_TIMEOUT, CMBProperties.getInstance().getCNSPublisherHttpTimeoutSeconds() * 1000)
-	            .setIntParameter(CoreConnectionPNames.SOCKET_BUFFER_SIZE, 8 * 1024)
-	            .setParameter(CoreProtocolPNames.USER_AGENT, "CNS/" + CMBControllerServlet.VERSION);
 
-	        httpProcessor = new ImmutableHttpProcessor(new HttpRequestInterceptor[] {
-	                new RequestContent(),
-	                new RequestTargetHost(),
-	                new RequestConnControl(),
-	                new RequestUserAgent(),
-	                new RequestExpectContinue()});
+			httpParams = new SyncBasicHttpParams();
+			httpParams
+			.setIntParameter(CoreConnectionPNames.SO_TIMEOUT, CMBProperties.getInstance().getCNSPublisherHttpTimeoutSeconds() * 1000)
+			.setIntParameter(CoreConnectionPNames.CONNECTION_TIMEOUT, CMBProperties.getInstance().getCNSPublisherHttpTimeoutSeconds() * 1000)
+			.setIntParameter(CoreConnectionPNames.SOCKET_BUFFER_SIZE, 8 * 1024)
+			.setParameter(CoreProtocolPNames.USER_AGENT, "CNS/" + CMBControllerServlet.VERSION);
 
-	        HttpAsyncRequestExecutor protocolHandler = new HttpAsyncRequestExecutor();
-	        final IOEventDispatch ioEventDispatch = new DefaultHttpClientIODispatch(protocolHandler, httpParams);
-	        final ConnectingIOReactor ioReactor = new DefaultConnectingIOReactor();
+			httpProcessor = new ImmutableHttpProcessor(new HttpRequestInterceptor[] {
+					new RequestContent(),
+					new RequestTargetHost(),
+					new RequestConnControl(),
+					new RequestUserAgent(),
+					new RequestExpectContinue()});
 
-	        connectionPool = new BasicNIOConnPool(ioReactor, httpParams);
-	        connectionPool.setDefaultMaxPerRoute(2); // maybe adjust pool size
-	        connectionPool.setMaxTotal(8);
-	        
-	        Thread t = new Thread(new Runnable() {
-	
-	            public void run() {
-	                try {
-	                    ioReactor.execute(ioEventDispatch);
-	                } catch (InterruptedIOException ex) {
-	        			logger.error("event=failed_to_initialize_async_http_client action=exiting", ex);
-	                } catch (IOException ex) {
-	        			logger.error("event=failed_to_initialize_async_http_client action=exiting", ex);
-	                }
-	            }
-	
-	        });
-	        
-	        t.start();
-	        
+			HttpAsyncRequestExecutor protocolHandler = new HttpAsyncRequestExecutor();
+			final IOEventDispatch ioEventDispatch = new DefaultHttpClientIODispatch(protocolHandler, httpParams);
+			final ConnectingIOReactor ioReactor = new DefaultConnectingIOReactor();
+
+			connectionPool = new BasicNIOConnPool(ioReactor, httpParams);
+			connectionPool.setDefaultMaxPerRoute(2); // maybe adjust pool size
+			connectionPool.setMaxTotal(8);
+
+			Thread t = new Thread(new Runnable() {
+
+				public void run() {
+					try {
+						ioReactor.execute(ioEventDispatch);
+					} catch (InterruptedIOException ex) {
+						logger.error("event=failed_to_initialize_async_http_client action=exiting", ex);
+					} catch (IOException ex) {
+						logger.error("event=failed_to_initialize_async_http_client action=exiting", ex);
+					}
+				}
+
+			});
+
+			t.start();
+
 		} catch (IOReactorException ex) {
 			logger.error("event=failed_to_initialize_async_http_client action=exiting", ex);
 		}
 	}
-	
+
 	public HTTPEndpointAsyncPublisher(IPublisherCallback callback) {
 		this.callback = callback;
 	}
-	
+
 	@Override
 	public void send() throws Exception {
 		logger.info("event=send_async_http_request endpoint=" + endpoint + "\" message=\"" + message + "\"");
-		
-        HttpAsyncRequester requester = new HttpAsyncRequester(httpProcessor, new DefaultConnectionReuseStrategy(), httpParams);
-        final URL url = new URL(endpoint);
-        final HttpHost target = new HttpHost(url.getHost(), url.getPort(), url.getProtocol());
-        
-        BasicHttpEntityEnclosingRequest request = new BasicHttpEntityEnclosingRequest("POST", url.getPath() + (url.getQuery() == null ? "" : "?" + url.getQuery()));
-		//TODO check raw message condition        
-        if(this.getRawMessageDelivery()){
-        	request.setHeader("x-amz-raw-message", "true");
-        }
-        request.setEntity(new NStringEntity(message));
 
-        requester.execute(
-                new BasicAsyncRequestProducer(target, request),
-                new BasicAsyncResponseConsumer(),
-                connectionPool,
-                new BasicHttpContext(),
-                new FutureCallback<HttpResponse>() {
+		HttpAsyncRequester requester = new HttpAsyncRequester(httpProcessor, new DefaultConnectionReuseStrategy(), httpParams);
+		final URL url = new URL(endpoint);
+		final HttpHost target = new HttpHost(url.getHost(), url.getPort(), url.getProtocol());
 
-		            public void completed(final HttpResponse response) {
-		            	
-		                int statusCode = response.getStatusLine().getStatusCode();
-		                
-		                // accept all 2xx status codes
-		                
-		                if (statusCode >= 200 && statusCode < 300) {
-			                callback.onSuccess();
-		                } else {
-			                logger.warn(target + "://" + url.getPath() + "?" + url.getQuery() + " -> " + response.getStatusLine());
-		                	callback.onFailure(statusCode);
-		                }
-		            }
-		
-		            public void failed(final Exception ex) {
-		                logger.warn(target + " " + url.getPath() + " " + url.getQuery(), ex);
-		                callback.onFailure(0);
-		            }
-		
-		            public void cancelled() {
-		                logger.warn(target + " " + url.getPath() + " " + url.getQuery() + " -> " + "cancelled");
-		                callback.onFailure(1);
-		            }
-                });
-    }
+		BasicHttpEntityEnclosingRequest request = new BasicHttpEntityEnclosingRequest("POST", url.getPath() + (url.getQuery() == null ? "" : "?" + url.getQuery()));
+		composeHeader(request);
+		request.setEntity(new NStringEntity(message));
+
+		requester.execute(
+				new BasicAsyncRequestProducer(target, request),
+				new BasicAsyncResponseConsumer(),
+				connectionPool,
+				new BasicHttpContext(),
+				new FutureCallback<HttpResponse>() {
+
+					public void completed(final HttpResponse response) {
+
+						int statusCode = response.getStatusLine().getStatusCode();
+
+						// accept all 2xx status codes
+
+						if (statusCode >= 200 && statusCode < 300) {
+							callback.onSuccess();
+						} else {
+							logger.warn(target + "://" + url.getPath() + "?" + url.getQuery() + " -> " + response.getStatusLine());
+							callback.onFailure(statusCode);
+						}
+					}
+
+					public void failed(final Exception ex) {
+						logger.warn(target + " " + url.getPath() + " " + url.getQuery(), ex);
+						callback.onFailure(0);
+					}
+
+					public void cancelled() {
+						logger.warn(target + " " + url.getPath() + " " + url.getQuery() + " -> " + "cancelled");
+						callback.onFailure(1);
+					}
+				});
+	}
+
+	private void composeHeader(BasicHttpEntityEnclosingRequest request) {		
+
+		request.setHeader("x-amz-sns-message-type", this.getMessageType());
+		request.setHeader("x-amz-sns-message-id", this.getMessageId());
+		request.setHeader("x-amz-sns-topic-arn", this.getTopicArn());
+		request.setHeader("x-amz-sns-subscription-arn", this.getSubscriptionArn());
+		request.setHeader("User-Agent", "Cloud Notification Service Agent");
+
+		if (this.getRawMessageDelivery()) {
+			request.addHeader("x-amz-raw-message", "true");
+		}
+	}
 }
