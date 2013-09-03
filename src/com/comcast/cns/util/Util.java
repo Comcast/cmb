@@ -19,9 +19,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.PrintWriter;
 import java.io.Writer;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.Date;
-import java.util.TimeZone;
 import java.util.UUID;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
@@ -144,12 +142,6 @@ public class Util {
     	SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ"); // UTC, no offset
         Date now = new Date();
 
-        Calendar st = Calendar.getInstance();
-        st.setTimeZone(TimeZone.getTimeZone("America/Los_Angeles"));
-        st.setTime(now);
-        df.setCalendar(st);
-        df.setTimeZone(TimeZone.getTimeZone("America/Los_Angeles"));
-    	
     	try {
 	    	jw = jw.object();
 	    	jw.key("Type").value(CNSMessageType.SubscriptionConfirmation);
@@ -188,11 +180,6 @@ public class Util {
     	String cnsServiceLocation = CMBProperties.getInstance().getCNSServiceUrl();
     	SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ"); //Time is in UTC zone. i,e no offset
 
-        Calendar st = Calendar.getInstance();
-        st.setTimeZone(TimeZone.getTimeZone("America/Los_Angeles"));//We should double check this.
-        st.setTime(cnsMessage.getTimestamp());
-        df.setCalendar(st);
-        df.setTimeZone(TimeZone.getTimeZone("America/Los_Angeles"));//?
         String timestamp = df.format(cnsMessage.getTimestamp());
         
     	try {
