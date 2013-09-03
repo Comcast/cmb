@@ -56,6 +56,7 @@ public final class CQSMessage implements Serializable {
 	public CQSMessage(String body, Map<String, String> attributes) throws NoSuchAlgorithmException, UnsupportedEncodingException {
 		
 		this.messageId = UUID.randomUUID().toString();
+		this.receiptHandle = this.messageId;
 		this.body = body;
 		this.attributes = attributes;
 
@@ -67,6 +68,7 @@ public final class CQSMessage implements Serializable {
 	public CQSMessage(String messageId, String body) throws NoSuchAlgorithmException, UnsupportedEncodingException {
 
 		this.messageId = messageId;
+		this.receiptHandle = messageId;
 		this.body = body;
 
 		if (body != null) {

@@ -17,122 +17,56 @@ package com.comcast.cns.test.unit;
 
 import static org.junit.Assert.*;
 
-import java.io.ByteArrayOutputStream;
-import java.util.List;
-import java.util.Random;
+import java.util.Arrays;
 
-import org.apache.log4j.Logger;
 import org.json.JSONObject;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 
-import com.comcast.cmb.common.controller.CMBControllerServlet;
-import com.comcast.cmb.common.model.User;
-import com.comcast.cmb.common.persistence.IUserPersistence;
-import com.comcast.cmb.common.persistence.PersistenceFactory;
-import com.comcast.cmb.common.util.Util;
+import com.amazonaws.services.sns.model.AddPermissionRequest;
+import com.amazonaws.services.sns.model.GetSubscriptionAttributesRequest;
+import com.amazonaws.services.sns.model.GetSubscriptionAttributesResult;
+import com.amazonaws.services.sns.model.SetSubscriptionAttributesRequest;
+import com.amazonaws.services.sns.model.SetTopicAttributesRequest;
+import com.amazonaws.services.sns.model.SubscribeRequest;
+import com.comcast.cmb.common.util.XmlUtil;
+import com.comcast.cmb.test.tools.CMBAWSBaseTest;
 import com.comcast.cmb.test.tools.CMBTestingConstants;
 import com.comcast.cmb.test.tools.CNSTestingUtils;
-import com.comcast.cmb.test.tools.SubscriptionAttributeParser;
-import com.comcast.cns.controller.CNSControllerServlet;
-import com.comcast.cns.model.CNSSubscription;
-import com.comcast.cns.model.CNSSubscription.CnsSubscriptionProtocol;
 
-public class SubscriptionAttributeCMBTest {
+public class SubscriptionAttributeCMBTest extends CMBAWSBaseTest {
 	
-	private static Logger logger = Logger.getLogger(SubscriptionAttributeCMBTest.class);
-
-	private User user;
-	private User user2;
-	private User user3;
-
-	private String userName1 = "cns_unit_test_1";
-	private String userName2 = "cns_unit_test_2";
-	private String userName3 = "cns_unit_test_3";
-	
-	private Random rand = new Random();
-
-	@Before
-	public void setup() {
-
-		try {
-
-			Util.initLog4jTest();
-			CMBControllerServlet.valueAccumulator.initializeAllCounters();
-			PersistenceFactory.reset();
-			
-			IUserPersistence userHandler = PersistenceFactory.getUserPersistence();
-
-			user = userHandler.getUserByName(userName1);
-
-			if (user == null) {
-				user =  userHandler.createUser(userName1, userName1);
-			}
-
-			user2 = userHandler.getUserByName(userName2);
-
-			if (user2 == null) {
-				user2 =  userHandler.createUser(userName2, userName2);
-			}
-
-			user3 = userHandler.getUserByName(userName3);
-			
-			if (user3 == null) {
-				user3 =  userHandler.createUser(userName3, userName3);
-			}
-
-		} catch (Exception ex) {
-			logger.error("setup failed", ex);
-			assertFalse(true);
-		}
-	}
-
-	@After
-	public void tearDown() {
-		CMBControllerServlet.valueAccumulator.deleteAllCounters();
-	}
-
 	@Test
 	public void testGetAttributes() {
 
 		try {
 			
-			CNSControllerServlet cns = new CNSControllerServlet();
-			ByteArrayOutputStream out = new ByteArrayOutputStream();
-
-			String topicName = "T" + rand.nextLong();
-			CNSTestingUtils.addTopic(cns, user, out, topicName);
-			String res = out.toString();
-			String topicArn = CNSTestingUtils.getArnFromString(res);
-			out.reset();
+			String topicArn = getTopic(1, USR.USER1);
 
 			String endpoint = CMBTestingConstants.HTTP_ENDPOINT_BASE_URL + "recv/" + rand.nextInt();
-			String protocol = "http";
-			CNSTestingUtils.subscribe(cns, user, out, endpoint, protocol, topicArn);
-			String subscriptionArn = CNSTestingUtils.getSubscriptionArnFromString(out.toString());
-			out.reset();
+
+			SubscribeRequest subscribeRequest = new SubscribeRequest();
+			subscribeRequest.setEndpoint(endpoint);
+			subscribeRequest.setProtocol("http");
+			subscribeRequest.setTopicArn(topicArn);
+			String subscriptionArn = cns1.subscribe(subscribeRequest).getSubscriptionArn();
+			
+			String lastMessageUrl = endpoint.replace("recv", "info") + "?showLast=true";
 
 			if (subscriptionArn.equals("pending confirmation")) {
-
-				List<CNSSubscription> confirmedSubscriptions = CNSTestingUtils.confirmPendingSubscriptionsByTopic(topicArn, user.getUserId(), CnsSubscriptionProtocol.valueOf(protocol));
-
-				if (confirmedSubscriptions.size() == 1) {
-					subscriptionArn = confirmedSubscriptions.get(0).getArn();
-				}
+				String resp = CNSTestingUtils.sendHttpMessage(lastMessageUrl, "");
+    			JSONObject o = new JSONObject(resp);
+    			if (!o.has("SubscribeURL")) {
+    				fail("Message is not a confirmation messsage");
+    			}
+    			String subscriptionUrl = o.getString("SubscribeURL");
+				resp = CNSTestingUtils.sendHttpMessage(subscriptionUrl, "");
+				logger.info(resp);
+				subscriptionArn = XmlUtil.getCurrentLevelTextValue(XmlUtil.getChildNodes(XmlUtil.buildDoc(resp)).get(0), "SubscriptionArn");
 			}
 
-			CNSTestingUtils.doGetSubscriptionAttributes(cns, user, out, subscriptionArn);
-			res = out.toString();
-			out.reset();
-			
-			logger.debug("getSubscription Attributes: " + res);
-			
-			SubscriptionAttributeParser attr = CNSTestingUtils.getSubscriptionAttributesFromString(res);
-			
-			assertTrue(attr.getOwner().equals(user.getUserId()));
+			GetSubscriptionAttributesResult result = cns1.getSubscriptionAttributes(new GetSubscriptionAttributesRequest(subscriptionArn));
 
-			JSONObject effectiveDeliveryPolicy = new JSONObject(attr.getEffectiveDeliveryPolicy());
+			JSONObject effectiveDeliveryPolicy = new JSONObject(result.getAttributes().get("EffectiveDeliveryPolicy"));
 			
 			assertTrue(effectiveDeliveryPolicy.has("healthyRetryPolicy"));
 			
@@ -153,15 +87,13 @@ public class SubscriptionAttributeCMBTest {
 			JSONObject throttlePolicy = effectiveDeliveryPolicy.getJSONObject("throttlePolicy");								
 			
 			assertTrue(throttlePolicy.get("maxReceivesPerSecond") == JSONObject.NULL);
-			assertTrue(attr.getConfirmationWasAuthenticated().equals("false"));
-			assertTrue(attr.getTopicArn().equals(topicArn));
-			assertTrue(attr.getSubscriptionArn().equals(subscriptionArn));
+			assertTrue(result.getAttributes().get("ConfirmationWasAuthenticated").equals("false"));
+			assertTrue(result.getAttributes().get("TopicArn").equals(topicArn));
+			assertTrue(result.getAttributes().get("SubscriptionArn").equals(subscriptionArn));
 			
-			CNSTestingUtils.deleteTopic(cns, user, out, topicArn);
-
-		} catch (Exception e) {
-			logger.error("Exception occured", e);
-			fail("exception: "+e);
+		} catch (Exception ex) {
+			logger.error("test failed", ex);
+			fail(ex.getMessage());
 		}
 	}
 
@@ -170,28 +102,28 @@ public class SubscriptionAttributeCMBTest {
 
 		try {
 
-			CNSControllerServlet cns = new CNSControllerServlet();
-			ByteArrayOutputStream out = new ByteArrayOutputStream();
-
-			String topicName = "T" + rand.nextLong();
-			CNSTestingUtils.addTopic(cns, user, out, topicName);
-			String res = out.toString();
-			String topicArn = CNSTestingUtils.getArnFromString(res);
-			out.reset();
+			String topicArn = getTopic(1, USR.USER1);
 
 			String endpoint = CMBTestingConstants.HTTP_ENDPOINT_BASE_URL + "recv/" + rand.nextInt();
-			String protocol = "http";
-			CNSTestingUtils.subscribe(cns, user, out, endpoint, protocol, topicArn);
-			String subscriptionArn = CNSTestingUtils.getSubscriptionArnFromString(out.toString());
-			out.reset();
+
+			SubscribeRequest subscribeRequest = new SubscribeRequest();
+			subscribeRequest.setEndpoint(endpoint);
+			subscribeRequest.setProtocol("http");
+			subscribeRequest.setTopicArn(topicArn);
+			String subscriptionArn = cns1.subscribe(subscribeRequest).getSubscriptionArn();
+			
+			String lastMessageUrl = endpoint.replace("recv", "info") + "?showLast=true";
 
 			if (subscriptionArn.equals("pending confirmation")) {
-
-				List<CNSSubscription> confirmedSubscriptions = CNSTestingUtils.confirmPendingSubscriptionsByTopic(topicArn, user.getUserId(), CnsSubscriptionProtocol.valueOf(protocol));
-
-				if (confirmedSubscriptions.size() == 1) {
-					subscriptionArn = confirmedSubscriptions.get(0).getArn();
-				}
+				String resp = CNSTestingUtils.sendHttpMessage(lastMessageUrl, "");
+    			JSONObject o = new JSONObject(resp);
+    			if (!o.has("SubscribeURL")) {
+    				fail("Message is not a confirmation messsage");
+    			}
+    			String subscriptionUrl = o.getString("SubscribeURL");
+				resp = CNSTestingUtils.sendHttpMessage(subscriptionUrl, "");
+				logger.info(resp);
+				subscriptionArn = XmlUtil.getCurrentLevelTextValue(XmlUtil.getChildNodes(XmlUtil.buildDoc(resp)).get(0), "SubscriptionArn");
 			}
 
 			String attributeName = "DeliveryPolicy";
@@ -219,21 +151,12 @@ public class SubscriptionAttributeCMBTest {
 			"\"backoffFunction\": \"exponential\""+
 			"}" +
 			"}";
-
-			CNSTestingUtils.doSetSubscriptionAttributes(cns, user, out, attributeName, attributeValue, subscriptionArn);
-			out.reset();
-
-			CNSTestingUtils.doGetSubscriptionAttributes(cns, user, out, subscriptionArn);
-			res = out.toString();
-			out.reset();
 			
-			logger.debug("getSubscription Attributes: " + res);
-			
-			SubscriptionAttributeParser attributeParser = CNSTestingUtils.getSubscriptionAttributesFromString(res);
-			
-			assertTrue(attributeParser.getOwner().equals(user.getUserId()));
+			cns1.setSubscriptionAttributes(new SetSubscriptionAttributesRequest(subscriptionArn, attributeName, attributeValue));
 
-			JSONObject effectiveDeliveryPolicy = new JSONObject(attributeParser.getEffectiveDeliveryPolicy());
+			GetSubscriptionAttributesResult result = cns1.getSubscriptionAttributes(new GetSubscriptionAttributesRequest(subscriptionArn));
+
+			JSONObject effectiveDeliveryPolicy = new JSONObject(result.getAttributes().get("EffectiveDeliveryPolicy"));
 			
 			assertTrue(effectiveDeliveryPolicy.has("healthyRetryPolicy"));
 			
@@ -266,9 +189,9 @@ public class SubscriptionAttributeCMBTest {
 			JSONObject throttlePolicy = effectiveDeliveryPolicy.getJSONObject("throttlePolicy");								
 			
 			assertTrue(throttlePolicy.getInt("maxReceivesPerSecond") == 7);
-			assertTrue(attributeParser.getConfirmationWasAuthenticated().equals("false"));
+			assertTrue(result.getAttributes().get("ConfirmationWasAuthenticated").equals("false"));
 
-			JSONObject deliveryPolicy = new JSONObject(attributeParser.getDeliveryPolicy());
+			JSONObject deliveryPolicy = new JSONObject(result.getAttributes().get("DeliveryPolicy"));
 			
 			assertTrue(deliveryPolicy.has("healthyRetryPolicy"));
 			
@@ -301,63 +224,68 @@ public class SubscriptionAttributeCMBTest {
 			assertTrue(sicklyRetryPolicy.getInt("numNoDelayRetries") == 6);
 			assertTrue(sicklyRetryPolicy.getString("backoffFunction").equals("exponential"));
 
-			assertTrue(attributeParser.getTopicArn().equals(topicArn));
-			assertTrue(attributeParser.getSubscriptionArn().equals(subscriptionArn));
+			assertTrue(result.getAttributes().get("TopicArn").equals(topicArn));
+			assertTrue(result.getAttributes().get("SubscriptionArn").equals(subscriptionArn));
 			
-			CNSTestingUtils.deleteTopic(cns, user, out, topicArn);
-
 		} catch (Exception e) {
-			logger.error("Exception occured", e);
-			fail("exception: "+e);
+			logger.error("test failed", e);
+			fail(e.getMessage());
 		}
 	}
 
 	@Test
-	public void testSetGetAttributes2() {
+	public void testSetGetAttributesWithPermissions() {
 		
 		try {
 			
-			CNSControllerServlet cns = new CNSControllerServlet();
-			ByteArrayOutputStream out = new ByteArrayOutputStream();
+			String topicArn = getTopic(1, USR.USER1);
+			
+			cns1.addPermission(new AddPermissionRequest(topicArn, "p1", Arrays.asList("*") , Arrays.asList("*")));
 
-			String topicName = "T" + rand.nextLong();
-			CNSTestingUtils.addTopic(cns, user, out, topicName);
-			String res = out.toString();
-			String topicArn = CNSTestingUtils.getArnFromString(res);
-			out.reset();
-			
-			CNSTestingUtils.addPermission(cns, user, out, topicArn, "*", "*", rand.nextLong()+"");
-			out.reset();
-			
 			String endpoint = CMBTestingConstants.HTTP_ENDPOINT_BASE_URL + "recv/" + rand.nextInt();
-			String protocol = "http";
-			CNSTestingUtils.subscribe(cns, user2, out, endpoint, protocol, topicArn);
-			out.reset();
-			String lastMessageUrl = endpoint.replace("recv", "info") + "?showLast=true";
-			String resp = CNSTestingUtils.sendHttpMessage(lastMessageUrl, "");
-			out.reset();
-			JSONObject js = new JSONObject(resp);
-			String token = (String) js.get("Token");	
-			String authOnSub = "false";
-			CNSTestingUtils.confirmSubscription(cns, user2, out, topicArn, token, authOnSub);
-			String subscriptionArn = CNSTestingUtils.getSubscriptionArnFromString(out.toString());
-			out.reset();
 
-			String endpoint2 = CMBTestingConstants.HTTP_ENDPOINT_BASE_URL + "recv/" + rand.nextInt();
-			String protocol2 = "http";
-			CNSTestingUtils.subscribe(cns, user3, out, endpoint2, protocol2, topicArn);
-			out.reset();
-			String lastMessageUrl2 = endpoint2.replace("recv", "info") + "?showLast=true";
-			resp = CNSTestingUtils.sendHttpMessage(lastMessageUrl2, "");
-			out.reset();
+			SubscribeRequest subscribeRequest = new SubscribeRequest();
+			subscribeRequest.setEndpoint(endpoint);
+			subscribeRequest.setProtocol("http");
+			subscribeRequest.setTopicArn(topicArn);
+			String subscriptionArn1 = cns2.subscribe(subscribeRequest).getSubscriptionArn();
 			
-			js = new JSONObject(resp);
-			token = (String) js.get("Token");	
-			authOnSub = "false";
-			CNSTestingUtils.confirmSubscription(cns, user3, out, topicArn, token, authOnSub);
-			String subscriptionArn2  = CNSTestingUtils.getSubscriptionArnFromString(out.toString());
-			out.reset();
+			String lastMessageUrl = endpoint.replace("recv", "info") + "?showLast=true";
 
+			if (subscriptionArn1.equals("pending confirmation")) {
+				String resp = CNSTestingUtils.sendHttpMessage(lastMessageUrl, "");
+    			JSONObject o = new JSONObject(resp);
+    			if (!o.has("SubscribeURL")) {
+    				fail("Message is not a confirmation messsage");
+    			}
+    			String subscriptionUrl = o.getString("SubscribeURL");
+				resp = CNSTestingUtils.sendHttpMessage(subscriptionUrl, "");
+				logger.info(resp);
+				subscriptionArn1 = XmlUtil.getCurrentLevelTextValue(XmlUtil.getChildNodes(XmlUtil.buildDoc(resp)).get(0), "SubscriptionArn");
+			}
+
+			endpoint = CMBTestingConstants.HTTP_ENDPOINT_BASE_URL + "recv/" + rand.nextInt();
+
+			subscribeRequest = new SubscribeRequest();
+			subscribeRequest.setEndpoint(endpoint);
+			subscribeRequest.setProtocol("http");
+			subscribeRequest.setTopicArn(topicArn);
+			String subscriptionArn2 = cns2.subscribe(subscribeRequest).getSubscriptionArn();
+			
+			lastMessageUrl = endpoint.replace("recv", "info") + "?showLast=true";
+
+			if (subscriptionArn2.equals("pending confirmation")) {
+				String resp = CNSTestingUtils.sendHttpMessage(lastMessageUrl, "");
+    			JSONObject o = new JSONObject(resp);
+    			if (!o.has("SubscribeURL")) {
+    				fail("Message is not a confirmation messsage");
+    			}
+    			String subscriptionUrl = o.getString("SubscribeURL");
+				resp = CNSTestingUtils.sendHttpMessage(subscriptionUrl, "");
+				logger.info(resp);
+				subscriptionArn2 = XmlUtil.getCurrentLevelTextValue(XmlUtil.getChildNodes(XmlUtil.buildDoc(resp)).get(0), "SubscriptionArn");
+			}
+			
 			String attributeName = "DeliveryPolicy";
 			String attributeValue = "{" +
 			"\"http\": {" +
@@ -388,8 +316,7 @@ public class SubscriptionAttributeCMBTest {
 			"}" +
 			"}";
 
-			CNSTestingUtils.doSetTopicAttributes(cns, user, out, attributeName, attributeValue, topicArn);
-			out.reset();
+			cns1.setTopicAttributes(new SetTopicAttributesRequest(topicArn, attributeName, attributeValue));
 
 			String attributeName2 = "DeliveryPolicy";
 			String attributeValue2 = "{\"healthyRetryPolicy\":" +				 
@@ -417,20 +344,12 @@ public class SubscriptionAttributeCMBTest {
 			"}" +
 			"}";
 
-			CNSTestingUtils.doSetSubscriptionAttributes(cns, user2, out, attributeName2, attributeValue2, subscriptionArn);
-			out.reset();
+			cns2.setSubscriptionAttributes(new SetSubscriptionAttributesRequest(subscriptionArn1, attributeName2, attributeValue2));
 
-			CNSTestingUtils.doGetSubscriptionAttributes(cns, user3, out, subscriptionArn2);
-			res = out.toString();
-			out.reset();
+			GetSubscriptionAttributesResult result = cns3.getSubscriptionAttributes(new GetSubscriptionAttributesRequest(subscriptionArn2));
 
 			{
-				logger.debug("getSubscription Attributes: " + res);
-				
-				SubscriptionAttributeParser attributeParser = CNSTestingUtils.getSubscriptionAttributesFromString(res);
-				assertTrue(attributeParser.getOwner().equals(user3.getUserId()));
-
-				JSONObject effectiveDeliveryPolicy = new JSONObject(attributeParser.getEffectiveDeliveryPolicy());
+				JSONObject effectiveDeliveryPolicy = new JSONObject(result.getAttributes().get("EffectiveDeliveryPolicy"));
 				assertTrue(effectiveDeliveryPolicy.has("healthyRetryPolicy"));
 				JSONObject healthyRetryPolicy = effectiveDeliveryPolicy.getJSONObject("healthyRetryPolicy");				
 				assertTrue(healthyRetryPolicy != null);
@@ -457,9 +376,9 @@ public class SubscriptionAttributeCMBTest {
 				JSONObject throttlePolicy = effectiveDeliveryPolicy.getJSONObject("throttlePolicy");								
 				assertTrue(throttlePolicy.getInt("maxReceivesPerSecond") == 3);
 
-				assertTrue(attributeParser.getConfirmationWasAuthenticated().equals("false"));
+				assertTrue(result.getAttributes().get("ConfirmationWasAuthenticated").equals("false"));
 
-				JSONObject deliveryPolicy = new JSONObject(attributeParser.getDeliveryPolicy());
+				JSONObject deliveryPolicy = new JSONObject(result.getAttributes().get("DeliveryPolicy"));
 				assertTrue(deliveryPolicy.has("healthyRetryPolicy"));
 				healthyRetryPolicy = deliveryPolicy.getJSONObject("healthyRetryPolicy");				
 				assertTrue(healthyRetryPolicy != null);
@@ -487,20 +406,15 @@ public class SubscriptionAttributeCMBTest {
 				assertTrue("sicklyRetryPolicy.numNoDelayRetries returns incorrect value", sicklyRetryPolicy.getInt("numNoDelayRetries") == 3);
 				assertTrue("sicklyRetryPolicy.backoffFunction returns incorrect value", sicklyRetryPolicy.getString("backoffFunction").equals("exponential"));
 
-				assertTrue(attributeParser.getTopicArn().equals(topicArn));
-				assertTrue(attributeParser.getSubscriptionArn().equals(subscriptionArn2));
+				assertTrue(result.getAttributes().get("TopicArn").equals(topicArn));
+				assertTrue(result.getAttributes().get("SubscriptionArn").equals(subscriptionArn2));
 			}
 
-			CNSTestingUtils.doGetSubscriptionAttributes(cns, user2, out, subscriptionArn);
-			res = out.toString();
-			out.reset();
+			result = cns2.getSubscriptionAttributes(new GetSubscriptionAttributesRequest(subscriptionArn1));
 
 			{
-				logger.debug("getSubscription Attributes: " + res);
-				SubscriptionAttributeParser attr = CNSTestingUtils.getSubscriptionAttributesFromString(res);
-				assertTrue(attr.getOwner().equals(user2.getUserId()));
+				JSONObject effectiveDeliveryPolicy = new JSONObject(result.getAttributes().get("EffectiveDeliveryPolicy"));
 
-				JSONObject effectiveDeliveryPolicy = new JSONObject(attr.getEffectiveDeliveryPolicy());
 				assertTrue(effectiveDeliveryPolicy.has("healthyRetryPolicy"));
 				JSONObject healthyRetryPolicy = effectiveDeliveryPolicy.getJSONObject("healthyRetryPolicy");				
 				assertTrue(healthyRetryPolicy != null);
@@ -527,9 +441,9 @@ public class SubscriptionAttributeCMBTest {
 				JSONObject throttlePolicy = effectiveDeliveryPolicy.getJSONObject("throttlePolicy");								
 				assertTrue(throttlePolicy.getInt("maxReceivesPerSecond") == 7);
 
-				assertTrue(attr.getConfirmationWasAuthenticated().equals("false"));
+				assertTrue(result.getAttributes().get("ConfirmationWasAuthenticated").equals("false"));
 
-				JSONObject deliveryPolicy = new JSONObject(attr.getDeliveryPolicy());
+				JSONObject deliveryPolicy = new JSONObject(result.getAttributes().get("DeliveryPolicy"));
 				assertTrue(deliveryPolicy.has("healthyRetryPolicy"));
 				healthyRetryPolicy = deliveryPolicy.getJSONObject("healthyRetryPolicy");				
 				assertTrue(healthyRetryPolicy != null);
@@ -557,185 +471,14 @@ public class SubscriptionAttributeCMBTest {
 				assertTrue(sicklyRetryPolicy.getInt("numNoDelayRetries") == 6);
 				assertTrue(sicklyRetryPolicy.getString("backoffFunction").equals("exponential"));
 
-				assertTrue(attr.getTopicArn().equals(topicArn));
+				assertTrue(result.getAttributes().get("TopicArn").equals(topicArn));
 
-				assertTrue(attr.getSubscriptionArn().equals(subscriptionArn));
-			}
-			
-			CNSTestingUtils.deleteTopic(cns, user, out, topicArn);
-
-		} catch (Exception e) {
-			logger.error("Exception occured", e);
-			fail("exception: "+e);
-		}
-	}
-
-	@Test
-	public void testSetGetAttributes3() {
-
-		try {
-
-			CNSControllerServlet cns = new CNSControllerServlet();
-			ByteArrayOutputStream out = new ByteArrayOutputStream();
-
-			String topicName = "T" + rand.nextLong();
-			CNSTestingUtils.addTopic(cns, user, out, topicName);
-			String res = out.toString();
-			String topicArn = CNSTestingUtils.getArnFromString(res);
-			out.reset();
-
-			String endpoint = CMBTestingConstants.HTTP_ENDPOINT_BASE_URL + "recv/" + rand.nextInt();
-			String protocol = "http";
-			CNSTestingUtils.subscribe(cns, user, out, endpoint, protocol, topicArn);
-			String subscriptionArn = CNSTestingUtils.getSubscriptionArnFromString(out.toString());
-			out.reset();
-
-			if (subscriptionArn.equals("pending confirmation")) {
-
-				List<CNSSubscription> confirmedSubscriptions = CNSTestingUtils.confirmPendingSubscriptionsByTopic(topicArn, user.getUserId(), CnsSubscriptionProtocol.valueOf(protocol));
-
-				if (confirmedSubscriptions.size() == 1) {
-					subscriptionArn = confirmedSubscriptions.get(0).getArn();
-				}
+				assertTrue(result.getAttributes().get("SubscriptionArn").equals(subscriptionArn1));
 			}
 
-			String attributeName = "DeliveryPolicy";
-			String attributeValue = "{" +
-			"\"http\": {" +
-			"\"defaultHealthyRetryPolicy\":" +				 
-			"{"+
-			"\"minDelayTarget\":10,"+
-			"\"maxDelayTarget\":10,"+
-			"\"numRetries\":30,"+
-			"\"numMaxDelayRetries\": 11,"+
-			"\"numMinDelayRetries\": 11,"+
-			"\"backoffFunction\": \"geometric\""+
-			"}," +
-			"\"disableSubscriptionOverrides\": true," +
-			"\"defaultThrottlePolicy\":" +
-			"{" +
-			"\"maxReceivesPerSecond\":3" +
-			"}," +
-			"\"defaultSicklyRetryPolicy\":" +				 
-			"{"+
-			"\"minDelayTarget\":1,"+
-			"\"maxDelayTarget\":3,"+
-			"\"numRetries\":16,"+
-			"\"numMinDelayRetries\": 1,"+
-			"\"numMaxDelayRetries\": 3,"+
-			"\"numNoDelayRetries\":3,"+
-			"\"backoffFunction\": \"exponential\""+
-			"}" +
-			"}" +
-			"}";
-
-			CNSTestingUtils.doSetTopicAttributes(cns, user, out, attributeName, attributeValue, topicArn);
-			out.reset();
-
-			String attributeName2 = "DeliveryPolicy";
-			String attributeValue2 = "{\"healthyRetryPolicy\":" +				 
-			"{"+
-			"\"minDelayTarget\":12,"+
-			"\"maxDelayTarget\":13,"+
-			"\"numRetries\":43,"+
-			"\"numMaxDelayRetries\": 23,"+
-			"\"numMinDelayRetries\": 20,"+
-			"\"backoffFunction\": \"arithmetic\""+
-			"}," +
-			"\"throttlePolicy\":" +
-			"{" +
-			"\"maxReceivesPerSecond\":7" +
-			"}," +
-			"\"sicklyRetryPolicy\":" +				 
-			"{"+
-			"\"minDelayTarget\":2,"+
-			"\"maxDelayTarget\":3,"+
-			"\"numRetries\":15,"+
-			"\"numMinDelayRetries\": 4,"+
-			"\"numMaxDelayRetries\": 5,"+
-			"\"numNoDelayRetries\":6,"+
-			"\"backoffFunction\": \"exponential\""+
-			"}" +
-			"}";
-
-			CNSTestingUtils.doSetSubscriptionAttributes(cns, user, out, attributeName2, attributeValue2, subscriptionArn);
-			out.reset();
-
-			CNSTestingUtils.doGetSubscriptionAttributes(cns, user, out, subscriptionArn);
-			res = out.toString();
-			out.reset();
-			
-			logger.debug("getSubscription Attributes: " + res);
-			
-			SubscriptionAttributeParser attributeParser = CNSTestingUtils.getSubscriptionAttributesFromString(res);
-			assertTrue(attributeParser.getOwner().equals(user.getUserId()));
-
-			JSONObject effectiveDeliveryPolicy = new JSONObject(attributeParser.getEffectiveDeliveryPolicy());
-			assertTrue(effectiveDeliveryPolicy.has("healthyRetryPolicy"));
-			JSONObject healthyRetryPolicy = effectiveDeliveryPolicy.getJSONObject("healthyRetryPolicy");				
-			assertTrue(healthyRetryPolicy != null);
-			assertTrue(healthyRetryPolicy.getInt("numRetries") == 30);
-			assertTrue(healthyRetryPolicy.getInt("minDelayTarget") == 10);
-			assertTrue(healthyRetryPolicy.getInt("maxDelayTarget") == 10);
-			assertTrue(healthyRetryPolicy.getInt("numMinDelayRetries") == 11);
-			assertTrue(healthyRetryPolicy.getInt("numMaxDelayRetries") == 11);
-			assertTrue(healthyRetryPolicy.getInt("numNoDelayRetries") == 0);
-			assertTrue(healthyRetryPolicy.getString("backoffFunction").equals("geometric"));
-
-			assertTrue(effectiveDeliveryPolicy.has("sicklyRetryPolicy"));
-			JSONObject sicklyRetryPolicy = effectiveDeliveryPolicy.getJSONObject("sicklyRetryPolicy");	
-			assertTrue(sicklyRetryPolicy != null);
-			assertTrue(sicklyRetryPolicy.getInt("numRetries") == 16);
-			assertTrue(sicklyRetryPolicy.getInt("minDelayTarget") == 1);
-			assertTrue(sicklyRetryPolicy.getInt("maxDelayTarget") == 3);
-			assertTrue(sicklyRetryPolicy.getInt("numMinDelayRetries") == 1);
-			assertTrue(sicklyRetryPolicy.getInt("numMaxDelayRetries") == 3);
-			assertTrue(sicklyRetryPolicy.getInt("numNoDelayRetries") == 3);
-			assertTrue(sicklyRetryPolicy.getString("backoffFunction").equals("exponential"));
-
-			assertTrue(effectiveDeliveryPolicy.has("throttlePolicy"));
-			JSONObject throttlePolicy = effectiveDeliveryPolicy.getJSONObject("throttlePolicy");								
-			assertTrue(throttlePolicy.getInt("maxReceivesPerSecond") == 3);
-
-			assertTrue(attributeParser.getConfirmationWasAuthenticated().equals("false"));
-
-			JSONObject deliveryPolicy = new JSONObject(attributeParser.getDeliveryPolicy());
-			assertTrue(deliveryPolicy.has("healthyRetryPolicy"));
-			healthyRetryPolicy = deliveryPolicy.getJSONObject("healthyRetryPolicy");				
-			assertTrue(healthyRetryPolicy != null);
-			assertTrue(healthyRetryPolicy.getInt("numRetries") == 43);
-			assertTrue(healthyRetryPolicy.getInt("minDelayTarget") == 12);
-			assertTrue(healthyRetryPolicy.getInt("maxDelayTarget") == 13);
-			assertTrue(healthyRetryPolicy.getInt("numMinDelayRetries") == 20);
-			assertTrue(healthyRetryPolicy.getInt("numMaxDelayRetries") == 23);
-			assertTrue(healthyRetryPolicy.getInt("numNoDelayRetries") == 0);
-			assertTrue(healthyRetryPolicy.getString("backoffFunction").equals("arithmetic"));
-
-			assertTrue(deliveryPolicy.has("sicklyRetryPolicy"));
-			assertTrue(deliveryPolicy.has("throttlePolicy"));
-
-			throttlePolicy = deliveryPolicy.getJSONObject("throttlePolicy");		
-			
-			assertTrue(throttlePolicy.getInt("maxReceivesPerSecond") == 7);
-
-			sicklyRetryPolicy = deliveryPolicy.getJSONObject("sicklyRetryPolicy");	
-			assertTrue(sicklyRetryPolicy != null);
-			assertTrue(sicklyRetryPolicy.getInt("numRetries") == 15);
-			assertTrue(sicklyRetryPolicy.getInt("minDelayTarget") == 2);
-			assertTrue(sicklyRetryPolicy.getInt("maxDelayTarget") == 3);
-			assertTrue(sicklyRetryPolicy.getInt("numMinDelayRetries") == 4);
-			assertTrue(sicklyRetryPolicy.getInt("numMaxDelayRetries") == 5);
-			assertTrue(sicklyRetryPolicy.getInt("numNoDelayRetries") == 6);
-			assertTrue(sicklyRetryPolicy.getString("backoffFunction").equals("exponential"));
-
-			assertTrue(attributeParser.getTopicArn().equals(topicArn));
-			assertTrue(attributeParser.getSubscriptionArn().equals(subscriptionArn));
-			
-			CNSTestingUtils.deleteTopic(cns, user, out, topicArn);
-
 		} catch (Exception e) {
-			logger.error("Exception occured", e);
-			fail("exception: "+e);
+			logger.error("test failed", e);
+			fail(e.getMessage());
 		}
 	}
 
@@ -744,36 +487,39 @@ public class SubscriptionAttributeCMBTest {
 
 		try {
 
-			CNSControllerServlet cns = new CNSControllerServlet();
-			ByteArrayOutputStream out = new ByteArrayOutputStream();
-
-			String topicName = "T" + rand.nextLong();
-			CNSTestingUtils.addTopic(cns, user, out, topicName);
-			String res = out.toString();
-			String topicArn = CNSTestingUtils.getArnFromString(res);
-			out.reset();
+			String topicArn = getTopic(1, USR.USER1);
 
 			String endpoint = CMBTestingConstants.HTTP_ENDPOINT_BASE_URL + "recv/" + rand.nextInt();
-			String protocol = "http";
-			CNSTestingUtils.subscribe(cns, user, out, endpoint, protocol, topicArn);
-			String subscriptionArn = CNSTestingUtils.getSubscriptionArnFromString(out.toString());
-			out.reset();
+
+			SubscribeRequest subscribeRequest = new SubscribeRequest();
+			subscribeRequest.setEndpoint(endpoint);
+			subscribeRequest.setProtocol("http");
+			subscribeRequest.setTopicArn(topicArn);
+			String subscriptionArn = cns1.subscribe(subscribeRequest).getSubscriptionArn();
+			
+			String lastMessageUrl = endpoint.replace("recv", "info") + "?showLast=true";
 
 			if (subscriptionArn.equals("pending confirmation")) {
-
-				List<CNSSubscription> confirmedSubscriptions = CNSTestingUtils.confirmPendingSubscriptionsByTopic(topicArn, user.getUserId(), CnsSubscriptionProtocol.valueOf(protocol));
-
-				if (confirmedSubscriptions.size() == 1) {
-					subscriptionArn = confirmedSubscriptions.get(0).getArn();
-				}
+				String resp = CNSTestingUtils.sendHttpMessage(lastMessageUrl, "");
+    			JSONObject o = new JSONObject(resp);
+    			if (!o.has("SubscribeURL")) {
+    				fail("Message is not a confirmation messsage");
+    			}
+    			String subscriptionUrl = o.getString("SubscribeURL");
+				resp = CNSTestingUtils.sendHttpMessage(subscriptionUrl, "");
+				logger.info(resp);
+				subscriptionArn = XmlUtil.getCurrentLevelTextValue(XmlUtil.getChildNodes(XmlUtil.buildDoc(resp)).get(0), "SubscriptionArn");
 			}
 
 			String attributeName = "DeliveryPolicy";
 			String attributeValue = null;
-
-			CNSTestingUtils.doSetSubscriptionAttributes(cns, user, out, attributeName, attributeValue, subscriptionArn);
-			assertTrue(CNSTestingUtils.verifyErrorResponse(out.toString(),"InvalidParameter", "missing parameters"));
-			out.reset();
+			
+			try {
+				cns1.setSubscriptionAttributes(new SetSubscriptionAttributesRequest(subscriptionArn, attributeName, attributeValue));
+				fail("exception expected");
+			} catch (Exception ex) {
+				logger.info("expected exception", ex);
+			}
 
 			attributeValue = "{\"healthyRetryPolicy\":" +				 
 			"{"+
@@ -797,9 +543,13 @@ public class SubscriptionAttributeCMBTest {
 			"}" +
 			"}";
 
-			CNSTestingUtils.doSetSubscriptionAttributes(cns, user, out, attributeName, attributeValue, subscriptionArn);
-			assertTrue(CNSTestingUtils.verifyErrorResponse(out.toString(),"InvalidParameter", "DeliveryPolicy: healthyRetryPolicy.maxDelayTarget must be specified"));
-			out.reset();
+			try {
+				cns1.setSubscriptionAttributes(new SetSubscriptionAttributesRequest(subscriptionArn, attributeName, attributeValue));
+				fail("exception expected");
+			} catch (Exception ex) {
+				// DeliveryPolicy: healthyRetryPolicy.maxDelayTarget must be specified
+				logger.info("expected exception", ex);
+			}
 
 			attributeValue = "{\"healthyRetryPolicy\":" +				 
 			"{"+
@@ -824,10 +574,14 @@ public class SubscriptionAttributeCMBTest {
 			"\"backoffFunction\": \"exponential\""+
 			"}" +
 			"}";
-
-			CNSTestingUtils.doSetSubscriptionAttributes(cns, user, out, attributeName, attributeValue, subscriptionArn);
-			assertTrue(CNSTestingUtils.verifyErrorResponse(out.toString(),"InvalidParameter", "DeliveryPolicy: healthyRetryPolicy.maxDelayTarget must be greater than or equal to minDelayTarget"));
-			out.reset();
+			
+			try {
+				cns1.setSubscriptionAttributes(new SetSubscriptionAttributesRequest(subscriptionArn, attributeName, attributeValue));
+				fail("exception expected");
+			} catch (Exception ex) {
+				// DeliveryPolicy: healthyRetryPolicy.maxDelayTarget must be greater than or equal to minDelayTarget
+				logger.info("expected exception", ex);
+			}
 
 			attributeValue = "{\"healthyRetryPolicy\":" +				 
 			"{"+
@@ -854,9 +608,13 @@ public class SubscriptionAttributeCMBTest {
 			"}" +
 			"}";
 
-			CNSTestingUtils.doSetSubscriptionAttributes(cns, user, out, attributeName, attributeValue, subscriptionArn);
-			assertTrue(CNSTestingUtils.verifyErrorResponse(out.toString(),"InvalidParameter", "DeliveryPolicy: healthyRetryPolicy.numRetries must be greater than or equal to total of numMinDelayRetries, numNoDelayRetries and numMaxDelayRetries"));
-			out.reset();
+			try {
+				cns1.setSubscriptionAttributes(new SetSubscriptionAttributesRequest(subscriptionArn, attributeName, attributeValue));
+				fail("exception expected");
+			} catch (Exception ex) {
+				// DeliveryPolicy: healthyRetryPolicy.numRetries must be greater than or equal to total of numMinDelayRetries, numNoDelayRetries and numMaxDelayRetries
+				logger.info("expected exception", ex);
+			}
 
 			attributeValue = "{\"healthyRetryPolicy\":" +				 
 			"{"+
@@ -884,15 +642,17 @@ public class SubscriptionAttributeCMBTest {
 			"}" +
 			"}";
 
-			CNSTestingUtils.doSetSubscriptionAttributes(cns, user, out, attributeName, attributeValue, subscriptionArn);
-			assertTrue(CNSTestingUtils.verifyErrorResponse(out.toString(),"InvalidParameter", "DeliveryPolicy: sicklyRetryPolicy.numRetries must be greater than or equal to total of numMinDelayRetries, numNoDelayRetries and numMaxDelayRetries"));
-			out.reset();
-			
-			CNSTestingUtils.deleteTopic(cns, user, out, topicArn);
+			try {
+				cns1.setSubscriptionAttributes(new SetSubscriptionAttributesRequest(subscriptionArn, attributeName, attributeValue));
+				fail("exception expected");
+			} catch (Exception ex) {
+				// DeliveryPolicy: sicklyRetryPolicy.numRetries must be greater than or equal to total of numMinDelayRetries, numNoDelayRetries and numMaxDelayRetries
+				logger.info("expected exception", ex);
+			}
 
 		} catch (Exception e) {
-			logger.error("Exception occured", e);
-			fail("exception: "+e);
+			logger.error("test failed", e);
+			fail(e.getMessage());
 		}
 	}
 
@@ -900,38 +660,14 @@ public class SubscriptionAttributeCMBTest {
 	public void testBadGetAttributes() {
 
 		try {
-		
-			CNSControllerServlet cns = new CNSControllerServlet();
-			ByteArrayOutputStream out = new ByteArrayOutputStream();
 
-			String topicName = "T" + rand.nextLong();
-			CNSTestingUtils.addTopic(cns, user, out, topicName);
-			String res = out.toString();
-			String topicArn = CNSTestingUtils.getArnFromString(res);
-			out.reset();
-
-			String endpoint = CMBTestingConstants.HTTP_ENDPOINT_BASE_URL + "recv/" + rand.nextInt();
-			String protocol = "http";
-			CNSTestingUtils.subscribe(cns, user, out, endpoint, protocol, topicArn);
-			String subscriptionArn = CNSTestingUtils.getSubscriptionArnFromString(out.toString());
-			out.reset();
-
-			if (subscriptionArn.equals("pending confirmation")) {
-
-				List<CNSSubscription> confirmedSubscriptions = CNSTestingUtils.confirmPendingSubscriptionsByTopic(topicArn, user.getUserId(), CnsSubscriptionProtocol.valueOf(protocol));
-
-				if (confirmedSubscriptions.size() == 1) {
-					subscriptionArn = confirmedSubscriptions.get(0).getArn();
-				}
+			try {
+				GetSubscriptionAttributesResult result = cns1.getSubscriptionAttributes(new GetSubscriptionAttributesRequest(null));
+				fail("exception expected");
+			} catch (Exception ex) {
+				logger.info("expected exception", ex);
 			}
-
-			CNSTestingUtils.doGetSubscriptionAttributes(cns, user, out, null);
-			res = out.toString();
-			assertTrue(CNSTestingUtils.verifyErrorResponse(res,"InvalidParameter", "missing parameters"));
-			out.reset();
 			
-			CNSTestingUtils.deleteTopic(cns, user, out, topicArn);
-
 		} catch (Exception e) {
 			logger.error("Exception occured", e);
 			fail("exception: "+e);

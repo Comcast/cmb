@@ -170,7 +170,6 @@ public class CNSPublishTest {
 		
 		try {	
 			
-			String endPoint = CMBTestingConstants.HTTP_ENDPOINT_BASE_URL + "recv/" + rand.nextInt();
 			String topicName = "T" + rand.nextLong();
 			
 			CreateTopicRequest createTopicRequest = new CreateTopicRequest(topicName); 
@@ -185,7 +184,7 @@ public class CNSPublishTest {
 			
 			Thread.sleep(1000);
 
-			endPoint = queueArn;
+			String endPoint = queueArn;
 
 			SubscribeRequest subscribeRequest = new SubscribeRequest();
 			subscribeRequest.setEndpoint(endPoint);
