@@ -26,7 +26,7 @@ workingDir="$( cd "$( dirname "$0" )" && pwd )"
 cd $workingDir
 cd ..
 
-THE_CLASSPATH=
+THE_CLASSPATH=config
 for i in `ls lib/*.jar`
 do
   THE_CLASSPATH=${THE_CLASSPATH}:${i}
@@ -39,4 +39,12 @@ then
 	instance=`cat CMB_INSTANCE_NAME`
 fi
 
-java -Xmx2048m -Dlog4j.debug -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.port=${JMX_PORT} -Dcmb.log4j.propertyFile=${LOG4J_PROPS} -Dcmb.propertyFile=${CMB_PROPS} -classpath ".:${THE_CLASSPATH}" com.comcast.cmb.common.controller.CMB ${CMB_INSTANCE_NAME}
+if [ -f lib/jolokia-jvm*-agent.jar ]
+then
+  AGENT_JAR=`ls lib/jolokia-jvm*-agent.jar`
+  AGENT_OPTION=-javaagent:${AGENT_JAR}=port=7777
+else
+  AGENT_OPTION=""
+fi
+
+java $AGENT_OPTION -Xmx2048m -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.port=${JMX_PORT} -Dcmb.log4j.propertyFile=${LOG4J_PROPS} -Dcmb.propertyFile=${CMB_PROPS} -classpath ".:${THE_CLASSPATH}" com.comcast.cmb.common.controller.CMB ${CMB_INSTANCE_NAME}
