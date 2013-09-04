@@ -137,4 +137,11 @@ public interface ICNSSubscriptionPersistence {
 	 */
 	
 	public long getCountSubscription(String topicArn, String columnName) throws Exception;
+
+	/**
+	 * Allow an subscription arn to be able to send raw message
+	 * @param subscriptionArn, rawMessageDelivery
+	 * @throws Exception 
+	 */
+	public void setRawMessageDelivery(String subscriptionArn, Boolean rawMessageDelivery) throws Exception;
 }

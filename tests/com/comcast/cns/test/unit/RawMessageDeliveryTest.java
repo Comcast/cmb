@@ -141,6 +141,7 @@ public class RawMessageDeliveryTest {
 			if(subArn != null && !subArn.isEmpty()){
 				rawEndPointsubscriptionArn = subArn;
 			}
+			System.out.println("Raw-message EndPoint subscription Arn after confirmation: " + rawEndPointsubscriptionArn);
 		}
 		
 		// set subscription attribute for raw message delivery
@@ -159,6 +160,7 @@ public class RawMessageDeliveryTest {
 				Boolean rawMessagePolicyReturn = Boolean.parseBoolean(rawMessageDeliveryStr);
 				assertTrue("Set raw message delivery successful", rawMessagePolicyReturn);
 			}
+			System.out.println("Raw Message Delivery attribute:" + rawMessageDeliveryStr);
 		} catch (Exception ex) {
 			throw new Exception("Can't set raw message delivery attribute to subscription arn " + rawEndPointsubscriptionArn);
 		}
@@ -174,6 +176,7 @@ public class RawMessageDeliveryTest {
 		jsonEndPointSubscribeRequest.setTopicArn(topicArn);
 		SubscribeResult jsonSubscribeResult = sns.subscribe(jsonEndPointSubscribeRequest);
 		String jsonEndPointsubscriptionArn = jsonSubscribeResult.getSubscriptionArn();
+		System.out.println("JSON EndPoint subscription arn:" + jsonEndPointsubscriptionArn);
 		
 		if (jsonEndPointsubscriptionArn.equals("pending confirmation")) {
 			
@@ -194,6 +197,7 @@ public class RawMessageDeliveryTest {
 			if(subArn != null && !subArn.isEmpty()){
 				jsonEndPointsubscriptionArn = subArn;
 			}
+			System.out.println("JSON EndPoint subscription arn after confirmation:" + jsonEndPointsubscriptionArn);
 		}
 		
 		
@@ -210,6 +214,7 @@ public class RawMessageDeliveryTest {
 
 		// check raw message is received			
 		String response = httpGet(rawEndPointLastMessageUrl);
+		System.out.println("Reponse of raw-message endpoint:" + response);
 		if (response != null && response.length() > 0) {
 			assertEquals("Receive raw message", response, messageText);				
 		} else {
@@ -218,6 +223,7 @@ public class RawMessageDeliveryTest {
 		
 		// check json message is received
 		response = httpGet(jsonEndPointLastMessageUrl);
+		System.out.println("Reponse of JSON-message endpoint: " + response);
 		if (response != null && response.length() > 0) {
 			JSONObject obj = new JSONObject(response);
 			assertNotNull("Received JSON message", obj);

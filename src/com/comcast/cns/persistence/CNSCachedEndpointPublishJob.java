@@ -135,20 +135,14 @@ public class CNSCachedEndpointPublishJob extends CNSEndpointPublishJob {
             } else {
                 //get from Cassandra                
                 ICNSSubscriptionPersistence subscriptionPersistence = PersistenceFactory.getSubscriptionPersistence();
-                ICNSAttributesPersistence attributePersistence = PersistenceFactory.getCNSAttributePersistence();
                 for (int i = idx; i < idx + count ; i++) {
                     String subArn = arr[i];
                     CNSSubscription sub = subscriptionPersistence.getSubscription(subArn);
                 	//TODO: store raw delivery flag as part of the subscription for better performance
-                    CNSSubscriptionAttributes attrib = attributePersistence.getSubscriptionAttributes(subArn);
-                    boolean rawDelivery = false;
-                    if (attrib != null) {
-                    	rawDelivery = attrib.getRawMessageDelivery();
-                    }
                     if (sub == null) {
                         logger.warn("event=subscription_info_not_found arn=" + subArn + " topic_arn=" + topicArn);
                     } else {
-                        infos.add(new CNSCachedEndpointSubscriptionInfo(sub.getProtocol(), sub.getEndpoint(), sub.getArn(), rawDelivery));
+                        infos.add(new CNSCachedEndpointSubscriptionInfo(sub.getProtocol(), sub.getEndpoint(), sub.getArn(), sub.getRawMessageDelivery()));
                     }
                 }                
             }
@@ -172,18 +166,11 @@ public class CNSCachedEndpointPublishJob extends CNSEndpointPublishJob {
         public LinkedHashMap<String, CNSCachedEndpointSubscriptionInfo> call() throws Exception {
             long ts1 = System.currentTimeMillis();
             ICNSSubscriptionPersistence subscriptionPersistence = PersistenceFactory.getSubscriptionPersistence();
-            ICNSAttributesPersistence attributePersistence = PersistenceFactory.getCNSAttributePersistence();
             List<CNSSubscription> subs = subscriptionPersistence.listSubscriptionsByTopic(null, topicArn, null, Integer.MAX_VALUE); //get all in one call
             LinkedHashMap<String, CNSCachedEndpointSubscriptionInfo> val = new LinkedHashMap<String, CNSCachedEndpointPublishJob.CNSCachedEndpointSubscriptionInfo>();
             for (CNSSubscription sub : subs) {
                 if (!sub.getArn().equals("PendingConfirmation")) {
-                	boolean rawDelivery = false;
-                	//TODO: store raw delivery flag as part of the subscription for better performance
-                	CNSSubscriptionAttributes attrib = attributePersistence.getSubscriptionAttributes(sub.getArn());
-                	if (attrib != null) {
-                		rawDelivery = attrib.getRawMessageDelivery();
-                	}
-                    val.put(sub.getArn(), new CNSCachedEndpointSubscriptionInfo(sub.getProtocol(), sub.getEndpoint(), sub.getArn(), rawDelivery));
+                    val.put(sub.getArn(), new CNSCachedEndpointSubscriptionInfo(sub.getProtocol(), sub.getEndpoint(), sub.getArn(), sub.getRawMessageDelivery()));
                 }
             }
             long ts2 = System.currentTimeMillis();

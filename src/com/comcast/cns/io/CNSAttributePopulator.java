@@ -17,6 +17,7 @@ package com.comcast.cns.io;
 
 import org.apache.commons.lang.StringEscapeUtils;
 
+import com.comcast.cns.model.CNSSubscription;
 import com.comcast.cns.model.CNSSubscriptionAttributes;
 import com.comcast.cns.model.CNSTopicAttributes;
 
@@ -26,7 +27,7 @@ import com.comcast.cns.model.CNSTopicAttributes;
  */
 public class CNSAttributePopulator {
 
-	public static String getGetSubscriptionAttributesResponse(CNSSubscriptionAttributes attr) {
+	public static String getGetSubscriptionAttributesResponse(CNSSubscription sub, CNSSubscriptionAttributes attr) {
 
 		StringBuffer out = new StringBuffer("<GetSubscriptionAttributesResponse xmlns=\"http://sns.amazonaws.com/doc/2010-03-31/\">\n");
 		out.append("\t<GetSubscriptionAttributesResult>\n");
@@ -56,7 +57,7 @@ public class CNSAttributePopulator {
 		
 		out.append("\t\t\t<entry>\n");
 		out.append("\t\t\t\t<key>RawMessageDelivery</key>\n"); 
-		out.append("\t\t\t\t<value>" + attr.getRawMessageDelivery() + "</value>\n");
+		out.append("\t\t\t\t<value>" + sub.getRawMessageDelivery() + "</value>\n");
 		out.append("\t\t\t</entry>\n");
 		
 		out.append("\t\t\t<entry>\n");

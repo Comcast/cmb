@@ -83,6 +83,7 @@ public class CNSSubscription {
 	private String token;
 	private boolean authenticateOnUnsubscribe;
 	private CNSSubscriptionDeliveryPolicy deliveryPolicy;
+	private Boolean rawMessageDelivery = false;
 
 	public CNSSubscription(String endpoint, CnsSubscriptionProtocol protocol, String topicArn, String userId) {
 
@@ -95,6 +96,7 @@ public class CNSSubscription {
 		this.requestDate = new Date();
 		this.confirmed = false;
 		this.authenticateOnUnsubscribe = false;
+		this.setRawMessageDelivery(false);
 	}
 
 	public CNSSubscription(String arn) {
@@ -235,7 +237,11 @@ public class CNSSubscription {
 
 	@Override
 	public String toString() {
-		return "arn=" + getArn() + " topicArn=" + getTopicArn() + " user_id=" + getUserId() + " protocol=" + getProtocol() + " endpoint=" + getEndpoint() + " request_date=" + getRequestDate() + " confirm_date=" + getConfirmDate() + " confirmed=" + isConfirmed() + " token=" + getToken();
+		return "arn=" + getArn() + " topicArn=" + getTopicArn() + " user_id=" + getUserId() + 
+				" protocol=" + getProtocol() + " endpoint=" + getEndpoint() + 
+				" request_date=" + getRequestDate() + " confirm_date=" + getConfirmDate() + 
+				" confirmed=" + isConfirmed() + " token=" + getToken() + 
+				" rawMessageDelivery=" + getRawMessageDelivery();
 	}
 
 	@Override
@@ -255,7 +261,8 @@ public class CNSSubscription {
 				Util.isEqual(getRequestDate(), s.getRequestDate()) &&
 				Util.isEqual(getConfirmDate(), s.getConfirmDate()) &&
 				Util.isEqual(isConfirmed(), s.isConfirmed()) &&
-				Util.isEqual(getToken(), s.getToken())) {
+				Util.isEqual(getToken(), s.getToken()) &&
+				Util.isEqual(getRawMessageDelivery(), s.getRawMessageDelivery())) {
 			return true;
 		}
 
@@ -268,5 +275,13 @@ public class CNSSubscription {
 
 	public void setDeliveryPolicy(CNSSubscriptionDeliveryPolicy deliveryPolicy) {
 		this.deliveryPolicy = deliveryPolicy;
+	}
+
+	public Boolean getRawMessageDelivery() {
+		return rawMessageDelivery;
+	}
+
+	public void setRawMessageDelivery(Boolean rawMessageDelivery) {
+		this.rawMessageDelivery = rawMessageDelivery;
 	}
 }
