@@ -67,7 +67,7 @@ public class CQSScaleQueuesTest {
     private static String queueName = null;
     
     private static AtomicLong totalMessagesFound = new AtomicLong(0);
-    private static boolean deleteQueues = false;
+    private static boolean deleteQueues = true;
 
 	public static void main(String [ ] args) throws Exception {
 

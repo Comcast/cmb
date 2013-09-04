@@ -197,9 +197,10 @@ public class QueuePersistenceTest {
 			persistence.createQueue(queue2);
 			persistence.updatePolicy(queue2.getRelativeUrl(), policy);
 			
-			for (CQSQueue queue: persistence.listQueues(user.getUserId(), QUEUE_PREFIX, false)) {
-				assertTrue(policy.equals(queue.getPolicy()));
-				persistence.deleteQueue(queue.getRelativeUrl());
+			for (CQSQueue e: persistence.listQueues(user.getUserId(), QUEUE_PREFIX, false)) {
+				CQSQueue q = persistence.getQueue(e.getRelativeUrl());
+				assertTrue(policy.equals(q.getPolicy()));
+				persistence.deleteQueue(e.getRelativeUrl());
 			}
 			
 		} catch (PersistenceException e) {

@@ -138,6 +138,7 @@ public class CQSQueueCassandraPersistence extends CassandraPersistence implement
 					CQSQueue queue = new CQSQueue(Util.getNameForArn(lastArn), Util.getQueueOwnerFromArn(lastArn));
 					queue.setRelativeUrl(Util.getRelativeQueueUrlForArn(lastArn));
 					queue.setArn(lastArn);
+					queue.setCreatedTime(c.getClock());
 					
 					if (queueNamePrefix != null && !queue.getName().startsWith(queueNamePrefix)) {
 						continue;

@@ -44,6 +44,7 @@ import com.comcast.cmb.common.persistence.UserCassandraPersistence;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.PersistenceException;
 import com.comcast.cmb.common.util.Util;
+import com.comcast.cqs.controller.CQSCache;
 import com.comcast.cqs.model.CQSMessage;
 import com.comcast.cqs.model.CQSQueue;
 import com.comcast.cqs.persistence.CQSMessagePartitionedCassandraPersistence;
@@ -182,7 +183,7 @@ public class CQSMessagePartitionedCassandraPersistenceTest {
 	}
 	
 	@Test 
-	public void testPeekQueue() throws NoSuchAlgorithmException, PersistenceException, IOException, InterruptedException {
+	public void testPeekQueue() throws Exception {
 		
 		List<CQSMessage> messageList = new ArrayList<CQSMessage>();
 		
@@ -192,7 +193,7 @@ public class CQSMessagePartitionedCassandraPersistenceTest {
 			persistence.sendMessage(queue, 0, message);
 		}
 		
-		assertEquals(messageList.size(), getQueueCount(queue.getRelativeUrl()));
+		assertEquals(messageList.size(), getQueueMessageCount(queue.getRelativeUrl()));
 		
 		List<CQSMessage> peekMessageList = new ArrayList<CQSMessage>();
 		List<CQSMessage> newMessageList = new ArrayList<CQSMessage>();
@@ -231,7 +232,7 @@ public class CQSMessagePartitionedCassandraPersistenceTest {
  		//assertEquals(messageList.size(), peekMessageList.size());
 	}
     @Test 
-    public void testPeekQueueRandom() throws NoSuchAlgorithmException, PersistenceException, IOException, InterruptedException {
+    public void testPeekQueueRandom() throws Exception {
         
         List<CQSMessage> messageList = new ArrayList<CQSMessage>();
         
@@ -241,7 +242,7 @@ public class CQSMessagePartitionedCassandraPersistenceTest {
             persistence.sendMessage(queue, 0, message);
         }
         
-        assertEquals(messageList.size(), getQueueCount(queue.getRelativeUrl()));
+        assertEquals(messageList.size(), getQueueMessageCount(queue.getRelativeUrl()));
         
         List<CQSMessage> messages = persistence.peekQueueRandom(queue.getRelativeUrl(), 0, 5);
         if (messages.size() != 5) {
@@ -269,21 +270,25 @@ public class CQSMessagePartitionedCassandraPersistenceTest {
 		return minMessageId;
 	}
 	
-	private long getQueueCount(String queueUrl) throws NoSuchAlgorithmException, UnsupportedEncodingException {
+	private long getQueueMessageCount(String queueUrl) throws Exception {
 		
-		int numberOfPartitions = CMBProperties.getInstance().getCQSNumberOfQueuePartitions();
+		CQSQueue queue = CQSCache.getCachedQueue(queueUrl);
+		int numberOfPartitions = queue.getNumberOfPartitions();
+		int numberOfShards = queue.getNumberOfShards();
 		CassandraPersistence persistence = new CassandraPersistence(CMBProperties.getInstance().getCQSKeyspace());
 		String queueHash = com.comcast.cqs.util.Util.hashQueueUrl(queueUrl);
 		long messageCount = 0;
 		
-		for (int i=0; i<numberOfPartitions; i++) {
-			String queueKey = queueHash + "_" + i;
-			long partitionCount = persistence.getCount("CQSPartitionedQueueMessages", queueKey, StringSerializer.get(), new CompositeSerializer(), CMBProperties.getInstance().getConsistencyLevel());
-			messageCount += partitionCount;
-			System.out.println("# of messages in " + queueKey + " =" + partitionCount);
+		for (int k=0; k<numberOfShards; k++) {
+			for (int i=0; i<numberOfPartitions; i++) {
+				String queueKey = queueHash + "_" + k + "_" + i;
+				long partitionCount = persistence.getCount("CQSPartitionedQueueMessages", queueKey, StringSerializer.get(), new CompositeSerializer(), CMBProperties.getInstance().getConsistencyLevel());
+				messageCount += partitionCount;
+				logger.debug("# of messages in " + queueKey + " =" + partitionCount);
+			}
 		}
 		
-		System.out.println("There are " + messageCount + " messages in queue " + queueUrl);
+		logger.debug("There are " + messageCount + " messages in queue " + queueUrl);
 		return messageCount;
 	}
 	
