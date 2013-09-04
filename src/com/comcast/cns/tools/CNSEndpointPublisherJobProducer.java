@@ -283,13 +283,7 @@ public class CNSEndpointPublisherJobProducer implements CNSPublisherPartitionRun
     	        
     				if (!subscription.getArn().equals("PendingConfirmation")) {
     	                allPendingConfirmation = false;
-                    	//TODO: store raw delivery flag as part of the subscription for better performance
-                        CNSSubscriptionAttributes attrib = attributePersistence.getSubscriptionAttributes(subscription.getArn());
-                        boolean rawDelivery = false;
-                        if (attrib != null) {
-                        	rawDelivery = attrib.getRawMessageDelivery();
-                        }
-    	                subInfoList.add(new CNSEndpointPublishJob.CNSEndpointSubscriptionInfo(subscription.getProtocol(), subscription.getEndpoint(), subscription.getArn(), rawDelivery));
+    	                subInfoList.add(new CNSEndpointPublishJob.CNSEndpointSubscriptionInfo(subscription.getProtocol(), subscription.getEndpoint(), subscription.getArn(), subscription.getRawMessageDelivery()));
     	                nextToken = subscription.getArn();
     	            }
     	        }

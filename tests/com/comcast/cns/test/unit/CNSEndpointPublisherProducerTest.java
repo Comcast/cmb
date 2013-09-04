@@ -396,6 +396,12 @@ public class CNSEndpointPublisherProducerTest {
 			
 			return 0;
 		}
+
+		@Override
+		public void setRawMessageDelivery(String subscriptionArn,
+				Boolean rawMessageDelivery) throws Exception {
+			
+		}
     	
     }
 

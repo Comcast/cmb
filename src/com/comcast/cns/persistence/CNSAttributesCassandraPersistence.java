@@ -157,7 +157,6 @@ public class CNSAttributesCassandraPersistence extends CassandraPersistence impl
 			colVals.put("deliveryPolicy", subscriptionAtributes.getDeliveryPolicy().toString());
 		}
 		
-		colVals.put("rawMessageDelivery", subscriptionAtributes.getRawMessageDelivery() + "");
 		
 		// currently only accept delivery policy parameter, fill up with defaults if elements are missing and return as both delivery policy and effective delivery policy
 		
@@ -196,12 +195,6 @@ public class CNSAttributesCassandraPersistence extends CassandraPersistence impl
 			
 			if (row.getColumnSlice().getColumnByName("deliveryPolicy") != null) {
 				subscriptionAttributes.setDeliveryPolicy(new CNSSubscriptionDeliveryPolicy(new JSONObject(row.getColumnSlice().getColumnByName("deliveryPolicy").getValue())));
-			}
-			
-			if (row.getColumnSlice().getColumnByName("rawMessageDelivery") != null) {
-				subscriptionAttributes.setRawMessageDelivery(Boolean.parseBoolean(row.getColumnSlice().getColumnByName("rawMessageDelivery").getValue()));
-			} else {
-				subscriptionAttributes.setRawMessageDelivery(false);
 			}
 			
 			// if "ignore subscription override" is checked, get effective delivery policy from topic delivery policy, otherwise 

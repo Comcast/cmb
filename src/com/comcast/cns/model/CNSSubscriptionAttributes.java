@@ -26,8 +26,8 @@ public class CNSSubscriptionAttributes {
 	private CNSSubscriptionDeliveryPolicy effectiveDeliveryPolicy;
 
 	private CNSSubscriptionDeliveryPolicy deliveryPolicy;
-
-	private boolean rawMessageDelivery;
+	
+	
 
 	private String userId;
 	
@@ -38,7 +38,6 @@ public class CNSSubscriptionAttributes {
 	private String subscriptionArn;
 	
 	public CNSSubscriptionAttributes() {
-		this.rawMessageDelivery = false;
 	}
 	
 	public CNSSubscriptionAttributes(String topicArn, String subscriptionArn, String userId) {
@@ -47,7 +46,6 @@ public class CNSSubscriptionAttributes {
 		this.subscriptionArn = subscriptionArn;
 		this.userId = userId;
 		this.deliveryPolicy = null;//new CNSSubscriptionDeliveryPolicy();
-		this.rawMessageDelivery = false;
 	}
 	
 	public CNSSubscriptionDeliveryPolicy getEffectiveDeliveryPolicy() {
@@ -103,15 +101,7 @@ public class CNSSubscriptionAttributes {
 		return "user_id=" + userId + " topci_arn=" + topicArn + " subscription_arn=" + subscriptionArn + 
 				" effective_delivery_policy=" + effectiveDeliveryPolicy  + 
 				" delivery_policy=" + deliveryPolicy + 
-				" confirmation_was_authenticated=" + confirmationWasAuthenticated + 
-				" rawMessagePolicy=" + rawMessageDelivery;
+				" confirmation_was_authenticated=" + confirmationWasAuthenticated;
 	}
 
-	public boolean getRawMessageDelivery() {
-		return rawMessageDelivery;
-	}
-
-	public void setRawMessageDelivery(boolean rawMessageDelivery) {
-		this.rawMessageDelivery = rawMessageDelivery;
-	}
 }
