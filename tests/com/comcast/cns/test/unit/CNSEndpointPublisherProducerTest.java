@@ -398,11 +398,8 @@ public class CNSEndpointPublisherProducerTest {
 		}
 
 		@Override
-		public void setRawMessageDelivery(String subscriptionArn,
-				Boolean rawMessageDelivery) throws Exception {
-			
+		public void setRawMessageDelivery(String subscriptionArn, boolean rawMessageDelivery) throws Exception {
 		}
-    	
     }
 
     @Test

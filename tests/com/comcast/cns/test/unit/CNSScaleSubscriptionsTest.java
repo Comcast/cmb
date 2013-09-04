@@ -146,7 +146,7 @@ public class CNSScaleSubscriptionsTest {
 	            }
     		}
     		
-    		Thread.sleep(5000);
+    		Thread.sleep(2000);
 
             try {
     			sns.publish(new PublishRequest(topicArn, "test message"));
@@ -155,7 +155,7 @@ public class CNSScaleSubscriptionsTest {
 				logger.error("publish failure", ex);
             }
     		
-    		Thread.sleep(20000);
+    		Thread.sleep(10000);
     		
 			try {
             	sns.deleteTopic(new DeleteTopicRequest(topicArn));

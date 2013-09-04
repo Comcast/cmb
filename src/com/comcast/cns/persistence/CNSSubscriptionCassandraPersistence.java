@@ -166,7 +166,7 @@ public class CNSSubscriptionCassandraPersistence extends CassandraPersistence im
         }
         
         String rawMessage = map.get("rawMessageDelivery");
-        if(rawMessage != null){
+        if (rawMessage != null) {
         	s.setRawMessageDelivery(Boolean.parseBoolean(rawMessage));
         }
         
@@ -676,11 +676,10 @@ public class CNSSubscriptionCassandraPersistence extends CassandraPersistence im
     }
 
 	@Override
-	public void setRawMessageDelivery(String subscriptionArn,
-			Boolean rawMessageDelivery) throws Exception{
+	public void setRawMessageDelivery(String subscriptionArn, boolean rawMessageDelivery) throws Exception{
 		CNSSubscription sub;
 		sub = getSubscription(subscriptionArn);
-		if(sub != null){
+		if (sub != null) {
 			sub.setRawMessageDelivery(rawMessageDelivery);
 			insertOrUpdateSubsAndIndexes(sub, null);
 		}

@@ -143,5 +143,5 @@ public interface ICNSSubscriptionPersistence {
 	 * @param subscriptionArn, rawMessageDelivery
 	 * @throws Exception 
 	 */
-	public void setRawMessageDelivery(String subscriptionArn, Boolean rawMessageDelivery) throws Exception;
+	public void setRawMessageDelivery(String subscriptionArn, boolean rawMessageDelivery) throws Exception;
 }
