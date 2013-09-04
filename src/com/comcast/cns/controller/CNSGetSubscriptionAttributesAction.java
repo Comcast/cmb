@@ -25,6 +25,7 @@ import com.comcast.cmb.common.model.User;
 import com.comcast.cmb.common.persistence.PersistenceFactory;
 import com.comcast.cmb.common.util.CMBException;
 import com.comcast.cns.io.CNSAttributePopulator;
+import com.comcast.cns.model.CNSSubscription;
 import com.comcast.cns.model.CNSSubscriptionAttributes;
 import com.comcast.cns.util.CNSErrorCodes;
 
@@ -56,7 +57,8 @@ public class CNSGetSubscriptionAttributesAction extends CNSAction {
     	}	
     	
     	CNSSubscriptionAttributes attr = PersistenceFactory.getCNSAttributePersistence().getSubscriptionAttributes(subscriptionArn);
-    	String res = CNSAttributePopulator.getGetSubscriptionAttributesResponse(attr);
+    	CNSSubscription sub = PersistenceFactory.getSubscriptionPersistence().getSubscription(subscriptionArn);
+    	String res = CNSAttributePopulator.getGetSubscriptionAttributesResponse(sub, attr);
 
     	logger.debug("event=cns_get_subscription_attributes subscription_arn=" + subscriptionArn + " user_id=" + userId);
     	

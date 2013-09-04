@@ -119,6 +119,7 @@ public class CNSSubscriptionCassandraPersistence extends CassandraPersistence im
 		
 		columnValues.put("authenticateOnSubscribe", s.isAuthenticateOnUnsubscribe() + "");
 		columnValues.put("isConfirmed", s.isConfirmed() + "");
+		columnValues.put("rawMessageDelivery", s.getRawMessageDelivery() + "");
 
 		return columnValues;
 	}
@@ -162,6 +163,11 @@ public class CNSSubscriptionCassandraPersistence extends CassandraPersistence im
         
         if (authenticateOnSubscribe != null) {
         	s.setAuthenticateOnUnsubscribe(Boolean.parseBoolean(authenticateOnSubscribe));
+        }
+        
+        String rawMessage = map.get("rawMessageDelivery");
+        if(rawMessage != null){
+        	s.setRawMessageDelivery(Boolean.parseBoolean(rawMessage));
         }
         
         return s;
@@ -668,4 +674,16 @@ public class CNSSubscriptionCassandraPersistence extends CassandraPersistence im
 
 		deleteSuperColumn(subscriptionsTemplate, topicArn, null);
     }
+
+	@Override
+	public void setRawMessageDelivery(String subscriptionArn,
+			Boolean rawMessageDelivery) throws Exception{
+		CNSSubscription sub;
+		sub = getSubscription(subscriptionArn);
+		if(sub != null){
+			sub.setRawMessageDelivery(rawMessageDelivery);
+			insertOrUpdateSubsAndIndexes(sub, null);
+		}
+		
+	}
 }
