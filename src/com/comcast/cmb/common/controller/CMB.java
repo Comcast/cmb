@@ -36,9 +36,7 @@ public class CMB {
 	
 	private static Logger logger = Logger.getLogger(CMB.class);
 	
-	private static final int MAX_REQUEST_LENGTH = 
-			CMBProperties.getInstance().getCNSMaxMessageSize()*2 > CMBProperties.getInstance().getCNSMaxMessageSize()*2 ? 
-			CMBProperties.getInstance().getCNSMaxMessageSize()*2 : CMBProperties.getInstance().getCNSMaxMessageSize()*2;
+	private static final int MAX_REQUEST_LENGTH = Math.max(CMBProperties.getInstance().getCNSMaxMessageSize()*2, 500*1024);
 	 
     public static void main(String argv[]) throws Exception {
     	
