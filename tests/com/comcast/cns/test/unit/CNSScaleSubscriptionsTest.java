@@ -18,7 +18,7 @@ import com.comcast.cmb.test.tools.CMBAWSBaseTest;
 
 public class CNSScaleSubscriptionsTest extends CMBAWSBaseTest {
 	
-    private static List<String> queueUrls = new ArrayList<String>();
+    private static List<String> queueUrls = null;
     
     @Test
     public void Create250Subscriptions() {
@@ -33,6 +33,8 @@ public class CNSScaleSubscriptionsTest extends CMBAWSBaseTest {
     private void CreateNSubscriptions(long n) {
 
     	try {
+    		
+    		queueUrls = new ArrayList<String>();
     		
     		long counter = 0;
     		long totalTime = 0;
