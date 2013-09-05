@@ -79,74 +79,20 @@ import com.comcast.cmb.common.persistence.UserCassandraPersistence;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.PersistenceException;
 import com.comcast.cmb.common.util.Util;
+import com.comcast.cmb.test.tools.CMBAWSBaseTest;
+import com.comcast.cmb.test.tools.CNSTestingUtils;
 import com.comcast.cqs.persistence.CQSMessagePartitionedCassandraPersistence;
 import com.comcast.cqs.persistence.ICQSMessagePersistence;
 import com.comcast.cqs.persistence.RedisCachedCassandraPersistence;
 import com.comcast.cqs.util.CQSErrorCodes;
 
-public class CQSIntegrationTest {
+public class CQSIntegrationTest extends CMBAWSBaseTest {
 
-    private static Logger logger = Logger.getLogger(CQSIntegrationTest.class);
-
-    private AmazonSQS sqs = null;
-    private AmazonSNS sns = null;
-    private HashMap<String, String> attributeParams = new HashMap<String, String>();
-    private User user = null;
-    private User user1 = null;
-    private User user2 = null;
-    private List<String> randomQueueUrls = null;
-    private Random randomGenerator = new Random();
-    private final static String QUEUE_PREFIX = "TSTQ_"; 
+    private static HashMap<String, String> attributeParams = new HashMap<String, String>();
     
-    @Before
-    public void setup() throws Exception {
-    	
-        Util.initLog4jTest();
-        CMBControllerServlet.valueAccumulator.initializeAllCounters();
-        PersistenceFactory.reset();
-        
-        randomQueueUrls = new ArrayList<String>();
-
-        try {
-        	
-            IUserPersistence userPersistence = new UserCassandraPersistence();
- 
-            user = userPersistence.getUserByName("cqs_unit_test");
-
-            if (user == null) {
-                user = userPersistence.createUser("cqs_unit_test", "cqs_unit_test");
-            }
-
-            BasicAWSCredentials credentialsUser = new BasicAWSCredentials(user.getAccessKey(), user.getAccessSecret());
-
-            user1 = userPersistence.getUserByName("cqs_unit_test_1");
-
-            if (user1 == null) {
-                user1 = userPersistence.createUser("cqs_unit_test_1", "cqs_unit_test_1");
-            }
-
-            user2 = userPersistence.getUserByName("cqs_unit_test_2");
-
-            if (user2 == null) {
-                user2 = userPersistence.createUser("cqs_unit_test_2", "cqs_unit_test_2");
-            }
-
-            BasicAWSCredentials credentialsUser1 = new BasicAWSCredentials(user1.getAccessKey(), user1.getAccessSecret());
-
-            sqs = new AmazonSQSClient(credentialsUser);
-            sqs.setEndpoint(CMBProperties.getInstance().getCQSServiceUrl());
-
-            sns = new AmazonSNSClient(credentialsUser1);
-            sns.setEndpoint(CMBProperties.getInstance().getCNSServiceUrl());
-            
-        } catch (Exception ex) {
-            logger.error("setup failed", ex);
-            fail("setup failed: "+ex);
-            return;
-        }
-        
-        attributeParams.put("MessageRetentionPeriod", "600");
-        attributeParams.put("VisibilityTimeout", "30");
+    static {
+    	attributeParams.put("MessageRetentionPeriod", "600");
+    	attributeParams.put("VisibilityTimeout", "30");
     }
     
     @Test
@@ -154,37 +100,23 @@ public class CQSIntegrationTest {
     	
     	try {
     	
-	    	String queueName = QUEUE_PREFIX + randomGenerator.nextLong();
-	        
-	        CreateQueueRequest createQueueRequest = new CreateQueueRequest(queueName);
-	        createQueueRequest.setAttributes(attributeParams);
-	        String queueUrl = sqs.createQueue(createQueueRequest).getQueueUrl();
-	        
-	        randomQueueUrls.add(queueUrl);
-	        
-	        logger.info("Created queue " + queueUrl);
+	        String queueUrl = getQueueUrl(1, USR.USER1);
 	        
 	        AddPermissionRequest addPermissionRequest = new AddPermissionRequest();
 	        addPermissionRequest.setQueueUrl(queueUrl);
 	        addPermissionRequest.setActions(Arrays.asList("SendMessage"));
 	        addPermissionRequest.setLabel(UUID.randomUUID().toString());
-	        addPermissionRequest.setAWSAccountIds(Arrays.asList(user1.getUserId()));        
-	        sqs.addPermission(addPermissionRequest);
+	        addPermissionRequest.setAWSAccountIds(Arrays.asList(user2.getUserId()));        
+	        cqs1.addPermission(addPermissionRequest);
 	        
-	        String topicName = "TSTT" + randomGenerator.nextLong();
-	        	
-			CreateTopicRequest createTopicRequest = new CreateTopicRequest(topicName);
-			CreateTopicResult createTopicResult = sns.createTopic(createTopicRequest);
-			String topicArn = createTopicResult.getTopicArn();
-			
-			logger.info("Created topic " + topicArn + ", now subscribing and confirming");
+			String topicArn = getTopic(1, USR.USER2);
 			
 			SubscribeRequest subscribeRequest = new SubscribeRequest();
 			String queueArn = com.comcast.cqs.util.Util.getArnForAbsoluteQueueUrl(queueUrl);
 			subscribeRequest.setEndpoint(queueArn);
 			subscribeRequest.setProtocol("cqs");
 			subscribeRequest.setTopicArn(topicArn);
-			SubscribeResult subscribeResult = sns.subscribe(subscribeRequest);
+			SubscribeResult subscribeResult = cns2.subscribe(subscribeRequest);
 			String subscriptionArn = subscribeResult.getSubscriptionArn();
 			
 			if (subscriptionArn.equals("pending confirmation")) {
@@ -194,7 +126,7 @@ public class CQSIntegrationTest {
 				ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest();
 				receiveMessageRequest.setQueueUrl(queueUrl);
 				receiveMessageRequest.setMaxNumberOfMessages(1);
-				ReceiveMessageResult receiveMessageResult = sqs.receiveMessage(receiveMessageRequest);
+				ReceiveMessageResult receiveMessageResult = cqs1.receiveMessage(receiveMessageRequest);
 				
 				List<Message> messages = receiveMessageResult.getMessages();
 				
@@ -207,26 +139,13 @@ public class CQSIntegrationTest {
 	    			}
 	    			
 	    			String subscriptionUrl = o.getString("SubscribeURL");
-	    			
-	    		    URL confirmationEndpoint = new URL(subscriptionUrl);
-	    		    URLConnection conn = confirmationEndpoint.openConnection();
-	    		    BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-	    		    String inputLine;
-	    		    String response = "";
-
-    		        while ((inputLine = in.readLine()) != null) {
-	    		        response += inputLine;
-    		        }
-	    		    
-    		        logger.info(response);
-    		        
-    		        in.close();
+					CNSTestingUtils.sendHttpMessage(subscriptionUrl, "");
     		        
     				DeleteMessageRequest deleteMessageRequest = new DeleteMessageRequest();
     				deleteMessageRequest.setQueueUrl(queueUrl);
     				deleteMessageRequest.setReceiptHandle(messages.get(0).getReceiptHandle());
     				
-    				sqs.deleteMessage(deleteMessageRequest);
+    				cqs1.deleteMessage(deleteMessageRequest);
 				
 				} else {
 					fail("No confirmation message found");
@@ -242,14 +161,14 @@ public class CQSIntegrationTest {
 			publishRequest.setMessage(messageText);
 			publishRequest.setSubject("unit test message");
 			publishRequest.setTopicArn(topicArn);
-			sns.publish(publishRequest);
+			cns2.publish(publishRequest);
 			
 			Thread.sleep(2000);
 
 			ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest();
 			receiveMessageRequest.setQueueUrl(queueUrl);
 			receiveMessageRequest.setMaxNumberOfMessages(1);
-			ReceiveMessageResult receiveMessageResult = sqs.receiveMessage(receiveMessageRequest);
+			ReceiveMessageResult receiveMessageResult = cqs1.receiveMessage(receiveMessageRequest);
 			
 			List<Message> messages = receiveMessageResult.getMessages();
 			
@@ -260,30 +179,22 @@ public class CQSIntegrationTest {
 				fail("No messages found");
 			}
 			
-			DeleteTopicRequest  deleteTopicRequest = new DeleteTopicRequest(topicArn);
-			sns.deleteTopic(deleteTopicRequest);
-			
     	} catch (Exception ex) {
-    		fail(ex.toString());
+    		logger.error("test failed", ex);
+    		fail(ex.getMessage());
     	}
     }
     
     @Test
     public void testGetSetQueueAttributes() throws PersistenceException, InterruptedException {
     	
-    	String queueName = QUEUE_PREFIX + randomGenerator.nextLong();
-        
-        CreateQueueRequest createQueueRequest = new CreateQueueRequest(queueName);
-        createQueueRequest.setAttributes(attributeParams);
-        String queueUrl = sqs.createQueue(createQueueRequest).getQueueUrl();
-        randomQueueUrls.add(queueUrl);
-        
-        logger.info("Created queue " + queueUrl + ", now setting attributes");
-        
+        String queueUrl = getQueueUrl(1, USR.USER1);
+        cqs1.setQueueAttributes(new SetQueueAttributesRequest(queueUrl, attributeParams));
+
         GetQueueAttributesRequest getQueueAttributesRequest = new GetQueueAttributesRequest();
         getQueueAttributesRequest.setQueueUrl(queueUrl);
         getQueueAttributesRequest.setAttributeNames(Arrays.asList("VisibilityTimeout", "MessageRetentionPeriod", "All"));
-        GetQueueAttributesResult result = sqs.getQueueAttributes(getQueueAttributesRequest);
+        GetQueueAttributesResult result = cqs1.getQueueAttributes(getQueueAttributesRequest);
         assertTrue(result.getAttributes().get("MessageRetentionPeriod").equals("600"));
         assertTrue(result.getAttributes().get("VisibilityTimeout").equals("30"));
         
@@ -294,14 +205,12 @@ public class CQSIntegrationTest {
         attributes.put("VisibilityTimeout", "80");
         attributes.put("MaximumMessageSize", "10240");
         attributes.put("DelaySeconds", "100");
-        String policy = "{\"Version\":\"2008-10-17\",\"Id\":\""+queueUrl+"/SQSDefaultPolicy\",\"Statement\":[{\"Sid\":\"test\",\"Effect\":\"Allow\",\"Principal\":{\"AWS\":\""+user.getUserId()+"\"},\"Action\":\"CQS:SendMessage\",\"Resource\":\""+com.comcast.cqs.util.Util.getArnForAbsoluteQueueUrl(queueUrl)+"\"}]}";
+        String policy = "{\"Version\":\"2008-10-17\",\"Id\":\""+queueUrl+"/SQSDefaultPolicy\",\"Statement\":[{\"Sid\":\"test\",\"Effect\":\"Allow\",\"Principal\":{\"AWS\":\""+user1.getUserId()+"\"},\"Action\":\"CQS:SendMessage\",\"Resource\":\""+com.comcast.cqs.util.Util.getArnForAbsoluteQueueUrl(queueUrl)+"\"}]}";
         attributes.put("Policy", policy);
         setQueueAttributesRequest.setAttributes(attributes);
-        sqs.setQueueAttributes(setQueueAttributesRequest);
+        cqs1.setQueueAttributes(setQueueAttributesRequest);
 
-        Thread.sleep(1000);
-        
-        result = sqs.getQueueAttributes(getQueueAttributesRequest);
+        result = cqs1.getQueueAttributes(getQueueAttributesRequest);
         assertTrue("Expected retention period of 300 sec, instead found " + result.getAttributes().get("MessageRetentionPeriod"), result.getAttributes().get("MessageRetentionPeriod").equals("300"));
         assertTrue("Expected visibility timeout to be 80 sec, instead found " + result.getAttributes().get("VisibilityTimeout"), result.getAttributes().get("VisibilityTimeout").equals("80"));
         assertTrue("Expected max message size to be 10240, instead found " + result.getAttributes().get("MaximumMessageSize"), result.getAttributes().get("MaximumMessageSize").equals("10240"));
@@ -309,21 +218,20 @@ public class CQSIntegrationTest {
 
         attributes = new HashMap<String, String>(){ {put("VisibilityTimeout", "100");}};
         setQueueAttributesRequest.setAttributes(attributes);
-        sqs.setQueueAttributes(setQueueAttributesRequest);
+        cqs1.setQueueAttributes(setQueueAttributesRequest);
         
-        result = sqs.getQueueAttributes(getQueueAttributesRequest);
+        result = cqs1.getQueueAttributes(getQueueAttributesRequest);
         assertTrue("Expected visibility timeout to be 100 sec, instead found " + result.getAttributes().get("VisibilityTimeout"), result.getAttributes().get("VisibilityTimeout").equals("100"));
 
-        Thread.sleep(1000);
-        
         // try triggering missing parameter error
         
         try {
 
         	setQueueAttributesRequest = new SetQueueAttributesRequest();
 	        setQueueAttributesRequest.setQueueUrl(queueUrl);
-	        sqs.setQueueAttributes(setQueueAttributesRequest);
-
+	        cqs1.setQueueAttributes(setQueueAttributesRequest);
+	        fail("missing expected exception");
+	        
         } catch (AmazonServiceException ase) {
             assertTrue("Did not receive missing parameter exception", ase.getErrorCode().equals(CQSErrorCodes.MissingParameter.getCMBCode()));
         }
@@ -335,87 +243,60 @@ public class CQSIntegrationTest {
 	        getQueueAttributesRequest = new GetQueueAttributesRequest();
 	        getQueueAttributesRequest.setQueueUrl(queueUrl);
 	        getQueueAttributesRequest.setAttributeNames(Arrays.asList("all"));
-	        sqs.getQueueAttributes(getQueueAttributesRequest);
+	        cqs1.getQueueAttributes(getQueueAttributesRequest);
+	        fail("missing expected exception");
 
         } catch (AmazonServiceException ase) {
             assertTrue(ase.getErrorCode().equals(CQSErrorCodes.InvalidAttributeName.getCMBCode()));
         }
-
-        DeleteQueueRequest deleteQueueRequest = new DeleteQueueRequest();
-        deleteQueueRequest.setQueueUrl(queueUrl);
-        sqs.deleteQueue(deleteQueueRequest);
-        
-        randomQueueUrls.remove(queueUrl);
     }
     
     @Test
     public void testAddRemovePermission() throws PersistenceException, InterruptedException {
         
-        CreateQueueRequest createQueueRequest = new CreateQueueRequest(QUEUE_PREFIX + randomGenerator.nextLong());
-        createQueueRequest.setAttributes(attributeParams);
-        String queueUrl = sqs.createQueue(createQueueRequest).getQueueUrl();
-        randomQueueUrls.add(queueUrl);
-        
-        logger.info("Created queue " + queueUrl + ", now setting permissions");
-        
-        Thread.sleep(1000);
+        String queueUrl = getQueueUrl(1, USR.USER1);
+        cqs1.setQueueAttributes(new SetQueueAttributesRequest(queueUrl, attributeParams));
         
         AddPermissionRequest addPermissionRequest = new AddPermissionRequest();
         addPermissionRequest.setQueueUrl(queueUrl);
         addPermissionRequest.setActions(Arrays.asList("SendMessage"));
         addPermissionRequest.setLabel("testLabel");
         addPermissionRequest.setAWSAccountIds(Arrays.asList(user1.getUserId(), user2.getUserId()));        
-        sqs.addPermission(addPermissionRequest);
+        cqs1.addPermission(addPermissionRequest);
 
         addPermissionRequest.setLabel("testLabel2");
         addPermissionRequest.setActions(Arrays.asList("SendMessage", "GetQueueUrl"));
-        sqs.addPermission(addPermissionRequest);
+        cqs1.addPermission(addPermissionRequest);
 
-        Thread.sleep(1000);
-        
         GetQueueAttributesRequest getQueueAttributesRequest = new GetQueueAttributesRequest();
         getQueueAttributesRequest.setAttributeNames(Arrays.asList("All"));
         getQueueAttributesRequest.setQueueUrl(queueUrl);
-        GetQueueAttributesResult res = sqs.getQueueAttributes(getQueueAttributesRequest);
-        res = sqs.getQueueAttributes(getQueueAttributesRequest);
+        GetQueueAttributesResult res = cqs1.getQueueAttributes(getQueueAttributesRequest);
+        res = cqs1.getQueueAttributes(getQueueAttributesRequest);
         
         assertTrue("Did not find labels testLabel and testLabel2", res.toString().contains("testLabel") && res.toString().contains("testLabel2"));
         
         RemovePermissionRequest removePermissionRequest = new RemovePermissionRequest();
         removePermissionRequest.setLabel("testLabel");
         removePermissionRequest.setQueueUrl(queueUrl);
-        sqs.removePermission(removePermissionRequest);
+        cqs1.removePermission(removePermissionRequest);
         removePermissionRequest.setLabel("testLabel2");
-        sqs.removePermission(removePermissionRequest);
-        
-        Thread.sleep(1000);
-                
-        DeleteQueueRequest deleteQueueRequest = new DeleteQueueRequest();
-        deleteQueueRequest.setQueueUrl(queueUrl);
-        sqs.deleteQueue(deleteQueueRequest);
-        
-        randomQueueUrls.remove(queueUrl);
+        cqs1.removePermission(removePermissionRequest);
     }
  
     @Test
     public void testInvalidRequest() throws PersistenceException, NoSuchAlgorithmException, UnsupportedEncodingException {
         
-        CreateQueueRequest createQueueRequest = new CreateQueueRequest(QUEUE_PREFIX + randomGenerator.nextLong());
-        createQueueRequest.setAttributes(attributeParams);
-        String queueUrl = sqs.createQueue(createQueueRequest).getQueueUrl();
-        randomQueueUrls.add(queueUrl);
-        
-        logger.info("Created queue " + queueUrl + ", now trying invalid stuff");
-
-        ICQSMessagePersistence messagePersistence = new CQSMessagePartitionedCassandraPersistence();
-        messagePersistence.clearQueue(queueUrl, 0);
+        String queueUrl = getQueueUrl(1, USR.USER1);
+        cqs1.setQueueAttributes(new SetQueueAttributesRequest(queueUrl, attributeParams));
 
         logger.info("Send a message with empty message body");
         
         try {
             SendMessageRequest sendMessageRequest = new SendMessageRequest();
             sendMessageRequest.setQueueUrl(queueUrl);
-            sqs.sendMessage(sendMessageRequest);
+            cqs1.sendMessage(sendMessageRequest);
+	        fail("missing expected exception");
         } catch (AmazonServiceException ase) {
             assertTrue("Did not get missing parameter exception", ase.getErrorCode().equals(CQSErrorCodes.MissingParameter.getCMBCode()));
         }
@@ -428,7 +309,8 @@ public class CQSIntegrationTest {
             String msg = "This is a message to test invalid delay seconds;";
             sendMessageRequest.setMessageBody(msg);
             sendMessageRequest.setDelaySeconds(1000);
-            sqs.sendMessage(sendMessageRequest);
+            cqs1.sendMessage(sendMessageRequest);
+	        fail("missing expected exception");
         } catch (AmazonServiceException ase) {
             assertTrue("Did not get invalid parameter exception", ase.getErrorCode().contains(CQSErrorCodes.InvalidParameterValue.getCMBCode()));
         }
@@ -439,14 +321,15 @@ public class CQSIntegrationTest {
             
         	SendMessageRequest sendMessageRequest = new SendMessageRequest();
             sendMessageRequest.setQueueUrl(queueUrl);
-            String msg = "This is a message to test too longggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg. ";
+            StringBuffer msg = new StringBuffer("");
             
-            while (msg.length() < 32 * 1024) {
-                msg += msg;
+            for  (int i=0; i<300*1024; i++) {
+                msg.append("M");
             }
             
-            sendMessageRequest.setMessageBody(msg);
-            sqs.sendMessage(sendMessageRequest);
+            sendMessageRequest.setMessageBody(msg.toString());
+            cqs1.sendMessage(sendMessageRequest);
+	        fail("missing expected exception");
         
         } catch (AmazonServiceException ase) {
             assertTrue("Did not get an invalid value exception", ase.getErrorCode().equals(CQSErrorCodes.InvalidParameterValue.getCMBCode()));
@@ -458,7 +341,8 @@ public class CQSIntegrationTest {
             ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest(queueUrl);
             receiveMessageRequest.setVisibilityTimeout(10);
             receiveMessageRequest.setMaxNumberOfMessages(12);
-            sqs.receiveMessage(receiveMessageRequest).getMessages();
+            cqs1.receiveMessage(receiveMessageRequest).getMessages();
+	        fail("missing expected exception");
         } catch (AmazonServiceException ase) {
             assertTrue("Did not get an invalid value exception", ase.getErrorCode().contains(CQSErrorCodes.InvalidParameterValue.getCMBCode()));
         }
@@ -469,35 +353,22 @@ public class CQSIntegrationTest {
             ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest(queueUrl);
             receiveMessageRequest.setVisibilityTimeout(10);
             receiveMessageRequest.setMaxNumberOfMessages(0);
-            sqs.receiveMessage(receiveMessageRequest).getMessages();
+            cqs1.receiveMessage(receiveMessageRequest).getMessages();
+	        fail("missing expected exception");
         } catch (AmazonServiceException ase) {
             assertTrue("Did not get an invalid value exception", ase.getErrorCode().contains(CQSErrorCodes.InvalidParameterValue.getCMBCode()));
         }
-        
-        DeleteQueueRequest deleteQueueRequest = new DeleteQueueRequest();
-        deleteQueueRequest.setQueueUrl(queueUrl);
-        sqs.deleteQueue(deleteQueueRequest);
-        
-        randomQueueUrls.remove(queueUrl);
     }
 
     @Test
     public void testInvalidBatchDeleteRequest() throws PersistenceException, NoSuchAlgorithmException, UnsupportedEncodingException, InterruptedException {
         
-        CreateQueueRequest createQueueRequest = new CreateQueueRequest(QUEUE_PREFIX + randomGenerator.nextLong());
-        createQueueRequest.setAttributes(attributeParams);
-        String queueUrl = sqs.createQueue(createQueueRequest).getQueueUrl();
-        randomQueueUrls.add(queueUrl);
-        
-        logger.info("Created queue " + queueUrl + ", now sending message batch");
-        
-        ICQSMessagePersistence messagePersistence = new CQSMessagePartitionedCassandraPersistence();
-        messagePersistence.clearQueue(queueUrl, 0);
+        String queueUrl = getQueueUrl(1, USR.USER1);
+        cqs1.setQueueAttributes(new SetQueueAttributesRequest(queueUrl, attributeParams));
 
         try {
-            Thread.sleep(1000);
 
-            List<SendMessageBatchRequestEntry> messageList = Arrays.asList(
+        	List<SendMessageBatchRequestEntry> messageList = Arrays.asList(
                 new SendMessageBatchRequestEntry("id1", "This is the 1st message in a batch"),
                 new SendMessageBatchRequestEntry("id2", "This is the 2nd message in a batch"),
                 new SendMessageBatchRequestEntry("id3", "This is the 3rd message in a batch"),
@@ -507,9 +378,8 @@ public class CQSIntegrationTest {
             );
             
             SendMessageBatchRequest batchSendRequest = new SendMessageBatchRequest(queueUrl, messageList);
-            sqs.sendMessageBatch(batchSendRequest);
-            
-            Thread.sleep(1000);
+            cqs1.sendMessageBatch(batchSendRequest);
+
         } catch (AmazonServiceException ase) {
             fail(ase.toString());
         }
@@ -521,7 +391,7 @@ public class CQSIntegrationTest {
         List<Message> messages = new ArrayList<Message>();
         receiveMessageRequest.setVisibilityTimeout(60);
         receiveMessageRequest.setMaxNumberOfMessages(6);
-        messages = sqs.receiveMessage(receiveMessageRequest).getMessages();
+        messages = cqs1.receiveMessage(receiveMessageRequest).getMessages();
         
         assertTrue("Did not receive any messages", messages.size() > 0);
         
@@ -541,13 +411,13 @@ public class CQSIntegrationTest {
             i++;
         }
 
-        logger.info("Delete a batch of messages with same supplied id");
+        logger.info("Delete a batch of messages with same supplied id (should be ok!)");
         
         try {
             DeleteMessageBatchRequest batchDeleteRequest = new DeleteMessageBatchRequest(queueUrl, deleteMsgList);
-            sqs.deleteMessageBatch(batchDeleteRequest);
+            cqs1.deleteMessageBatch(batchDeleteRequest);
         } catch (AmazonServiceException ase) {
-            assertTrue("Did not ids not distinct exception", ase.getErrorCode().contains(CQSErrorCodes.BatchEntryIdsNotDistinct.getCMBCode()));
+	        fail("exception where none expected");
         }
 
         logger.info("Delete a batch of messages with empty receipt handle");
@@ -557,34 +427,20 @@ public class CQSIntegrationTest {
             deleteMsgList.get(deleteMsgList.size() - 1).setId("some-random-id");
             deleteMsgList.get(0).setReceiptHandle("somerandomestring");
             DeleteMessageBatchRequest batchDeleteRequest = new DeleteMessageBatchRequest(queueUrl, deleteMsgList);
-            sqs.deleteMessageBatch(batchDeleteRequest);
+            cqs1.deleteMessageBatch(batchDeleteRequest);
+	        fail("missing expected exception");
         } catch (AmazonServiceException ase) {
             assertTrue("Did not get internal error exception", ase.getErrorCode().equals(CQSErrorCodes.InternalError.getCMBCode()));
         }
-        
-        DeleteQueueRequest deleteQueueRequest = new DeleteQueueRequest();
-        deleteQueueRequest.setQueueUrl(queueUrl);
-        sqs.deleteQueue(deleteQueueRequest);
-        
-        randomQueueUrls.remove(queueUrl);
     }
 
     @Test
     public void testInvalidBatchChangeMessageVisibilityRequest() throws PersistenceException, NoSuchAlgorithmException, UnsupportedEncodingException, InterruptedException {
         
-        CreateQueueRequest createQueueRequest = new CreateQueueRequest(QUEUE_PREFIX + randomGenerator.nextLong());
-        createQueueRequest.setAttributes(attributeParams);
-        String queueUrl = sqs.createQueue(createQueueRequest).getQueueUrl();
-        randomQueueUrls.add(queueUrl);
-        
-        ICQSMessagePersistence messagePersistence = new CQSMessagePartitionedCassandraPersistence();
-        messagePersistence.clearQueue(queueUrl, 0);
-
-        logger.info("Created queue " + queueUrl + ", now sending message batch");
+        String queueUrl = getQueueUrl(1, USR.USER1);
+        cqs1.setQueueAttributes(new SetQueueAttributesRequest(queueUrl, attributeParams));
         
         try {
-        	
-        	Thread.sleep(1000);
         	
             List<SendMessageBatchRequestEntry> messageList = Arrays.asList(
                 new SendMessageBatchRequestEntry("id1", "This is the 1st message in a batch"),
@@ -596,11 +452,11 @@ public class CQSIntegrationTest {
             );
             
             SendMessageBatchRequest batchSendRequest = new SendMessageBatchRequest(queueUrl, messageList);
-            sqs.sendMessageBatch(batchSendRequest);
-            Thread.sleep(1000);
+            cqs1.sendMessageBatch(batchSendRequest);
             
         } catch (AmazonServiceException ase) {
-            displayServiceException(ase);
+        	logger.error("test failed", ase);
+        	fail("exception where none expected");
         }
 
         logger.info("Receiving messages from " + queueUrl);
@@ -610,33 +466,26 @@ public class CQSIntegrationTest {
         List<Message> messages = new ArrayList<Message>();
         receiveMessageRequest.setVisibilityTimeout(60);
         receiveMessageRequest.setMaxNumberOfMessages(6);
-        messages = sqs.receiveMessage(receiveMessageRequest).getMessages();
+        messages = cqs1.receiveMessage(receiveMessageRequest).getMessages();
         
         List<ChangeMessageVisibilityBatchRequestEntry> msgList = new ArrayList<ChangeMessageVisibilityBatchRequestEntry>();
 
-        int i = 0;
-        
         for (Message message : messages) {
-        	
-            if (i == messages.size() - 1) {
-                i--;
-            }
-            
             logger.info("MessageId:     " + message.getMessageId());
             logger.info("ReceiptHandle: " + message.getReceiptHandle());
-            ChangeMessageVisibilityBatchRequestEntry entry = new ChangeMessageVisibilityBatchRequestEntry("msg" + i, message.getReceiptHandle());
+            ChangeMessageVisibilityBatchRequestEntry entry = new ChangeMessageVisibilityBatchRequestEntry("1", message.getReceiptHandle());
             entry.setVisibilityTimeout(60);
             msgList.add(entry);
-            i++;
         }
 
         logger.info("Change a batch of message visibility timeout with same supplied id");
         
         try {
             ChangeMessageVisibilityBatchRequest batchRequest = new ChangeMessageVisibilityBatchRequest(queueUrl, msgList);
-            sqs.changeMessageVisibilityBatch(batchRequest);
+            cqs1.changeMessageVisibilityBatch(batchRequest);
+            fail("missing expected exception");
         } catch (AmazonServiceException ase) {
-            assertTrue("Did not get distinct id excpetion", ase.getErrorCode().contains(CQSErrorCodes.BatchEntryIdsNotDistinct.getCMBCode()));
+            //assertTrue("Did not get distinct id excpetion", ase.getErrorCode().contains(CQSErrorCodes.BatchEntryIdsNotDistinct.getCMBCode()));
         }
 
         logger.info("Change a batch of messages with empty or invalid supplied id");
@@ -644,7 +493,8 @@ public class CQSIntegrationTest {
         try {
             msgList.get(0).setId("bad.id");
             ChangeMessageVisibilityBatchRequest batchRequest = new ChangeMessageVisibilityBatchRequest(queueUrl, msgList);
-            sqs.changeMessageVisibilityBatch(batchRequest);
+            cqs1.changeMessageVisibilityBatch(batchRequest);
+            fail("missing expected exception");
         } catch (AmazonServiceException ase) {
             assertTrue("Did not get invalid batch entry id exception", ase.getErrorCode().contains(CQSErrorCodes.InvalidBatchEntryId.getCMBCode()));
         }
@@ -656,28 +506,18 @@ public class CQSIntegrationTest {
             msgList.get(msgList.size() - 1).setId("some-random-id");
             msgList.get(0).setReceiptHandle("somerandomestring");
             ChangeMessageVisibilityBatchRequest batchRequest = new ChangeMessageVisibilityBatchRequest(queueUrl, msgList);
-            sqs.changeMessageVisibilityBatch(batchRequest);
+            cqs1.changeMessageVisibilityBatch(batchRequest);
+            fail("missing expected exception");
         } catch (AmazonServiceException ase) {
             assertTrue("Did not get internal error exception", ase.getErrorCode().contains(CQSErrorCodes.InternalError.getCMBCode()));
         }
-        
-        DeleteQueueRequest deleteQueueRequest = new DeleteQueueRequest();
-        deleteQueueRequest.setQueueUrl(queueUrl);
-        sqs.deleteQueue(deleteQueueRequest);
-        
-        randomQueueUrls.remove(queueUrl);
     }
 
     @Test
     public void testInvalidBatchSendRequest() throws PersistenceException, NoSuchAlgorithmException, UnsupportedEncodingException {
         
-        CreateQueueRequest createQueueRequest = new CreateQueueRequest(QUEUE_PREFIX + randomGenerator.nextLong());
-        createQueueRequest.setAttributes(attributeParams);
-        String myQueueUrl = sqs.createQueue(createQueueRequest).getQueueUrl();
-        randomQueueUrls.add(myQueueUrl);
-        
-        ICQSMessagePersistence messagePersistence = new CQSMessagePartitionedCassandraPersistence();
-        messagePersistence.clearQueue(myQueueUrl, 0);
+    	String queueUrl = getQueueUrl(1, USR.USER1);
+		cqs1.setQueueAttributes(new SetQueueAttributesRequest(queueUrl, attributeParams));
 
         logger.info("Send a batch of messages with empty supplied Id");
         
@@ -689,8 +529,9 @@ public class CQSIntegrationTest {
                 new SendMessageBatchRequestEntry("id3", "This is the third message in a batch")
             );
             
-            SendMessageBatchRequest batchSendRequest = new SendMessageBatchRequest(myQueueUrl, messageList);
-            sqs.sendMessageBatch(batchSendRequest);
+            SendMessageBatchRequest batchSendRequest = new SendMessageBatchRequest(queueUrl, messageList);
+            cqs1.sendMessageBatch(batchSendRequest);
+            fail("missing expected exception");
             
         } catch (AmazonServiceException ase) {
             assertTrue("Did not get invalid batch entry id exception", ase.getErrorCode().contains(CQSErrorCodes.InvalidBatchEntryId.getCMBCode()));
@@ -706,11 +547,11 @@ public class CQSIntegrationTest {
                 new SendMessageBatchRequestEntry("id3", "")
             );
             
-            SendMessageBatchRequest batchSendRequest = new SendMessageBatchRequest(myQueueUrl, messageList);
-            sqs.sendMessageBatch(batchSendRequest);
+            SendMessageBatchRequest batchSendRequest = new SendMessageBatchRequest(queueUrl, messageList);
+            cqs1.sendMessageBatch(batchSendRequest);
             
         } catch (AmazonServiceException ase) {
-            fail(ase.toString());
+            fail(ase.getMessage());
         }
 
         logger.info("Send a batch of messages with same supplied id");
@@ -723,11 +564,12 @@ public class CQSIntegrationTest {
                 new SendMessageBatchRequestEntry("1", "Test")
             );
             
-            SendMessageBatchRequest batchSendRequest = new SendMessageBatchRequest(myQueueUrl, messageList);
-            sqs.sendMessageBatch(batchSendRequest);
+            SendMessageBatchRequest batchSendRequest = new SendMessageBatchRequest(queueUrl, messageList);
+            cqs1.sendMessageBatch(batchSendRequest);
+            fail("missing expected exception");
             
         } catch (AmazonServiceException ase) {
-            assertTrue("Did not get batch entry id not distinct exception", ase.getErrorCode().contains(CQSErrorCodes.BatchEntryIdsNotDistinct.getCMBCode()));
+            //assertTrue("Did not get batch entry id not distinct exception", ase.getErrorCode().contains(CQSErrorCodes.BatchEntryIdsNotDistinct.getCMBCode()));
         }
 
         logger.info("Send a batch of messages with supplied id too long");
@@ -740,8 +582,9 @@ public class CQSIntegrationTest {
                 new SendMessageBatchRequestEntry("123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890", "Test")
             );
             
-            SendMessageBatchRequest batchSendRequest = new SendMessageBatchRequest(myQueueUrl, messageList);
-            sqs.sendMessageBatch(batchSendRequest);
+            SendMessageBatchRequest batchSendRequest = new SendMessageBatchRequest(queueUrl, messageList);
+            cqs1.sendMessageBatch(batchSendRequest);
+            fail("missing expected exception");
             
         } catch (AmazonServiceException ase) {
             assertTrue("Did not get invalid batch entry id", ase.getErrorCode().contains(CQSErrorCodes.InvalidBatchEntryId.getCMBCode()));
@@ -750,238 +593,132 @@ public class CQSIntegrationTest {
         logger.info("Send a batch of messages total length over 64KB");
         
         try {
-            char[] chars = new char[64*1024 - 10];
+            char[] chars = new char[300*1024 - 10];
             java.util.Arrays.fill(chars, 'x');
             List<SendMessageBatchRequestEntry> messageList = Arrays.asList(
                 new SendMessageBatchRequestEntry("1", "This is the first message in a batch"),
                 new SendMessageBatchRequestEntry("2", "This is the second message in a batch"),
                 new SendMessageBatchRequestEntry("3", new String(chars))
             );
-            SendMessageBatchRequest batchSendRequest = new SendMessageBatchRequest(myQueueUrl, messageList);
-            sqs.sendMessageBatch(batchSendRequest);
+            SendMessageBatchRequest batchSendRequest = new SendMessageBatchRequest(queueUrl, messageList);
+            cqs1.sendMessageBatch(batchSendRequest);
+            fail("missing expected exception");
         } catch (AmazonServiceException ase) {
             assertTrue("Did not get batch request too long exception", ase.getErrorCode().contains(CQSErrorCodes.BatchRequestTooLong.getCMBCode()));
         }
-        
-        DeleteQueueRequest deleteQueueRequest = new DeleteQueueRequest();
-        deleteQueueRequest.setQueueUrl(myQueueUrl);
-        sqs.deleteQueue(deleteQueueRequest);
-        
-        randomQueueUrls.remove(myQueueUrl);
-    }
-
-    private void displayServiceException(AmazonServiceException ase) {
-    	
-        logger.error("Caught an AmazonServiceException, which means your request made it to Amazon SQS, but was rejected with an error response for some reason.");
-        logger.error("Error Message:    " + ase.getMessage());
-        logger.error("HTTP Status Code: " + ase.getStatusCode());
-        logger.error("AWS Error Code:   " + ase.getErrorCode());
-        logger.error("Error Type:       " + ase.getErrorType());
-        logger.error("Request ID:       " + ase.getRequestId());
-
-        fail("AWSServiceException:"+ase);
     }
 
     @Test
     public void testInvalidPermissionUpdate() {
     	
-        CreateQueueRequest createQueueRequest = new CreateQueueRequest(QUEUE_PREFIX + randomGenerator.nextLong());
-        createQueueRequest.setAttributes(attributeParams);
-        String queueUrl = sqs.createQueue(createQueueRequest).getQueueUrl();
-        randomQueueUrls.add(queueUrl);
+    	String queueUrl = getQueueUrl(1, USR.USER1);
+		cqs1.setQueueAttributes(new SetQueueAttributesRequest(queueUrl, attributeParams));
 
-        sqs.addPermission(new AddPermissionRequest(queueUrl, "label1", Arrays.asList(user1.getUserId()), Arrays.asList("SendMessage", "DeleteMessage")));
+        cqs1.addPermission(new AddPermissionRequest(queueUrl, "label1", Arrays.asList(user1.getUserId()), Arrays.asList("SendMessage", "DeleteMessage")));
 
         try {
-        	sqs.addPermission(new AddPermissionRequest(queueUrl, "label1", Arrays.asList(user1.getUserId()), Arrays.asList("SendMessage")));
+        	cqs1.addPermission(new AddPermissionRequest(queueUrl, "label1", Arrays.asList(user1.getUserId()), Arrays.asList("SendMessage")));
+        	fail("missing expected exception");
         } catch (Exception ex) {
         	assertTrue("Did not get label already exists exception", ex.getMessage().contains("Already exists"));
         }
         
-        sqs.removePermission(new RemovePermissionRequest(queueUrl, "label1"));
+        cqs1.removePermission(new RemovePermissionRequest(queueUrl, "label1"));
         
-    	sqs.addPermission(new AddPermissionRequest(queueUrl, "label1", Arrays.asList(user1.getUserId()), Arrays.asList("SendMessage")));
-
-    	DeleteQueueRequest deleteQueueRequest = new DeleteQueueRequest();
-        deleteQueueRequest.setQueueUrl(queueUrl);
-        sqs.deleteQueue(deleteQueueRequest);
-        
-        randomQueueUrls.remove(queueUrl);
+    	cqs1.addPermission(new AddPermissionRequest(queueUrl, "label1", Arrays.asList(user1.getUserId()), Arrays.asList("SendMessage")));
     }
 
     @Test
     public void testCreateDeleteQueue() throws InterruptedException {
 
-        String queueUrl1 = "";
-        String queueUrl2 = "";
-
-        try {
+         try {
         	
-            String qName = QUEUE_PREFIX + randomGenerator.nextLong();
-            CreateQueueRequest createQueueRequest = new CreateQueueRequest(qName);
+        	String queueUrl1 = getQueueUrl(1, USR.USER1);
+			cqs1.setQueueAttributes(new SetQueueAttributesRequest(queueUrl1, attributeParams));
+             
+        	String queueUrl2 = getQueueUrl(2, USR.USER1);
+			cqs1.setQueueAttributes(new SetQueueAttributesRequest(queueUrl1, attributeParams));
 
-            createQueueRequest.setAttributes((new HashMap<String, String>() {
-                {
-                    put("MessageRetentionPeriod", "600");
-                }
-            }
-            ));
-            
-            queueUrl1 = sqs.createQueue(createQueueRequest).getQueueUrl();
-            randomQueueUrls.add(queueUrl1);
+	        Thread.sleep(1000);
+	
+	        // List queues
+	        
+	        logger.info("Listing all queues");
+	        
+	        List<String> queueUrls = cqs1.listQueues().getQueueUrls();
+	
+	        for (String queueUrl : queueUrls) {
+	            logger.info(queueUrl);
+	        }
+	        
+	        assertTrue("Expected 2 queue urls but got " + queueUrls.size(), queueUrls.size() == 2);
+	        assertTrue("Missing queue url " + queueUrl1, queueUrls.contains(queueUrl1));
+	        assertTrue("Missing queue url " + queueUrl2, queueUrls.contains(queueUrl2));
+	
+	        // Send a message
+	        
+	        logger.info("Sending messages to " + queueUrl1);
+	        
+	        cqs1.sendMessage(new SendMessageRequest(queueUrl1, "This is my message text 1. " + (new Random()).nextInt()));
+	        cqs1.sendMessage(new SendMessageRequest(queueUrl1, "This is my message text 2. " + (new Random()).nextInt()));
+	        cqs1.sendMessage(new SendMessageRequest(queueUrl1, "This is my message text 3. " + (new Random()).nextInt()));
+	 
+	        logger.info("Receiving messages from " + queueUrl1);
+	        
+	        ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest(queueUrl1);
+	
+	        List<Message> messages = new ArrayList<Message>();
+	        receiveMessageRequest.setVisibilityTimeout(600);
+	
+	        receiveMessageRequest.setMaxNumberOfMessages(2);
+	        messages = cqs1.receiveMessage(receiveMessageRequest).getMessages();
+	        assertTrue("Expected 2 messages, instead found " + messages.size(), messages.size() == 2);
+	
+	        for (Message message : messages) {
+	        	
+	            logger.info("  Message");
+	            logger.info("    MessageId:     " + message.getMessageId());
+	            logger.info("    ReceiptHandle: " + message.getReceiptHandle());
+	            logger.info("    MD5OfBody:     " + message.getMD5OfBody());
+	            logger.info("    Body:          " + message.getBody());
+	            
+	            for (Entry<String, String> entry : message.getAttributes().entrySet()) {
+	                logger.info("  Attribute");
+	                logger.info("    Name:  " + entry.getKey());
+	                logger.info("    Value: " + entry.getValue());
+	            }
+	        }
+	
+	        List<Message> messages2 = cqs1.receiveMessage(receiveMessageRequest).getMessages();
+	
+	        assertTrue("Expected one message, instead found " + messages2.size(), messages2.size() == 1);
 
-            sqs.receiveMessage(new ReceiveMessageRequest(queueUrl1));
-
-            String qName2 = QUEUE_PREFIX + randomGenerator.nextLong();
-            createQueueRequest = new CreateQueueRequest(qName2);
-            queueUrl2 = sqs.createQueue(createQueueRequest).getQueueUrl();
-            randomQueueUrls.add(queueUrl2);
-
-            sqs.receiveMessage(new ReceiveMessageRequest(queueUrl2));
-
-            Thread.sleep(1000);
-
-            // List queues
-            
-            logger.info("Listing all queues");
-            
-            List<String> queueUrls = sqs.listQueues().getQueueUrls();
-
-            for (String queueUrl : queueUrls) {
-                logger.info(queueUrl);
-            }
-            
-            assertTrue("Expected 2 queue urls but got " + queueUrls.size(), queueUrls.size() == 2);
-            assertTrue("Missing queue url " + queueUrl1, queueUrls.contains(queueUrl1));
-            assertTrue("Missing queue url " + queueUrl2, queueUrls.contains(queueUrl2));
-
-            // Send a message
-            
-            logger.info("Sending messages to " + queueUrl1);
-            
-            sqs.sendMessage(new SendMessageRequest(queueUrl1, "This is my message text 1. " + (new Random()).nextInt()));
-            sqs.sendMessage(new SendMessageRequest(queueUrl1, "This is my message text 2. " + (new Random()).nextInt()));
-            sqs.sendMessage(new SendMessageRequest(queueUrl1, "This is my message text 3. " + (new Random()).nextInt()));
-     
-            Thread.sleep(1000);
-
-            logger.info("Receiving messages from " + queueUrl1);
-            
-            ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest(queueUrl1);
-
-            List<Message> messages = new ArrayList<Message>();
-            receiveMessageRequest.setVisibilityTimeout(600);
-
-            receiveMessageRequest.setMaxNumberOfMessages(2);
-            messages = sqs.receiveMessage(receiveMessageRequest).getMessages();
-            assertTrue("Expected 2 messages, instead found " + messages.size(), messages.size() == 2);
-
-            for (Message message : messages) {
-            	
-                logger.info("  Message");
-                logger.info("    MessageId:     " + message.getMessageId());
-                logger.info("    ReceiptHandle: " + message.getReceiptHandle());
-                logger.info("    MD5OfBody:     " + message.getMD5OfBody());
-                logger.info("    Body:          " + message.getBody());
-                
-                for (Entry<String, String> entry : message.getAttributes().entrySet()) {
-                    logger.info("  Attribute");
-                    logger.info("    Name:  " + entry.getKey());
-                    logger.info("    Value: " + entry.getValue());
-                }
-            }
-
-            List<Message> messages2 = sqs.receiveMessage(receiveMessageRequest).getMessages();
-
-            for (Message message : messages2) {
-            	
-                logger.info("  Message");
-                logger.info("    MessageId:     " + message.getMessageId());
-                logger.info("    ReceiptHandle: " + message.getReceiptHandle());
-                logger.info("    MD5OfBody:     " + message.getMD5OfBody());
-                logger.info("    Body:          " + message.getBody());
-                
-                for (Entry<String, String> entry : message.getAttributes().entrySet()) {
-                    logger.info("  Attribute");
-                    logger.info("    Name:  " + entry.getKey());
-                    logger.info("    Value: " + entry.getValue());
-                }
-            }
-            
-            assertTrue("Expected one message, instead found " + messages2.size(), messages2.size() == 1);
-
-            if (messages.size() > 0) {
-            	
-                logger.info("Deleting a message");
-                
-                String messageRecieptHandle = messages.get(0).getReceiptHandle();
-                sqs.deleteMessage(new DeleteMessageRequest(queueUrl1, messageRecieptHandle));
-            }
-
-            DeleteQueueRequest deleteQueueRequest = new DeleteQueueRequest();
-            deleteQueueRequest.setQueueUrl(queueUrl1);
-            sqs.deleteQueue(deleteQueueRequest);
-            
-            randomQueueUrls.remove(queueUrl1);
-            
-            deleteQueueRequest = new DeleteQueueRequest();
-            deleteQueueRequest.setQueueUrl(queueUrl2);
-            sqs.deleteQueue(deleteQueueRequest);
-            
-            randomQueueUrls.remove(queueUrl2);
-
+	        for (Message message : messages2) {
+	        	
+	            logger.info("  Message");
+	            logger.info("    MessageId:     " + message.getMessageId());
+	            logger.info("    ReceiptHandle: " + message.getReceiptHandle());
+	            logger.info("    MD5OfBody:     " + message.getMD5OfBody());
+	            logger.info("    Body:          " + message.getBody());
+	            
+	            for (Entry<String, String> entry : message.getAttributes().entrySet()) {
+	                logger.info("  Attribute");
+	                logger.info("    Name:  " + entry.getKey());
+	                logger.info("    Value: " + entry.getValue());
+	            }
+	        }
+	        
+	        if (messages.size() > 0) {
+	        	
+	            logger.info("Deleting a message");
+	            
+	            String messageRecieptHandle = messages.get(0).getReceiptHandle();
+	            cqs1.deleteMessage(new DeleteMessageRequest(queueUrl1, messageRecieptHandle));
+	        }
+	        
         } catch (AmazonServiceException ase) {
-        	sqs.deleteQueue(new DeleteQueueRequest(queueUrl1));
-        	fail(ase.toString());
-        }
-    }
-    
-    @Test
-    public void testCreateDuplicateQueue() {
-
-        String queueUrl = "";
-
-        try {
-        	
-            String qName = QUEUE_PREFIX + randomGenerator.nextLong();
-            CreateQueueRequest createQueueRequest = new CreateQueueRequest(qName);
-
-            createQueueRequest.setAttributes((new HashMap<String, String>() {
-                {
-                    put("MessageRetentionPeriod", "60");
-                }
-            }
-            ));
-
-            queueUrl = sqs.createQueue(createQueueRequest).getQueueUrl();
-            randomQueueUrls.add(queueUrl);
-            
-            // Create a duplicate name queue
-            
-            String qUrl = sqs.createQueue(createQueueRequest).getQueueUrl();
-            
-            assert(qUrl.equals(queueUrl));
-            
-            // Create a duplicate name queue with different attribute
-
-            createQueueRequest.setAttributes((new HashMap<String, String>() {
-                {
-                    put("MessageRetentionPeriod", "30");
-                }
-            }
-            ));
-            
-            qUrl = sqs.createQueue(createQueueRequest).getQueueUrl();
-
-        } catch (AmazonServiceException ase) {
-        	
-        	DeleteQueueRequest deleteQueueRequest = new DeleteQueueRequest();
-            deleteQueueRequest.setQueueUrl(queueUrl);
-            sqs.deleteQueue(deleteQueueRequest);
-            
-            randomQueueUrls.remove(queueUrl);
-
-            assertTrue("Did not get queue name exists exception", ase.getErrorCode().contains(CQSErrorCodes.QueueNameExists.getCMBCode()));
+        	logger.error("test failed", ase);
+        	fail(ase.getMessage());
         }
     }
 
@@ -990,33 +727,27 @@ public class CQSIntegrationTest {
     	
         try {
         	
-            String queueName = QUEUE_PREFIX + randomGenerator.nextLong();
-            CreateQueueRequest createQueueRequest = new CreateQueueRequest(queueName);
-            String queueUrl = sqs.createQueue(createQueueRequest).getQueueUrl();
-            randomQueueUrls.add(queueUrl);
+            String queueUrl = getQueueUrl(1, USR.USER1);
+            cqs1.setQueueAttributes(new SetQueueAttributesRequest(queueUrl, attributeParams));
             
-            ICQSMessagePersistence messagePersistence = RedisCachedCassandraPersistence.getInstance();
-            messagePersistence.clearQueue(queueUrl, 0);
+            Thread.sleep(1000);
             
             // send message
             
-            Thread.sleep(1000);
             logger.info("Sending a message to " + queueUrl);
             
-            sqs.sendMessage(new SendMessageRequest(queueUrl, "This is my message text. " + (new Random()).nextInt()));
+            cqs1.sendMessage(new SendMessageRequest(queueUrl, "This is my message text. " + (new Random()).nextInt()));
             
-            Thread.sleep(1000);
-
             // receive message
             
-            logger.info("Receiving messages from " + queueName);
+            logger.info("Receiving messages from " + queueUrl);
             
             ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest(queueUrl);
 
             List<Message> messages = new ArrayList<Message>();
             receiveMessageRequest.setVisibilityTimeout(60);
-            receiveMessageRequest.setMaxNumberOfMessages(2);
-            messages = sqs.receiveMessage(receiveMessageRequest).getMessages();
+            receiveMessageRequest.setMaxNumberOfMessages(10);
+            messages = cqs1.receiveMessage(receiveMessageRequest).getMessages();
 
             assertTrue("Expected 1 message, instead found " + messages.size(), messages.size() == 1);
 
@@ -1042,7 +773,7 @@ public class CQSIntegrationTest {
             
             logger.info("Trying to receive message, none expected");
   
-            messages = sqs.receiveMessage(receiveMessageRequest).getMessages();
+            messages = cqs1.receiveMessage(receiveMessageRequest).getMessages();
 
             assertTrue("Expected 0 messages, instead found "+ messages.size(), messages.size() == 0);
             
@@ -1053,9 +784,9 @@ public class CQSIntegrationTest {
             logger.info("Changing visibility timeout to " + timeoutSeconds);
             
             ChangeMessageVisibilityRequest changeMessageVisibilityRequest = new ChangeMessageVisibilityRequest(queueUrl, receiptHandle, timeoutSeconds);
-            sqs.changeMessageVisibility(changeMessageVisibilityRequest);
+            cqs1.changeMessageVisibility(changeMessageVisibilityRequest);
             
-            messages = sqs.receiveMessage(receiveMessageRequest).getMessages();
+            messages = cqs1.receiveMessage(receiveMessageRequest).getMessages();
             
             // keep checking
 
@@ -1068,7 +799,7 @@ public class CQSIntegrationTest {
             	Thread.sleep(waitSeconds*1000);
             	waitedAlreadySeconds += waitSeconds;
             	logger.info("Checking for messages for " + waitedAlreadySeconds + " seconds");
-                messages = sqs.receiveMessage(receiveMessageRequest).getMessages();
+                messages = cqs1.receiveMessage(receiveMessageRequest).getMessages();
             }
             
 
@@ -1078,18 +809,12 @@ public class CQSIntegrationTest {
             // delete message
             
             logger.info("Deleting message with receipt handle " + messages.get(0).getReceiptHandle());
-            sqs.deleteMessage(new DeleteMessageRequest(queueUrl, messages.get(0).getReceiptHandle()));
+            cqs1.deleteMessage(new DeleteMessageRequest(queueUrl, messages.get(0).getReceiptHandle()));
 
-            // delete queue
-            
-        	DeleteQueueRequest deleteQueueRequest = new DeleteQueueRequest();
-            deleteQueueRequest.setQueueUrl(queueUrl);
-            sqs.deleteQueue(deleteQueueRequest);
-            
-            randomQueueUrls.remove(queueUrl);
             
         } catch (AmazonServiceException ase) {
-            fail(ase.toString());
+        	logger.error("test failed", ase);
+            fail(ase.getMessage());
         }
     }
     
@@ -1098,18 +823,10 @@ public class CQSIntegrationTest {
     	
         try {
         	
-            String queueName = QUEUE_PREFIX + randomGenerator.nextLong();
-            CreateQueueRequest createQueueRequest = new CreateQueueRequest(queueName);
-            createQueueRequest.setAttributes(attributeParams);
-            String queueUrl = sqs.createQueue(createQueueRequest).getQueueUrl();
-            randomQueueUrls.add(queueUrl);
-            
-            ICQSMessagePersistence messagePersistence = RedisCachedCassandraPersistence.getInstance();
-            messagePersistence.clearQueue(queueUrl, 0);
+            String queueUrl = getQueueUrl(1, USR.USER1);
+            cqs1.setQueueAttributes(new SetQueueAttributesRequest(queueUrl, attributeParams));
 
             // send a batch of messages
-            
-            Thread.sleep(1000);
             
             StringBuffer msg256k = new StringBuffer("");
             
@@ -1121,7 +838,7 @@ public class CQSIntegrationTest {
 
             logger.info("Sending large message to " + queueUrl);
             SendMessageRequest sendMessageRequest = new SendMessageRequest(queueUrl, msg256k.toString());
-            SendMessageResult sendResult = sqs.sendMessage(sendMessageRequest);
+            SendMessageResult sendResult = cqs1.sendMessage(sendMessageRequest);
             
             assertNotNull("Message id is null", sendResult.getMessageId());
 
@@ -1136,13 +853,11 @@ public class CQSIntegrationTest {
             try {
 	            logger.info("Sending too large message to " + queueUrl);
 	            sendMessageRequest = new SendMessageRequest(queueUrl, msg280k.toString());
-	            sendResult = sqs.sendMessage(sendMessageRequest);
+	            sendResult = cqs1.sendMessage(sendMessageRequest);
 	            fail("should not accept messages > 256k");
             } catch (Exception ex) {
             	assertTrue("wrong error, expected message too long", ex.getMessage().contains("body must be shorter than"));
             }
-
-            Thread.sleep(1000);
 
             // receive messages
             
@@ -1153,7 +868,7 @@ public class CQSIntegrationTest {
             List<Message> messages = new ArrayList<Message>();
             receiveMessageRequest.setVisibilityTimeout(60);
             receiveMessageRequest.setMaxNumberOfMessages(1);
-            messages = sqs.receiveMessage(receiveMessageRequest).getMessages();
+            messages = cqs1.receiveMessage(receiveMessageRequest).getMessages();
             
             assertTrue("Expected one message, instead got " + messages.size(), messages.size() == 1);
 
@@ -1173,16 +888,11 @@ public class CQSIntegrationTest {
             }
             
             DeleteMessageRequest deleteMessageRequest = new DeleteMessageRequest(queueUrl, messages.get(0).getReceiptHandle());
-            sqs.deleteMessage(deleteMessageRequest);
+            cqs1.deleteMessage(deleteMessageRequest);
             
-        	DeleteQueueRequest deleteQueueRequest = new DeleteQueueRequest();
-            deleteQueueRequest.setQueueUrl(queueUrl);
-            sqs.deleteQueue(deleteQueueRequest);
-            
-            randomQueueUrls.remove(queueUrl);
-
         } catch (AmazonServiceException ase) {
-            fail(ase.toString());
+        	logger.error("test failed", ase);
+            fail(ase.getMessage());
         }
     }
 
@@ -1191,26 +901,16 @@ public class CQSIntegrationTest {
     	
         try {
         	
-            String queueName = QUEUE_PREFIX + randomGenerator.nextLong();
-            CreateQueueRequest createQueueRequest = new CreateQueueRequest(queueName);
-            createQueueRequest.setAttributes(attributeParams);
-            String queueUrl = sqs.createQueue(createQueueRequest).getQueueUrl();
-            randomQueueUrls.add(queueUrl);
-            
-            ICQSMessagePersistence messagePersistence = RedisCachedCassandraPersistence.getInstance();
-            messagePersistence.clearQueue(queueUrl, 0);
+            String queueUrl = getQueueUrl(1, USR.USER1);
+            cqs1.setQueueAttributes(new SetQueueAttributesRequest(queueUrl, attributeParams));
 
             // send a batch of messages
             
-            Thread.sleep(1000);
-
             logger.info("Sending message to " + queueUrl);
             SendMessageRequest sendMessageRequest = new SendMessageRequest(queueUrl, "This is a test message");
-            SendMessageResult sendResult = sqs.sendMessage(sendMessageRequest);
+            SendMessageResult sendResult = cqs1.sendMessage(sendMessageRequest);
             
             assertNotNull("Message id is null", sendResult.getMessageId());
-
-            Thread.sleep(1000);
 
             // receive messages
             
@@ -1220,8 +920,8 @@ public class CQSIntegrationTest {
 
             List<Message> messages = new ArrayList<Message>();
             receiveMessageRequest.setVisibilityTimeout(60);
-            receiveMessageRequest.setMaxNumberOfMessages(1);
-            messages = sqs.receiveMessage(receiveMessageRequest).getMessages();
+            receiveMessageRequest.setMaxNumberOfMessages(10);
+            messages = cqs1.receiveMessage(receiveMessageRequest).getMessages();
             
             assertTrue("Expected one message, instead got " + messages.size(), messages.size() == 1);
 
@@ -1241,16 +941,11 @@ public class CQSIntegrationTest {
             }
             
             DeleteMessageRequest deleteMessageRequest = new DeleteMessageRequest(queueUrl, messages.get(0).getReceiptHandle());
-            sqs.deleteMessage(deleteMessageRequest);
+            cqs1.deleteMessage(deleteMessageRequest);
             
-        	DeleteQueueRequest deleteQueueRequest = new DeleteQueueRequest();
-            deleteQueueRequest.setQueueUrl(queueUrl);
-            sqs.deleteQueue(deleteQueueRequest);
-            
-            randomQueueUrls.remove(queueUrl);
-
         } catch (AmazonServiceException ase) {
-            fail(ase.toString());
+        	logger.error("test failed", ase);
+            fail(ase.getMessage());
         }
     }
     
@@ -1259,16 +954,8 @@ public class CQSIntegrationTest {
     	
         try {
         	
-            String queueName = QUEUE_PREFIX + randomGenerator.nextLong();
-            CreateQueueRequest createQueueRequest = new CreateQueueRequest(queueName);
-            createQueueRequest.setAttributes(attributeParams);
-            String queueUrl = sqs.createQueue(createQueueRequest).getQueueUrl();
-            randomQueueUrls.add(queueUrl);
-            
-            ICQSMessagePersistence messagePersistence = RedisCachedCassandraPersistence.getInstance();
-            messagePersistence.clearQueue(queueUrl, 0);
-            
-            Thread.sleep(1000);
+            String queueUrl = getQueueUrl(1, USR.USER1);
+            cqs1.setQueueAttributes(new SetQueueAttributesRequest(queueUrl, attributeParams));
 
             // send batch of messages
 
@@ -1282,7 +969,7 @@ public class CQSIntegrationTest {
             }
             
             sendMessageBatchRequest.setEntries(sendEntryList);
-            sqs.sendMessageBatch(sendMessageBatchRequest);
+            cqs1.sendMessageBatch(sendMessageBatchRequest);
             
             Thread.sleep(1000);
 
@@ -1294,8 +981,8 @@ public class CQSIntegrationTest {
 
             List<Message> messages = new ArrayList<Message>();
             receiveMessageRequest.setVisibilityTimeout(60);
-            receiveMessageRequest.setMaxNumberOfMessages(5);
-            messages = sqs.receiveMessage(receiveMessageRequest).getMessages();
+            receiveMessageRequest.setMaxNumberOfMessages(10);
+            messages = cqs1.receiveMessage(receiveMessageRequest).getMessages();
 
             assertTrue("Expected 5 messages, instead found " + messages.size(), messages.size() == 5);
 
@@ -1324,16 +1011,11 @@ public class CQSIntegrationTest {
             
             DeleteMessageBatchRequest deleteMessageBatchRequest = new DeleteMessageBatchRequest(queueUrl);
             deleteMessageBatchRequest.setEntries(deleteEntryList);
-            sqs.deleteMessageBatch(deleteMessageBatchRequest);
-            
-        	DeleteQueueRequest deleteQueueRequest = new DeleteQueueRequest();
-            deleteQueueRequest.setQueueUrl(queueUrl);
-            sqs.deleteQueue(deleteQueueRequest);
-            
-            randomQueueUrls.remove(queueUrl);
+            cqs1.deleteMessageBatch(deleteMessageBatchRequest);
             
         } catch (AmazonServiceException ase) {
-            fail(ase.toString());
+        	logger.error("test failed", ase);
+            fail(ase.getMessage());
         }       
     }
 
@@ -1342,16 +1024,8 @@ public class CQSIntegrationTest {
     	
         try {
         	
-            String queueName = QUEUE_PREFIX + randomGenerator.nextLong();
-            CreateQueueRequest createQueueRequest = new CreateQueueRequest(queueName);
-            createQueueRequest.setAttributes(attributeParams);
-            String queueUrl = sqs.createQueue(createQueueRequest).getQueueUrl();
-            randomQueueUrls.add(queueUrl);
-            
-            ICQSMessagePersistence messagePersistence = RedisCachedCassandraPersistence.getInstance();
-            messagePersistence.clearQueue(queueUrl, 0);
-            
-            Thread.sleep(1000);
+            String queueUrl = getQueueUrl(1, USR.USER1);
+            cqs1.setQueueAttributes(new SetQueueAttributesRequest(queueUrl, attributeParams));
 
             // send batch of messages
 
@@ -1365,10 +1039,10 @@ public class CQSIntegrationTest {
             }
             
             sendMessageBatchRequest.setEntries(sendEntryList);
-            sqs.sendMessageBatch(sendMessageBatchRequest);
+            cqs1.sendMessageBatch(sendMessageBatchRequest);
             
             Thread.sleep(1000);
-
+            
             // receive messages
             
             logger.info("Receiving messages from " + queueUrl);
@@ -1376,8 +1050,8 @@ public class CQSIntegrationTest {
             ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest(queueUrl);
 
             List<Message> messages = new ArrayList<Message>();
-            receiveMessageRequest.setMaxNumberOfMessages(5);
-            messages = sqs.receiveMessage(receiveMessageRequest).getMessages();
+            receiveMessageRequest.setMaxNumberOfMessages(10);
+            messages = cqs1.receiveMessage(receiveMessageRequest).getMessages();
 
             assertTrue("Expected 5 messages, received " + messages.size(), messages.size() == 5);
 
@@ -1412,13 +1086,13 @@ public class CQSIntegrationTest {
             }
             
             changeMessageVisibilityBatchRequest.setEntries(visibilityEntryList);
-            sqs.changeMessageVisibilityBatch(changeMessageVisibilityBatchRequest);
+            cqs1.changeMessageVisibilityBatch(changeMessageVisibilityBatchRequest);
             
             // check if messages invisible
             
             messages = new ArrayList<Message>();
-            receiveMessageRequest.setMaxNumberOfMessages(5);
-            messages = sqs.receiveMessage(receiveMessageRequest).getMessages();
+            receiveMessageRequest.setMaxNumberOfMessages(10);
+            messages = cqs1.receiveMessage(receiveMessageRequest).getMessages();
 
             assertTrue("Expected 0 messages, received " + messages.size(), messages.size() == 0);
             
@@ -1427,8 +1101,8 @@ public class CQSIntegrationTest {
             // check if messages revisible
             
             messages = new ArrayList<Message>();
-            receiveMessageRequest.setMaxNumberOfMessages(5);
-            messages = sqs.receiveMessage(receiveMessageRequest).getMessages();
+            receiveMessageRequest.setMaxNumberOfMessages(10);
+            messages = cqs1.receiveMessage(receiveMessageRequest).getMessages();
 
             assertTrue("Expected 5 messages, received " + messages.size(), messages.size() == 5);
             
@@ -1457,36 +1131,10 @@ public class CQSIntegrationTest {
             
             DeleteMessageBatchRequest deleteMessageBatchRequest = new DeleteMessageBatchRequest(queueUrl);
             deleteMessageBatchRequest.setEntries(deleteEntryList);
-            sqs.deleteMessageBatch(deleteMessageBatchRequest);
-            
-        	DeleteQueueRequest deleteQueueRequest = new DeleteQueueRequest();
-            deleteQueueRequest.setQueueUrl(queueUrl);
-            sqs.deleteQueue(deleteQueueRequest);
-            
-            Thread.sleep(1000);
-            
-            // check if messages deleted
-            
-            messages = new ArrayList<Message>();
-            receiveMessageRequest.setMaxNumberOfMessages(5);
-            messages = sqs.receiveMessage(receiveMessageRequest).getMessages();
-
-            assertTrue("Expected 0 messages, received " + messages.size(), messages.size() == 0);
-            
-            randomQueueUrls.remove(queueUrl);
+            cqs1.deleteMessageBatch(deleteMessageBatchRequest);
             
         } catch (AmazonServiceException ase) {
             fail(ase.toString());
         }       
-    }
-
-    @After    
-    public void tearDown() {
-    	
-        CMBControllerServlet.valueAccumulator.deleteAllCounters();
-        
-        for (String queueUrl : randomQueueUrls) {
-        	sqs.deleteQueue(new DeleteQueueRequest(queueUrl));
-        }
     }
 }

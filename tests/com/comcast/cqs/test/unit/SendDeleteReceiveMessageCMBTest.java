@@ -15,63 +15,32 @@
  */
 package com.comcast.cqs.test.unit;
 
-import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.*;
 
-import java.util.Random;
-
-import org.apache.log4j.Logger;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
+import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
+import com.amazonaws.services.sqs.model.ReceiveMessageResult;
+import com.amazonaws.services.sqs.model.SendMessageRequest;
+import com.comcast.cmb.test.tools.CMBAWSBaseTest;
 
-import com.comcast.cmb.common.controller.CMBControllerServlet;
-import com.comcast.cmb.common.model.User;
-import com.comcast.cmb.common.persistence.IUserPersistence;
-import com.comcast.cmb.common.persistence.PersistenceFactory;
-import com.comcast.cmb.common.persistence.UserCassandraPersistence;
-import com.comcast.cmb.common.util.Util;
+public class SendDeleteReceiveMessageCMBTest extends CMBAWSBaseTest {
 
-public class SendDeleteReceiveMessageCMBTest {
-
-	private static Logger logger = Logger.getLogger(SendDeleteReceiveMessageCMBTest.class);
-    
-    private User user;
-    private Random randomGenerator = new Random();
-    private final static String QUEUE_PREFIX = "TSTQ_"; 
-    
-    @Before
-    public void setup() {
-    	
-        try {
-        	
-            Util.initLog4jTest();
-            CMBControllerServlet.valueAccumulator.initializeAllCounters();
-            PersistenceFactory.reset();
-    
-            IUserPersistence userHandler = new UserCassandraPersistence();
-
-            user = userHandler.getUserByName("cqs_unit_test");
-    
-            if (user == null) {
-                user = userHandler.createUser("cqs_unit_test", "cqs_unit_test");
-            }
-            
-        } catch (Exception ex) {
-            logger.error("setup failed", ex);
-            assertFalse(true);
-        }
-    }
 
     @Test
     public void testSendDeleteReceiveMessageServlet() {
     	
-    	//TODO: place test here
-
-    }
-
-    @After    
-    public void tearDown() {
-
-        CMBControllerServlet.valueAccumulator.deleteAllCounters();
+    	String queueUrl = getQueueUrl(1, USR.USER1);
+    	String message = "hello world!!!";
+    	
+    	cqs1.sendMessage(new SendMessageRequest(queueUrl, message));
+    	
+    	ReceiveMessageResult result = cqs1.receiveMessage(new ReceiveMessageRequest(queueUrl));
+    	
+    	if (result != null && result.getMessages().size() == 1) {
+    		assertTrue("wrong message content: " + result.getMessages().get(0).getBody(), message.equals(result.getMessages().get(0).getBody()));
+    		logger.info("event=message_found queue=" + queueUrl + " message=" + message);
+    	} else {
+    		fail("no message found in " + queueUrl);
+    	}
     }
 }
