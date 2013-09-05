@@ -3,125 +3,29 @@ package com.comcast.cqs.test.unit;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import java.util.HashMap;
 import java.util.Random;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
 
-import org.apache.log4j.Logger;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 
-import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.services.sqs.AmazonSQS;
-import com.amazonaws.services.sqs.AmazonSQSClient;
 import com.amazonaws.services.sqs.model.ChangeMessageVisibilityRequest;
-import com.amazonaws.services.sqs.model.CreateQueueRequest;
 import com.amazonaws.services.sqs.model.DeleteMessageRequest;
-import com.amazonaws.services.sqs.model.DeleteQueueRequest;
 import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
 import com.amazonaws.services.sqs.model.ReceiveMessageResult;
 import com.amazonaws.services.sqs.model.SendMessageRequest;
-import com.comcast.cmb.common.controller.CMBControllerServlet;
-import com.comcast.cmb.common.model.User;
-import com.comcast.cmb.common.persistence.IUserPersistence;
-import com.comcast.cmb.common.persistence.PersistenceFactory;
-import com.comcast.cmb.common.persistence.UserCassandraPersistence;
-import com.comcast.cmb.common.util.CMBProperties;
-import com.comcast.cmb.common.util.Util;
+import com.comcast.cmb.test.tools.CMBAWSBaseTest;
 
-public class CQSMessageVisibilityTest {
-	
-	private static Logger logger = Logger.getLogger(CQSScaleQueuesTest.class);
-
-	private static AmazonSQS sqs = null;
-
-	private HashMap<String, String> attributeParams = new HashMap<String, String>();
-	private User user = null;
-	private Random randomGenerator = new Random();
-	private final static String QUEUE_PREFIX = "TSTQ_"; 
-	
-	private static String accessKey = null;
-	private static String accessSecret = null;
-
-	private static int messageLength = 0;
+public class CQSMessageVisibilityTest extends CMBAWSBaseTest {
+											  	
 	private static final String ALPHABET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     private static Random rand = new Random();
-    
-    private static String queueName = null;
-    private static String queueUrl = null;
-    
-    private static AtomicLong totalMessagesFound = new AtomicLong(0);
-    private static boolean deleteQueues = false;
-    
-    private static String message = null;
+    private static String message = generateRandomMessage(1024);
+    private static String queueUrl;
     
 	private static ScheduledThreadPoolExecutor ep = new ScheduledThreadPoolExecutor(10);
-
-	@Before
-	public void setup() throws Exception {
-
-		Util.initLog4jTest();
-		CMBControllerServlet.valueAccumulator.initializeAllCounters();
-		PersistenceFactory.reset();
-		
-		try {
-			
-			BasicAWSCredentials credentialsUser = null;
-			
-			if (accessKey != null && accessSecret != null) {
-
-				credentialsUser = new BasicAWSCredentials(accessKey, accessSecret);
-			
-			} else {
-
-				IUserPersistence userPersistence = new UserCassandraPersistence();
 	
-				user = userPersistence.getUserByName("cqs_unit_test");
-	
-				if (user == null) {
-					user = userPersistence.createUser("cqs_unit_test", "cqs_unit_test");
-				}
-	
-				credentialsUser = new BasicAWSCredentials(user.getAccessKey(), user.getAccessSecret());
-			}
-
-			sqs = new AmazonSQSClient(credentialsUser);
-
-			sqs.setEndpoint(CMBProperties.getInstance().getCQSServiceUrl());
-
-		} catch (Exception ex) {
-			logger.error("setup failed", ex);
-			fail("setup failed: "+ex);
-			return;
-		}
-		
-		message = generateRandomMessage(1024);
-		
-		queueName = QUEUE_PREFIX + randomGenerator.nextLong();
-        CreateQueueRequest createQueueRequest = new CreateQueueRequest(queueName);
-
-		//attributeParams.put("MessageRetentionPeriod", "600");
-		//attributeParams.put("VisibilityTimeout", "30");
-        //createQueueRequest.setAttributes(attributeParams);
-        
-        queueUrl = sqs.createQueue(createQueueRequest).getQueueUrl();
-        
-        //Thread.sleep(2500);
-	}
-	
-	@After
-	public void Teardown() {
-		if (queueUrl != null && deleteQueues) {
-			DeleteQueueRequest deleteQueueRequest = new DeleteQueueRequest();
-			deleteQueueRequest.setQueueUrl(queueUrl);
-			sqs.deleteQueue(deleteQueueRequest);
-		}
-	}
-	
-	private String generateRandomMessage(int length) {
+	private static String generateRandomMessage(int length) {
 		StringBuilder sb = new StringBuilder(length);
 		for (int i=0; i<length; i++) {
 			sb.append(ALPHABET.charAt(rand.nextInt(ALPHABET.length())));
@@ -132,13 +36,15 @@ public class CQSMessageVisibilityTest {
 	@Test
 	public void messageVisibilityTest() {
 		try {
+    		queueUrl = getQueueUrl(1, USR.USER1);
+    		Thread.sleep(1000);
 			ep.submit(new MessageSender());
 			//give initial thread time to launch more thread
 			Thread.sleep(5*1000);
 			ep.shutdown();
 			ep.awaitTermination(60, TimeUnit.MINUTES);
 		} catch (InterruptedException ex) {
-			ex.printStackTrace();
+			logger.error("test failed", ex);
 			fail(ex.getMessage());
 		}
 	}
@@ -153,7 +59,7 @@ public class CQSMessageVisibilityTest {
 			try {
 
 	    		SendMessageRequest sendMessageRequest = new SendMessageRequest(queueUrl, message);
-	    		sqs.sendMessage(sendMessageRequest);
+	    		cqs1.sendMessage(sendMessageRequest);
 
 	    		ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest();
 				receiveMessageRequest.setQueueUrl(queueUrl);
@@ -163,7 +69,7 @@ public class CQSMessageVisibilityTest {
 				// set initial vto to 20 sec
 				receiveMessageRequest.setVisibilityTimeout(20);
 				
-				ReceiveMessageResult receiveMessageResult = sqs.receiveMessage(receiveMessageRequest);
+				ReceiveMessageResult receiveMessageResult = cqs1.receiveMessage(receiveMessageRequest);
 
 				if (receiveMessageResult.getMessages().size() == 1) {
 					
@@ -180,7 +86,7 @@ public class CQSMessageVisibilityTest {
 					changeMessageVisibilityRequest.setVisibilityTimeout(11);
 					changeMessageVisibilityRequest.setReceiptHandle(receiveMessageResult.getMessages().get(0).getReceiptHandle());
 					changeMessageVisibilityRequest.setQueueUrl(queueUrl);
-					sqs.changeMessageVisibility(changeMessageVisibilityRequest);
+					cqs1.changeMessageVisibility(changeMessageVisibilityRequest);
 					logger.info("changed visibility timeout to 11 sec");
 					
 					// push message out 10 sec
@@ -191,7 +97,7 @@ public class CQSMessageVisibilityTest {
 					changeMessageVisibilityRequest.setVisibilityTimeout(10);
 					changeMessageVisibilityRequest.setReceiptHandle(receiveMessageResult.getMessages().get(0).getReceiptHandle());
 					changeMessageVisibilityRequest.setQueueUrl(queueUrl);
-					sqs.changeMessageVisibility(changeMessageVisibilityRequest);
+					cqs1.changeMessageVisibility(changeMessageVisibilityRequest);
 					logger.info("changed visibility timeout to 10 sec");
 					
 					// push message out 11 sec
@@ -202,7 +108,7 @@ public class CQSMessageVisibilityTest {
 					changeMessageVisibilityRequest.setVisibilityTimeout(11);
 					changeMessageVisibilityRequest.setReceiptHandle(receiveMessageResult.getMessages().get(0).getReceiptHandle());
 					changeMessageVisibilityRequest.setQueueUrl(queueUrl);
-					sqs.changeMessageVisibility(changeMessageVisibilityRequest);
+					cqs1.changeMessageVisibility(changeMessageVisibilityRequest);
 					logger.info("changed visibility timeout to 11 sec");
 					
 				} else {
@@ -210,7 +116,7 @@ public class CQSMessageVisibilityTest {
 				}
 			
 			} catch (Exception ex) {
-				ex.printStackTrace();
+				logger.error("test failed", ex);
 				fail(ex.getMessage());
 			}
 		}
@@ -243,7 +149,7 @@ public class CQSMessageVisibilityTest {
 					receiveMessageRequest.setMaxNumberOfMessages(1);
 					receiveMessageRequest.setWaitTimeSeconds(waitTime);
 					
-					ReceiveMessageResult receiveMessageResult = sqs.receiveMessage(receiveMessageRequest);
+					ReceiveMessageResult receiveMessageResult = cqs1.receiveMessage(receiveMessageRequest);
 
 					if (receiveMessageResult.getMessages().size() == 1) {
 						assertTrue("wrong message content", receiveMessageResult.getMessages().get(0).getBody().equals(message));
@@ -252,7 +158,7 @@ public class CQSMessageVisibilityTest {
 						DeleteMessageRequest deleteMessageRequest = new DeleteMessageRequest();
 						deleteMessageRequest.setQueueUrl(queueUrl);
 						deleteMessageRequest.setReceiptHandle(receiveMessageResult.getMessages().get(0).getReceiptHandle());
-						sqs.deleteMessage(deleteMessageRequest);
+						cqs1.deleteMessage(deleteMessageRequest);
 						logger.info("deleted message");
 						assertTrue("message became visible already after " + durationSec + " sec", durationSec >= expectedDelaySeconds);
 						break;
@@ -268,7 +174,7 @@ public class CQSMessageVisibilityTest {
 	            }
 				
 			} catch (Exception ex) {
-				ex.printStackTrace();
+				logger.error("test failed", ex);
 				fail(ex.getMessage());
 			}
 		}

@@ -19,108 +19,24 @@ import static org.junit.Assert.*;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Random;
-
-import org.apache.log4j.Logger;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 
 import com.amazonaws.AmazonServiceException;
-import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.sqs.AmazonSQS;
-import com.amazonaws.services.sqs.AmazonSQSClient;
-import com.amazonaws.services.sqs.model.CreateQueueRequest;
 import com.amazonaws.services.sqs.model.DeleteMessageRequest;
-import com.amazonaws.services.sqs.model.DeleteQueueRequest;
 import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
 import com.amazonaws.services.sqs.model.ReceiveMessageResult;
 import com.amazonaws.services.sqs.model.SendMessageRequest;
 import com.amazonaws.services.sqs.model.SetQueueAttributesRequest;
-import com.comcast.cmb.common.controller.CMBControllerServlet;
-import com.comcast.cmb.common.model.User;
-import com.comcast.cmb.common.persistence.IUserPersistence;
-import com.comcast.cmb.common.persistence.PersistenceFactory;
-import com.comcast.cmb.common.persistence.UserCassandraPersistence;
-import com.comcast.cmb.common.util.CMBProperties;
-import com.comcast.cmb.common.util.Util;
-import com.comcast.cqs.persistence.ICQSMessagePersistence;
-import com.comcast.cqs.persistence.RedisCachedCassandraPersistence;
+import com.comcast.cmb.test.tools.CMBAWSBaseTest;
 
-public class CQSLongPollTest {
+public class CQSLongPollTest extends CMBAWSBaseTest {
 	
-    private static Logger logger = Logger.getLogger(CQSIntegrationTest.class);
-
-    private AmazonSQS sqs = null;
-    
-    // alternateSqs is referring to a separate cqs api server using the same redis and cassandra to simulate 
-    // random distribution of requests by load ablancer within a single data center
-    
-    //todo: put url of primary and alternate cqs service here
-    
-    private String alternateCqsServiceUrl = null;
-    private String cqsServiceUrl = CMBProperties.getInstance().getCQSServiceUrl();
-
-    private AmazonSQS alternateSqs = null;
-    
-    private HashMap<String, String> attributeParams = new HashMap<String, String>();
-    private User user = null;
-    private Random randomGenerator = new Random();
-    private final static String QUEUE_PREFIX = "TSTQ_"; 
-    
+    private static HashMap<String, String> attributeParams = new HashMap<String, String>();
+    private static Map<String, String> messageMap;
     private static String queueUrl;
-    private static Map messageMap;
     
-    @Before
-    public void setup() throws Exception {
-    	
-        Util.initLog4jTest();
-        CMBControllerServlet.valueAccumulator.initializeAllCounters();
-        PersistenceFactory.reset();
-        
-        messageMap = new HashMap<String, String>();
-        
-        try {
-        	
-            IUserPersistence userPersistence = new UserCassandraPersistence();
- 
-            user = userPersistence.getUserByName("cqs_unit_test");
-
-            if (user == null) {
-                user = userPersistence.createUser("cqs_unit_test", "cqs_unit_test");
-            }
-
-            BasicAWSCredentials credentialsUser = new BasicAWSCredentials(user.getAccessKey(), user.getAccessSecret());
-
-            sqs = new AmazonSQSClient(credentialsUser);
-            sqs.setEndpoint(cqsServiceUrl);
-            
-            if (alternateCqsServiceUrl != null) {
-            	alternateSqs = new AmazonSQSClient(credentialsUser);
-            	alternateSqs.setEndpoint(alternateCqsServiceUrl);
-            }
-            
-            queueUrl = null;
-            
-    		String queueName = QUEUE_PREFIX + randomGenerator.nextLong();
-	        CreateQueueRequest createQueueRequest = new CreateQueueRequest(queueName);
-	        createQueueRequest.setAttributes(attributeParams);
-	        
-	        queueUrl = sqs.createQueue(createQueueRequest).getQueueUrl();
-	        
-	        ICQSMessagePersistence messagePersistence = RedisCachedCassandraPersistence.getInstance();
-			messagePersistence.clearQueue(queueUrl, 0);
-			
-			logger.info("queue " + queueUrl + "created");
-	        
-	        Thread.sleep(1000);
-            
-        } catch (Exception ex) {
-            logger.error("setup failed", ex);
-            fail("setup failed: "+ex);
-            return;
-        }
-        
+    static {
         attributeParams.put("MessageRetentionPeriod", "600");
         attributeParams.put("VisibilityTimeout", "30");
     }
@@ -130,7 +46,7 @@ public class CQSLongPollTest {
     		try {
 				logger.info("sender sleeping for 5 sec");
     			sleep(5000);
-	            sqs.sendMessage(new SendMessageRequest(queueUrl, "test message"));
+	            cqs1.sendMessage(new SendMessageRequest(queueUrl, "test message"));
 	            logger.info("test message sent");
 			} catch (Exception ex) {
 				ex.printStackTrace();
@@ -143,8 +59,15 @@ public class CQSLongPollTest {
      * and check if message is received exactly once after around 5 sec.
      */
     private void testLongPoll(AmazonSQS receiverSqs) {
+    	
+    	messageMap = new HashMap<String, String>();
 
     	try {
+    		
+    		queueUrl = getQueueUrl(1, USR.USER1);
+    		cqs1.setQueueAttributes(new SetQueueAttributesRequest(queueUrl, attributeParams));
+
+    		Thread.sleep(1000);
 
 			ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest();
 			receiveMessageRequest.setQueueUrl(queueUrl);
@@ -183,15 +106,22 @@ public class CQSLongPollTest {
      */
     @Test
     public void testLongPollQueue() {
+    	
+    	messageMap = new HashMap<String, String>();
 
     	try {
             
+    		queueUrl = getQueueUrl(1, USR.USER1);
+    		cqs1.setQueueAttributes(new SetQueueAttributesRequest(queueUrl, attributeParams));
+
+    		Thread.sleep(1000);
+    		
     		SetQueueAttributesRequest setQueueAttributesRequest = new SetQueueAttributesRequest();
     		setQueueAttributesRequest.setQueueUrl(queueUrl);
             attributeParams.put("ReceiveMessageWaitTimeSeconds", "15");
     		setQueueAttributesRequest.setAttributes(attributeParams);
 
-    		sqs.setQueueAttributes(setQueueAttributesRequest);
+    		cqs1.setQueueAttributes(setQueueAttributesRequest);
 
 			ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest();
 			receiveMessageRequest.setQueueUrl(queueUrl);
@@ -206,7 +136,7 @@ public class CQSLongPollTest {
 			// note: we are calling receivemessage without waittime set and yet we should see long poll
 			// behavior because the queue has a default wait time set
 			
-			ReceiveMessageResult receiveMessageResult = sqs.receiveMessage(receiveMessageRequest);
+			ReceiveMessageResult receiveMessageResult = cqs1.receiveMessage(receiveMessageRequest);
 			
 			logger.info("receive message returns");
 			
@@ -221,24 +151,25 @@ public class CQSLongPollTest {
 			assertTrue("Message came back too slow: " + (end-start) + " ms", end-start <= 5250);
 	        
 		} catch (Exception ex) {
-			ex.printStackTrace();
+			logger.error("test failed", ex);
+			fail(ex.getMessage());
 		}
     }
 
     @Test
     public void testLongPoll() {
-    	testLongPoll(sqs);
+    	testLongPoll(cqs1);
     }
     
     @Test
     public void testLongPollWithLoadBalancer() {
     	
-    	if (alternateSqs == null) {
+    	if (this.cqsAlt == null) {
     		logger.info("skipping load balanced long poll test due to missing alternate sqs service url");
     		return;
     	}
     	
-    	testLongPoll(alternateSqs);
+    	testLongPoll(cqsAlt);
     }
     
     /**
@@ -249,7 +180,14 @@ public class CQSLongPollTest {
     @Test
     public void testLongPollNoDelay() {
 
+    	messageMap = new HashMap<String, String>();
+
     	try {
+    		
+    		queueUrl = getQueueUrl(1, USR.USER1);
+    		cqs1.setQueueAttributes(new SetQueueAttributesRequest(queueUrl, attributeParams));
+
+    		Thread.sleep(1000);
 
 			ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest();
 			receiveMessageRequest.setQueueUrl(queueUrl);
@@ -258,11 +196,11 @@ public class CQSLongPollTest {
 			
 			long start = System.currentTimeMillis();
 			
-            sqs.sendMessage(new SendMessageRequest(queueUrl, "test message"));
+            cqs1.sendMessage(new SendMessageRequest(queueUrl, "test message"));
 			
 			logger.info("calling receive message");
 			
-			ReceiveMessageResult receiveMessageResult = sqs.receiveMessage(receiveMessageRequest);
+			ReceiveMessageResult receiveMessageResult = cqs1.receiveMessage(receiveMessageRequest);
 			
 			logger.info("receive message returns");
 			
@@ -275,7 +213,8 @@ public class CQSLongPollTest {
 			assertTrue("Message came back too slow: " + (end-start) + " ms", end-start <= 250);
 	        
 		} catch (Exception ex) {
-			ex.printStackTrace();
+			logger.error("test failed", ex);
+			fail(ex.getMessage());
 		}
     }
 
@@ -285,7 +224,14 @@ public class CQSLongPollTest {
      */
     private void testLongPollTimeout(int timeoutSecs) {
     	
+    	messageMap = new HashMap<String, String>();
+
     	try {
+    		
+    		queueUrl = getQueueUrl(1, USR.USER1);
+    		cqs1.setQueueAttributes(new SetQueueAttributesRequest(queueUrl, attributeParams));
+
+    		Thread.sleep(1000);
 
 			ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest();
 			receiveMessageRequest.setQueueUrl(queueUrl);
@@ -296,7 +242,7 @@ public class CQSLongPollTest {
 			
 			logger.info("calling receive message");
 			
-			ReceiveMessageResult receiveMessageResult = sqs.receiveMessage(receiveMessageRequest);
+			ReceiveMessageResult receiveMessageResult = cqs1.receiveMessage(receiveMessageRequest);
 			
 			logger.info("receive message returns");
 			
@@ -309,7 +255,8 @@ public class CQSLongPollTest {
 			assertTrue("Receive came back too slow: " + (end-start) + " ms", end-start <= timeoutSecs*1000+100);
 	        
 		} catch (Exception ex) {
-			ex.printStackTrace();
+			logger.error("test failed", ex);
+			fail(ex.getMessage());
 		}
     }
     
@@ -342,7 +289,7 @@ public class CQSLongPollTest {
     		try {
     			Thread.sleep(delay);
     			for (int i=0; i<count; i++) {
-    				sqs.sendMessage(new SendMessageRequest(queueUrl, "test message " + i));
+    				cqs1.sendMessage(new SendMessageRequest(queueUrl, "test message " + i));
     			}
 			} catch (Exception ex) {
 				logger.error("error", ex);
@@ -359,11 +306,16 @@ public class CQSLongPollTest {
     
     private void testLongPollLoad(int timeoutSecs) {
     	
+    	messageMap = new HashMap<String, String>();
+    	
     	// set timeoutSecs to 0 to test traditional polling receives (mainly for benchmarking)
     	
     	try {
 
-	        (new MultiMessageSender(5000,0)).start();
+    		queueUrl = getQueueUrl(1, USR.USER1);
+    		cqs1.setQueueAttributes(new SetQueueAttributesRequest(queueUrl, attributeParams));
+
+    		(new MultiMessageSender(5000,0)).start();
 
 	        int messageCounter = 0;
 	        
@@ -379,7 +331,7 @@ public class CQSLongPollTest {
 					receiveMessageRequest.setWaitTimeSeconds(timeoutSecs);
 				}
 				
-				ReceiveMessageResult receiveMessageResult = sqs.receiveMessage(receiveMessageRequest);
+				ReceiveMessageResult receiveMessageResult = cqs1.receiveMessage(receiveMessageRequest);
 				messageCounter += receiveMessageResult.getMessages().size();
 				
 				if (receiveMessageResult.getMessages().size() == 1) {
@@ -388,7 +340,7 @@ public class CQSLongPollTest {
 					DeleteMessageRequest deleteMessageRequest = new DeleteMessageRequest();
 					deleteMessageRequest.setQueueUrl(queueUrl);
 					deleteMessageRequest.setReceiptHandle(receiveMessageResult.getMessages().get(0).getReceiptHandle());
-					sqs.deleteMessage(deleteMessageRequest);
+					cqs1.deleteMessage(deleteMessageRequest);
 				}
 	        }
 	        
@@ -399,7 +351,8 @@ public class CQSLongPollTest {
 	        assertTrue("wrong number of messages: " + messageMap.size(), messageMap.size() == 5000);
 	        
 		} catch (Exception ex) {
-			ex.printStackTrace();
+			logger.error("test failed", ex);
+			fail(ex.getMessage());
 		}
     }
 
@@ -419,8 +372,15 @@ public class CQSLongPollTest {
      */
     @Test
     public void testInvalidParameters() {
+    	
+    	messageMap = new HashMap<String, String>();
 
     	try {
+    		
+    		queueUrl = getQueueUrl(1, USR.USER1);
+    		cqs1.setQueueAttributes(new SetQueueAttributesRequest(queueUrl, attributeParams));
+
+    		Thread.sleep(1000);
 
 			ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest();
 			receiveMessageRequest.setQueueUrl(queueUrl);
@@ -433,7 +393,7 @@ public class CQSLongPollTest {
 			boolean failed = false;
 			
 			try {
-				sqs.receiveMessage(receiveMessageRequest);
+				cqs1.receiveMessage(receiveMessageRequest);
 			} catch (AmazonServiceException ex) {
 				assertTrue("Wrong error message: " + ex.getErrorCode(), ex.getErrorCode().equals("InvalidParameterValue"));
 				failed = true;
@@ -446,7 +406,7 @@ public class CQSLongPollTest {
 			failed = false;
 			
 			try {
-				sqs.receiveMessage(receiveMessageRequest);
+				cqs1.receiveMessage(receiveMessageRequest);
 			} catch (AmazonServiceException ex) {
 				assertTrue("Wrong error message: " + ex.getErrorCode(), ex.getErrorCode().equals("InvalidParameterValue"));
 				failed = true;
@@ -455,7 +415,8 @@ public class CQSLongPollTest {
 			assertTrue("Didn't fail", failed);
 	        
 		} catch (Exception ex) {
-			ex.printStackTrace();
+			logger.error("test failed", ex);
+			fail(ex.getMessage());
 		}
     }
     
@@ -470,7 +431,7 @@ public class CQSLongPollTest {
     			receiveMessageRequest.setMaxNumberOfMessages(1);
     			receiveMessageRequest.setWaitTimeSeconds(20);
     			
-    			ReceiveMessageResult receiveMessageResult = sqs.receiveMessage(receiveMessageRequest);
+    			ReceiveMessageResult receiveMessageResult = cqs1.receiveMessage(receiveMessageRequest);
     			
     			if (receiveMessageResult.getMessages().size() == 1) {
     				
@@ -479,11 +440,12 @@ public class CQSLongPollTest {
 	    			DeleteMessageRequest deleteMessageRequest = new DeleteMessageRequest();
 	    			deleteMessageRequest.setQueueUrl(queueUrl);
 	    			deleteMessageRequest.setReceiptHandle(receiveMessageResult.getMessages().get(0).getReceiptHandle());
-	    			sqs.deleteMessage(deleteMessageRequest);
+	    			cqs1.deleteMessage(deleteMessageRequest);
     			}
     			
 			} catch (Exception ex) {
-				logger.error("error", ex);
+				logger.error("test failed", ex);
+				fail(ex.getMessage());
 			}
     	}
     }
@@ -494,6 +456,8 @@ public class CQSLongPollTest {
      * sending 25 seconds. Test verifies that 25 unique messages are received. 
      */
     private void testConcurrentLPRequests(AmazonSQS senderSqs) {
+    	
+    	messageMap = new HashMap<String, String>();
 
     	try {
 
@@ -516,33 +480,24 @@ public class CQSLongPollTest {
 	    	assertTrue("Wrong number of messages: " + messageMap.size(), messageMap.size() == numMessages);
     	
     	} catch (Exception ex) {
-			ex.printStackTrace();
+			logger.error("test failed", ex);
+			fail(ex.getMessage());
 		}
-    	
     }
     
     @Test
     public void testConcurrentLPRequests() {
-    	testConcurrentLPRequests(sqs);
+    	testConcurrentLPRequests(cqs1);
     }
 
     @Test
     public void testConcurrentLPRequestsLoadBalancer() {
 
-    	if (alternateSqs == null) {
+    	if (cqsAlt == null) {
     		logger.info("skipping concurrent load balanced long poll test due to missing alternate sqs service url");
     		return;
     	}
     	
-    	testConcurrentLPRequests(alternateSqs);
+    	testConcurrentLPRequests(cqsAlt);
     }
-
-    @After    
-    public void tearDown() {
-        CMBControllerServlet.valueAccumulator.deleteAllCounters();
-        
-        if (queueUrl != null) {
-        	sqs.deleteQueue(new DeleteQueueRequest(queueUrl));
-        }
-    }    
 }

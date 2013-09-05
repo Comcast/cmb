@@ -51,21 +51,21 @@ public class CMBAWSBaseTest {
 	public static final String cqsServiceUrlAlt = null;
 	public static final String cnsServiceUrlAlt = null;
 	
-	protected User user1, user2, user3;
+	protected static User user1, user2, user3;
 	
-	protected AmazonSNS cns1 = null;
-	protected AmazonSQS cqs1 = null;
+	protected static AmazonSNS cns1 = null;
+	protected static AmazonSQS cqs1 = null;
 
-	protected AmazonSNS cns2 = null;
-	protected AmazonSQS cqs2 = null;
+	protected static AmazonSNS cns2 = null;
+	protected static AmazonSQS cqs2 = null;
 	
-	protected AmazonSNS cns3 = null;
-	protected AmazonSQS cqs3 = null;
+	protected static AmazonSNS cns3 = null;
+	protected static AmazonSQS cqs3 = null;
 
-	protected AmazonSNS cnsAlt = null;
-	protected AmazonSQS cqsAlt = null;
+	protected static AmazonSNS cnsAlt = null;
+	protected static AmazonSQS cqsAlt = null;
 
-	protected Random rand = new Random();
+	protected static Random rand = new Random();
 	
 	private Map<String, String> queues = new HashMap<String, String>();
 	private Map<String, String> topics = new HashMap<String, String>();

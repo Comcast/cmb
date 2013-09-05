@@ -23,7 +23,7 @@ import com.amazonaws.services.sqs.model.ReceiveMessageResult;
 import com.amazonaws.services.sqs.model.SendMessageRequest;
 import com.comcast.cmb.test.tools.CMBAWSBaseTest;
 
-public class SendDeleteReceiveMessageCMBTest extends CMBAWSBaseTest {
+public class CQSSendDeleteReceiveMessageTest extends CMBAWSBaseTest {
 
 
     @Test

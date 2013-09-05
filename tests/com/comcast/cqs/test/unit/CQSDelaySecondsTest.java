@@ -18,95 +18,22 @@ package com.comcast.cqs.test.unit;
 import static org.junit.Assert.*;
 
 import java.util.HashMap;
-import java.util.Random;
-
-import org.apache.log4j.Logger;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 
-import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.services.sqs.AmazonSQS;
-import com.amazonaws.services.sqs.AmazonSQSClient;
-import com.amazonaws.services.sqs.model.CreateQueueRequest;
-import com.amazonaws.services.sqs.model.DeleteQueueRequest;
 import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
 import com.amazonaws.services.sqs.model.ReceiveMessageResult;
 import com.amazonaws.services.sqs.model.SendMessageRequest;
 import com.amazonaws.services.sqs.model.SetQueueAttributesRequest;
-import com.comcast.cmb.common.controller.CMBControllerServlet;
-import com.comcast.cmb.common.model.User;
-import com.comcast.cmb.common.persistence.IUserPersistence;
-import com.comcast.cmb.common.persistence.PersistenceFactory;
-import com.comcast.cmb.common.persistence.UserCassandraPersistence;
-import com.comcast.cmb.common.util.CMBProperties;
-import com.comcast.cmb.common.util.Util;
-import com.comcast.cqs.persistence.ICQSMessagePersistence;
-import com.comcast.cqs.persistence.RedisCachedCassandraPersistence;
+import com.comcast.cmb.test.tools.CMBAWSBaseTest;
 
-public class CQSDelaySecondsTest {
+public class CQSDelaySecondsTest extends CMBAWSBaseTest {
 	
-    private static Logger logger = Logger.getLogger(CQSIntegrationTest.class);
-
-    private AmazonSQS sqs = null;
+    private static HashMap<String, String> attributeParams = new HashMap<String, String>();
     
-    private String cqsServiceUrl = CMBProperties.getInstance().getCQSServiceUrl();
-
-    private HashMap<String, String> attributeParams = new HashMap<String, String>();
-    private User user = null;
-    private Random randomGenerator = new Random();
-    private final static String QUEUE_PREFIX = "TSTQ_"; 
-    
-    private static String queueUrl;
-   
-    @Before
-    public void setup() throws Exception {
-    	
-        Util.initLog4jTest();
-        CMBControllerServlet.valueAccumulator.initializeAllCounters();
-        PersistenceFactory.reset();
-        
-        try {
-        	
-            IUserPersistence userPersistence = new UserCassandraPersistence();
- 
-            user = userPersistence.getUserByName("cqs_unit_test");
-
-            if (user == null) {
-                user = userPersistence.createUser("cqs_unit_test", "cqs_unit_test");
-            }
-
-            BasicAWSCredentials credentialsUser = new BasicAWSCredentials(user.getAccessKey(), user.getAccessSecret());
-
-            sqs = new AmazonSQSClient(credentialsUser);
-            sqs.setEndpoint(cqsServiceUrl);
-            
-            queueUrl = null;
-            
-    		String queueName = QUEUE_PREFIX + randomGenerator.nextLong();
-	        CreateQueueRequest createQueueRequest = new CreateQueueRequest(queueName);
-
-	        attributeParams.put("MessageRetentionPeriod", "600");
-	        attributeParams.put("VisibilityTimeout", "30");
-	        attributeParams.put("DelaySeconds", "20");
-	        
-	        createQueueRequest.setAttributes(attributeParams);
-	        
-	        queueUrl = sqs.createQueue(createQueueRequest).getQueueUrl();
-	        
-	        ICQSMessagePersistence messagePersistence = RedisCachedCassandraPersistence.getInstance();
-			messagePersistence.clearQueue(queueUrl, 0);
-			
-			logger.info("queue " + queueUrl + "created");
-	        
-	        Thread.sleep(1000);
-            
-        } catch (Exception ex) {
-            logger.error("setup failed", ex);
-            fail("setup failed: "+ex);
-            return;
-        }
-        
+    static {
+        attributeParams.put("MessageRetentionPeriod", "600");
+        attributeParams.put("VisibilityTimeout", "30");
+        attributeParams.put("DelaySeconds", "20");
     }
     
     /**
@@ -116,8 +43,13 @@ public class CQSDelaySecondsTest {
     public void testDelayQueue() {
 
     	try {
+    		
+    		String queueUrl = getQueueUrl(1, USR.USER1);
+    		cqs1.setQueueAttributes(new SetQueueAttributesRequest(queueUrl, attributeParams));
 
-            sqs.sendMessage(new SendMessageRequest(queueUrl, "test message"));
+    		Thread.sleep(1000);
+    		
+            cqs1.sendMessage(new SendMessageRequest(queueUrl, "test message"));
 
             long ts1 = System.currentTimeMillis();
             
@@ -130,7 +62,7 @@ public class CQSDelaySecondsTest {
 				receiveMessageRequest.setMaxNumberOfMessages(1);
 				//receiveMessageRequest.setWaitTimeSeconds(20);
 				
-				ReceiveMessageResult receiveMessageResult = sqs.receiveMessage(receiveMessageRequest);
+				ReceiveMessageResult receiveMessageResult = cqs1.receiveMessage(receiveMessageRequest);
 
 				if (receiveMessageResult.getMessages().size() == 1) {
 					assertTrue("Wrong message content", receiveMessageResult.getMessages().get(0).getBody().equals("test message"));
@@ -148,7 +80,8 @@ public class CQSDelaySecondsTest {
             }
 			
 		} catch (Exception ex) {
-			ex.printStackTrace();
+			logger.error("test failed", ex);
+			fail(ex.getMessage());
 		}
     }
     
@@ -160,10 +93,15 @@ public class CQSDelaySecondsTest {
 
     	try {
 
+    		String queueUrl = getQueueUrl(1, USR.USER1);
+    		cqs1.setQueueAttributes(new SetQueueAttributesRequest(queueUrl, attributeParams));
+
+    		Thread.sleep(1000);
+
     		SendMessageRequest sendMessageRequest = new SendMessageRequest(queueUrl, "test message");
     		sendMessageRequest.setDelaySeconds(10);
     		
-            sqs.sendMessage(sendMessageRequest);
+            cqs1.sendMessage(sendMessageRequest);
 
             long ts1 = System.currentTimeMillis();
             
@@ -176,7 +114,7 @@ public class CQSDelaySecondsTest {
 				receiveMessageRequest.setMaxNumberOfMessages(1);
 				//receiveMessageRequest.setWaitTimeSeconds(20);
 				
-				ReceiveMessageResult receiveMessageResult = sqs.receiveMessage(receiveMessageRequest);
+				ReceiveMessageResult receiveMessageResult = cqs1.receiveMessage(receiveMessageRequest);
 
 				if (receiveMessageResult.getMessages().size() == 1) {
 					assertTrue("Wrong message content", receiveMessageResult.getMessages().get(0).getBody().equals("test message"));
@@ -194,7 +132,8 @@ public class CQSDelaySecondsTest {
             }
 			
 		} catch (Exception ex) {
-			ex.printStackTrace();
+			logger.error("test failed", ex);
+			fail(ex.getMessage());
 		}
     }
     
@@ -206,14 +145,19 @@ public class CQSDelaySecondsTest {
 
     	try {
     		
+    		String queueUrl = getQueueUrl(1, USR.USER1);
+    		cqs1.setQueueAttributes(new SetQueueAttributesRequest(queueUrl, attributeParams));
+
+    		Thread.sleep(1000);
+
     		SetQueueAttributesRequest setQueueAttributesRequest = new SetQueueAttributesRequest();
     		setQueueAttributesRequest.setQueueUrl(queueUrl);
 	        attributeParams.put("DelaySeconds", "0");
     		setQueueAttributesRequest.setAttributes(attributeParams);
 
-    		sqs.setQueueAttributes(setQueueAttributesRequest);
+    		cqs1.setQueueAttributes(setQueueAttributesRequest);
     		
-            sqs.sendMessage(new SendMessageRequest(queueUrl, "test message"));
+            cqs1.sendMessage(new SendMessageRequest(queueUrl, "test message"));
 
             long ts1 = System.currentTimeMillis();
             
@@ -226,7 +170,7 @@ public class CQSDelaySecondsTest {
 				receiveMessageRequest.setMaxNumberOfMessages(1);
 				//receiveMessageRequest.setWaitTimeSeconds(20);
 				
-				ReceiveMessageResult receiveMessageResult = sqs.receiveMessage(receiveMessageRequest);
+				ReceiveMessageResult receiveMessageResult = cqs1.receiveMessage(receiveMessageRequest);
 
 				if (receiveMessageResult.getMessages().size() == 1) {
 					assertTrue("Wrong message content", receiveMessageResult.getMessages().get(0).getBody().equals("test message"));
@@ -244,16 +188,8 @@ public class CQSDelaySecondsTest {
             }
 			
 		} catch (Exception ex) {
-			ex.printStackTrace();
+			logger.error("test failed", ex);
+			fail(ex.getMessage());
 		}
     }
-
-    @After    
-    public void tearDown() {
-        CMBControllerServlet.valueAccumulator.deleteAllCounters();
-        
-        if (queueUrl != null) {
-        	sqs.deleteQueue(new DeleteQueueRequest(queueUrl));
-        }
-    }    
 }

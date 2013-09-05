@@ -42,9 +42,9 @@ import com.comcast.cqs.persistence.CQSQueueCassandraPersistence;
 import com.comcast.cqs.persistence.ICQSQueuePersistence;
 import com.comcast.cqs.util.CQSConstants;
 
-public class QueuePersistenceTest {
+public class CQSQueuePersistenceTest {
 
-    protected static Logger logger = Logger.getLogger(QueuePersistenceTest.class);
+    protected static Logger logger = Logger.getLogger(CQSQueuePersistenceTest.class);
     private User user = null;
     private Random randomGenerator = new Random();
     private final static String QUEUE_PREFIX = "TSTQ_"; 
@@ -142,7 +142,6 @@ public class QueuePersistenceTest {
 		assertTrue(queue.getVisibilityTO() > 0);
 	}
 	
-	//@Test
 	public void deleteQueuesTest() {
 		
 		ICQSQueuePersistence persistence = new CQSQueueCassandraPersistence();

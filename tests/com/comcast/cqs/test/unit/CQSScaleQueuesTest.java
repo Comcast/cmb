@@ -18,13 +18,9 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.apache.log4j.Logger;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.services.sqs.AmazonSQS;
-import com.amazonaws.services.sqs.AmazonSQSClient;
 import com.amazonaws.services.sqs.model.CreateQueueRequest;
 import com.amazonaws.services.sqs.model.DeleteMessageRequest;
 import com.amazonaws.services.sqs.model.DeleteQueueRequest;
@@ -33,21 +29,11 @@ import com.amazonaws.services.sqs.model.ReceiveMessageResult;
 import com.amazonaws.services.sqs.model.SendMessageRequest;
 import com.amazonaws.services.sqs.model.SendMessageResult;
 import com.comcast.cmb.common.controller.CMBControllerServlet;
-import com.comcast.cmb.common.model.User;
-import com.comcast.cmb.common.persistence.IUserPersistence;
-import com.comcast.cmb.common.persistence.PersistenceFactory;
-import com.comcast.cmb.common.persistence.UserCassandraPersistence;
 import com.comcast.cmb.common.util.CMBProperties;
-import com.comcast.cmb.common.util.Util;
+import com.comcast.cmb.test.tools.CMBAWSBaseTest;
 
-public class CQSScaleQueuesTest {
+public class CQSScaleQueuesTest extends CMBAWSBaseTest {
 
-	private static Logger logger = Logger.getLogger(CQSScaleQueuesTest.class);
-
-	private AmazonSQS sqs = null;
-
-	private HashMap<String, String> attributeParams = new HashMap<String, String>();
-	private User user = null;
 	private Random randomGenerator = new Random();
 	private final static String QUEUE_PREFIX = "TSTQ_"; 
 	private final static AtomicLong[] responseTimeDistribution100MS = new AtomicLong[100];
@@ -68,6 +54,14 @@ public class CQSScaleQueuesTest {
     
     private static AtomicLong totalMessagesFound = new AtomicLong(0);
     private static boolean deleteQueues = true;
+    
+    private static HashMap<String, String> attributeParams = new HashMap<String, String>();
+    
+    static {
+        attributeParams.put("MessageRetentionPeriod", "600");
+        attributeParams.put("VisibilityTimeout", "30");
+    }
+
 
 	public static void main(String [ ] args) throws Exception {
 
@@ -138,11 +132,9 @@ public class CQSScaleQueuesTest {
 
 	@Before
 	public void setup() throws Exception {
-
-		Util.initLog4jTest();
-		CMBControllerServlet.valueAccumulator.initializeAllCounters();
-		PersistenceFactory.reset();
 		
+		super.setup();
+
 		for (int i=0; i<responseTimeDistribution100MS.length; i++) {
 			responseTimeDistribution100MS[i] = new AtomicLong(0);
 		}
@@ -150,40 +142,6 @@ public class CQSScaleQueuesTest {
 		for (int i=0; i<responseTimeDistribution10MS.length; i++) {
 			responseTimeDistribution10MS[i] = new AtomicLong(0);
 		}
-
-		try {
-			
-			BasicAWSCredentials credentialsUser = null;
-			
-			if (accessKey != null && accessSecret != null) {
-
-				credentialsUser = new BasicAWSCredentials(accessKey, accessSecret);
-			
-			} else {
-
-				IUserPersistence userPersistence = new UserCassandraPersistence();
-	
-				user = userPersistence.getUserByName("cqs_unit_test");
-	
-				if (user == null) {
-					user = userPersistence.createUser("cqs_unit_test", "cqs_unit_test");
-				}
-	
-				credentialsUser = new BasicAWSCredentials(user.getAccessKey(), user.getAccessSecret());
-			}
-
-			sqs = new AmazonSQSClient(credentialsUser);
-
-			sqs.setEndpoint(CMBProperties.getInstance().getCQSServiceUrl());
-
-		} catch (Exception ex) {
-			logger.error("setup failed", ex);
-			fail("setup failed: "+ex);
-			return;
-		}
-
-		//attributeParams.put("MessageRetentionPeriod", "600");
-		attributeParams.put("VisibilityTimeout", "30");
 	}
 	
 	private String generateRandomMessage(int length) {
@@ -374,7 +332,7 @@ public class CQSScaleQueuesTest {
 		//receiveMessageRequest.setWaitTimeSeconds(1);
 
 		long start = System.currentTimeMillis();
-		ReceiveMessageResult receiveMessageResult = sqs.receiveMessage(receiveMessageRequest);
+		ReceiveMessageResult receiveMessageResult = cqs1.receiveMessage(receiveMessageRequest);
 		long end = System.currentTimeMillis();
 		recordResponseTime(null, end-start);
 		
@@ -391,7 +349,7 @@ public class CQSScaleQueuesTest {
 			deleteMessageRequest.setReceiptHandle(receiveMessageResult.getMessages().get(0).getReceiptHandle());
 
 			start = System.currentTimeMillis();
-			sqs.deleteMessage(deleteMessageRequest);
+			cqs1.deleteMessage(deleteMessageRequest);
 			end = System.currentTimeMillis();
 			recordResponseTime(null, end-start);
 			
@@ -443,7 +401,7 @@ public class CQSScaleQueuesTest {
 					CreateQueueRequest createQueueRequest = new CreateQueueRequest(name);
 					createQueueRequest.setAttributes(attributeParams);
 					long start = System.currentTimeMillis();
-					String queueUrl = sqs.createQueue(createQueueRequest).getQueueUrl();
+					String queueUrl = cqs1.createQueue(createQueueRequest).getQueueUrl();
 					long end = System.currentTimeMillis();
 					recordResponseTime(null, end-start);
 					totalTime += end-start;
@@ -478,7 +436,7 @@ public class CQSScaleQueuesTest {
 						if (messageLength > 0) {
 							msg += "-" + generateRandomMessage(messageLength);
 						}
-						SendMessageResult result = sqs.sendMessage(new SendMessageRequest(queueUrl, msg));
+						SendMessageResult result = cqs1.sendMessage(new SendMessageRequest(queueUrl, msg));
 						long end = System.currentTimeMillis();
 						recordResponseTime(null, end-start);
 						totalTime += end-start;
@@ -571,7 +529,7 @@ public class CQSScaleQueuesTest {
 				for (String queueUrl : queueUrls) {
 					try {
 						long start = System.currentTimeMillis();
-						sqs.deleteQueue(new DeleteQueueRequest(queueUrl));
+						cqs1.deleteQueue(new DeleteQueueRequest(queueUrl));
 						long end = System.currentTimeMillis();
 						recordResponseTime(null, end-start);
 						totalTime += end-start;

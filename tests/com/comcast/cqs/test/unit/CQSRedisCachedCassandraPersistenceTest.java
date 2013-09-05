@@ -57,8 +57,8 @@ import com.comcast.cqs.persistence.RedisCachedCassandraPersistence;
 import com.comcast.cqs.persistence.RedisCachedCassandraPersistence.QCacheState;
 import com.comcast.cqs.util.CQSConstants;
 
-public class RedisCachedCassandraPersistenceTest {
-    private static Logger log = Logger.getLogger(RedisCachedCassandraPersistenceTest.class);
+public class CQSRedisCachedCassandraPersistenceTest {
+    private static Logger log = Logger.getLogger(CQSRedisCachedCassandraPersistenceTest.class);
 
     @Before
     public void setup() throws Exception {
