@@ -33,7 +33,7 @@ import com.comcast.cmb.test.tools.CMBAWSBaseTest;
 import com.comcast.cmb.test.tools.CMBTestingConstants;
 import com.comcast.cmb.test.tools.CNSTestingUtils;
 
-public class SubscriptionAttributeCMBTest extends CMBAWSBaseTest {
+public class CNSSubscriptionAttributeCMBTest extends CMBAWSBaseTest {
 	
 	@Test
 	public void testGetAttributes() {
