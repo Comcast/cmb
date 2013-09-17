@@ -67,7 +67,7 @@ public class CQSHandler {
 			User cnsInternalUser = userHandler.getUserByName(CMBProperties.getInstance().getCNSUserName());
 		
 		    if (cnsInternalUser == null) {	          
-		    	cnsInternalUser =  userHandler.createUser(CMBProperties.getInstance().getCNSUserName(), CMBProperties.getInstance().getCNSUserPassword());
+		    	cnsInternalUser =  userHandler.createDefaultUser();
 		    }
 
 		    awsCredentials = new BasicAWSCredentials(cnsInternalUser.getAccessKey(), cnsInternalUser.getAccessSecret());

@@ -44,6 +44,7 @@ public class UserCassandraPersistence extends CassandraPersistence implements IU
 	private static final String ACCESS_SECRET = "accessSecret";
 	private static final String USER_ID = "userId";
 	private static final String HASH_PASSWORD = "hashPassword";
+	private static final String IS_ADMIN = "isAdmin";
 	//private static final String USER_NAME = "userName";
 	private final ColumnFamilyTemplate<String, String> usersTemplate;
 	private static final String COLUMN_FAMILY_USERS = "Users";
@@ -56,6 +57,12 @@ public class UserCassandraPersistence extends CassandraPersistence implements IU
 
 	@Override
 	public User createUser(String userName, String password) throws PersistenceException {
+		
+		return this.createUser(userName, password, false);
+	}
+	
+	@Override
+	public User createUser(String userName, String password, Boolean isAdmin) throws PersistenceException {
 		
 		User user = null;
 		
@@ -82,7 +89,7 @@ public class UserCassandraPersistence extends CassandraPersistence implements IU
             String accessSecret = AuthUtil.generateRandomAccessSecret();
             String accessKey = AuthUtil.generateRandomAccessKey();
 
-			user = new User(userId, userName, hashedPassword, accessKey, accessSecret);
+			user = new User(userId, userName, hashedPassword, accessKey, accessSecret, isAdmin);
 			
 			Map<String, String> userDataMap = new HashMap<String, String>();
 			
@@ -90,7 +97,8 @@ public class UserCassandraPersistence extends CassandraPersistence implements IU
 			//userDataMap.put(USER_NAME, user.getUserName());
 			userDataMap.put(HASH_PASSWORD, user.getHashPassword());
 			userDataMap.put(ACCESS_SECRET, user.getAccessSecret());		
-			userDataMap.put(ACCESS_KEY, user.getAccessKey());		
+			userDataMap.put(ACCESS_KEY, user.getAccessKey());
+			userDataMap.put(IS_ADMIN, user.getIsAdmin().toString());
 			
 			insertOrUpdateRow(user.getUserName(), COLUMN_FAMILY_USERS, userDataMap, CMBProperties.getInstance().getConsistencyLevel());
 			
@@ -233,9 +241,22 @@ public class UserCassandraPersistence extends CassandraPersistence implements IU
 			return null;
 		}
 		
-		User user = new User(userId, userName, hashPassword, accessKey, accessSecret);
+		Boolean isAdmin = false;
+		
+		if (columnSlice.getColumnByName(IS_ADMIN) != null) {
+			isAdmin = Boolean.parseBoolean(columnSlice.getColumnByName(IS_ADMIN).getValue());
+		} else {
+			return null;
+		}
+		
+		User user = new User(userId, userName, hashPassword, accessKey, accessSecret, isAdmin);
 		
 		return user;
+	}
+
+	@Override
+	public User createDefaultUser() throws PersistenceException {
+		return createUser(CMBProperties.getInstance().getCNSUserName(), CMBProperties.getInstance().getCNSUserPassword(), true);
 	}
 }
 

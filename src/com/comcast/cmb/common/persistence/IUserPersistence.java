@@ -33,6 +33,23 @@ public interface IUserPersistence {
      * @return User object if successful
      */
     public User createUser(String userName, String password) throws PersistenceException;
+    
+    /**
+     * Create a user given username, password and admin permission
+     * @param userName
+     * @param password
+     * @return User object if successful
+     */
+    public User createUser(String userName, String password, Boolean isAdmin) throws PersistenceException;
+    
+    
+    /**
+     * Create a default user given username, password in CMB properties and admin permission
+     * @param userName
+     * @param password
+     * @return User object if successful
+     */
+    public User createDefaultUser() throws PersistenceException;
 
     /**
      * Delete a user given an user name

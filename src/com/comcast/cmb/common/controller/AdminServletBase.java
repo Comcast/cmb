@@ -91,12 +91,7 @@ public abstract class AdminServletBase extends HttpServlet {
 		}
 		
 		User user = (User)request.getSession(true).getAttribute("USER");
-		
-		if (!CMBProperties.getInstance().getCNSUserName().equals(user.getUserName())) {
-			return false;
-		}
-		
-		return true;
+		return user.getIsAdmin();
 	}
 	
 	protected boolean redirectUnauthenticatedUser(HttpServletRequest request, HttpServletResponse response) throws IOException {
@@ -157,7 +152,7 @@ public abstract class AdminServletBase extends HttpServlet {
         	throw new ServletException("User " + userId + " does not exist");
         }
         
-        if (!user.getUserName().equals(getAuthenticatedUser(request).getUserName()) && !CMBProperties.getInstance().getCNSUserName().equals(getAuthenticatedUser(request).getUserName())) {
+        if (!user.getUserName().equals(getAuthenticatedUser(request).getUserName()) && !getAuthenticatedUser(request).getIsAdmin()) {
         	throw new ServletException("Only admin may impersonate other users");
         }
 		
