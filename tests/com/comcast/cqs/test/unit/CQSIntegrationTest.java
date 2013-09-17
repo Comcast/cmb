@@ -792,6 +792,101 @@ public class CQSIntegrationTest extends CMBAWSBaseTest {
     }
     
     @Test
+    public void testMessageVisibilityOnReceive() throws PersistenceException, NoSuchAlgorithmException, UnsupportedEncodingException, InterruptedException {
+    	
+        try {
+        	
+            String queueUrl = getQueueUrl(1, USR.USER1);
+            
+            Thread.sleep(1000);
+            
+            // send message
+            
+            logger.info("Sending a message to " + queueUrl);
+            
+            cqs1.sendMessage(new SendMessageRequest(queueUrl, "This is my message text. " + (new Random()).nextInt()));
+            
+            // receive message
+            
+            logger.info("Receiving messages from " + queueUrl);
+            
+            ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest(queueUrl);
+            int timeoutSeconds = 40;
+
+            List<Message> messages = new ArrayList<Message>();
+            receiveMessageRequest.setVisibilityTimeout(timeoutSeconds);
+            receiveMessageRequest.setMaxNumberOfMessages(10);
+            receiveMessageRequest.setWaitTimeSeconds(2);
+            messages = cqs1.receiveMessage(receiveMessageRequest).getMessages();
+
+            assertTrue("Expected 1 message, instead found " + messages.size(), messages.size() == 1);
+
+            for (Message message : messages) {
+            
+            	logger.info("  Message");
+                logger.info("    MessageId:     " + message.getMessageId());
+                logger.info("    ReceiptHandle: " + message.getReceiptHandle());
+                logger.info("    MD5OfBody:     " + message.getMD5OfBody());
+                logger.info("    Body:          " + message.getBody());
+                
+                for (Entry<String, String> entry : message.getAttributes().entrySet()) {
+                    logger.info("  Attribute");
+                    logger.info("    Name:  " + entry.getKey());
+                    logger.info("    Value: " + entry.getValue());
+                }
+            }
+            
+            // message should be invisible now
+            
+            logger.info("Trying to receive message until it becomes revisible");
+  
+            messages = cqs1.receiveMessage(receiveMessageRequest).getMessages();
+
+            assertTrue("Expected 0 messages, instead found "+ messages.size(), messages.size() == 0);
+            
+            long start = System.currentTimeMillis();
+
+            // keep checking
+
+            int waitedAlreadySeconds = 0;
+            
+            while (messages.size() == 0) {
+            	logger.info("Checking for messages for " + waitedAlreadySeconds + " seconds");
+                messages = cqs1.receiveMessage(receiveMessageRequest).getMessages();
+                waitedAlreadySeconds = (int)((System.currentTimeMillis()-start)/1000); 
+            	if (waitedAlreadySeconds > (int)(timeoutSeconds*1.1)) {
+            		fail("Message did not become revisible after " + waitedAlreadySeconds + " seconds");
+            	}
+            }
+            
+            assertTrue("Message became visible too soon after " + waitedAlreadySeconds + " sec", waitedAlreadySeconds < (int)(timeoutSeconds*1.1));
+            assertTrue("Received " + messages.size() + " instead of 1 message", messages.size() == 1);
+            assertTrue("Message content dorky: " + messages.get(0).getBody(), messages.get(0).getBody().startsWith("This is my message text."));
+            
+            // delete message
+            
+            logger.info("Deleting message with receipt handle " + messages.get(0).getReceiptHandle());
+            cqs1.deleteMessage(new DeleteMessageRequest(queueUrl, messages.get(0).getReceiptHandle()));
+
+            // check if message reappears
+            
+            waitedAlreadySeconds = 0;
+            start = System.currentTimeMillis();
+            
+            for (int i=0; i<10; i++) {
+            	logger.info("Checking for messages for " + waitedAlreadySeconds + " seconds");
+                messages = cqs1.receiveMessage(receiveMessageRequest).getMessages();
+                waitedAlreadySeconds = (int)((System.currentTimeMillis()-start)/1000); 
+            	assertTrue("Message reappeared", messages.size() == 0);
+            }
+            
+        } catch (AmazonServiceException ase) {
+        	logger.error("test failed", ase);
+            fail(ase.getMessage());
+        }
+    }
+
+    @Test
     public void testSendDeleteLargeMessage() throws InterruptedException, PersistenceException, NoSuchAlgorithmException, UnsupportedEncodingException {
     	
         try {
