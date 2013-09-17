@@ -31,11 +31,21 @@ public final class User {
     private final String hashedPassword;  
     private final String accessKey;       
     private final String accessSecret;
+    private Boolean isAdmin;
     
     // some stats about the user
     
     private long numQueues;
 	private long numTopics;
+    
+    public User(String userId, String userName, String hashedPassword, String accessKey, String accessSecret, Boolean isAdmin) {
+        this.userId = userId;
+        this.userName = userName;
+        this.hashedPassword = hashedPassword;
+        this.accessKey = accessKey;
+        this.accessSecret = accessSecret;
+        this.isAdmin = isAdmin;
+    }
     
     public User(String userId, String userName, String hashedPassword, String accessKey, String accessSecret) {
         this.userId = userId;
@@ -43,6 +53,7 @@ public final class User {
         this.hashedPassword = hashedPassword;
         this.accessKey = accessKey;
         this.accessSecret = accessSecret;
+        this.isAdmin = false;
     }
     
     public String getUserId() {
@@ -84,5 +95,13 @@ public final class User {
 
 	public void setNumTopics(long numTopics) {
 		this.numTopics = numTopics;
+	}
+
+	public Boolean getIsAdmin() {
+		return isAdmin;
+	}
+	
+	public void setIsAdmin(Boolean isAdmin) {
+		this.isAdmin = isAdmin;
 	}
 }

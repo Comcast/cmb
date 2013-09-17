@@ -92,7 +92,7 @@ public class CNSPublishAction extends CNSAction {
 	        cnsInternalUser = userHandler.getUserByName(CMBProperties.getInstance().getCNSUserName());
 
 	        if (cnsInternalUser == null) {	          
-	        	cnsInternalUser =  userHandler.createUser(CMBProperties.getInstance().getCNSUserName(), CMBProperties.getInstance().getCNSUserPassword());
+	        	cnsInternalUser =  userHandler.createDefaultUser();
 	        }
 		}
 		

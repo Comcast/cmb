@@ -106,6 +106,25 @@ public class UserPersistenceTest {
 		Thread.sleep(10);
 		return user;
 	}
+	
+	@Test
+	public void testCreateAdmin(){
+		try{
+			String ADMIN_NAME = "cns_admin";
+			String ADMIN_PASSWORD = "cns_admin";
+			IUserPersistence persistence = new UserCassandraPersistence();	
+			User user = persistence.getUserByName(ADMIN_NAME);
+			if (user != null) {
+				persistence.deleteUser(ADMIN_NAME);
+			}
+			user = persistence.createUser(ADMIN_NAME, ADMIN_PASSWORD, true);
+			assertAdmin(ADMIN_NAME, user);
+			persistence.deleteUser(ADMIN_NAME);
+		}catch(Exception ex){
+			logger.error("test failed", ex);
+			fail("Test failed: " + ex.toString());
+		}
+	}
 
 	private void assertUser(String userName, User user) {
 		assertNotNull(user);
@@ -114,6 +133,11 @@ public class UserPersistenceTest {
 		assertNotNull(user.getAccessSecret());
 		assertNotNull(user.getHashPassword());
 		assertNotNull(user.getUserId());
+	}
+	
+	private void assertAdmin(String userName, User user) {
+		assertUser(userName, user);
+		assertTrue(user.getIsAdmin());
 	}
 
 	private void verifyUserCleanup(List<User> users, IUserPersistence persistence) throws PersistenceException {
