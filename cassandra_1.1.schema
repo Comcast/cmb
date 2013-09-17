@@ -4,15 +4,15 @@
 
 -- note: drop keyspaces only if they exist already
 
-drop keyspace CNS;
-drop keyspace CQS;
-drop keyspace CMB;
+--drop keyspace CNS;
+--drop keyspace CQS;
+--drop keyspace CMB;
 
 create keyspace CNS;
 create keyspace CQS;
 create keyspace CMB;
 
--- note: for a replicated environment make sure to configure the desired placment strategy and strategy options 
+-- note: for a replicated environment make sure to configure the desired placement strategy and strategy options 
 
 --
 -- CNS Column Families

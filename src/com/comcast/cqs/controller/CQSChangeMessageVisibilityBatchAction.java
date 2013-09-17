@@ -72,6 +72,8 @@ public class CQSChangeMessageVisibilityBatchAction extends CQSAction {
         	if (idList.contains(suppliedId)) {
                 throw new CMBException(CQSErrorCodes.BatchEntryIdsNotDistinct, "Id " + suppliedId + " repeated");
             }
+        	
+        	idList.add(suppliedId);
             
         	if (receiptHandle.isEmpty()) {
                 failedList.add(new CQSBatchResultErrorEntry(suppliedId, true, "ReceiptHandleIsInvalid", "No Value Found for " + this.actionName + CQSConstants.REQUEST_ENTRY + index + "." + CQSConstants.RECEIPT_HANDLE));

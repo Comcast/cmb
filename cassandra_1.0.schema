@@ -12,7 +12,7 @@ create keyspace CNS;
 create keyspace CQS;
 create keyspace CMB;
 
--- note: for a replicated environment make sure to configure the desired placment strategy and strategy options 
+-- note: for a replicated environment make sure to configure the desired placement strategy and strategy options 
 
 --
 -- CNS Column Families
@@ -491,5 +491,7 @@ create column family Users
     {column_name : 'userId',
     validation_class : UTF8Type,
     index_name : 'usersUserIdIdx',
-    index_type : 0}];
+    index_type : 0},
+    {column_name : 'isAdmin',
+    validation_class : UTF8Type}];
    
