@@ -1,3 +1,17 @@
+
+CMB VERSION 2.2.36
+--------------------------------------------------------------------
+
+New features and bug fixes:
+
+- performance optimization for raw message delivery for CNS
+- bug fix for passing request parameters to long polling ReceiveMessage()
+  calls (visibility timeout, delay seconds etc.)
+- allow multiple admin accounts
+- include jlokia for jmx monitoring
+- improved unit tests
+- improved http headers for CNS Publish()
+
 CMB VERSION 2.2.35
 --------------------------------------------------------------------
 
