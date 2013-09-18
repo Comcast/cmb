@@ -118,6 +118,7 @@ public class CQSReceiveMessageAction extends CQSAction {
         //request.setWaitTime(waitTimeSeconds * 1000);
 
         List<CQSMessage> messageList = PersistenceFactory.getCQSMessagePersistence().receiveMessage(queue, msgParam);
+        request.setReceiveAttributes(msgParam);
         
         // wait for long poll if desired
         

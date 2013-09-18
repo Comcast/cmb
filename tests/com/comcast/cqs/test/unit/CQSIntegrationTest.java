@@ -887,6 +887,71 @@ public class CQSIntegrationTest extends CMBAWSBaseTest {
     }
 
     @Test
+    public void testMessageVisibilityOnReceiveLongPoll() throws PersistenceException, NoSuchAlgorithmException, UnsupportedEncodingException, InterruptedException {
+    	
+        try {
+        	
+            final String queueUrl = getQueueUrl(1, USR.USER1);
+            Thread.sleep(1000);
+            
+    		final ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest(queueUrl);
+            receiveMessageRequest.setVisibilityTimeout(120);
+            receiveMessageRequest.setMaxNumberOfMessages(10);
+            receiveMessageRequest.setWaitTimeSeconds(20);
+
+            (new Thread() {
+            	public void run() {
+            		long ts1 = System.currentTimeMillis();
+            		logger.info("event=lp_receive vto=120 wt=20");
+                    List<Message> messages = cqs1.receiveMessage(receiveMessageRequest).getMessages();
+                    assertTrue("Expected 1 message, instead found " + messages.size(), messages.size() == 1);
+            		long ts2 = System.currentTimeMillis();
+            		logger.info("event=message_found duration=" + (ts2-ts1));
+            	}
+            }).start();
+
+            Thread.sleep(100);           
+            
+            // send message
+            logger.info("event=send_message queue_url=" + queueUrl);
+            cqs1.sendMessage(new SendMessageRequest(queueUrl, "This is my message text. " + (new Random()).nextInt()));
+            Thread.sleep(100);
+
+            // receive message
+            
+            // message should be invisible now
+  
+            List<Message> messages = null;
+            
+            long ts = System.currentTimeMillis();
+            
+            for (int i=0; i<5; i++) {
+	            logger.info("event=receive");
+	            messages = cqs1.receiveMessage(receiveMessageRequest).getMessages();
+	            if (messages.size() > 0) {
+	            	logger.info("event=message_found delay=" + (System.currentTimeMillis()-ts));
+	            }
+	            assertTrue("Expected 0 messages, instead found "+ messages.size(), messages.size() == 0);
+            }
+            
+            for (int i=0; i<5; i++) {
+	            logger.info("event=receive");
+	            messages = cqs1.receiveMessage(receiveMessageRequest).getMessages();
+	            if (messages.size() > 0) {
+	            	logger.info("event=message_found delay=" + (System.currentTimeMillis()-ts));
+	            	return;
+	            }
+            }
+            
+            fail("message not found any more");
+
+        } catch (AmazonServiceException ase) {
+        	logger.error("test failed", ase);
+            fail(ase.getMessage());
+        }
+    }
+
+    @Test
     public void testSendDeleteLargeMessage() throws InterruptedException, PersistenceException, NoSuchAlgorithmException, UnsupportedEncodingException {
     	
         try {
