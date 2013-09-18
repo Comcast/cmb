@@ -245,6 +245,8 @@ public class UserCassandraPersistence extends CassandraPersistence implements IU
 		
 		if (columnSlice.getColumnByName(IS_ADMIN) != null) {
 			isAdmin = Boolean.parseBoolean(columnSlice.getColumnByName(IS_ADMIN).getValue());
+		} else  if (userName.equals(CMBProperties.getInstance().getCNSUserName())) {
+			isAdmin = true;
 		} else {
 			isAdmin = false;
 		}
