@@ -493,5 +493,7 @@ create column family Users
     index_name : 'usersUserIdIdx',
     index_type : 0},
     {column_name : 'isAdmin',
+    validation_class : UTF8Type},
+    {column_name : 'description',
     validation_class : UTF8Type}];
    

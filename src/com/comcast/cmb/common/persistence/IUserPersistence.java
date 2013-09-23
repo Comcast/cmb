@@ -41,7 +41,7 @@ public interface IUserPersistence {
      * @return User object if successful
      */
     public User createUser(String userName, String password, Boolean isAdmin) throws PersistenceException;
-    
+    public User createUser(String userName, String password, Boolean isAdmin, String description)  throws PersistenceException;;
     
     /**
      * Create a default user given username, password in CMB properties and admin permission
@@ -83,4 +83,6 @@ public interface IUserPersistence {
 	 * @throws PersistenceException 
 	 */
     public long getNumUserTopics(String userId) throws PersistenceException;
+
+	
 }

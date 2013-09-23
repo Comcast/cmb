@@ -58,6 +58,7 @@ public class AdminServlet extends AdminServletBase {
 		String userName = request.getParameter("user");
 		String passwd = request.getParameter("password");
 		String isAdminStr = request.getParameter("isAdmin");
+		String description = request.getParameter("description") + "";
 		IUserPersistence userHandler = PersistenceFactory.getUserPersistence();
 		
 		if (parameters.containsKey("Create")) {
@@ -68,7 +69,7 @@ public class AdminServlet extends AdminServletBase {
 					logger.debug("event=user_already_exists user_name=" + userName);
 				} else {
 					Boolean isAdmin = Boolean.parseBoolean(isAdminStr);
-					userHandler.createUser(userName, passwd, isAdmin);
+					userHandler.createUser(userName, passwd, isAdmin, description);
 					logger.debug("event=create_user user_name=" + userName);
 				}
 			} catch (PersistenceException ex) {
@@ -94,8 +95,16 @@ public class AdminServlet extends AdminServletBase {
 		out.println("<body>");
 		
 		out.println("<h2>All Users</h2>");
-        out.print("<table><tr><td>Username:</td><td>Password:</td><td></td></tr>");
-        out.print("<tr><form action=\"/webui\" method=POST><td><input type='text' name='user'/></td><td><input type='password' name='password'></td><td><input type='checkbox' id='isAdmin' name='isAdmin' value='true'><label for='isAdmin'>Is Admin</label></td><td><input type='submit' value='Create' name='Create' /></td></form></tr></table>");
+		out.print("<form action=\"/webui\" method=POST>");
+        out.print("<table><tr><td>Username:</td><td>Password:</td><td>Description:</td><td></td></tr>");
+        out.print("<tr>" +
+        		"<td><input type='text' name='user'/></td>" +
+        		"<td><input type='password' name='password'></td>" +
+        		"<td><input type='text' name='description'/></td>" +
+        		"<td><input type='checkbox' id='isAdmin' name='isAdmin' value='true'><label for='isAdmin'>Is Admin</label></td>" +
+        		"<td><input type='submit' value='Create' name='Create' /></td></tr>");
+        out.print("</table>");
+        out.print("</form>");
         List<User> users = new ArrayList<User>();
 		
         try {
@@ -129,7 +138,9 @@ public class AdminServlet extends AdminServletBase {
         	User user = (User)users.get(i);
         	
         	out.println("<form action=\"/"+response.encodeURL("webui")+"\" method=POST>");
-        	out.println("<tr><td>"+user.getUserName() +"<input type='hidden' name='user' value="+user.getUserName()+"></td>");
+        	out.println("<tr><td>"+user.getUserName() +"<input type='hidden' name='user' value="+user.getUserName()+">" +
+        			(user.getDescription().isEmpty()? "":"<br/><i>" + user.getDescription()) + "</i>" +
+        			"</td>");
         	out.println("<td>"+user.getUserId()+"</td>");
         	out.println("<td>"+user.getIsAdmin()+"</td>");
         	out.println("<td>"+user.getAccessKey()+"</td>");
