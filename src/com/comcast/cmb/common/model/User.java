@@ -32,6 +32,7 @@ public final class User {
     private final String accessKey;       
     private final String accessSecret;
     private Boolean isAdmin;
+    private String description = "";
     
     // some stats about the user
     
@@ -45,6 +46,7 @@ public final class User {
         this.accessKey = accessKey;
         this.accessSecret = accessSecret;
         this.isAdmin = isAdmin;
+        this.setDescription("");
     }
     
     public User(String userId, String userName, String hashedPassword, String accessKey, String accessSecret) {
@@ -54,6 +56,17 @@ public final class User {
         this.accessKey = accessKey;
         this.accessSecret = accessSecret;
         this.isAdmin = false;
+        this.setDescription("");
+    }
+    
+    public User(String userId, String userName, String hashedPassword, String accessKey, String accessSecret, Boolean isAdmin, String description) {
+        this.userId = userId;
+        this.userName = userName;
+        this.hashedPassword = hashedPassword;
+        this.accessKey = accessKey;
+        this.accessSecret = accessSecret;
+        this.isAdmin = isAdmin;
+        this.setDescription(description);
     }
     
     public String getUserId() {
@@ -103,5 +116,13 @@ public final class User {
 	
 	public void setIsAdmin(Boolean isAdmin) {
 		this.isAdmin = isAdmin;
+	}
+
+	public String getDescription() {
+		return description;
+	}
+
+	public void setDescription(String description) {
+		this.description = description;
 	}
 }
