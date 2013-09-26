@@ -373,19 +373,12 @@ public class CQSIntegrationTest extends CMBAWSBaseTest {
         int i = 0;
         
         for (Message message : messages) {
-        	
-            if (i == messages.size() - 1) {
-                i--;
-            }
-            
             logger.info("MessageId:     " + message.getMessageId());
             logger.info("ReceiptHandle: " + message.getReceiptHandle());
             deleteMsgList.add(new DeleteMessageBatchRequestEntry("msg" + i, message.getReceiptHandle()));
             i++;
         }
 
-        logger.info("Delete a batch of messages with same supplied id (should be ok!)");
-        
         try {
             DeleteMessageBatchRequest batchDeleteRequest = new DeleteMessageBatchRequest(queueUrl, deleteMsgList);
             cqs1.deleteMessageBatch(batchDeleteRequest);
