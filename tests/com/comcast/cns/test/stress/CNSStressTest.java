@@ -37,7 +37,6 @@ import org.junit.Test;
 import com.amazonaws.ClientConfiguration;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.services.sns.AmazonSNS;
 import com.amazonaws.services.sns.AmazonSNSClient;
 import com.amazonaws.services.sns.model.CreateTopicRequest;
 import com.amazonaws.services.sns.model.CreateTopicResult;
@@ -165,10 +164,10 @@ public class CNSStressTest {
 	
     private class MessageSender implements Runnable {
     	
-    	private AmazonSNS sns;
+    	private AmazonSNSClient sns;
     	private String topicArn;
     	
-    	public MessageSender(AmazonSNS sns, String topicArn) {
+    	public MessageSender(AmazonSNSClient sns, String topicArn) {
     		this.sns = sns;
     		this.topicArn = topicArn;
     	}
@@ -226,7 +225,7 @@ public class CNSStressTest {
 			
 			ClientConfiguration clientConfiguration = new ClientConfiguration();
 
-			AmazonSNS sns = new AmazonSNSClient(awsCredentials, clientConfiguration);
+			AmazonSNSClient sns = new AmazonSNSClient(awsCredentials, clientConfiguration);
 
 			if (useLocalSns) {
 				sns.setEndpoint(CMBProperties.getInstance().getCNSServiceUrl());

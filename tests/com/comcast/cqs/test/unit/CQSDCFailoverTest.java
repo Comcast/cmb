@@ -6,103 +6,37 @@ import static org.junit.Assert.fail;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Random;
 
-import org.apache.log4j.Logger;
 import org.junit.After;
 import org.junit.Before;
 
-import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClient;
-import com.amazonaws.services.sqs.model.CreateQueueRequest;
 import com.amazonaws.services.sqs.model.DeleteMessageRequest;
 import com.amazonaws.services.sqs.model.DeleteQueueRequest;
 import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
 import com.amazonaws.services.sqs.model.ReceiveMessageResult;
 import com.amazonaws.services.sqs.model.SendMessageRequest;
 import com.comcast.cmb.common.controller.CMBControllerServlet;
-import com.comcast.cmb.common.model.User;
-import com.comcast.cmb.common.persistence.IUserPersistence;
 import com.comcast.cmb.common.persistence.PersistenceFactory;
-import com.comcast.cmb.common.persistence.UserCassandraPersistence;
-import com.comcast.cmb.common.util.CMBProperties;
-import com.comcast.cmb.common.util.Util;
-import com.comcast.cqs.persistence.ICQSMessagePersistence;
-import com.comcast.cqs.persistence.RedisCachedCassandraPersistence;
+import com.comcast.cmb.test.tools.CMBAWSBaseTest;
 
-public class CQSDCFailoverTest {
+public class CQSDCFailoverTest extends CMBAWSBaseTest {
 	
-    private static Logger logger = Logger.getLogger(CQSIntegrationTest.class);
-
-    private AmazonSQS primarySqs = null;
-    
-    // alternateSqs is referring to a separate cqs api server using a separate redis service but the same
-    // cassandra ring to simulate fail-over across data center boundaries
-    
-    
-    private String cqsServiceUrl = CMBProperties.getInstance().getCQSServiceUrl();
-
-    //todo: put url of primary and alternate cqs service here
-    
-    private String alternateCqsServiceUrl = null;
-    
-    private AmazonSQS alternateSqs = null;
-    
-    private AmazonSQS currentSqs = null;
-    
-    private HashMap<String, String> attributeParams = new HashMap<String, String>();
-    private User user = null;
-    private Random randomGenerator = new Random();
-    private final static String QUEUE_PREFIX = "TSTQ_"; 
-    
+    private AmazonSQSClient currentSqs = null;
     private static String queueUrl;
     private static Map<String, String> messageMap;
     
     @Before
     public void setup() throws Exception {
     	
-        Util.initLog4jTest();
-        CMBControllerServlet.valueAccumulator.initializeAllCounters();
-        PersistenceFactory.reset();
-        
+    	super.setup();
+    	
+    	PersistenceFactory.reset();
         messageMap = new HashMap<String, String>();
         
         try {
-        	
-            IUserPersistence userPersistence = new UserCassandraPersistence();
- 
-            user = userPersistence.getUserByName("cqs_unit_test");
-
-            if (user == null) {
-                user = userPersistence.createUser("cqs_unit_test", "cqs_unit_test");
-            }
-
-            BasicAWSCredentials credentialsUser = new BasicAWSCredentials(user.getAccessKey(), user.getAccessSecret());
-
-            primarySqs = new AmazonSQSClient(credentialsUser);
-            primarySqs.setEndpoint(cqsServiceUrl);
-            
-            if (alternateCqsServiceUrl != null) {
-            	alternateSqs = new AmazonSQSClient(credentialsUser);
-            	alternateSqs.setEndpoint(alternateCqsServiceUrl);
-            }
-            
-            currentSqs = primarySqs;
-            
-            queueUrl = null;
-            
-    		String queueName = QUEUE_PREFIX + randomGenerator.nextLong();
-	        CreateQueueRequest createQueueRequest = new CreateQueueRequest(queueName);
-	        createQueueRequest.setAttributes(attributeParams);
-	        
-	        queueUrl = primarySqs.createQueue(createQueueRequest).getQueueUrl();
-	        
-	        ICQSMessagePersistence messagePersistence = RedisCachedCassandraPersistence.getInstance();
-			messagePersistence.clearQueue(queueUrl, 0);
-			
-			logger.info("queue " + queueUrl + "created");
-	        
+            currentSqs = cqs1;
+	        queueUrl = getQueueUrl(1, USR.USER1);
 	        Thread.sleep(1000);
             
         } catch (Exception ex) {
@@ -110,9 +44,6 @@ public class CQSDCFailoverTest {
             fail("setup failed: "+ex);
             return;
         }
-        
-        attributeParams.put("MessageRetentionPeriod", "600");
-        attributeParams.put("VisibilityTimeout", "30");
     }
     
     @After    
@@ -120,7 +51,7 @@ public class CQSDCFailoverTest {
         CMBControllerServlet.valueAccumulator.deleteAllCounters();
         
         if (queueUrl != null) {
-        	primarySqs.deleteQueue(new DeleteQueueRequest(queueUrl));
+        	currentSqs.deleteQueue(new DeleteQueueRequest(queueUrl));
         }
     } 
     
@@ -152,7 +83,7 @@ public class CQSDCFailoverTest {
     @Test
     public void testDCFailover() {
     	
-    	if (alternateCqsServiceUrl == null) {
+    	if (cqsAlt == null) {
     		logger.info("skipping dc failover test due to missing alternate sqs service url");
     		return;
     	}
@@ -180,8 +111,8 @@ public class CQSDCFailoverTest {
         		
 		        	// flip to second data center half-way through the test
 		        	
-		        	if (messageCounter >= NUM_MESSAGES/2 && currentSqs == primarySqs) {
-		        		currentSqs = alternateSqs;
+		        	if (messageCounter >= NUM_MESSAGES/2 && currentSqs == cqs1) {
+		        		currentSqs = cqsAlt;
 		        		logger.info("switching to secondary data center");
 		        	}
 		        	

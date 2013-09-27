@@ -63,7 +63,7 @@ public class CNSPublishAction extends CNSAction {
 	
     private static volatile User cnsInternalUser = null;
     private static volatile BasicAWSCredentials awsCredentials = null;
-    private static volatile AmazonSQS sqs = null;
+    private static volatile AmazonSQSClient sqs = null;
     
     public static final String CNS_PUBLISH_QUEUE_NAME_PREFIX = CMBProperties.getInstance().getCNSPublishQueueNamePrefix();
     public static final String CNS_ENDPOINT_QUEUE_NAME_PREFIX = CMBProperties.getInstance().getCNSEndpointPublishQueueNamePrefix();

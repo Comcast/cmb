@@ -10,11 +10,9 @@ import org.junit.Before;
 
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.services.sns.AmazonSNS;
 import com.amazonaws.services.sns.AmazonSNSClient;
 import com.amazonaws.services.sns.model.CreateTopicRequest;
 import com.amazonaws.services.sns.model.DeleteTopicRequest;
-import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClient;
 import com.amazonaws.services.sqs.model.CreateQueueRequest;
 import com.amazonaws.services.sqs.model.DeleteQueueRequest;
@@ -53,17 +51,17 @@ public class CMBAWSBaseTest {
 	
 	protected static User user1, user2, user3;
 	
-	protected static AmazonSNS cns1 = null;
-	protected static AmazonSQS cqs1 = null;
+	protected static AmazonSNSClient cns1 = null;
+	protected static AmazonSQSClient cqs1 = null;
 
-	protected static AmazonSNS cns2 = null;
-	protected static AmazonSQS cqs2 = null;
+	protected static AmazonSNSClient cns2 = null;
+	protected static AmazonSQSClient cqs2 = null;
 	
-	protected static AmazonSNS cns3 = null;
-	protected static AmazonSQS cqs3 = null;
+	protected static AmazonSNSClient cns3 = null;
+	protected static AmazonSQSClient cqs3 = null;
 
-	protected static AmazonSNS cnsAlt = null;
-	protected static AmazonSQS cqsAlt = null;
+	protected static AmazonSNSClient cnsAlt = null;
+	protected static AmazonSQSClient cqsAlt = null;
 
 	protected static Random rand = new Random();
 	
@@ -157,7 +155,7 @@ public class CMBAWSBaseTest {
 		CMBControllerServlet.valueAccumulator.deleteAllCounters();
 	}
 	
-	public AmazonSQS getCqs(USR usr) {
+	public AmazonSQSClient getCqs(USR usr) {
 		if (usr.equals(USR.USER1)) {
 			return cqs1;
 		} else if (usr.equals(USR.USER2)) {
@@ -167,7 +165,7 @@ public class CMBAWSBaseTest {
 		}
 	}
 
-	public AmazonSNS getCns(USR usr) {
+	public AmazonSNSClient getCns(USR usr) {
 		if (usr.equals(USR.USER1)) {
 			return cns1;
 		} else if (usr.equals(USR.USER2)) {

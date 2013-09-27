@@ -18,7 +18,6 @@ package com.comcast.cns.io;
 import org.apache.log4j.Logger;
 
 import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClient;
 import com.amazonaws.services.sqs.model.SendMessageRequest;
 import com.comcast.cmb.common.util.CMBException;
@@ -36,7 +35,7 @@ public class CQSEndpointPublisher extends AbstractEndpointPublisher {
 
 	
     private BasicAWSCredentials awsCredentials;
-    private AmazonSQS sqs;
+    private AmazonSQSClient sqs;
 	
 	@Override
 	public void send() throws Exception {

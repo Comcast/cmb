@@ -30,7 +30,6 @@ import org.apache.log4j.Logger;
 import org.json.JSONObject;
 
 import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.services.sns.AmazonSNS;
 import com.amazonaws.services.sns.AmazonSNSClient;
 import com.amazonaws.services.sns.model.CreateTopicRequest;
 import com.amazonaws.services.sns.model.CreateTopicResult;
@@ -38,7 +37,6 @@ import com.amazonaws.services.sns.model.DeleteTopicRequest;
 import com.amazonaws.services.sns.model.PublishRequest;
 import com.amazonaws.services.sns.model.SubscribeRequest;
 import com.amazonaws.services.sns.model.SubscribeResult;
-import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClient;
 import com.amazonaws.services.sqs.model.AddPermissionRequest;
 import com.amazonaws.services.sqs.model.CreateQueueRequest;
@@ -116,10 +114,10 @@ public class CMBTutorial {
             
             // initialize service
 
-            AmazonSQS sqs = new AmazonSQSClient(user1Credentials);
+            AmazonSQSClient sqs = new AmazonSQSClient(user1Credentials);
             sqs.setEndpoint(cqsServerUrl);
 
-            AmazonSNS sns = new AmazonSNSClient(user2Credentials);
+            AmazonSNSClient sns = new AmazonSNSClient(user2Credentials);
             sns.setEndpoint(cnsServerUrl);
         
             // create queue

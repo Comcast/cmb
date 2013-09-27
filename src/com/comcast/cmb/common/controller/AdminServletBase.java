@@ -57,8 +57,8 @@ public abstract class AdminServletBase extends HttpServlet {
 	
     protected volatile User user = null;
     
-    protected volatile AmazonSQS sqs = null;
-    protected volatile AmazonSNS sns = null;
+    protected volatile AmazonSQSClient sqs = null;
+    protected volatile AmazonSNSClient sns = null;
 
     private volatile BasicAWSCredentials awsCredentials = null;
     

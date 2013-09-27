@@ -98,7 +98,7 @@ with a few lines of simple code as the following example illustrates.
  
   String cqsServerUrl = "http://<cqs_host>:<cqs_port>/";
              
-  AmazonSQS sqs = new AmazonSQSClient(credentialsUser);
+  AmazonSQSClient sqs = new AmazonSQSClient(credentialsUser);
   sqs.setEndpoint(cqsServerUrl);
  
   Random randomGenerator = new Random();
@@ -142,8 +142,7 @@ CMB comes with an embedded Jetty server. As a result the required components (CQ
 Service Endpoint, CNS Service Endpoint and CNS Publish Worker) can all be conveniently
 launched using the cmb.sh script within a single JVM. The only external components
 you need to install separately are Cassandra and Redis (make sure Redis does not 
-persist to disk!). To take advantage of the embedded Jetty option follow the 
-instructions below:
+persist to disk!). 
 
 1. Build CMB from source
 
@@ -294,7 +293,7 @@ http://secondarycqsserviceurl/?Action=ManageService&Task=ClearCache&AWSAccessKey
 - Known Limitations
 --------------------------------------------------------------------------------------
 
-1. Compatibility with AWS SDK has been tested up to version 1.4.7.
+1. Compatibility with AWS SDK has been tested up to version 1.5.7.
  
 2. AWS4 signatures are currently not supported (V1 and V2 ok).
 

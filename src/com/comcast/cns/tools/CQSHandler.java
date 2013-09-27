@@ -21,7 +21,6 @@ import org.apache.log4j.Logger;
 
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClient;
 import com.amazonaws.services.sqs.model.ChangeMessageVisibilityRequest;
 import com.amazonaws.services.sqs.model.CreateQueueRequest;
@@ -48,7 +47,7 @@ public class CQSHandler {
     
     private static volatile boolean initialized = false;
     private static volatile BasicAWSCredentials awsCredentials = null;
-    private static volatile AmazonSQS sqs = null;
+    private static volatile AmazonSQSClient sqs = null;
     private static ConcurrentHashMap<String, String> queueUrlCache = new ConcurrentHashMap<String, String>();
     
     public static synchronized void initialize() throws PersistenceException {
@@ -84,11 +83,11 @@ public class CQSHandler {
     	initialized = false;
     }
     
-    public static AmazonSQS getSQSHandler() {
+    public static AmazonSQSClient getSQSHandler() {
     	return sqs;
     }
     
-    public static void setSQSHandler(AmazonSQS sqs) {
+    public static void setSQSHandler(AmazonSQSClient sqs) {
     	CQSHandler.sqs = sqs;
     }
     

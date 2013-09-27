@@ -28,7 +28,6 @@ import org.apache.log4j.Logger;
 
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.AmazonServiceException;
-import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.model.Message;
 import com.comcast.cmb.common.controller.CMBControllerServlet;
 import com.comcast.cmb.common.model.User;
@@ -122,27 +121,6 @@ public class CNSEndpointPublisherJobConsumer implements CNSPublisherPartitionRun
     
     public static void submitForReDelivery(Runnable job, long delay, TimeUnit unit) {
     	reDeliveryHandlers.schedule(job, delay, unit);
-    }
-    
-    public static class TestInterface {
-        public static boolean isInitialized() {
-            return initialized;
-        }
-        public static AmazonSQS getSQS() {
-            return CQSHandler.getSQSHandler();
-        }
-        public static void setAmazonSQS(AmazonSQS sqs) {
-            CQSHandler.setSQSHandler(sqs);
-        }
-        public static void setTestQueueLimit(Integer limit) {
-            testQueueLimit = limit;
-        }
-        public static void clearDeliveryHandlerQueue() {
-            deliveryHandlers.getQueue().clear();
-        }
-        public static void clearReDeliveryHandlerQueue() {
-            reDeliveryHandlers.getQueue().clear();
-        }
     }
     
     /**

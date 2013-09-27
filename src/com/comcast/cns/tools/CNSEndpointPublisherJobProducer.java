@@ -27,7 +27,6 @@ import org.apache.log4j.Logger;
 
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.AmazonServiceException;
-import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.model.Message;
 import com.comcast.cmb.common.controller.CMBControllerServlet;
 import com.comcast.cmb.common.persistence.PersistenceFactory;
@@ -37,10 +36,8 @@ import com.comcast.cmb.common.util.ValueAccumulator.AccumulatorName;
 import com.comcast.cns.model.CNSEndpointPublishJob;
 import com.comcast.cns.model.CNSMessage;
 import com.comcast.cns.model.CNSSubscription;
-import com.comcast.cns.model.CNSSubscriptionAttributes;
 import com.comcast.cns.model.CNSEndpointPublishJob.CNSEndpointSubscriptionInfo;
 import com.comcast.cns.persistence.CNSCachedEndpointPublishJob;
-import com.comcast.cns.persistence.ICNSAttributesPersistence;
 import com.comcast.cns.persistence.ICNSSubscriptionPersistence;
 import com.comcast.cns.persistence.TopicNotFoundException;
 
@@ -61,31 +58,9 @@ public class CNSEndpointPublisherJobProducer implements CNSPublisherPartitionRun
     private static volatile boolean initialized = false; 
     
     private static volatile ICNSSubscriptionPersistence subscriptionPersistence = PersistenceFactory.getSubscriptionPersistence(); 
-    private static volatile ICNSAttributesPersistence attributePersistence = PersistenceFactory.getCNSAttributePersistence();
 
     private long processingDelayMillis = 10;
 
-    public static class TestInterface {
-        public static boolean isInitialized() {
-            return initialized;
-        }
-        public static void setInitialized(boolean flag) {
-        	initialized = flag;
-        }
-        public static AmazonSQS getSQS() {
-            return CQSHandler.getSQSHandler();
-        }
-        public static void setSQS(AmazonSQS sqs) {
-            CQSHandler.setSQSHandler(sqs);
-        }
-        public static ICNSSubscriptionPersistence getSubscriptionPersistence() {
-        	return subscriptionPersistence;
-        }
-        public static void setSubscriptionPersistence(ICNSSubscriptionPersistence inst) {
-        	subscriptionPersistence = inst; 
-        }
-    }
-    
    /* 
     * Read the EndpointPublishQ_<m> property and ensuring they exist (create if not) 
     * @throws PersistenceException 

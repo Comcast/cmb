@@ -1,5 +1,6 @@
 package com.comcast.cqs.controller;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -34,7 +35,7 @@ public class CQSHttpServletRequest extends HttpServletRequestWrapper {
 	public void setReceiptHandles(List<String> receiptHandles) {
 		this.receiptHandles = receiptHandles;
 	}
-
+	
 	public long getWaitTime() {
 		return waitTime;
 	}
