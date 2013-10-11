@@ -1,12 +1,12 @@
 /**
  * Copyright 2012 Comcast Corporation
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
- *   http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -49,82 +49,74 @@ import com.comcast.cqs.util.Util;
  *
  */
 public class CQSUserPageServlet extends AdminServletBase {
-	
+
 	private static final long serialVersionUID = 1L;
 	private static Logger logger = Logger.getLogger(CQSUserPageServlet.class);
-	
+	public static final String cqsServiceBaseUrl = CMBProperties.getInstance().getCQSServiceUrl();
+
 	public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 
 		if (redirectUnauthenticatedUser(request, response)) {
 			return;
 		}
 
+		boolean showQueueAttributes = false;
+		boolean showQueuesWithMessagesOnly = false;
+
 		CMBControllerServlet.valueAccumulator.initializeAllCounters();
 		response.setContentType("text/html");
 		PrintWriter out = response.getWriter();
-		
+
 		Map<?, ?> parameters = request.getParameterMap();
 		String userId = request.getParameter("userId");
 		String queueName = request.getParameter("queueName");
+		String queueNamePrefix = request.getParameter("queueNamePrefix");
 		String queueUrl = request.getParameter("qUrl");
-		
-        List<String> queueUrls = new ArrayList<String>();
-        
-        boolean showQueueAttributes = false;
-        boolean showQueuesWithMessagesOnly = false;
-		boolean useQueueNamePrefix = false;
-        
+
+		if (request.getParameter("ShowMessagesOnly") != null) {
+			showQueuesWithMessagesOnly = true;
+		}
+
+		if (request.getParameter("ShowAttributes") != null) {
+			showQueueAttributes = true;
+		}
+
+		List<String> queueUrls = new ArrayList<String>();
+
 		connect(request);
-		
+
 		if (parameters.containsKey("Search")) {
-			
-			useQueueNamePrefix = true; 
-			
-			if (request.getParameter("ShowMessagesOnly") != null) {
-				showQueuesWithMessagesOnly = true;
+		}
+
+		try {
+
+			String url = cqsServiceBaseUrl + "?Action=ListQueues&AWSAccessKeyId=" + user.getAccessKey();
+
+			if (queueNamePrefix != null && !queueNamePrefix.equals("")) {
+				url += "&QueueNamePrefix=" + queueNamePrefix;
 			}
 
-			if (request.getParameter("ShowAttributes") != null) {
-				showQueueAttributes = true;
-			}
-		}
-		
-		try {
-		
-			/*ListQueuesRequest listQueuesRequest = new ListQueuesRequest();
-	
-			if (queueName != null && !queueName.equals("")) {
-				listQueuesRequest.setQueueNamePrefix(queueName);
-			}
-			
-			ListQueuesResult listQueuesResult = sqs.listQueues(listQueuesRequest);
-			queueUrls = listQueuesResult.getQueueUrls();*/
-			
-			String url = cqsServiceBaseUrl + "?Action=ListQueues&AWSAccessKeyId=" + user.getAccessKey();
-			
-			if (useQueueNamePrefix && queueName != null && !queueName.equals("")) {
-				url += "&QueueNamePrefix=" + queueName;
-			}
-			
 			if (showQueuesWithMessagesOnly) {
 				url += "&ContainingMessagesOnly=true";
 			}
-	
+
 			String apiStateXml = httpGet(url);
 			Element root = XmlUtil.buildDoc(apiStateXml);
 			List<Element> queueUrlList = XmlUtil.getCurrentLevelChildNodes(root, "ListQueuesResult");
-			
+
 			for (Element urlElement : queueUrlList) {
-				queueUrls.add(XmlUtil.getCurrentLevelChildNodes(urlElement, "QueueUrl").get(0).getTextContent().trim());
+				String u = XmlUtil.getCurrentLevelChildNodes(urlElement, "QueueUrl").get(0).getTextContent().trim();
+				queueUrls.add(u);
+				logger.info("found:" + u);
 			}
-		
-        } catch (Exception ex) {
+
+		} catch (Exception ex) {
 			logger.error("event=list_queues user_id= " + userId, ex);
 			throw new ServletException(ex);
 		}
 
 		if (parameters.containsKey("Create")) {
-			
+
 			try {
 				CreateQueueRequest createQueueRequest = new CreateQueueRequest(queueName);
 				CreateQueueResult createQueueResult = sqs.createQueue(createQueueRequest);
@@ -135,9 +127,9 @@ public class CQSUserPageServlet extends AdminServletBase {
 				logger.error("event=create_queue queue_url=" + queueUrl + " user_id= " + userId, ex);
 				throw new ServletException(ex);
 			}
-		
+
 		} else if (parameters.containsKey("Delete")) {
-			
+
 			try {
 				DeleteQueueRequest deleteQueueRequest = new DeleteQueueRequest(queueUrl);
 				sqs.deleteQueue(deleteQueueRequest);
@@ -149,7 +141,7 @@ public class CQSUserPageServlet extends AdminServletBase {
 			}
 
 		} else if (parameters.containsKey("DeleteAll")) {
-			
+
 			for (int i = 0; queueUrls != null && i < queueUrls.size(); i++) {
 
 				try {
@@ -160,25 +152,64 @@ public class CQSUserPageServlet extends AdminServletBase {
 					logger.error("event=delete_queue queue_url=" + queueUrls.get(i) + " user_id= " + userId, ex);
 				}
 			}
-			
+
 			queueUrls = new ArrayList<String>();
+			
+		} else if (parameters.containsKey("ClearQueue")) {
+			
+			String qName = Util.getNameForAbsoluteQueueUrl(queueUrl);
+			String qUserId = Util.getUserIdForAbsoluteQueueUrl(queueUrl);
+			
+			try {	
+				String url = cqsServiceBaseUrl;
+				if (!url.endsWith("/")) {
+					url += "/";
+				}
+				url += qUserId + "/" + qName + "?Action=ClearQueue&AWSAccessKeyId=" + user.getAccessKey();
+				httpGet(url);
+				logger.debug("event=clear_queue url=" + url + " user_id= " + userId);
+			} catch (Exception ex) {
+				logger.error("event=clear_queue queue_name=" + qName + " user_id= " + userId, ex);
+				throw new ServletException(ex);
+			}
+
+		} else if (parameters.containsKey("ClearAllQueues")) {
+			
+			for (int i = 0; queueUrls != null && i < queueUrls.size(); i++) {
+
+				String qName = Util.getNameForAbsoluteQueueUrl(queueUrls.get(i));
+				String qUserId = Util.getUserIdForAbsoluteQueueUrl(queueUrls.get(i));
+				
+				try {
+					String url = cqsServiceBaseUrl;
+					if (!url.endsWith("/")) {
+						url += "/";
+					}
+					url += qUserId + "/" + qName + "?Action=ClearQueue&AWSAccessKeyId=" + user.getAccessKey();
+					httpGet(url);
+					logger.debug("event=clear_queue url=" + url + " user_id= " + userId);
+				} catch (Exception ex) {
+					logger.error("event=clear_queue queue_name=" + qName + " user_id= " + userId, ex);
+				}
+			}
 		}
-		
+
 		out.println("<html>");
-		
+
 		header(request, out, "Queues");
-		
+
 		out.println("<body>");
 
 		out.println("<h2>Queues</h2>");
-		
+
 		long numQueues = 0;
-		
+
 		try {
 			numQueues = PersistenceFactory.getUserPersistence().getNumUserQueues(userId);
 		} catch (PersistenceException ex) {
 			logger.warn("event=queue_count_failure", ex);
 		}
+
 
 		if (user != null) {
 			out.println("<table><tr><td><b>User Name:</b></td><td>"+ user.getUserName()+"</td></tr>");
@@ -187,28 +218,54 @@ public class CQSUserPageServlet extends AdminServletBase {
 			out.println("<tr><td><b>Access Secret:</b></td><td>"+user.getAccessSecret()+"</td>");
 			out.println("<tr><td><b>Queue Count</b></td><td>"+numQueues+"</td></tr></table>");
 		}
-        
+
 		out.println("<p><table>");
-		
+
 		out.println("<tr><td>Search queues with name prefix:</td><td></td></tr>");
-        out.println("<tr><form action=\"/webui/cqsuser?userId="+user.getUserId() + "\" method=POST>");
-        out.println("<td><input type='text' name='queueName' value='"+(useQueueNamePrefix?queueName:"")+"'/><input type='hidden' name='userId' value='"+ userId + "'/>");
-        out.println("<input type='checkbox' " + (showQueueAttributes ? "checked='true' " : "") + "name='ShowAttributes' value='ShowAttributes'>Show Attributes</input>");
-        out.println("<input type='checkbox' " + (showQueuesWithMessagesOnly ? "checked='true' " : "") + " name='ShowMessagesOnly' value='ShowMessagesOnly'>Only Queues With Messages</input></td>");
-        out.println("<td><input type='submit' value='Search' name='Search' /></td></form></tr>");
+		out.println("<tr><form action=\"/webui/cqsuser?userId="+user.getUserId() + "\" method=POST>");
+		out.println("<td><input type='text' name='queueNamePrefix' value='"+(queueNamePrefix!=null?queueNamePrefix:"")+"'/><input type='hidden' name='userId' value='"+ userId + "'/>");
+		out.println("<input type='checkbox' " + (showQueueAttributes ? "checked='true' " : "") + "name='ShowAttributes' value='ShowAttributes'>Show Attributes</input>");
+		out.println("<input type='checkbox' " + (showQueuesWithMessagesOnly ? "checked='true' " : "") + " name='ShowMessagesOnly' value='ShowMessagesOnly'>Only Queues With Messages</input></td>");
+		out.println("<td><input type='submit' value='Search' name='Search' /></td></form></tr>");
 
-        out.println("<tr><td>Create queue with name:</td><td></td></tr>");
-        out.println("<tr><form action=\"/webui/cqsuser?userId="+user.getUserId() + "\" method=POST>");
-        out.println("<td><input type='text' name='queueName' /><input type='hidden' name='userId' value='"+ userId + "'></td><td><input type='submit' value='Create' name='Create' /></td></form></tr>");
+		out.println("<tr><td>Create queue with name:</td><td></td></tr>");
+		out.println("<tr><form action=\"/webui/cqsuser?userId="+user.getUserId() + "\" method=POST>");
+		out.println("<td><input type='text' name='queueName' /><input type='hidden' name='userId' value='"+ userId + "'></td>");
+		out.println("<input type='hidden' name='queueNamePrefix' value='"+(queueNamePrefix != null ? queueNamePrefix : "")+"'/>");
+		if (showQueuesWithMessagesOnly) {
+			out.println("<input type='hidden' name='ShowMessagesOnly' value='true'/>");
+		}
+		if (showQueueAttributes) {
+			out.println("<input type='hidden' name='ShowAttributes' value='true'/>");
+		}
+		out.println("<td><input type='submit' value='Create' name='Create' /></td></form></tr>");
 
-        out.println("<tr><td>Delete all queues:</td><td></td></tr>");
-        out.println("<tr><form action=\"/webui/cqsuser?userId="+user.getUserId() + "\" " + "method=POST><td><input type='hidden' name='userId' value='"+ userId + "'/>");
-        out.println("<input type='hidden' name='queueName' value='"+(queueName != null ? queueName : "")+"'/></td><td><input type='submit' value='DeleteAll' name='DeleteAll'/></td></form></tr>");
-        
-        out.println("</table></p>");
+		out.println("<tr><td>Delete all queues:</td><td></td></tr>");
+		out.println("<tr><form action=\"/webui/cqsuser?userId="+user.getUserId() + "\" " + "method=POST><td><input type='hidden' name='userId' value='"+ userId + "'/>");
+		out.println("<input type='hidden' name='queueNamePrefix' value='"+(queueNamePrefix != null ? queueNamePrefix : "")+"'/></td>");
+		if (showQueuesWithMessagesOnly) {
+			out.println("<input type='hidden' name='ShowMessagesOnly' value='true'/>");
+		}
+		if (showQueueAttributes) {
+			out.println("<input type='hidden' name='ShowAttributes' value='true'/>");
+		}
+		out.println("<td><input type='submit' value='DeleteAll' name='DeleteAll'/></td></form></tr>");
+
+		out.println("<tr><td>Clear all queues:</td><td></td></tr>");
+		out.println("<tr><form action=\"/webui/cqsuser?userId="+user.getUserId() + "\" " + "method=POST><td><input type='hidden' name='userId' value='"+ userId + "'/>");
+		out.println("<input type='hidden' name='queueNamePrefix' value='"+(queueNamePrefix != null ? queueNamePrefix : "")+"'/></td>");
+		if (showQueuesWithMessagesOnly) {
+			out.println("<input type='hidden' name='ShowMessagesOnly' value='true'/>");
+		}
+		if (showQueueAttributes) {
+			out.println("<input type='hidden' name='ShowAttributes' value='true'/>");
+		}
+		out.println("<td><input type='submit' value='ClearAll' name='ClearAllQueues'/></td></form></tr>");
+
+		out.println("</table></p>");
 
 		out.println("<p><hr width='100%' align='left' /></p>");
-		
+
 		out.println("<p><span class='content'><table border='1'>");
 		out.println("<tr><th>&nbsp;</th>");
 		out.println("<th>Queue Url</th>");
@@ -227,58 +284,66 @@ public class CQSUserPageServlet extends AdminServletBase {
 		out.println("<th>&nbsp;</th><th>&nbsp;</th><th>&nbsp;</th><th>&nbsp;</th></tr>");
 
 		for (int i = 0; queueUrls != null && i < queueUrls.size(); i++) {
-			
+
 			Map<String, String> attributes = new HashMap<String, String>();
-			
+
 			if (showQueueAttributes) {
 				try {	
-				
+
 					GetQueueAttributesRequest getQueueAttributesRequest = new GetQueueAttributesRequest(queueUrls.get(i));
-					
+
 					getQueueAttributesRequest.setAttributeNames(
-							Arrays.asList("VisibilityTimeout", "MaximumMessageSize", "MessageRetentionPeriod", "DelaySeconds", 
-							"ApproximateNumberOfMessages", "ReceiveMessageWaitTimeSeconds", "NumberOfPartitions", "NumberOfShards"));
-					
+							Arrays.asList("VisibilityTimeout", "MaximumMessageSize", "MessageRetentionPeriod", "DelaySeconds",
+									"ApproximateNumberOfMessages", "ReceiveMessageWaitTimeSeconds", "NumberOfPartitions", "NumberOfShards"));
+
 					GetQueueAttributesResult getQueueAttributesResult = sqs.getQueueAttributes(getQueueAttributesRequest);
 					attributes = getQueueAttributesResult.getAttributes();
-		        	
+
 				} catch (Exception ex) {
 					logger.error("event=get_queue_attributes url=" + queueUrls.get(i));
 				}
 			}
 
 			out.println("<form action=\"/webui/cqsuser?userId="+user.getUserId()+"\" method=POST>");
-            out.println("<tr>");
-        	out.println("<td>"+i+"</td>");
-            out.println("<td>"+queueUrls.get(i)+"<input type='hidden' name='qUrl' value="+queueUrls.get(i)+"></td>");
-        	out.println("<td>"+Util.getArnForAbsoluteQueueUrl(queueUrls.get(i)) +"<input type='hidden' name='arn' value="+Util.getArnForAbsoluteQueueUrl(queueUrls.get(i))+"></td>");
-        	out.println("<td>"+Util.getNameForAbsoluteQueueUrl(queueUrls.get(i))+"</td>");
-        	out.println("<td>"+user.getUserId()+"<input type='hidden' name='userId' value="+user.getUserId()+"></td>");
-        	out.println("<td>"+CMBProperties.getInstance().getRegion()+"</td>");
-        	
-        	out.println("<td>"+(attributes.get("VisibilityTimeout") != null ? attributes.get("VisibilityTimeout"):"")+"</td>");
-        	out.println("<td>"+(attributes.get("MaximumMessageSize") != null ? attributes.get("MaximumMessageSize"):"")+"</td>");
-        	out.println("<td>"+(attributes.get("MessageRetentionPeriod") != null ? attributes.get("MessageRetentionPeriod"):"")+"</td>");
-        	out.println("<td>"+(attributes.get("DelaySeconds") != null ? attributes.get("DelaySeconds"):"")+"</td>");
-        	out.println("<td>"+(attributes.get("ReceiveMessageWaitTimeSeconds") != null ? attributes.get("ReceiveMessageWaitTimeSeconds"):"")+"</td>");
-        	out.println("<td>"+(attributes.get("NumberOfPartitions") != null ? attributes.get("NumberOfPartitions"):"")+"</td>");
-        	out.println("<td>"+(attributes.get("NumberOfShards") != null ? attributes.get("NumberOfShards"):"")+"</td>");
-        	out.println("<td>"+(attributes.get("ApproximateNumberOfMessages") != null ? attributes.get("ApproximateNumberOfMessages"):"")+"</td>");
-        	
-        	out.println("<td><a href='/webui/cqsuser/message?userId=" + user.getUserId()+ "&queueName=" + Util.getNameForAbsoluteQueueUrl(queueUrls.get(i)) + "'>Messages</a></td>");
-        	out.println("<td><a href='/webui/cqsuser/permissions?userId="+ user.getUserId() + "&queueName="+ Util.getNameForAbsoluteQueueUrl(queueUrls.get(i)) + "'>Permissions</a></td>");
-        	out.println("<td><a href='' onclick=\"window.open('/webui/cqsuser/editqueueattributes?queueName="+ Util.getNameForAbsoluteQueueUrl(queueUrls.get(i)) + "&userId="+userId+"', 'EditQueueAttributes', 'height=630,width=580,toolbar=no')\">Attributes</a></td>");
+			out.println("<tr>");
+			out.println("<td>"+i+"</td>");
+			out.println("<td>"+queueUrls.get(i)+"<input type='hidden' name='qUrl' value="+queueUrls.get(i)+"><input type='hidden' name='qName' value="+Util.getNameForAbsoluteQueueUrl(queueUrls.get(i))+"></td>");
+			out.println("<td>"+Util.getArnForAbsoluteQueueUrl(queueUrls.get(i)) +"<input type='hidden' name='arn' value="+Util.getArnForAbsoluteQueueUrl(queueUrls.get(i))+"></td>");
+			out.println("<td>"+Util.getNameForAbsoluteQueueUrl(queueUrls.get(i))+"</td>");
+			out.println("<td>"+user.getUserId()+"<input type='hidden' name='userId' value="+user.getUserId()+"></td>");
+			out.println("<td>"+CMBProperties.getInstance().getRegion()+"</td>");
 
-        	out.println("<td><input type='submit' value='Delete' name='Delete'/></td></tr></form>");
-        }
-		
-        out.println("</table></span></p>");
-        out.println("<h5 style='text-align:center;'><a href='/webui'>ADMIN HOME</a></h5>");
-        out.println("</body></html>");
-        
-        CMBControllerServlet.valueAccumulator.deleteAllCounters();
+			out.println("<td>"+(attributes.get("VisibilityTimeout") != null ? attributes.get("VisibilityTimeout"):"")+"</td>");
+			out.println("<td>"+(attributes.get("MaximumMessageSize") != null ? attributes.get("MaximumMessageSize"):"")+"</td>");
+			out.println("<td>"+(attributes.get("MessageRetentionPeriod") != null ? attributes.get("MessageRetentionPeriod"):"")+"</td>");
+			out.println("<td>"+(attributes.get("DelaySeconds") != null ? attributes.get("DelaySeconds"):"")+"</td>");
+			out.println("<td>"+(attributes.get("ReceiveMessageWaitTimeSeconds") != null ? attributes.get("ReceiveMessageWaitTimeSeconds"):"")+"</td>");
+			out.println("<td>"+(attributes.get("NumberOfPartitions") != null ? attributes.get("NumberOfPartitions"):"")+"</td>");
+			out.println("<td>"+(attributes.get("NumberOfShards") != null ? attributes.get("NumberOfShards"):"")+"</td>");
+			out.println("<td>"+(attributes.get("ApproximateNumberOfMessages") != null ? attributes.get("ApproximateNumberOfMessages"):"")+"</td>");
+
+			out.println("<td><a href='/webui/cqsuser/message?userId=" + user.getUserId()+ "&queueName=" + Util.getNameForAbsoluteQueueUrl(queueUrls.get(i)) + "'>Messages</a></td>");
+			out.println("<td><a href='/webui/cqsuser/permissions?userId="+ user.getUserId() + "&queueName="+ Util.getNameForAbsoluteQueueUrl(queueUrls.get(i)) + "'>Permissions</a></td>");
+			out.println("<td><a href='' onclick=\"window.open('/webui/cqsuser/editqueueattributes?queueName="+ Util.getNameForAbsoluteQueueUrl(queueUrls.get(i)) + "&userId="+userId+"', 'EditQueueAttributes', 'height=630,width=580,toolbar=no')\">Attributes</a></td>");
+
+			out.println("<input type='hidden' name='queueNamePrefix' value='"+(queueNamePrefix != null ? queueNamePrefix : "")+"'/>");
+			if (showQueuesWithMessagesOnly) {
+				out.println("<input type='hidden' name='ShowMessagesOnly' value='true'/>");
+			}
+			if (showQueueAttributes) {
+				out.println("<input type='hidden' name='ShowAttributes' value='true'/>");
+			}
+			
+			out.println("<td><input type='submit' value='Clear' name='ClearQueue'/> <br/><input type='submit' value='Delete' name='Delete'/></td></tr></form>");
+		}
+
+		out.println("</table></span></p>");
+		out.println("<h5 style='text-align:center;'><a href='/webui'>ADMIN HOME</a></h5>");
+		out.println("</body></html>");
+
+		CMBControllerServlet.valueAccumulator.deleteAllCounters();
 	}
-	
+
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
 		doGet(request, response);
 	}
