@@ -1,11 +1,12 @@
 package com.comcast.cns.io;
 
 import com.comcast.cmb.common.model.User;
+import com.comcast.cns.model.CNSMessage;
 
 public abstract class AbstractEndpointPublisher implements IEndpointPublisher {
 
 	protected String endpoint;
-	protected String message;
+	protected CNSMessage message;
 	protected User user;
 	protected String subject;
 	protected Boolean rawMessageDelivery = false;
@@ -13,7 +14,6 @@ public abstract class AbstractEndpointPublisher implements IEndpointPublisher {
 	protected String messageId;
 	protected String topicArn;
 	protected String subscriptionArn;
-	
 
 	@Override
 	public void setEndpoint(String endpoint) {
@@ -21,7 +21,7 @@ public abstract class AbstractEndpointPublisher implements IEndpointPublisher {
 	}
 
 	@Override
-	public void setMessage(String message) {
+	public void setMessage(CNSMessage message) {
 		this.message = message;     
 	}
 
@@ -31,7 +31,7 @@ public abstract class AbstractEndpointPublisher implements IEndpointPublisher {
 	}
 
 	@Override
-	public String getMessage() {        
+	public CNSMessage getMessage() {        
 		return message;
 	}
 

@@ -18,6 +18,9 @@ package com.comcast.cns.io;
 import org.apache.log4j.Logger;
 
 import com.comcast.cmb.common.util.CMBProperties;
+import com.comcast.cns.model.CNSMessage.CNSMessageStructure;
+import com.comcast.cns.model.CNSMessage.CNSMessageType;
+import com.comcast.cns.model.CNSSubscription.CnsSubscriptionProtocol;
 import com.comcast.cns.util.MailWrapper;
 
 /**
@@ -36,9 +39,21 @@ public class EmailEndpointPublisher extends AbstractEndpointPublisher {
 			return;
 		}
 		
-		logger.debug("event=send_email endpoint=" + endpoint + " subject=\"" + subject);
+		String msg = null;
+		
+		if (message.getMessageStructure() == CNSMessageStructure.json) {
+			msg = message.getProtocolSpecificMessage(CnsSubscriptionProtocol.email);
+		} else {
+			msg = message.getMessage();
+		}
+		
+		if (!rawMessageDelivery && message.getMessageType() == CNSMessageType.Notification) {
+			msg = com.comcast.cns.util.Util.generateMessageJson(message, CnsSubscriptionProtocol.email);
+		}
+
+		logger.info("event=send_email endpoint=" + endpoint + " subject=\"" + subject + " message=\"" + msg + "\"");
 		
 		MailWrapper mailAgent = new MailWrapper(); 
-		mailAgent.postMail(new String [] { endpoint }, subject, message, CMBProperties.getInstance().getSmtpReplyAddress());
+		mailAgent.postMail(new String [] { endpoint }, subject, msg, CMBProperties.getInstance().getSmtpReplyAddress());
 	}
 }

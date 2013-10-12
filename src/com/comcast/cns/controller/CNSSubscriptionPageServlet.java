@@ -177,7 +177,7 @@ public class CNSSubscriptionPageServlet extends AdminServletBase {
         		out.println("<td>&nbsp;</td>");
         	}
         	
-        	if ((s.getProtocol().toString().equals("http") || s.getProtocol().toString().equals("cqs") || s.getProtocol().toString().equals("sqs"))
+        	if ((s.getProtocol().toString().equals("https") || s.getProtocol().toString().equals("http") || s.getProtocol().toString().equals("cqs") || s.getProtocol().toString().equals("sqs"))
         			&& !s.getSubscriptionArn().equals("PendingConfirmation")) {
         		String url = "/webui/cnsuser/subscription/rawmessagedeliverypolicy/?subscriptionArn="+ s.getSubscriptionArn() + "&userId=" + userId;
         		out.println("<td><a href='#' onclick=\"window.open('" + url + "', 'RawMessageDelivery', 'height=200,width=580,toolbar=no')\">Raw Message Delivery</a></td>");

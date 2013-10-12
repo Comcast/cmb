@@ -649,7 +649,7 @@ public class EndpointServlet extends HttpServlet {
         String header = "";
         while(headerNames.hasMoreElements()) {
           String headerName = (String)headerNames.nextElement();
-          header += headerName + ":" + request.getHeader(headerName) + "\n";
+          header += headerName + ": " + request.getHeader(headerName) + "\n";
         }
         msg.httpHeader = header;
 

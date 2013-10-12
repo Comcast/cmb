@@ -191,16 +191,8 @@ public class CNSPublishJob implements Runnable {
         
         publisher.setEndpoint(endpoint);
 		
-		String msg = "";
-		
-		if (rawDelivery) {
-			publisher.setRawMessageDelivery(true);
-			msg = message.getProtocolSpecificProcessedRawMessage(protocol);
-		} else {
-			msg = message.getProtocolSpecificProcessedMessage(protocol);
-		}
-		
-        publisher.setMessage(msg);
+		publisher.setRawMessageDelivery(rawDelivery);
+        publisher.setMessage(message);
         publisher.setSubject(message.getSubject());            
         publisher.setUser(user);
         publisher.setMessageType(this.message.getMessageType().toString());

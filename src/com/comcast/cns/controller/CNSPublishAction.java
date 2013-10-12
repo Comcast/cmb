@@ -27,7 +27,6 @@ import org.apache.log4j.Logger;
 
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClient;
 import com.amazonaws.services.sqs.model.CreateQueueRequest;
 import com.amazonaws.services.sqs.model.CreateQueueResult;
@@ -156,7 +155,6 @@ public class CNSPublishAction extends CNSAction {
     	cnsMessage.setMessageType(CNSMessageType.Notification);
     	
     	cnsMessage.checkIsValid();
-    	cnsMessage.processMessageToProtocols();
     	
     	CNSTopicAttributes topicAttributes = CNSCache.getTopicAttributes(topicArn);
     	

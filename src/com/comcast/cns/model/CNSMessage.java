@@ -16,9 +16,7 @@
 package com.comcast.cns.model;
 
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.UUID;
 
 import org.json.JSONException;
@@ -89,11 +87,22 @@ public final class CNSMessage {
     private volatile Date timestamp;
     
     /**
+     * 
+     */
+    private volatile String subArn;
+    
+    /**
      * Type of message, default value is Notification
      */
     private volatile CNSMessageType messageType = CNSMessageType.Notification;
     
-	private volatile Map<CnsSubscriptionProtocol, String> protocolToProcessedMessage = new HashMap<CnsSubscriptionProtocol, String>();
+	public void setSubscriptionArn(String subArn) {
+		this.subArn = subArn;
+	}
+	
+	public String getSubscriptionArn() {
+		return subArn;
+	}
 	
     public Date getTimestamp() {
 		return timestamp;
@@ -267,21 +276,21 @@ public final class CNSMessage {
         }
     }
     
-    private static String getProtocolSpecificMessage(CnsSubscriptionProtocol protocol, CNSMessage message) throws CMBException {
+    public String getProtocolSpecificMessage(CnsSubscriptionProtocol protocol) throws CMBException {
     	
         //Figure out what message to send
     	
         String msg;
         
-        if (message.getMessageStructure() == null) {
+        if (getMessageStructure() == null) {
         	
-            msg = message.getMessage();
+            msg = getMessage();
             
         } else {
         	
             try {
             	
-                JSONObject msgObj = new JSONObject(message.getMessage());
+                JSONObject msgObj = new JSONObject(getMessage());
                 
                 if (protocol == null) {
                     throw new CMBException(CMBErrorCodes.InternalError, "Subscription has no protocol");
@@ -308,12 +317,13 @@ public final class CNSMessage {
                 throw new CMBException(CMBErrorCodes.InternalError, "Could not parse JSON:" + e.getMessage());
             }
         }     
+        
         return msg;
     }
     
-    public String getProtocolSpecificMessage(CnsSubscriptionProtocol prot) throws CMBException {
+    /*public String getProtocolSpecificMessage(CnsSubscriptionProtocol prot) throws CMBException {
 		return CNSMessage.getProtocolSpecificMessage(prot, this);
-    }
+    }*/
 
     /**
      * Method processes this message object by protocol so its easier and quicker to access
@@ -322,7 +332,7 @@ public final class CNSMessage {
      * Note: Must call this method before getting messages-per-protocol
      * @throws CMBException 
      */
-    public void processMessageToProtocols() throws CMBException {    	
+    /*public void processMessageToProtocols() throws CMBException {    	
         for (CnsSubscriptionProtocol prot : CnsSubscriptionProtocol.values()) {
             if (prot != CnsSubscriptionProtocol.email) {
                 protocolToProcessedMessage.put(prot, com.comcast.cns.util.Util.generateMessageJson(this, prot));
@@ -330,20 +340,11 @@ public final class CNSMessage {
                 protocolToProcessedMessage.put(prot, getProtocolSpecificMessage(prot, this));
             }
         }
-    }
+    }*/
     
-    public String getProtocolSpecificProcessedMessage(CnsSubscriptionProtocol protocol) {
+    /*public String getProtocolSpecificProcessedMessage(CnsSubscriptionProtocol protocol) {
         return protocolToProcessedMessage.get(protocol);
-    }   
-    
-    public String getProtocolSpecificProcessedRawMessage(CnsSubscriptionProtocol protocol) {
-		try {
-			String msg = getProtocolSpecificMessage(protocol, this);
-			return msg;
-		} catch (CMBException e) {
-			return "";
-		}
-	}
+    }*/   
     
     /**
      * 

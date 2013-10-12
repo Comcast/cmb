@@ -43,6 +43,9 @@ import org.apache.log4j.Logger;
 import com.comcast.cmb.common.util.CMBErrorCodes;
 import com.comcast.cmb.common.util.CMBException;
 import com.comcast.cmb.common.util.CMBProperties;
+import com.comcast.cns.model.CNSMessage.CNSMessageStructure;
+import com.comcast.cns.model.CNSMessage.CNSMessageType;
+import com.comcast.cns.model.CNSSubscription.CnsSubscriptionProtocol;
 
 /**
  * Following class uses the HttpClient library version 4.2.1 
@@ -94,18 +97,30 @@ public class HTTPEndpointSyncPublisher extends AbstractEndpointPublisher {
 	@Override
 	public void send() throws Exception {
 
-		logger.debug("event=send_sync_http_request endpoint=" + endpoint + "\" message=\"" + message + "\"");
-
 		if ((message == null) || (endpoint == null)) {
 			logger.debug("event=send_http_request error_code=MissingParameters endpoint=" + endpoint + "\" message=\"" + message + "\"");
 			throw new Exception("Message and Endpoint must both be set");
 		}
 
 		HttpPost httpPost = new HttpPost(endpoint);
-		StringEntity stringEntity = new StringEntity(message);
+
+		String msg = null;
+		
+		if (message.getMessageStructure() == CNSMessageStructure.json) {
+			msg = message.getProtocolSpecificMessage(CnsSubscriptionProtocol.http);
+		} else {
+			msg = message.getMessage();
+		}
+		
+		if (!rawMessageDelivery && message.getMessageType() == CNSMessageType.Notification) {
+			msg = com.comcast.cns.util.Util.generateMessageJson(message, CnsSubscriptionProtocol.http);
+		}
+		
+		logger.info("event=send_sync_http_request endpoint=" + endpoint + "\" message=\"" + msg + "\"");
+
+		StringEntity stringEntity = new StringEntity(msg);
 		httpPost.setEntity(stringEntity);
 		composeHeader(httpPost);
-
 
 		HttpResponse response = httpClient.execute(httpPost);
 		int statusCode = response.getStatusLine().getStatusCode();

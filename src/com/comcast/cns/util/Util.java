@@ -177,9 +177,7 @@ public class Util {
     	ByteArrayOutputStream out = new ByteArrayOutputStream();
 		Writer writer = new PrintWriter(out); 
     	JSONWriter jw = new JSONWriter(writer);
-    	String cnsServiceLocation = CMBProperties.getInstance().getCNSServiceUrl();
     	SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ"); //Time is in UTC zone. i,e no offset
-
         String timestamp = df.format(cnsMessage.getTimestamp());
         
     	try {
@@ -194,10 +192,16 @@ public class Util {
 	    	jw.key("Timestamp").value(timestamp);
 	    	jw.key("TopicArn").value(cnsMessage.getTopicArn());
 	    	jw.key("Type").value(cnsMessage.getMessageType().toString());
-	    	jw.key("UnSubscribeURL").value(cnsServiceLocation+"?Action=Unsubscribe&TopicArn="+cnsMessage.getTopicArn());
+	    	String unsubscribeUrl = CMBProperties.getInstance().getCmbUnsubscribeUrl();
+	    	if (unsubscribeUrl.contains("%a")) {
+	    		unsubscribeUrl = unsubscribeUrl.replace("%a", cnsMessage.getSubscriptionArn());
+	    	} else {
+	    		unsubscribeUrl += "?Action=Unsubscribe&SubscriptionArn=" + cnsMessage.getSubscriptionArn();
+	    	}
+	    	jw.key("UnSubscribeURL").value(unsubscribeUrl);
 	    	jw.endObject();	    	    	
 	    	writer.flush();
-    	} catch(Exception e) {
+    	} catch (Exception e) {
     		return "";
     	} 
     	

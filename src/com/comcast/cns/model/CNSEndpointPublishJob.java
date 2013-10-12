@@ -150,7 +150,6 @@ public class CNSEndpointPublishJob {
         }
         
         CNSMessage message = CNSMessage.parseInstance(sb.toString());
-        message.processMessageToProtocols();
         
         return new CNSEndpointPublishJob(message, subInfos);
     }

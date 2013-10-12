@@ -53,6 +53,9 @@ import org.apache.log4j.Logger;
 
 import com.comcast.cmb.common.controller.CMBControllerServlet;
 import com.comcast.cmb.common.util.CMBProperties;
+import com.comcast.cns.model.CNSMessage.CNSMessageStructure;
+import com.comcast.cns.model.CNSMessage.CNSMessageType;
+import com.comcast.cns.model.CNSSubscription.CnsSubscriptionProtocol;
 
 /**
  * Asynchronous HTTP/1.1 client.
@@ -123,7 +126,6 @@ public class HTTPEndpointAsyncPublisher extends AbstractEndpointPublisher{
 
 	@Override
 	public void send() throws Exception {
-		logger.info("event=send_async_http_request endpoint=" + endpoint + "\" message=\"" + message + "\"");
 
 		HttpAsyncRequester requester = new HttpAsyncRequester(httpProcessor, new DefaultConnectionReuseStrategy(), httpParams);
 		final URL url = new URL(endpoint);
@@ -131,7 +133,22 @@ public class HTTPEndpointAsyncPublisher extends AbstractEndpointPublisher{
 
 		BasicHttpEntityEnclosingRequest request = new BasicHttpEntityEnclosingRequest("POST", url.getPath() + (url.getQuery() == null ? "" : "?" + url.getQuery()));
 		composeHeader(request);
-		request.setEntity(new NStringEntity(message));
+
+		String msg = null;
+		
+		if (message.getMessageStructure() == CNSMessageStructure.json) {
+			msg = message.getProtocolSpecificMessage(CnsSubscriptionProtocol.http);
+		} else {
+			msg = message.getMessage();
+		}
+		
+		if (!rawMessageDelivery && message.getMessageType() == CNSMessageType.Notification) {
+			msg = com.comcast.cns.util.Util.generateMessageJson(message, CnsSubscriptionProtocol.http);
+		}
+		
+		logger.info("event=send_async_http_request endpoint=" + endpoint + "\" message=\"" + msg + "\"");
+
+		request.setEntity(new NStringEntity(msg));
 
 		requester.execute(
 				new BasicAsyncRequestProducer(target, request),

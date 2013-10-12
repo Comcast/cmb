@@ -38,6 +38,8 @@ public class CMBProperties {
 	    SYNC, ASYNC 
 	}
 	
+	private final String cmbUnsubscribeUrl;
+	
 	private final HConsistencyLevel consistencyLevel;
 	
 	private final int cmbWorkerPoolSize;
@@ -238,6 +240,7 @@ public class CMBProperties {
 			cqsServiceUrl = props.getProperty("cmb.cqs.service.url", "http://localhost:6059/");
 			cnsAdminUrl = props.getProperty("cmb.cns.admin.url", cnsServiceUrl);
 			cqsAdminUrl = props.getProperty("cmb.cqs.admin.url", cqsServiceUrl);
+			cmbUnsubscribeUrl = props.getProperty("cmb.cns.unsubscribe.url", cnsServiceUrl);
 
 			cnsUserName = props.getProperty("cmb.cns.user.name", "cns_internal");
 			cnsUserPassword = props.getProperty("cmb.cns.user.password", "cns_internal");
@@ -786,5 +789,9 @@ public class CMBProperties {
 	
 	public HConsistencyLevel getConsistencyLevel() {
 		return consistencyLevel;
+	}
+	
+	public String getCmbUnsubscribeUrl() {
+		return cmbUnsubscribeUrl;
 	}
 }

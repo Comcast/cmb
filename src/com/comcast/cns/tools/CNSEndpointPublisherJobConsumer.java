@@ -39,6 +39,7 @@ import com.comcast.cmb.common.util.RollingWindowCapture;
 import com.comcast.cmb.common.util.ValueAccumulator.AccumulatorName;
 import com.comcast.cns.model.CNSEndpointPublishJob;
 import com.comcast.cns.model.CNSEndpointPublishJob.CNSEndpointSubscriptionInfo;
+import com.comcast.cns.model.CNSMessage;
 import com.comcast.cns.persistence.CNSCachedEndpointPublishJob;
 import com.comcast.cns.persistence.TopicNotFoundException;
 
@@ -275,11 +276,13 @@ public class CNSEndpointPublisherJobConsumer implements CNSPublisherPartitionRun
                     for (CNSEndpointSubscriptionInfo sub : subs) {             
                         
                     	Runnable publishJob = null;
+                    	CNSMessage message = endpointPublishJob.getMessage();
+                    	message.setSubscriptionArn(sub.subArn);
                         
                         if (CMBProperties.getInstance().getCNSIOMode() == IO_MODE.SYNC) {
-                        	publishJob = new CNSPublishJob(endpointPublishJob.getMessage(), pubUser, sub.protocol, sub.endpoint, sub.subArn, sub.rawDelivery, queueUrl, msg.getReceiptHandle(), endpointPublishJobCount);
+                        	publishJob = new CNSPublishJob(message, pubUser, sub.protocol, sub.endpoint, sub.subArn, sub.rawDelivery, queueUrl, msg.getReceiptHandle(), endpointPublishJobCount);
                         } else {
-                        	publishJob = new CNSAsyncPublishJob(endpointPublishJob.getMessage(), pubUser, sub.protocol, sub.endpoint, sub.subArn, sub.rawDelivery, queueUrl, msg.getReceiptHandle(), endpointPublishJobCount);
+                        	publishJob = new CNSAsyncPublishJob(message, pubUser, sub.protocol, sub.endpoint, sub.subArn, sub.rawDelivery, queueUrl, msg.getReceiptHandle(), endpointPublishJobCount);
                         }
 
                         deliveryHandlers.submit(publishJob);

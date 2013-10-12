@@ -15,6 +15,7 @@
  */
 package com.comcast.cns.controller;
 
+import java.util.Date;
 import java.util.UUID;
 
 import javax.servlet.AsyncContext;
@@ -28,6 +29,8 @@ import com.comcast.cmb.common.persistence.PersistenceFactory;
 import com.comcast.cmb.common.util.CMBException;
 import com.comcast.cns.io.CNSSubscriptionPopulator;
 import com.comcast.cns.io.CommunicationUtils;
+import com.comcast.cns.model.CNSMessage;
+import com.comcast.cns.model.CNSMessage.CNSMessageType;
 import com.comcast.cns.model.CNSSubscription;
 import com.comcast.cns.util.CNSErrorCodes;
 import com.comcast.cns.util.Util;
@@ -105,7 +108,14 @@ public class CNSSubscribeAction extends CNSAction {
     		User topicOwner = PersistenceFactory.getUserPersistence().getUserById(ownerUserId);   		
     		
     		try {
-    			CommunicationUtils.sendMessage(topicOwner, subProtocol, endpoint, json, messageId, topicArn, sub.getArn());
+    			CNSMessage message = new CNSMessage();
+    			message.setMessage(json);
+    			message.setSubscriptionArn(sub.getArn());
+    			message.setTopicArn(topicArn);
+    			message.setUserId(topicOwner.getUserId());
+    			message.setMessageType(CNSMessageType.SubscriptionConfirmation);
+    			message.setTimestamp(new Date());
+    			CommunicationUtils.sendMessage(topicOwner, subProtocol, endpoint, message, messageId, topicArn, sub.getArn(), false);
     		} catch (Exception ex) {
     			PersistenceFactory.getSubscriptionPersistence().unsubscribe(sub.getArn());
     			if (ex instanceof CMBException) {

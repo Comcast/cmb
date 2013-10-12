@@ -223,13 +223,13 @@ public class CNSCachedEndpointPublishJob extends CNSEndpointPublishJob {
         }
         
         CNSMessage message = null;
+
         try {
             message = CNSMessage.parseInstance(sb.toString());
         } catch(Exception e) {
             logger.error("event=parse_publish_job cnsmessage_serialized=" + sb.toString(), e);
             throw new CMBException(CMBErrorCodes.InternalError, e.getMessage());
         }
-        message.processMessageToProtocols();
         
         return new CNSCachedEndpointPublishJob(message, subInfos);
     }

@@ -15,7 +15,10 @@
  */
 package com.comcast.cqs.model;
 
+import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
@@ -142,10 +145,30 @@ public final class CQSMessage implements Serializable {
 		this.timebasedId = timebasedId;
 	}
 	
+    public static byte[] computeMD5Hash(InputStream is) throws NoSuchAlgorithmException, IOException {
+        BufferedInputStream bis = new BufferedInputStream(is);
+        try {
+            MessageDigest messageDigest = MessageDigest.getInstance("MD5");
+            byte[] buffer = new byte[16384];
+            int bytesRead = -1;
+            while ( (bytesRead = bis.read(buffer, 0, buffer.length)) != -1 ) {
+                messageDigest.update(buffer, 0, bytesRead);
+            }
+            return messageDigest.digest();
+        } finally {
+            try {
+                bis.close();
+            } catch ( Exception e ) {
+                System.err.println("Unable to close input stream of hash candidate: " + e);
+            }
+        }
+    }
+	
 	private String getMD5(String message) throws NoSuchAlgorithmException, UnsupportedEncodingException {
 		
 		MessageDigest digest = MessageDigest.getInstance("MD5");
 		byte bytes[] = digest.digest(message.getBytes("UTF-8"));
+        
         StringBuilder md5 = new StringBuilder(bytes.length*2);
 
         for (int i = 0; i < bytes.length; i++) {

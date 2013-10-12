@@ -16,6 +16,7 @@
 package com.comcast.cns.io;
 
 import com.comcast.cmb.common.model.User;
+import com.comcast.cns.model.CNSMessage;
 
 /**
  * The interface is for sending messages to a particular endpoint, first set the endpoint, and the message, and optionally the
@@ -41,9 +42,9 @@ public interface IEndpointPublisher {
 	  * Set the message we are going to send to the endpoint
 	  * @param message
 	  */
-	 public void setMessage(String message);
+	 public void setMessage(CNSMessage message);
 	 
-	 public String getMessage();
+	 public CNSMessage getMessage();
 
 	 /**
 	  * The user is only used for CQS to send the message to the queue

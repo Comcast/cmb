@@ -189,16 +189,10 @@ public class CNSAsyncPublishJob implements Runnable, IPublisherCallback {
     private void runCommon() throws Exception {
 
     	publisher.setEndpoint(endpoint);
-    	
-		if (rawDelivery) {
-			publisher.setRawMessageDelivery(true);
-			publisher.setMessage(message.getProtocolSpecificProcessedRawMessage(protocol));
-		} else {
-			publisher.setMessage(message.getProtocolSpecificProcessedMessage(protocol));
-		}
-
+		publisher.setMessage(message);
 		publisher.setSubject(message.getSubject());            
         publisher.setUser(user);
+        publisher.setRawMessageDelivery(rawDelivery);
         publisher.send(); // this will most likely not fail because we call asynchronously
     }
     

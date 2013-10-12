@@ -18,6 +18,7 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 import com.comcast.cmb.common.model.User;
 import com.comcast.cmb.common.util.CMBProperties;
+import com.comcast.cns.model.CNSMessage;
 
 /**
  * Class wraps synchronous endpoint publishers in asynchronous framework
@@ -62,12 +63,12 @@ public class EndpointAsyncPublisherWrapper extends AbstractEndpointPublisher{
 	}
 
 	@Override
-	public void setMessage(String message) {
+	public void setMessage(CNSMessage message) {
 		publisher.setMessage(message);
 	}
 
 	@Override
-	public String getMessage() {
+	public CNSMessage getMessage() {
 		return publisher.getMessage();
 	}
 

@@ -22,6 +22,9 @@ import com.amazonaws.services.sqs.AmazonSQSClient;
 import com.amazonaws.services.sqs.model.SendMessageRequest;
 import com.comcast.cmb.common.util.CMBException;
 import com.comcast.cmb.common.util.CMBProperties;
+import com.comcast.cns.model.CNSMessage.CNSMessageStructure;
+import com.comcast.cns.model.CNSMessage.CNSMessageType;
+import com.comcast.cns.model.CNSSubscription.CnsSubscriptionProtocol;
 import com.comcast.cns.util.CNSErrorCodes;
 
 /**
@@ -57,8 +60,23 @@ public class CQSEndpointPublisher extends AbstractEndpointPublisher {
 		}
 
 		try {
-			logger.info("event=send_cqs_message endpoint=" + endpoint + "\" message=\"" + message);
-			sqs.sendMessage(new SendMessageRequest(url, message));			
+
+			String msg = null;
+			
+			if (message.getMessageStructure() == CNSMessageStructure.json) {
+				msg = message.getProtocolSpecificMessage(CnsSubscriptionProtocol.cqs);
+			} else {
+				msg = message.getMessage();
+			}
+			
+			if (!rawMessageDelivery && message.getMessageType() == CNSMessageType.Notification) {
+				msg = com.comcast.cns.util.Util.generateMessageJson(message, CnsSubscriptionProtocol.cqs);
+			}
+
+			logger.info("event=send_cqs_message endpoint=" + endpoint + "\" message=\"" + msg);
+
+			sqs.sendMessage(new SendMessageRequest(url, msg));			
+		
 		} catch (Exception ex) {
 			logger.warn("event=send_cqs_message endpoint=" + endpoint + "\" message=\"" + message, ex);
 			throw new CMBException(CNSErrorCodes.InternalError, "internal service error");
