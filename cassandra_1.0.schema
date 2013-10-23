@@ -405,7 +405,7 @@ create column family CQSQueuesByUserId
   and keys_cached = 0.0
   and key_cache_save_period = 14400
   and read_repair_chance = 0.1
-  and gc_grace = 5
+  and gc_grace = 0
   and min_compaction_threshold = 4
   and max_compaction_threshold = 32
   and replicate_on_write = true
