@@ -94,7 +94,7 @@ public class CNSManageServiceAction extends CNSAction {
 
 		if (task.equals("ClearWorkerQueues")) {
 
-			List<Row<String, String, String>> rows = cassandraHandler.readNextNNonEmptyRows("CNSWorkers", null, 1000, 10, new StringSerializer(), new StringSerializer(), new StringSerializer(), CMBProperties.getInstance().getConsistencyLevel());
+			List<Row<String, String, String>> rows = cassandraHandler.readNextNNonEmptyRows("CNSWorkers", null, 1000, 10, new StringSerializer(), new StringSerializer(), new StringSerializer(), CMBProperties.getInstance().getReadConsistencyLevel());
 			List<CNSWorkerStats> statsList = new ArrayList<CNSWorkerStats>();
 
 			if (rows != null) {
@@ -163,7 +163,7 @@ public class CNSManageServiceAction extends CNSAction {
 
 		} else if (task.equals("RemoveWorkerRecord")) {
 			
-			ColumnFamilyTemplate<String, String> usersTemplate = new ThriftColumnFamilyTemplate<String, String>(cassandraHandler.getKeySpace(CMBProperties.getInstance().getConsistencyLevel()), "CNSWorkers", StringSerializer.get(), StringSerializer.get());
+			ColumnFamilyTemplate<String, String> usersTemplate = new ThriftColumnFamilyTemplate<String, String>(cassandraHandler.getKeySpace(CMBProperties.getInstance().getWriteConsistencyLevel()), "CNSWorkers", StringSerializer.get(), StringSerializer.get());
 			cassandraHandler.delete(usersTemplate, host, null);
 			
 	    	response.getWriter().println(CNSPopulator.getResponseMetadata());
@@ -178,7 +178,7 @@ public class CNSManageServiceAction extends CNSAction {
 
 		} else if (task.equals("RemoveRecord")) {
 			
-			ColumnFamilyTemplate<String, String> usersTemplate = new ThriftColumnFamilyTemplate<String, String>(cassandraHandler.getKeySpace(CMBProperties.getInstance().getConsistencyLevel()), "CNSAPIServers", StringSerializer.get(), StringSerializer.get());
+			ColumnFamilyTemplate<String, String> usersTemplate = new ThriftColumnFamilyTemplate<String, String>(cassandraHandler.getKeySpace(CMBProperties.getInstance().getWriteConsistencyLevel()), "CNSAPIServers", StringSerializer.get(), StringSerializer.get());
 			cassandraHandler.delete(usersTemplate, host, null);
 			
 	    	response.getWriter().println(CNSPopulator.getResponseMetadata());

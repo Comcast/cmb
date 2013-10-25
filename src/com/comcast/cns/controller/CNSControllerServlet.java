@@ -197,7 +197,7 @@ public class CNSControllerServlet extends CMBControllerServlet {
 	        	values.put("dataCenter", CMBProperties.getInstance().getCMBDataCenter());
 	        	values.put("serviceUrl", CMBProperties.getInstance().getCNSServiceUrl());
 	        	
-                cassandraHandler.insertOrUpdateRow(serverIp + ":" + serverPort, "CNSAPIServers", values, CMBProperties.getInstance().getConsistencyLevel());
+                cassandraHandler.insertOrUpdateRow(serverIp + ":" + serverPort, "CNSAPIServers", values, CMBProperties.getInstance().getWriteConsistencyLevel());
                 
         	} catch (Exception ex) {
         		logger.warn("event=ping_failed", ex);

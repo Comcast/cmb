@@ -27,7 +27,7 @@ import com.comcast.cqs.util.Util;
 
 public class CQSTestUtils {
 
-	/**D
+	/**
 	 * @param args
 	 * @throws UnsupportedEncodingException 
 	 * @throws NoSuchAlgorithmException 
@@ -53,12 +53,11 @@ public class CQSTestUtils {
 		long messageCount = 0;
 		for (int i=0; i<numberOfPartitions; i++) {
 			String queueKey = queueHash + "_" + i;
-			long partitionCount = persistence.getCount("CQSPartitionedQueueMessages", queueKey, StringSerializer.get(), new CompositeSerializer(), CMBProperties.getInstance().getConsistencyLevel());
+			long partitionCount = persistence.getCount("CQSPartitionedQueueMessages", queueKey, StringSerializer.get(), new CompositeSerializer(), CMBProperties.getInstance().getReadConsistencyLevel());
 			messageCount += partitionCount;
 			System.out.println("# of messages in " + queueKey + " =" + partitionCount);
 		}
 		
 		System.out.println("There are " + messageCount + " messages in queue " + queueUrl);
 	}
-
 }

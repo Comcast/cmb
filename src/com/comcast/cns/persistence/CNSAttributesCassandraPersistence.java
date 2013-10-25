@@ -52,7 +52,7 @@ public class CNSAttributesCassandraPersistence extends CassandraPersistence impl
 	@Override
 	public void setTopicAttributes(CNSTopicAttributes topicAttributes, String topicArn) throws Exception {
 		
-		insertOrUpdateRow(topicArn, columnFamilyTopicAttributes, getColumnValues(topicAttributes), CMBProperties.getInstance().getConsistencyLevel());
+		insertOrUpdateRow(topicArn, columnFamilyTopicAttributes, getColumnValues(topicAttributes), CMBProperties.getInstance().getWriteConsistencyLevel());
 		
 		if (topicAttributes.getDisplayName() != null) {
 			PersistenceFactory.getTopicPersistence().updateTopicDisplayName(topicArn, topicAttributes.getDisplayName());
@@ -106,7 +106,7 @@ public class CNSAttributesCassandraPersistence extends CassandraPersistence impl
 		CNSTopicAttributes topicAttributes = new CNSTopicAttributes();
 		topicAttributes.setTopicArn(topicArn);
 		
-		Row<String, String, String> row = readRow(columnFamilyTopicAttributes, topicArn, 10, new StringSerializer(), new StringSerializer(), new StringSerializer(), CMBProperties.getInstance().getConsistencyLevel());
+		Row<String, String, String> row = readRow(columnFamilyTopicAttributes, topicArn, 10, new StringSerializer(), new StringSerializer(), new StringSerializer(), CMBProperties.getInstance().getReadConsistencyLevel());
 		
 		if (row != null) {
 			
@@ -132,13 +132,13 @@ public class CNSAttributesCassandraPersistence extends CassandraPersistence impl
 			topicAttributes.setDisplayName(PersistenceFactory.getTopicPersistence().getTopic(topicArn).getDisplayName());
 		}
 		
-		long subscriptionConfirmedCount = getCounter(columnFamilyTopicStats, topicArn, "subscriptionConfirmed", StringSerializer.get(), new StringSerializer(), CMBProperties.getInstance().getConsistencyLevel());
+		long subscriptionConfirmedCount = getCounter(columnFamilyTopicStats, topicArn, "subscriptionConfirmed", StringSerializer.get(), new StringSerializer(), CMBProperties.getInstance().getReadConsistencyLevel());
 		topicAttributes.setSubscriptionsConfirmed(subscriptionConfirmedCount);
 		
-		long subscriptionPendingCount = getCounter(columnFamilyTopicStats, topicArn, "subscriptionPending", StringSerializer.get(), new StringSerializer(), CMBProperties.getInstance().getConsistencyLevel());
+		long subscriptionPendingCount = getCounter(columnFamilyTopicStats, topicArn, "subscriptionPending", StringSerializer.get(), new StringSerializer(), CMBProperties.getInstance().getReadConsistencyLevel());
 		topicAttributes.setSubscriptionsPending(subscriptionPendingCount);
 		
-		long subscriptionDeletedCount = getCounter(columnFamilyTopicStats, topicArn, "subscriptionDeleted", StringSerializer.get(), new StringSerializer(), CMBProperties.getInstance().getConsistencyLevel());
+		long subscriptionDeletedCount = getCounter(columnFamilyTopicStats, topicArn, "subscriptionDeleted", StringSerializer.get(), new StringSerializer(), CMBProperties.getInstance().getReadConsistencyLevel());
 		topicAttributes.setSubscriptionsDeleted(subscriptionDeletedCount);
 
 		return topicAttributes;
@@ -146,7 +146,7 @@ public class CNSAttributesCassandraPersistence extends CassandraPersistence impl
 
 	@Override
 	public void setSubscriptionAttributes(CNSSubscriptionAttributes subscriptionAtributes, String subscriptionArn) throws Exception {
-		insertOrUpdateRow(subscriptionArn, columnFamilySubscriptionAttributes, getColumnValues(subscriptionAtributes), CMBProperties.getInstance().getConsistencyLevel());
+		insertOrUpdateRow(subscriptionArn, columnFamilySubscriptionAttributes, getColumnValues(subscriptionAtributes), CMBProperties.getInstance().getWriteConsistencyLevel());
 	}
 
 	private Map<String, String> getColumnValues(CNSSubscriptionAttributes subscriptionAtributes) {
@@ -183,7 +183,7 @@ public class CNSAttributesCassandraPersistence extends CassandraPersistence impl
 	public CNSSubscriptionAttributes getSubscriptionAttributes(String subscriptionArn) throws Exception {
 		
 		CNSSubscriptionAttributes subscriptionAttributes = null;
-		Row<String, String, String> row = readRow(columnFamilySubscriptionAttributes, subscriptionArn, 10, new StringSerializer(), new StringSerializer(), new StringSerializer(), CMBProperties.getInstance().getConsistencyLevel());
+		Row<String, String, String> row = readRow(columnFamilySubscriptionAttributes, subscriptionArn, 10, new StringSerializer(), new StringSerializer(), new StringSerializer(), CMBProperties.getInstance().getReadConsistencyLevel());
 		
 		if (row != null) {
 			

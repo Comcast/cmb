@@ -220,7 +220,7 @@ public class CNSEndpointPublisherJobConsumer implements CNSPublisherPartitionRun
 		        	values.put("jmxport", System.getProperty("com.sun.management.jmxremote.port", "0"));
 		        	values.put("mode", CNSPublisher.getModeString());
 		        	values.put("dataCenter", CMBProperties.getInstance().getCMBDataCenter());
-	                CNSPublisher.cassandraHandler.insertOrUpdateRow(hostAddress, "CNSWorkers", values, CMBProperties.getInstance().getConsistencyLevel());
+	                CNSPublisher.cassandraHandler.insertOrUpdateRow(hostAddress, "CNSWorkers", values, CMBProperties.getInstance().getWriteConsistencyLevel());
 	        	} catch (Exception ex) {
 	        		logger.warn("event=ping_glitch", ex);
 	        	}

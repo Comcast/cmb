@@ -65,7 +65,8 @@ public class CMB {
 	        cqsServer.setHandler(cqsWebContext);
 	        cqsServer.start();
 	        
-	        logger.info("event=launched_cqs_service_endpoint port=" + CMBProperties.getInstance().getCQSServerPort() + " max_request_length=" + MAX_REQUEST_LENGTH);
+	        logger.info("event=launched_cqs_service_endpoint port=" + CMBProperties.getInstance().getCQSServerPort() + " max_request_length=" + MAX_REQUEST_LENGTH + 
+	        		" cl_read=" + CMBProperties.getInstance().getReadConsistencyLevel() + " cl_write=" + CMBProperties.getInstance().getWriteConsistencyLevel());
 	        
 	        CQSControllerServlet.writeHeartBeat();
 	        
@@ -93,7 +94,8 @@ public class CMB {
 	        cnsServer.setHandler(cnsWebContext);
 	        cnsServer.start();
 
-	        logger.info("event=launched_cns_service_endpoint port=" + CMBProperties.getInstance().getCNSServerPort() + " max_request_length=" + MAX_REQUEST_LENGTH);
+	        logger.info("event=launched_cns_service_endpoint port=" + CMBProperties.getInstance().getCNSServerPort() + " max_request_length=" + MAX_REQUEST_LENGTH + 
+	        		" cl_read=" + CMBProperties.getInstance().getReadConsistencyLevel() + " cl_write=" + CMBProperties.getInstance().getWriteConsistencyLevel());
     	}
     	
     	// launch cns publish worker if enabled

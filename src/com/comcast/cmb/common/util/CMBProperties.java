@@ -41,6 +41,8 @@ public class CMBProperties {
 	private final String cmbUnsubscribeUrl;
 	
 	private final HConsistencyLevel consistencyLevel;
+	private final HConsistencyLevel readConsistencyLevel;
+	private final HConsistencyLevel writeConsistencyLevel;
 	
 	private final int cmbWorkerPoolSize;
 	
@@ -211,6 +213,8 @@ public class CMBProperties {
 			props.load(fileStream);
 			
 			consistencyLevel = HConsistencyLevel.valueOf(props.getProperty("cmb.cassandra.consistencyLevel","QUORUM"));
+			readConsistencyLevel = HConsistencyLevel.valueOf(props.getProperty("cmb.cassandra.readConsistencyLevel",consistencyLevel.name()));
+			writeConsistencyLevel = HConsistencyLevel.valueOf(props.getProperty("cmb.cassandra.writeConsistencyLevel",consistencyLevel.name()));
 			
 			cmbWorkerPoolSize = Integer.parseInt(props.getProperty("cmb.workerpool.size","256"));
 			
@@ -787,10 +791,18 @@ public class CMBProperties {
 		return cmbWorkerPoolSize;
 	}
 	
-	public HConsistencyLevel getConsistencyLevel() {
+	/*public HConsistencyLevel getConsistencyLevel() {
 		return consistencyLevel;
+	}*/
+	
+	public HConsistencyLevel getReadConsistencyLevel() {
+		return readConsistencyLevel;
 	}
 	
+	public HConsistencyLevel getWriteConsistencyLevel() {
+		return writeConsistencyLevel;
+	}
+
 	public String getCmbUnsubscribeUrl() {
 		return cmbUnsubscribeUrl;
 	}

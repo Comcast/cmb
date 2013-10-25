@@ -172,7 +172,7 @@ public class CQSControllerServlet extends CMBControllerServlet {
 	        	values.put("serviceUrl", CMBProperties.getInstance().getCQSServiceUrl());
 	        	values.put("redisServerList", CMBProperties.getInstance().getRedisServerList());
 	        	
-                cassandraHandler.insertOrUpdateRow(serverIp + ":" + serverPort, "CQSAPIServers", values, CMBProperties.getInstance().getConsistencyLevel());
+                cassandraHandler.insertOrUpdateRow(serverIp + ":" + serverPort, "CQSAPIServers", values, CMBProperties.getInstance().getWriteConsistencyLevel());
                 
         	} catch (Exception ex) {
         		logger.warn("event=ping_failed", ex);
