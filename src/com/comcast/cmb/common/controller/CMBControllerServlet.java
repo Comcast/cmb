@@ -200,12 +200,14 @@ abstract public class CMBControllerServlet extends HttpServlet {
 
 			String key = keys.nextElement();
 			String value = request.getParameter(key);
+			int length = 0;
 
 			if (value != null && value.length() > CMBProperties.getInstance().getCMBRequestParameterValueMaxLength()) {
 				value = value.substring(0, CMBProperties.getInstance().getCMBRequestParameterValueMaxLength()) + "...";
 			}
 
 			if (value != null) {
+				length = value.length();
 				if (value.indexOf('\n') >= 0) {
 					value = value.replace("\n", "\\n");
 				}
@@ -215,6 +217,10 @@ abstract public class CMBControllerServlet extends HttpServlet {
 			}
 
 			params.append(key).append("=").append(value).append(" ");
+			
+			if (key.equals("MessageBody")) {
+				params.append("msg_size=").append(length).append(" ");
+			}
 		}
 
 		return params.toString();
@@ -479,12 +485,15 @@ abstract public class CMBControllerServlet extends HttpServlet {
 
 		// jetty appears to require calling setTimeout on http handler thread so we are setting 
 		// wait time seconds for long polling receive message here
+		
+		String actionParam = request.getParameter("Action");
+		String waitTimeSecondsParam = request.getParameter(CQSConstants.WAIT_TIME_SECONDS);
 
-		if (request.getParameter("Action") != null && request.getParameter("Action").equals("ReceiveMessage") && request.getParameter(CQSConstants.WAIT_TIME_SECONDS) != null) {
+		if (actionParam != null && actionParam.equals("ReceiveMessage") && waitTimeSecondsParam != null) {
 
 			try {
 
-				int waitTimeSeconds = Integer.parseInt(request.getParameter(CQSConstants.WAIT_TIME_SECONDS));
+				int waitTimeSeconds = Integer.parseInt(waitTimeSecondsParam);
 
 				if (waitTimeSeconds >= 1 && waitTimeSeconds <= 20) {
 					asyncContext.setTimeout(waitTimeSeconds * 1000);
@@ -493,10 +502,10 @@ abstract public class CMBControllerServlet extends HttpServlet {
 				}
 
 			} catch (Exception ex) {
-				logger.warn("event=ignoring_suspicious_wait_time_parameter value=" + request.getParameter(CQSConstants.WAIT_TIME_SECONDS));
+				logger.warn("event=ignoring_suspicious_wait_time_parameter value=" + waitTimeSecondsParam);
 			}
 
-		} else if (request.getParameter("Action") != null && request.getParameter("Action").equals("ReceiveMessage")) {
+		} else if (actionParam != null && actionParam.equals("ReceiveMessage")) {
 
 			String queueUrl = com.comcast.cqs.util.Util.getRelativeForAbsoluteQueueUrl(request.getRequestURL().toString());
 			CQSQueue queue;

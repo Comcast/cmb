@@ -28,10 +28,10 @@ import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.cassandra.service.template.ColumnFamilyTemplate;
 import me.prettyprint.cassandra.service.template.ThriftColumnFamilyTemplate;
 import me.prettyprint.cassandra.service.template.ThriftSuperCfTemplate;
+import me.prettyprint.hector.api.beans.ColumnSlice;
 import me.prettyprint.hector.api.beans.Composite;
 import me.prettyprint.hector.api.beans.HColumn;
 import me.prettyprint.hector.api.beans.HSuperColumn;
-import me.prettyprint.hector.api.beans.Row;
 
 import com.comcast.cmb.common.persistence.CassandraPersistence;
 import com.comcast.cmb.common.persistence.PersistenceFactory;
@@ -316,11 +316,11 @@ public class CNSSubscriptionCassandraPersistence extends CassandraPersistence im
 	public CNSSubscription getSubscription(String arn) throws Exception {
 		
 	    //read form index to get composite col-name
-	    Row<String, String, String> row = readRow(columnFamilySubscriptionsIndex, arn, 1, new StringSerializer(), new StringSerializer(), new StringSerializer(), CMBProperties.getInstance().getReadConsistencyLevel());	 
+	    ColumnSlice<String, String> slice = readColumnSlice(columnFamilySubscriptionsIndex, arn, 1, new StringSerializer(), new StringSerializer(), new StringSerializer(), CMBProperties.getInstance().getReadConsistencyLevel());	 
 	    		
-		if (row != null) {
+		if (slice != null) {
 		    //get Column from main table
-		    String colName = row.getColumnSlice().getColumns().get(0).getName();
+		    String colName = slice.getColumns().get(0).getName();
 		    CnsSubscriptionProtocol protocol = getEndpointAndProtoIndexValProtocol(colName);
 		    String endpoint = getEndpointAndProtoIndexValEndpoint(colName);
 		    
@@ -378,14 +378,14 @@ public class CNSSubscriptionCassandraPersistence extends CassandraPersistence im
 		
         while (l.size() < 100) {
         	
-            Row<String, String, String> row = readRow(columnFamilySubscriptionsUserIndex, userId, nextToken, null, 500, StringSerializer.get(), StringSerializer.get(), StringSerializer.get(), CMBProperties.getInstance().getReadConsistencyLevel());     
+            ColumnSlice<String, String> slice = readColumnSlice(columnFamilySubscriptionsUserIndex, userId, nextToken, null, 500, StringSerializer.get(), StringSerializer.get(), StringSerializer.get(), CMBProperties.getInstance().getReadConsistencyLevel());     
 
-            if (row == null) {
+            if (slice == null) {
                 return l;
             }
             
             //get Column from main table
-            List<HColumn<String, String>> cols = row.getColumnSlice().getColumns();
+            List<HColumn<String, String>> cols = slice.getColumns();
             
             if (nextToken != null) {
                 cols.remove(0);
@@ -475,12 +475,12 @@ public class CNSSubscriptionCassandraPersistence extends CassandraPersistence im
 		Composite nextTokenComposite = null;
 		
 		if (nextToken != null) {
-		    Row<String, String, String> row = readRow(columnFamilySubscriptionsIndex, nextToken, 1, new StringSerializer(), new StringSerializer(), new StringSerializer(), CMBProperties.getInstance().getReadConsistencyLevel());
-		    if (row == null) {
+		    ColumnSlice<String, String> slice = readColumnSlice(columnFamilySubscriptionsIndex, nextToken, 1, new StringSerializer(), new StringSerializer(), new StringSerializer(), CMBProperties.getInstance().getReadConsistencyLevel());
+		    if (slice == null) {
 		    	throw new IllegalArgumentException("Could not find any subscription with arn " + nextToken);
 		    }
 		    //get Column from main table
-		    String colName = row.getColumnSlice().getColumns().get(0).getName();
+		    String colName = slice.getColumns().get(0).getName();
 		    CnsSubscriptionProtocol tokProtocol = getEndpointAndProtoIndexValProtocol(colName);
 		    String endpoint = getEndpointAndProtoIndexValEndpoint(colName);
 		    nextTokenComposite = new Composite(endpoint, tokProtocol.name());
@@ -560,14 +560,14 @@ public class CNSSubscriptionCassandraPersistence extends CassandraPersistence im
 	public CNSSubscription confirmSubscription(boolean authenticateOnUnsubscribe, String token, String topicArn) throws Exception {
 		
 	    //get Sub-arn given token
-	    Row<String, String, String> row = readRow(columnFamilySubscriptionsTokenIndex, token, 1, StringSerializer.get(), StringSerializer.get(), StringSerializer.get(), CMBProperties.getInstance().getReadConsistencyLevel());
+	    ColumnSlice<String, String> slice = readColumnSlice(columnFamilySubscriptionsTokenIndex, token, 1, StringSerializer.get(), StringSerializer.get(), StringSerializer.get(), CMBProperties.getInstance().getReadConsistencyLevel());
 	    
-	    if (row == null) {
+	    if (slice == null) {
 	        throw new CMBException(CMBErrorCodes.NotFound, "Resource not found.");
 	    }
 	    
 	    //get Column from main table
-	    String subArn = row.getColumnSlice().getColumns().get(0).getName();
+	    String subArn = slice.getColumns().get(0).getName();
 	    
 	    //get Subscription given subArn
 		final CNSSubscription s = getSubscription(subArn);	

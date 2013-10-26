@@ -28,7 +28,6 @@ import me.prettyprint.cassandra.service.template.ColumnFamilyTemplate;
 import me.prettyprint.cassandra.service.template.ThriftColumnFamilyTemplate;
 import me.prettyprint.hector.api.beans.ColumnSlice;
 import me.prettyprint.hector.api.beans.HColumn;
-import me.prettyprint.hector.api.beans.Row;
 
 import com.comcast.cmb.common.persistence.CassandraPersistence;
 import com.comcast.cmb.common.util.CMBProperties;
@@ -118,13 +117,13 @@ public class CQSQueueCassandraPersistence extends CassandraPersistence implement
 			
 			counter = 0;
 			
-			Row<String, String, String> row = readRow(COLUMN_FAMILY_QUEUES_BY_USER, userId, lastArn, null, 1000, new StringSerializer(), new StringSerializer(), new StringSerializer(), CMBProperties.getInstance().getWriteConsistencyLevel());
+			ColumnSlice<String, String> slice = readColumnSlice(COLUMN_FAMILY_QUEUES_BY_USER, userId, lastArn, null, 1000, new StringSerializer(), new StringSerializer(), new StringSerializer(), CMBProperties.getInstance().getWriteConsistencyLevel());
 			
-			if (row != null) {
+			if (slice != null) {
 				
 				boolean first = true;
 
-				for (HColumn<String, String> c : row.getColumnSlice().getColumns()) {
+				for (HColumn<String, String> c : slice.getColumns()) {
 					
 					counter++;
 					
@@ -181,13 +180,12 @@ public class CQSQueueCassandraPersistence extends CassandraPersistence implement
 		do {
 			
 			sliceSize = 0;
+			ColumnSlice<String, String> slice = readColumnSlice(COLUMN_FAMILY_QUEUES_BY_USER, userId, lastArn, null, 10000, new StringSerializer(), new StringSerializer(), new StringSerializer(), CMBProperties.getInstance().getWriteConsistencyLevel());
 			
-			Row<String, String, String> row = readRow(COLUMN_FAMILY_QUEUES_BY_USER, userId, lastArn, null, 10000, new StringSerializer(), new StringSerializer(), new StringSerializer(), CMBProperties.getInstance().getWriteConsistencyLevel());
-			
-			if (row != null && row.getColumnSlice().getColumns().size() > 0) {
-				sliceSize = row.getColumnSlice().getColumns().size();
+			if (slice != null && slice.getColumns().size() > 0) {
+				sliceSize = slice.getColumns().size();
 				numQueues += sliceSize;
-				lastArn = row.getColumnSlice().getColumns().get(sliceSize-1).getName();
+				lastArn = slice.getColumns().get(sliceSize-1).getName();
 			}
 			
 		} while (sliceSize >= 10000);
@@ -195,30 +193,27 @@ public class CQSQueueCassandraPersistence extends CassandraPersistence implement
 		return numQueues;
 	}
 
-	private CQSQueue fillQueueFromCqlRow(me.prettyprint.hector.api.beans.Row<String, String, String> row) {
+	private CQSQueue fillQueueFromCqlSlice(String url, ColumnSlice<String, String> slice) {
 		
-		String url = row.getKey();
-		ColumnSlice<String, String> columnSlice = row.getColumnSlice();
-		
-		if (columnSlice == null || columnSlice.getColumns() == null || columnSlice.getColumns().size() <= 1) {
+		if (slice == null || slice.getColumns() == null || slice.getColumns().size() <= 1) {
 			return null;
 		}
 		
 		try {
-			String arn = columnSlice.getColumnByName(CQSConstants.COL_ARN).getValue();
-			String name = columnSlice.getColumnByName(CQSConstants.COL_NAME).getValue();
-			String ownerUserId = columnSlice.getColumnByName(CQSConstants.COL_OWNER_USER_ID).getValue();
-			String region = columnSlice.getColumnByName(CQSConstants.COL_REGION).getValue();
-			int visibilityTO = (new Long(columnSlice.getColumnByName(CQSConstants.COL_VISIBILITY_TO).getValue())).intValue(); 
-			int maxMsgSize = (new Long(columnSlice.getColumnByName(CQSConstants.COL_MAX_MSG_SIZE).getValue())).intValue(); 
-			int msgRetentionPeriod = (new Long(columnSlice.getColumnByName(CQSConstants.COL_MSG_RETENTION_PERIOD).getValue())).intValue(); 
-			int delaySeconds = columnSlice.getColumnByName(CQSConstants.COL_DELAY_SECONDS) == null ? 0 : (new Long(columnSlice.getColumnByName(CQSConstants.COL_DELAY_SECONDS).getValue())).intValue();
-			int waitTimeSeconds = columnSlice.getColumnByName(CQSConstants.COL_WAIT_TIME_SECONDS) == null ? 0 : (new Long(columnSlice.getColumnByName(CQSConstants.COL_WAIT_TIME_SECONDS).getValue())).intValue();
-			int numPartitions = columnSlice.getColumnByName(CQSConstants.COL_NUMBER_PARTITIONS) == null ? CMBProperties.getInstance().getCQSNumberOfQueuePartitions() : (new Long(columnSlice.getColumnByName(CQSConstants.COL_NUMBER_PARTITIONS).getValue())).intValue();
-			int numShards = columnSlice.getColumnByName(CQSConstants.COL_NUMBER_SHARDS) == null ? 1 : (new Long(columnSlice.getColumnByName(CQSConstants.COL_NUMBER_SHARDS).getValue())).intValue();
-			String policy = columnSlice.getColumnByName(CQSConstants.COL_POLICY).getValue();
-			long createdTime = (new Long(columnSlice.getColumnByName(CQSConstants.COL_CREATED_TIME).getValue())).longValue();
-			String hostName = columnSlice.getColumnByName(CQSConstants.COL_HOST_NAME) == null ? null : columnSlice.getColumnByName(CQSConstants.COL_HOST_NAME).getValue();
+			String arn = slice.getColumnByName(CQSConstants.COL_ARN).getValue();
+			String name = slice.getColumnByName(CQSConstants.COL_NAME).getValue();
+			String ownerUserId = slice.getColumnByName(CQSConstants.COL_OWNER_USER_ID).getValue();
+			String region = slice.getColumnByName(CQSConstants.COL_REGION).getValue();
+			int visibilityTO = (new Long(slice.getColumnByName(CQSConstants.COL_VISIBILITY_TO).getValue())).intValue(); 
+			int maxMsgSize = (new Long(slice.getColumnByName(CQSConstants.COL_MAX_MSG_SIZE).getValue())).intValue(); 
+			int msgRetentionPeriod = (new Long(slice.getColumnByName(CQSConstants.COL_MSG_RETENTION_PERIOD).getValue())).intValue(); 
+			int delaySeconds = slice.getColumnByName(CQSConstants.COL_DELAY_SECONDS) == null ? 0 : (new Long(slice.getColumnByName(CQSConstants.COL_DELAY_SECONDS).getValue())).intValue();
+			int waitTimeSeconds = slice.getColumnByName(CQSConstants.COL_WAIT_TIME_SECONDS) == null ? 0 : (new Long(slice.getColumnByName(CQSConstants.COL_WAIT_TIME_SECONDS).getValue())).intValue();
+			int numPartitions = slice.getColumnByName(CQSConstants.COL_NUMBER_PARTITIONS) == null ? CMBProperties.getInstance().getCQSNumberOfQueuePartitions() : (new Long(slice.getColumnByName(CQSConstants.COL_NUMBER_PARTITIONS).getValue())).intValue();
+			int numShards = slice.getColumnByName(CQSConstants.COL_NUMBER_SHARDS) == null ? 1 : (new Long(slice.getColumnByName(CQSConstants.COL_NUMBER_SHARDS).getValue())).intValue();
+			String policy = slice.getColumnByName(CQSConstants.COL_POLICY).getValue();
+			long createdTime = (new Long(slice.getColumnByName(CQSConstants.COL_CREATED_TIME).getValue())).longValue();
+			String hostName = slice.getColumnByName(CQSConstants.COL_HOST_NAME) == null ? null : slice.getColumnByName(CQSConstants.COL_HOST_NAME).getValue();
 			CQSQueue queue = new CQSQueue(name, ownerUserId);
 			queue.setRelativeUrl(url);
 			queue.setServiceEndpoint(hostName);
@@ -241,14 +236,13 @@ public class CQSQueueCassandraPersistence extends CassandraPersistence implement
 
 	private CQSQueue getQueueByUrl(String queueUrl) {
 
-		Row<String, String, String> row = readRow(COLUMN_FAMILY_QUEUES, queueUrl, 15, StringSerializer.get(), StringSerializer.get(), StringSerializer.get(), CMBProperties.getInstance().getReadConsistencyLevel());
+		ColumnSlice<String, String> slice = readColumnSlice(COLUMN_FAMILY_QUEUES, queueUrl, 15, StringSerializer.get(), StringSerializer.get(), StringSerializer.get(), CMBProperties.getInstance().getReadConsistencyLevel());
 
-		if (row == null) {		    
+		if (slice == null) {		    
 			return null;
 		}
 		
-	    CQSQueue queue = fillQueueFromCqlRow(row);
-	    
+	    CQSQueue queue = fillQueueFromCqlSlice(queueUrl, slice);
 	    return queue;
 	}
 

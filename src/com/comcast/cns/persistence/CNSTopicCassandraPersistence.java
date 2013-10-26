@@ -36,6 +36,7 @@ import org.apache.log4j.Logger;
 import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.cassandra.service.template.ColumnFamilyTemplate;
 import me.prettyprint.cassandra.service.template.ThriftColumnFamilyTemplate;
+import me.prettyprint.hector.api.beans.ColumnSlice;
 import me.prettyprint.hector.api.beans.HColumn;
 import me.prettyprint.hector.api.beans.Row;
 
@@ -163,12 +164,12 @@ public class CNSTopicCassandraPersistence extends CassandraPersistence implement
 			
 			sliceSize = 0;
 			
-			Row<String, String, String> row = readRow(columnFamilyTopicsByUserId, userId, lastArn, null, 10000, new StringSerializer(), new StringSerializer(), new StringSerializer(), CMBProperties.getInstance().getReadConsistencyLevel());
+			ColumnSlice<String, String> slice = readColumnSlice(columnFamilyTopicsByUserId, userId, lastArn, null, 10000, new StringSerializer(), new StringSerializer(), new StringSerializer(), CMBProperties.getInstance().getReadConsistencyLevel());
 			
-			if (row != null && row.getColumnSlice().getColumns().size() > 0) {
-				sliceSize = row.getColumnSlice().getColumns().size();
+			if (slice != null && slice.getColumns().size() > 0) {
+				sliceSize = slice.getColumns().size();
 				numTopics += sliceSize;
-				lastArn = row.getColumnSlice().getColumns().get(sliceSize-1).getName();
+				lastArn = slice.getColumns().get(sliceSize-1).getName();
 			}
 			
 		} while (sliceSize >= 10000);
@@ -187,26 +188,24 @@ public class CNSTopicCassandraPersistence extends CassandraPersistence implement
 		}
 
 		List<CNSTopic> topics = new ArrayList<CNSTopic>();
-		Row<String, String, String> row = null;
+		ColumnSlice<String, String> slice = readColumnSlice(columnFamilyTopicsByUserId, userId, nextToken, null, 100, new StringSerializer(), new StringSerializer(), new StringSerializer(), CMBProperties.getInstance().getReadConsistencyLevel());
 
-		row = readRow(columnFamilyTopicsByUserId, userId, nextToken, null, 100, new StringSerializer(), new StringSerializer(), new StringSerializer(), CMBProperties.getInstance().getReadConsistencyLevel());
-
-		if (row != null) {
+		if (slice != null) {
 			
-			for (HColumn<String, String> c : row.getColumnSlice().getColumns()) {
+			for (HColumn<String, String> c : slice.getColumns()) {
 				
 				String arn = c.getName();
 
-				row = readRow(columnFamilyTopics, arn, 100, new StringSerializer(), new StringSerializer(), new StringSerializer(), CMBProperties.getInstance().getReadConsistencyLevel());
+				slice = readColumnSlice(columnFamilyTopics, arn, 100, new StringSerializer(), new StringSerializer(), new StringSerializer(), CMBProperties.getInstance().getReadConsistencyLevel());
 
-				if (row != null) {
+				if (slice != null) {
 
-					String name = row.getColumnSlice().getColumnByName("name").getValue();
+					String name = slice.getColumnByName("name").getValue();
 
 					String displayName = null;
 
-					if (row.getColumnSlice().getColumnByName("displayName") != null) {
-						displayName = row.getColumnSlice().getColumnByName("displayName").getValue();
+					if (slice.getColumnByName("displayName") != null) {
+						displayName = slice.getColumnByName("displayName").getValue();
 					}
 
 					CNSTopic t = new CNSTopic(arn, name, displayName, userId);
@@ -261,21 +260,18 @@ public class CNSTopicCassandraPersistence extends CassandraPersistence implement
 	public CNSTopic getTopic(String arn) throws Exception {
 
 		CNSTopic topic = null;
+		ColumnSlice<String, String> slice = readColumnSlice(columnFamilyTopics, arn, 10, new StringSerializer(), new StringSerializer(), new StringSerializer(), CMBProperties.getInstance().getReadConsistencyLevel());
 
-		Row<String, String, String> row = readRow(columnFamilyTopics, arn, 10, new StringSerializer(), new StringSerializer(), new StringSerializer(), CMBProperties.getInstance().getReadConsistencyLevel());
+		if (slice != null) {
 
-		if (row != null) {
-
-			String name = row.getColumnSlice().getColumnByName("name").getValue();
-
+			String name = slice.getColumnByName("name").getValue();
 			String displayName = null;
 
-			if (row.getColumnSlice().getColumnByName("displayName") != null) {
-				displayName = row.getColumnSlice().getColumnByName("displayName").getValue();
+			if (slice.getColumnByName("displayName") != null) {
+				displayName = slice.getColumnByName("displayName").getValue();
 			}
 
-			String user = row.getColumnSlice().getColumnByName("userId").getValue();
-
+			String user = slice.getColumnByName("userId").getValue();
 			topic = new CNSTopic(arn, name, displayName, user);
 		}
 

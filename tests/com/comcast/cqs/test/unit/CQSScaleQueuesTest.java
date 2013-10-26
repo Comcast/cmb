@@ -7,9 +7,11 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
@@ -24,6 +26,7 @@ import org.junit.Test;
 import com.amazonaws.services.sqs.model.CreateQueueRequest;
 import com.amazonaws.services.sqs.model.DeleteMessageRequest;
 import com.amazonaws.services.sqs.model.DeleteQueueRequest;
+import com.amazonaws.services.sqs.model.Message;
 import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
 import com.amazonaws.services.sqs.model.ReceiveMessageResult;
 import com.amazonaws.services.sqs.model.SendMessageRequest;
@@ -51,8 +54,15 @@ public class CQSScaleQueuesTest extends CMBAWSBaseTest {
     private static Random rand = new Random();
     
     private static String queueName = null;
+    private static int numBatchReceive = 1;
     
     private static AtomicLong totalMessagesFound = new AtomicLong(0);
+    private static AtomicLong totalMessagesSent = new AtomicLong(0);
+    private static AtomicLong totalMessageSendTime = new AtomicLong(0);
+    private static AtomicLong totalMessageReceiveTime = new AtomicLong(0);
+    private static AtomicLong totalMessageDeleteTime = new AtomicLong(0);
+    private static AtomicLong totalNumReceiveCalls = new AtomicLong(0);
+    
     private static boolean deleteQueues = true;
     
     private static HashMap<String, String> attributeParams = new HashMap<String, String>();
@@ -61,7 +71,6 @@ public class CQSScaleQueuesTest extends CMBAWSBaseTest {
         attributeParams.put("MessageRetentionPeriod", "600");
         attributeParams.put("VisibilityTimeout", "30");
     }
-
 
 	public static void main(String [ ] args) throws Exception {
 
@@ -95,9 +104,11 @@ public class CQSScaleQueuesTest extends CMBAWSBaseTest {
 				accessSecret = arg.substring(4);
 			} else if (arg.startsWith("-dq")) {
 				deleteQueues = Boolean.parseBoolean(arg.substring(4));
+			} else if (arg.startsWith("-br")) {
+				numBatchReceive = Integer.parseInt(arg.substring(4));
 			} else {
-				System.out.println("Usage: CQSScaleQueuesTest -Dcmb.log4j.propertyFile=config/log4j.properties -Dcmb.propertyFile=config/cmb.properties -nq=<number_queues_per_thread> -nm=<number_messages_per_queue> -nt=<number_threads> -np=<number_partitions> -ns=<number_shards> -ml=<message_length> -dq=<delete_queues_at_end_true_or_false> -qn=<queue_name_for_single_queue_tests> -ak=<access_key> -as=<access_secret>");
-				System.out.println("Example: java CQSScaleQueuesTest -Dcmb.log4j.propertyFile=config/log4j.properties -Dcmb.propertyFile=config/cmb.properties -nq=10 -nm=10 -nt=10 -np=100 -ns=1 -dq=true");
+				System.out.println("Usage: CQSScaleQueuesTest -Dcmb.log4j.propertyFile=config/log4j.properties -Dcmb.propertyFile=config/cmb.properties -nq=<number_queues_per_thread> -nm=<number_messages_per_queue> -nt=<number_threads> -np=<number_partitions> -ns=<number_shards> -ml=<message_length> -dq=<delete_queues_at_end_true_or_false> -qn=<queue_name_for_single_queue_tests> -ak=<access_key> -as=<access_secret> -br=<num_batch_receive>");
+				System.out.println("Example: java CQSScaleQueuesTest -Dcmb.log4j.propertyFile=config/log4j.properties -Dcmb.propertyFile=config/cmb.properties -nq=10 -nm=10 -nt=10 -np=100 -ns=1 -dq=true -br=1");
 				System.exit(1);
 			}
 		}
@@ -110,6 +121,7 @@ public class CQSScaleQueuesTest extends CMBAWSBaseTest {
 		System.out.println("Number of partitions: " + numPartitions);
 		System.out.println("Number of shards: " + numShards);
 		System.out.println("Delete queues: " + deleteQueues);
+		System.out.println("Number of messages received in batch: " + numBatchReceive);
 		
 		if (queueName != null) {
 			System.out.println("Queue name: " + queueName);
@@ -173,11 +185,11 @@ public class CQSScaleQueuesTest extends CMBAWSBaseTest {
 	
 	private void printResponseTimeDistribution() {
 		long callCount = 0;
-		logger.warn("RT100");
+		/*logger.warn("RT100");
 		for (int i=0; i<responseTimeDistribution100MS.length; i++) {
 			logger.warn("RT=" + (i*100) + " CT=" + responseTimeDistribution100MS[i]);
 			callCount += responseTimeDistribution100MS[i].longValue();
-		}
+		}*/
 		logger.warn("RT10");
 		for (int i=0; i<responseTimeDistribution10MS.length; i++) {
 			logger.warn("RT=" + (i*10) + " CT=" + responseTimeDistribution10MS[i]);
@@ -297,6 +309,7 @@ public class CQSScaleQueuesTest extends CMBAWSBaseTest {
 		try {
 			ep.shutdown();
 			ep.awaitTermination(60, TimeUnit.MINUTES);
+			//Thread.sleep(5000);
 		} catch (InterruptedException ex) {
 			logger.error("fail", ex);
 			fail(ex.getMessage());
@@ -307,9 +320,12 @@ public class CQSScaleQueuesTest extends CMBAWSBaseTest {
 		long end = System.currentTimeMillis();
 		
 		stopHealthCheck = true;
+		
+		int c = 0;
 
 		for (String message : report) {
-			logger.warn(message);
+			logger.warn(c + ": " + message);
+			c++;
 		}
 		
 		printResponseTimeDistribution();
@@ -317,50 +333,61 @@ public class CQSScaleQueuesTest extends CMBAWSBaseTest {
 		long apisPerSec = (numThreads*numQueuesPerThread*numMessagesPerQueue*3)/((end-start)/1000);
 		
 		logger.warn("APIS_PER_SEC=" + apisPerSec);
+		logger.warn("TOTAL_MESSAGES_SENT=" + totalMessagesSent.longValue());
 		logger.warn("TOTAL_MESSAGES_FOUND=" + totalMessagesFound.longValue());
+		logger.warn("AVG_MSG_SEND_MS=" + totalMessageSendTime.longValue()/totalMessagesSent.longValue());
+		logger.warn("AVG_MSG_RECEIVE_MS=" + totalMessageReceiveTime.longValue()/totalNumReceiveCalls.longValue());
+		logger.warn("AVG_MSG_DELTE_MS=" + totalMessageDeleteTime.longValue()/totalMessagesFound.longValue());
 	}
 
-	private String receiveMessage(String queueUrl) {
+	private List<String> receiveMessage(String queueUrl) {
 
+		List<String> messageBodies = new ArrayList<String>();
+		
 		ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest();
 
 		receiveMessageRequest.setQueueUrl(queueUrl);
-		receiveMessageRequest.setMaxNumberOfMessages(1);
+		receiveMessageRequest.setMaxNumberOfMessages(numBatchReceive);
 
 		// use this to test with long poll
 
 		//receiveMessageRequest.setWaitTimeSeconds(1);
 
 		long start = System.currentTimeMillis();
+		//logger.info("event=REC_START");
 		ReceiveMessageResult receiveMessageResult = cqs1.receiveMessage(receiveMessageRequest);
+		//logger.info("event=REC_END");
 		long end = System.currentTimeMillis();
 		recordResponseTime(null, end-start);
+		totalMessageReceiveTime.addAndGet(end-start);
+		totalNumReceiveCalls.incrementAndGet();
 		
 		if (end-start>=500) {
 			logger.warn("RECEIVE_RT=" + (end-start));
 		}
 
-		if (receiveMessageResult.getMessages().size() == 1) {
+		for (Message msg : receiveMessageResult.getMessages()) {
 
-			String message = receiveMessageResult.getMessages().get(0).getBody();
+			messageBodies.add(msg.getBody());
 
 			DeleteMessageRequest deleteMessageRequest = new DeleteMessageRequest();
 			deleteMessageRequest.setQueueUrl(queueUrl);
-			deleteMessageRequest.setReceiptHandle(receiveMessageResult.getMessages().get(0).getReceiptHandle());
+			deleteMessageRequest.setReceiptHandle(msg.getReceiptHandle());
 
 			start = System.currentTimeMillis();
+			//logger.info("event=DEL_START");
 			cqs1.deleteMessage(deleteMessageRequest);
+			//logger.info("event=DEL_END");
 			end = System.currentTimeMillis();
 			recordResponseTime(null, end-start);
+			totalMessageDeleteTime.addAndGet(end-start);
 			
 			if (end-start>=500) {
 				logger.warn("DELETE_RT=" + (end-start));
 			}
-			
-			return message;
 		}
 
-		return null;
+		return messageBodies;
 	}
 
 	private void CreateNQueues(long numQueues, boolean logReport) {
@@ -431,14 +458,15 @@ public class CQSScaleQueuesTest extends CMBAWSBaseTest {
 
 					try {
 
-						long start = System.currentTimeMillis();
 						String msg = "" + messagesSent;
 						if (messageLength > 0) {
 							msg += "-" + generateRandomMessage(messageLength);
 						}
+						long start = System.currentTimeMillis();
 						SendMessageResult result = cqs1.sendMessage(new SendMessageRequest(queueUrl, msg));
 						long end = System.currentTimeMillis();
 						recordResponseTime(null, end-start);
+						totalMessageSendTime.addAndGet(end-start);
 						totalTime += end-start;
 						logger.info("average send millis: " + (totalTime/(totalCounter+1)) + " last: " + (end-start));
 						logger.info("sent message on queue " + i + " - " + counter + ": " + queueUrl);
@@ -459,6 +487,8 @@ public class CQSScaleQueuesTest extends CMBAWSBaseTest {
 					}
 				}
 			}
+			
+			totalMessagesSent.addAndGet(totalCounter);
 
 			Thread.sleep(1000);
 
@@ -470,9 +500,7 @@ public class CQSScaleQueuesTest extends CMBAWSBaseTest {
 			totalTime = 0;
 			totalCounter = 0;
 
-			for (int i=0; i<1.5*numMessages; i++) {
-
-				counter = 0;
+			for (int i=0; i<1.5*Math.max(numMessages/numBatchReceive,1); i++) {
 
 				String lastNumericContent = null;
 
@@ -481,35 +509,41 @@ public class CQSScaleQueuesTest extends CMBAWSBaseTest {
 					try {
 
 						long start = System.currentTimeMillis();
-						String messageBody = receiveMessage(queueUrl);
+						List<String> messageBodies = receiveMessage(queueUrl);
 						long end = System.currentTimeMillis();
 						totalTime += end-start;
-						logger.info("average receive millis: " + (totalTime/(totalCounter+1)) + " last: " + (end-start));
+						logger.info("avg_receive_ms=" + (totalTime/(totalCounter+1)) + " last_receive_ms=" + (end-start));
 						
-						if (messageBody != null) {
-							String numericContent = messageBody;
-							if (messageBody.length()>0 && messageBody.contains("-")) {
-								numericContent = messageBody.substring(0, messageBody.indexOf("-"));
+						if (messageBodies.size() > 0) {
+							for (String messageBody : messageBodies) {
+								String numericContent = messageBody;
+								if (messageBody.length()>0 && messageBody.contains("-")) {
+									numericContent = messageBody.substring(0, messageBody.indexOf("-"));
+								}
+								if (lastNumericContent != null && numericContent != null && Long.parseLong(lastNumericContent) > Long.parseLong(numericContent)) {
+									outOfOrder++;
+								}
+								if (messageMap.containsKey(messageBody)) {
+									logger.warn("event=DUPLICATE body=" + messageBody.substring(0, 50));
+									duplicates++;
+								} else {
+									messageMap.put(messageBody, null);
+								}
+								messagesFound++;
+								totalCounter++;
+								lastNumericContent = numericContent;
+								totalMessagesFound.incrementAndGet();
 							}
-							logger.info("received message on queue " + i + " - " + counter + " : " + queueUrl + " : " + messageBody);
-							if (lastNumericContent != null && numericContent != null && Long.parseLong(lastNumericContent) > Long.parseLong(numericContent)) {
-								outOfOrder++;
+							String messagePrefix = messageBodies.get(0);
+							if (messagePrefix.length() > 50) {
+								messagePrefix = messagePrefix.substring(0, 50);
 							}
-							if (messageMap.containsKey(messageBody)) {
-								logger.warn("DUPLICATE=" + messageBody);
-								duplicates++;
-							} else {
-								messageMap.put(messageBody, null);
-							}
-							messagesFound++;
-							lastNumericContent = numericContent;
+							logger.info("event=received_message batch_size=" + messageBodies.size() + " msg_count=" + totalCounter + " queue_url=" + queueUrl + " body=" + messagePrefix);
 						} else {
-							logger.info("no message found on queue " + i + " - " + counter + " : "  + queueUrl);
+							logger.info("event=no_message_found msg_count=" + totalCounter + " queue_url"  + queueUrl);
 							emptyResponses++;
 						}
 
-						counter++;
-						totalCounter++;
 
 					} catch (Exception ex) {
 
@@ -519,13 +553,12 @@ public class CQSScaleQueuesTest extends CMBAWSBaseTest {
 				}
 			}
 
-			Thread.sleep(1000);
-
 			long deleteFailures = 0;
 			counter = 0;
 			totalTime = 0;
 
 			if (deleteQueues) {
+				Thread.sleep(1000);
 				for (String queueUrl : queueUrls) {
 					try {
 						long start = System.currentTimeMillis();
@@ -545,9 +578,9 @@ public class CQSScaleQueuesTest extends CMBAWSBaseTest {
 			
 			long testEnd = System.currentTimeMillis();
 
-			String message = "duration sec: " + ((testEnd-testStart)/1000) + " create failuers: " + createFailures +  " delete failures: " + deleteFailures + " send failures: " + sendFailures + " read failures: " + readFailures + " empty reads: " + emptyResponses + " messages found: " + messagesFound + " messages sent: " + messagesSent + " out of order: " + outOfOrder + " duplicates: " + duplicates + " distinct messages: " + messageMap.size(); 
+			String message = Thread.currentThread().getName() + " duration sec: " + ((testEnd-testStart)/1000) + " create failuers: " + createFailures +  " delete failures: " + deleteFailures + " send failures: " + sendFailures + " read failures: " + readFailures + " empty reads: " + emptyResponses + " messages found: " + messagesFound + " messages sent: " + messagesSent + " out of order: " + outOfOrder + " duplicates: " + duplicates + " distinct messages: " + messageMap.size(); 
 
-			totalMessagesFound.addAndGet(messagesFound);
+			logger.info("event=thread_finished");
 			
 			report.add(new Date() + ": " + message);
 

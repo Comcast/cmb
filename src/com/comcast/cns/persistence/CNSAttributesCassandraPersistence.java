@@ -22,7 +22,7 @@ import org.apache.log4j.Logger;
 import org.json.JSONObject;
 
 import me.prettyprint.cassandra.serializers.StringSerializer;
-import me.prettyprint.hector.api.beans.Row;
+import me.prettyprint.hector.api.beans.ColumnSlice;
 
 import com.comcast.cmb.common.persistence.CassandraPersistence;
 import com.comcast.cmb.common.persistence.PersistenceFactory;
@@ -106,18 +106,18 @@ public class CNSAttributesCassandraPersistence extends CassandraPersistence impl
 		CNSTopicAttributes topicAttributes = new CNSTopicAttributes();
 		topicAttributes.setTopicArn(topicArn);
 		
-		Row<String, String, String> row = readRow(columnFamilyTopicAttributes, topicArn, 10, new StringSerializer(), new StringSerializer(), new StringSerializer(), CMBProperties.getInstance().getReadConsistencyLevel());
+		ColumnSlice<String, String> slice = readColumnSlice(columnFamilyTopicAttributes, topicArn, 10, new StringSerializer(), new StringSerializer(), new StringSerializer(), CMBProperties.getInstance().getReadConsistencyLevel());
 		
-		if (row != null) {
+		if (slice != null) {
 			
-			if (row.getColumnSlice().getColumnByName("policy") != null) {
-				topicAttributes.setPolicy(row.getColumnSlice().getColumnByName("policy").getValue());
+			if (slice.getColumnByName("policy") != null) {
+				topicAttributes.setPolicy(slice.getColumnByName("policy").getValue());
 			}
 			
 			CNSTopicDeliveryPolicy deliveryPolicy = null;
 			
-			if (row.getColumnSlice().getColumnByName("deliveryPolicy") != null) {
-				deliveryPolicy = new CNSTopicDeliveryPolicy(new JSONObject(row.getColumnSlice().getColumnByName("deliveryPolicy").getValue()));
+			if (slice.getColumnByName("deliveryPolicy") != null) {
+				deliveryPolicy = new CNSTopicDeliveryPolicy(new JSONObject(slice.getColumnByName("deliveryPolicy").getValue()));
 			} else {
 				deliveryPolicy = new CNSTopicDeliveryPolicy();
 			}
@@ -125,8 +125,8 @@ public class CNSAttributesCassandraPersistence extends CassandraPersistence impl
 			topicAttributes.setEffectiveDeliveryPolicy(deliveryPolicy);		
 			topicAttributes.setDeliveryPolicy(deliveryPolicy);
 
-			if (row.getColumnSlice().getColumnByName("userId") != null) {
-				topicAttributes.setUserId(row.getColumnSlice().getColumnByName("userId").getValue());
+			if (slice.getColumnByName("userId") != null) {
+				topicAttributes.setUserId(slice.getColumnByName("userId").getValue());
 			}
 			
 			topicAttributes.setDisplayName(PersistenceFactory.getTopicPersistence().getTopic(topicArn).getDisplayName());
@@ -183,18 +183,18 @@ public class CNSAttributesCassandraPersistence extends CassandraPersistence impl
 	public CNSSubscriptionAttributes getSubscriptionAttributes(String subscriptionArn) throws Exception {
 		
 		CNSSubscriptionAttributes subscriptionAttributes = null;
-		Row<String, String, String> row = readRow(columnFamilySubscriptionAttributes, subscriptionArn, 10, new StringSerializer(), new StringSerializer(), new StringSerializer(), CMBProperties.getInstance().getReadConsistencyLevel());
+		ColumnSlice<String, String> slice = readColumnSlice(columnFamilySubscriptionAttributes, subscriptionArn, 10, new StringSerializer(), new StringSerializer(), new StringSerializer(), CMBProperties.getInstance().getReadConsistencyLevel());
 		
-		if (row != null) {
+		if (slice != null) {
 			
 			subscriptionAttributes = new CNSSubscriptionAttributes();
 			
-			if (row.getColumnSlice().getColumnByName("confirmationWasAuthenticated") != null) {
-				subscriptionAttributes.setConfirmationWasAuthenticated(Boolean.getBoolean(row.getColumnSlice().getColumnByName("confirmationWasAuthenticated").getValue()));
+			if (slice.getColumnByName("confirmationWasAuthenticated") != null) {
+				subscriptionAttributes.setConfirmationWasAuthenticated(Boolean.getBoolean(slice.getColumnByName("confirmationWasAuthenticated").getValue()));
 			}
 			
-			if (row.getColumnSlice().getColumnByName("deliveryPolicy") != null) {
-				subscriptionAttributes.setDeliveryPolicy(new CNSSubscriptionDeliveryPolicy(new JSONObject(row.getColumnSlice().getColumnByName("deliveryPolicy").getValue())));
+			if (slice.getColumnByName("deliveryPolicy") != null) {
+				subscriptionAttributes.setDeliveryPolicy(new CNSSubscriptionDeliveryPolicy(new JSONObject(slice.getColumnByName("deliveryPolicy").getValue())));
 			}
 			
 			// if "ignore subscription override" is checked, get effective delivery policy from topic delivery policy, otherwise 
@@ -226,12 +226,12 @@ public class CNSAttributesCassandraPersistence extends CassandraPersistence impl
 				}
 			}
 			
-			if (row.getColumnSlice().getColumnByName("topicArn") != null) {
-				subscriptionAttributes.setTopicArn(row.getColumnSlice().getColumnByName("topicArn").getValue());
+			if (slice.getColumnByName("topicArn") != null) {
+				subscriptionAttributes.setTopicArn(slice.getColumnByName("topicArn").getValue());
 			}
 
-			if (row.getColumnSlice().getColumnByName("userId") != null) {
-				subscriptionAttributes.setUserId(row.getColumnSlice().getColumnByName("userId").getValue());
+			if (slice.getColumnByName("userId") != null) {
+				subscriptionAttributes.setUserId(slice.getColumnByName("userId").getValue());
 			}
 			
 			subscriptionAttributes.setSubscriptionArn(subscriptionArn);

@@ -59,6 +59,7 @@ import me.prettyprint.hector.api.mutation.Mutator;
 import me.prettyprint.hector.api.query.CounterQuery;
 import me.prettyprint.hector.api.query.QueryResult;
 import me.prettyprint.hector.api.query.RangeSlicesQuery;
+import me.prettyprint.hector.api.query.SliceQuery;
 import me.prettyprint.hector.api.query.SuperColumnQuery;
 import me.prettyprint.hector.api.query.SuperSliceQuery;
 
@@ -713,10 +714,10 @@ public class CassandraPersistence {
 	 *         of column value
 	 * @return row Will get row starting from the beginning
 	 */
-	public <K, N, V> Row<K, N, V> readRow(String columnFamily, K key, int numCols, 
+	public <K, N, V> ColumnSlice<N, V> readColumnSlice(String columnFamily, K key, int numCols, 
 			Serializer<K> keySerializer, Serializer<N> columnNameSerializer, Serializer<V> valueSerializer,
 			HConsistencyLevel level) {
-		return readRow(columnFamily, key, null, null, numCols, keySerializer, columnNameSerializer, valueSerializer, level);
+		return readColumnSlice(columnFamily, key, null, null, numCols, keySerializer, columnNameSerializer, valueSerializer, level);
 	}
 
 	/**
@@ -741,42 +742,55 @@ public class CassandraPersistence {
 	 *         of column value
 	 * @return row
 	 */
-	public <K, N, V> Row<K, N, V> readRow(String columnFamily, K key, N firstColumnName, N lastColumnName, int numCols,
+	public <K, N, V> ColumnSlice<N, V> readColumnSlice(String columnFamily, K key, N firstColumnName, N lastColumnName, int numCols,
 			Serializer<K> keySerializer, Serializer<N> columnNameSerializer, Serializer<V> valueSerializer, HConsistencyLevel level) {
         
 		long ts1 = System.currentTimeMillis();
 		
 		logger.debug("event=read_row cf=" + columnFamily + " key=" + key + " first_col=" + firstColumnName + " last_col=" + lastColumnName + " num_cols=" + numCols);
 
-		Row<K, N, V> row = null;
 		Keyspace keyspace = keyspaces.get(level);
 
-		RangeSlicesQuery<K, N, V> rangeSlicesQuery = HFactory.createRangeSlicesQuery(keyspace, keySerializer, columnNameSerializer, valueSerializer)
+		SliceQuery<K, N, V> sliceQuery = HFactory.createSliceQuery(keyspace, keySerializer, columnNameSerializer, valueSerializer)
 				.setColumnFamily(columnFamily)
 				.setRange(firstColumnName, lastColumnName, false, numCols)
-				.setRowCount(1).setKeys(key, key);
-
-		QueryResult<OrderedRows<K, N, V>> result = rangeSlicesQuery.execute();
+				.setKey(key);
+		
+		QueryResult<ColumnSlice<N, V>> result = sliceQuery.execute();
+		ColumnSlice<N, V> slice = result.get();
 		
 		CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CassandraRead, 1L);
-
-		OrderedRows<K, N, V> orderedRows = result.get();
-		Iterator<Row<K, N, V>> rowsIterator = orderedRows.iterator();
-
-		if (rowsIterator.hasNext()) {
-			row = rowsIterator.next();
-			// Venu 02/07/12: Checking for null rows or null column slice.
-			if (row == null || row.getColumnSlice() == null
-					|| row.getColumnSlice().getColumns() == null
-					|| row.getColumnSlice().getColumns().isEmpty()) {
-				row = null;
-			}
-		}
-		
         long ts2 = System.currentTimeMillis();
         CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CassandraTime, (ts2 - ts1));      
 
-		return row;
+        if (slice == null || slice.getColumns() == null || slice.getColumns().isEmpty()) {
+			return null;
+		}
+		
+		return slice;
+
+		/*RangeSlicesQuery<K, N, V> rangeSliceQuery = HFactory.createRangeSlicesQuery(keyspace, keySerializer, columnNameSerializer, valueSerializer)
+		.setColumnFamily(columnFamily)
+		.setKeys(key, key)
+		.setRange(firstColumnName, lastColumnName, false, numCols);
+		//.setRowCount(1);
+
+		OrderedRows<K, N, V> orderedRows = rangeSliceQuery.execute().get();
+		
+        Iterator<Row<K, N, V>> rowsIterator = orderedRows.iterator();
+        Row<K, N, V> row = null;
+        
+        if (rowsIterator.hasNext()) {
+                row = rowsIterator.next();
+                // Venu 02/07/12: Checking for null rows or null column slice.
+                if (row == null || row.getColumnSlice() == null
+                                || row.getColumnSlice().getColumns() == null
+                                || row.getColumnSlice().getColumns().isEmpty()) {
+                        return null;
+                }
+        }
+        
+    	return row.getColumnSlice();*/
 	}
 
 	/**
@@ -933,35 +947,6 @@ public class CassandraPersistence {
 	        long ts2 = System.currentTimeMillis();
 	        CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CassandraTime, (ts2 - ts1));      
 	    }	    
-	}
-
-	/**
-	 * Read single row by row key.
-	 * 
-	 * @param columnFamily
-	 *            column family
-	 * @param key
-	 *            row key
-	 * @param numCols
-	 *            maximum number of columns to read
-	 * @param keySerializer
-	 * @param columnNameSerializer
-	 * @param valueSerializer
-	 * @param level
-	 *            consistency level
-	 * @return null if no row found. Else return appt column slice K - type of
-	 *         row-key N - type of column name V - type of column value
-	 */
-	public <K, N, V> ColumnSlice<N, V> readTimeUUIDRow(String columnFamily, K key, N firstColumn, N lastColumn, int numCols, 
-			Serializer<K> keySerializer, Serializer<N> columnNameSerializer, Serializer<V> valueSerializer, HConsistencyLevel level) {
-
-		Row<K, N, V> row = readRow(columnFamily, key, firstColumn, lastColumn, numCols, keySerializer, columnNameSerializer, valueSerializer, level);
-
-		if (row == null) {
-			return null;
-		}
-
-		return row.getColumnSlice();
 	}
 
 	/**

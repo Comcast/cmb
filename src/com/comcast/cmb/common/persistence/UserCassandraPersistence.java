@@ -140,27 +140,20 @@ public class UserCassandraPersistence extends CassandraPersistence implements IU
 			return null;
 		} 
 		
-		/*else if (rows.getCount() > 1) {
-			logger.error("event=read_user query=" + query);
-			throw new PersistenceException(CQSErrorCodes.InvalidQueryParameter, "Failed to read user");
-		}*/
-
-		Row<String, String, String> row = rows.get(0);
-		User user = fillUserFromRow(row);
-		
+		User user = fillUserFromRow(rows.get(0).getKey(), rows.get(0).getColumnSlice());
 		return user;
 	}
 
 	@Override
 	public User getUserByName(String userName) throws PersistenceException {
 
-		Row<String, String, String> row = readRow(COLUMN_FAMILY_USERS, userName, 10, StringSerializer.get(), StringSerializer.get(), StringSerializer.get(), CMBProperties.getInstance().getReadConsistencyLevel());
+		ColumnSlice<String, String> slice = readColumnSlice(COLUMN_FAMILY_USERS, userName, 10, StringSerializer.get(), StringSerializer.get(), StringSerializer.get(), CMBProperties.getInstance().getReadConsistencyLevel());
 		
-		if (row == null) {
+		if (slice == null) {
 			return null;
 		}
 		
-		return fillUserFromRow(row);
+		return fillUserFromRow(userName, slice);
 	}
 
 
@@ -173,13 +166,7 @@ public class UserCassandraPersistence extends CassandraPersistence implements IU
 			return null;
 		} 
 		
-		/*else if (rows.getCount() > 1) {
-			logger.error("event=read_user query=" + query);
-			throw new PersistenceException(CQSErrorCodes.InvalidQueryParameter, "Failed to read user");
-		}*/
-
-		Row<String, String, String> row = rows.get(0);
-		User user = fillUserFromRow(row);
+		User user = fillUserFromRow(rows.get(0).getKey(), rows.get(0).getColumnSlice());
 		
 		return user;
 	}
@@ -187,7 +174,6 @@ public class UserCassandraPersistence extends CassandraPersistence implements IU
 	public List<User> getAllUsers() throws PersistenceException {
 		
 		List<Row<String, String, String>> rows = readNextNNonEmptyRows(COLUMN_FAMILY_USERS, null, 1000, 10, new StringSerializer(), new StringSerializer(), new StringSerializer(), CMBProperties.getInstance().getReadConsistencyLevel());
-		
 		List<User> userList = new ArrayList<User>();
 
 		if (rows == null || rows.size() == 0) {
@@ -196,7 +182,7 @@ public class UserCassandraPersistence extends CassandraPersistence implements IU
 		
 		for (Row<String, String, String> row : rows) {
 		
-			User user = fillUserFromRow(row);
+			User user = fillUserFromRow(row.getKey(), row.getColumnSlice());
 			
 			if (user != null) {
 				userList.add(user);
@@ -206,51 +192,48 @@ public class UserCassandraPersistence extends CassandraPersistence implements IU
 		return userList;
 	}
 
-	private User fillUserFromRow(Row<String, String, String> row) {
+	private User fillUserFromRow(String userName, ColumnSlice<String, String> slice) {
 		
-		String userName = row.getKey();
-		ColumnSlice<String, String> columnSlice = row.getColumnSlice();
-		
-		if (columnSlice == null || columnSlice.getColumns() == null || columnSlice.getColumns().size() <= 1) {
+		if (slice == null || slice.getColumns() == null || slice.getColumns().size() <= 1) {
 			return null;
 		}
 		
 		String userId = null;
 		
-		if (columnSlice.getColumnByName(USER_ID) != null) {
-			userId = columnSlice.getColumnByName(USER_ID).getValue();
+		if (slice.getColumnByName(USER_ID) != null) {
+			userId = slice.getColumnByName(USER_ID).getValue();
 		} else {
 			return null;
 		}
 		
 		String accessKey = null;
 		
-		if (columnSlice.getColumnByName(ACCESS_KEY) != null) {
-			accessKey = columnSlice.getColumnByName(ACCESS_KEY).getValue();
+		if (slice.getColumnByName(ACCESS_KEY) != null) {
+			accessKey = slice.getColumnByName(ACCESS_KEY).getValue();
 		} else {
 			return null;
 		}
 		
 		String hashPassword = null;
 		
-		if (columnSlice.getColumnByName(HASH_PASSWORD) != null) {
-			hashPassword = columnSlice.getColumnByName(HASH_PASSWORD).getValue();
+		if (slice.getColumnByName(HASH_PASSWORD) != null) {
+			hashPassword = slice.getColumnByName(HASH_PASSWORD).getValue();
 		} else {
 			return null;
 		}
 		
 		String accessSecret = null;
 		
-		if (columnSlice.getColumnByName(ACCESS_SECRET) != null) {
-			accessSecret = columnSlice.getColumnByName(ACCESS_SECRET).getValue();
+		if (slice.getColumnByName(ACCESS_SECRET) != null) {
+			accessSecret = slice.getColumnByName(ACCESS_SECRET).getValue();
 		} else {
 			return null;
 		}
 		
 		Boolean isAdmin = false;
 		
-		if (columnSlice.getColumnByName(IS_ADMIN) != null) {
-			isAdmin = Boolean.parseBoolean(columnSlice.getColumnByName(IS_ADMIN).getValue());
+		if (slice.getColumnByName(IS_ADMIN) != null) {
+			isAdmin = Boolean.parseBoolean(slice.getColumnByName(IS_ADMIN).getValue());
 		} else  if (userName.equals(CMBProperties.getInstance().getCNSUserName())) {
 			isAdmin = true;
 		} else {
@@ -259,8 +242,8 @@ public class UserCassandraPersistence extends CassandraPersistence implements IU
 		
 		String description = "";
 		
-		if (columnSlice.getColumnByName(USER_DESC) != null) {
-			description = columnSlice.getColumnByName(USER_DESC).getValue();
+		if (slice.getColumnByName(USER_DESC) != null) {
+			description = slice.getColumnByName(USER_DESC).getValue();
 		} else {
 			description = "";
 		}

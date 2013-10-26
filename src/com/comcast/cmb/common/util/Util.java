@@ -184,19 +184,17 @@ public class Util {
      }
     
     public static String decompress(String compressed) throws IOException {
-    	int len = 131072;
+    	int len = CMBProperties.getInstance().getCQSMaxMessageSize();
         if (compressed == null || compressed.trim().isEmpty()) {
             return compressed;
         }
 		byte[] unencodedEncrypted = Base64.decodeBase64(compressed);
-        
         ByteArrayInputStream in = new ByteArrayInputStream(unencodedEncrypted);
         GZIPInputStream gzip = new GZIPInputStream(in);
         byte[] buf = new byte[len];
         int length = gzip.read(buf, 0, len);
         gzip.close();
         String decompressed = new String(buf, 0, length);
-        
 		return decompressed;
     }
     
