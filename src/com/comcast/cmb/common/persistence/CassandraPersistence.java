@@ -17,6 +17,7 @@ package com.comcast.cmb.common.persistence;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -50,6 +51,8 @@ import me.prettyprint.hector.api.beans.HCounterColumn;
 import me.prettyprint.hector.api.beans.HSuperColumn;
 import me.prettyprint.hector.api.beans.OrderedRows;
 import me.prettyprint.hector.api.beans.Row;
+import me.prettyprint.hector.api.beans.SuperRow;
+import me.prettyprint.hector.api.beans.SuperRows;
 import me.prettyprint.hector.api.beans.SuperSlice;
 import me.prettyprint.hector.api.ddl.KeyspaceDefinition;
 import me.prettyprint.hector.api.exceptions.HectorException;
@@ -57,6 +60,7 @@ import me.prettyprint.hector.api.factory.HFactory;
 import me.prettyprint.hector.api.mutation.MutationResult;
 import me.prettyprint.hector.api.mutation.Mutator;
 import me.prettyprint.hector.api.query.CounterQuery;
+import me.prettyprint.hector.api.query.MultigetSuperSliceQuery;
 import me.prettyprint.hector.api.query.QueryResult;
 import me.prettyprint.hector.api.query.RangeSlicesQuery;
 import me.prettyprint.hector.api.query.SliceQuery;
@@ -879,6 +883,11 @@ public class CassandraPersistence {
         try {
 	       
 	    	Keyspace keyspace = keyspaces.get(level);
+	    	
+	    	//HFactory.createMultigetSuperSliceQuery(keyspace, keySerializer, superNameSerializer, columnNameSerializer, valueSerializer)
+	    	//.setColumnNames(null, null)
+	    	//.setKeys(null, null);
+	    	
 
 	        SuperColumnQuery<K, SN, N, V> superColumnQuery = HFactory.createSuperColumnQuery(keyspace, keySerializer, superNameSerializer, columnNameSerializer, valueSerializer)
 	        		.setColumnFamily(columnFamily)
@@ -902,6 +911,47 @@ public class CassandraPersistence {
 	        CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CassandraTime, (ts2 - ts1));      
 	    }
 	}
+
+	public <K, SN, N, V> List<HSuperColumn<SN, N, V>> readMultipleColumnsFromSuperColumnFamily(String columnFamily, Collection<K> keys, Collection<SN> columnNames, 
+			Serializer<K> keySerializer, Serializer<SN> superNameSerializer, Serializer<N> columnNameSerializer, Serializer<V> valueSerializer,
+			HConsistencyLevel level) {
+		
+		List<HSuperColumn<SN, N, V>> list = new ArrayList<HSuperColumn<SN, N, V>>();
+
+	    long ts1 = System.currentTimeMillis();
+	    
+        logger.info("event=read_column_from_super_column_family cf=" + columnFamily + " key_count=" + keys.size() + "column_count=" + columnNames.size());
+
+        try {
+	       
+	    	Keyspace keyspace = keyspaces.get(level);
+	    	
+	    	MultigetSuperSliceQuery<K, SN, N, V> query = HFactory.createMultigetSuperSliceQuery(keyspace, keySerializer, superNameSerializer, columnNameSerializer, valueSerializer)
+	    		.setColumnFamily(columnFamily)
+	    		.setColumnNames(columnNames)
+	    		.setKeys(keys);
+
+	        QueryResult<SuperRows<K, SN, N, V>> result = query.execute();
+	        SuperRows<K, SN, N, V> rows = result.get();
+	        Iterator<SuperRow<K, SN, N, V>> iter = rows.iterator();
+	        
+	        while (iter.hasNext()) {
+	        	SuperRow<K, SN, N, V> row = iter.next();
+	        	SuperSlice<SN, N, V> slice = row.getSuperSlice();
+	        	List<HSuperColumn<SN, N, V>> columns = slice.getSuperColumns();
+	        	list.addAll(columns);
+	        }
+
+	        CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CassandraRead, 1L);
+	        
+	        return list;
+	        
+	    } finally {
+	        long ts2 = System.currentTimeMillis();
+	        CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CassandraTime, (ts2 - ts1));      
+	    }
+	}
+
 	/**
 	 * Read multiple supercolumns from a column family given roe-key, and optional first-col, last-col and numCol
 	 * @param <K>

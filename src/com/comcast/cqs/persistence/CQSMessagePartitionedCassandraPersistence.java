@@ -347,6 +347,44 @@ public class CQSMessagePartitionedCassandraPersistence extends CassandraPersiste
 			messageMap.put(id, message);
 		}
 		
+		/*List<String> keys = new ArrayList<String>();
+		List<Composite> columnNames = new ArrayList<Composite>();
+		Map<String, String> idMap = new HashMap<String, String>();
+		
+		for (String id: ids) {
+			
+			String idParts[] = id.split(":");
+			
+			if (idParts.length != 3) {
+				logger.error("event=get_messages error_code=invalid_message_id id=" + id);
+				throw new IllegalArgumentException("Invalid message id " + id);
+			}
+			
+			Composite superColumnName = new Composite(Arrays.asList(Long.parseLong(idParts[1]), Long.parseLong(idParts[2])));
+			String hash = "" + idParts[0] + idParts[1];
+			idMap.put(hash, id);
+
+			keys.add(idParts[0]);
+			columnNames.add(superColumnName);
+		}
+			
+		List<HSuperColumn<Composite, String, String>> superColumns = readMultipleColumnsFromSuperColumnFamily(COLUMN_FAMILY_PARTITIONED_QUEUE_MESSAGES, 
+					keys, columnNames, StringSerializer.get(), 
+					new CompositeSerializer(), StringSerializer.get(),
+					StringSerializer.get(), CMBProperties.getInstance().getReadConsistencyLevel());
+		
+		for (HSuperColumn<Composite, String, String> superColumn : superColumns) {
+			
+			CQSMessage message = null;
+			
+			if (superColumn != null) {
+				message = Util.extractMessageFromSuperColumn(superColumn);
+			}
+			String idParts[] = message.getMessageId().split(":");
+			String hash = "" + idParts[0] + idParts[1];
+			messageMap.put(idMap.get(hash), message);
+		}*/
+
 		return messageMap;
 	}
 	
