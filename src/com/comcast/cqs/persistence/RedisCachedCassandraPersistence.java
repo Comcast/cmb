@@ -572,10 +572,10 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
             long ts1 = System.currentTimeMillis();
             ShardedJedis jedis = getResource();
             try {
-                jedis.del(queueUrl + "-" + shard + "-Q");
+            	logger.info("event=cache_filler_started queue_url=" + queueUrl + " shard=" + shard);
+            	jedis.del(queueUrl + "-" + shard + "-Q");
                 jedis.del(queueUrl + "-" + shard + "-H");
                 jedis.del(queueUrl + "-" + shard + "-R");
-                
                 String previousReceiptHandle = null;
                 List<CQSMessage> messages = persistenceStorage.peekQueue(queueUrl, shard, null, null, 1000);
                 int totalCached = 0;
@@ -590,12 +590,14 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
                 setCacheState(queueUrl, shard, QCacheState.OK, null, false);
                 setCacheFillerProcessing(queueUrl, shard, 0);
                 long ts3 = System.currentTimeMillis();
-                logger.debug("event=filled_cache  queue_url=" + queueUrl + " shard=" + shard +" num_cached=" + totalCached + " res_ms=" + (ts3 - ts1) + " redis_ms=" + CQSControllerServlet.valueAccumulator.getCounter(AccumulatorName.RedisTime));
+                //logger.debug("event=filled_cache  queue_url=" + queueUrl + " shard=" + shard +" num_cached=" + totalCached + " res_ms=" + (ts3 - ts1) + " redis_ms=" + CQSControllerServlet.valueAccumulator.getCounter(AccumulatorName.RedisTime));
+                logger.info("event=cache_filler_finished  queue_url=" + queueUrl + " shard=" + shard +" num_cached=" + totalCached + " total_ms=" + (ts3 - ts1) + " redis_ms=" + CQSControllerServlet.valueAccumulator.getCounter(AccumulatorName.RedisTime) + " cass_ms=" + CQSControllerServlet.valueAccumulator.getCounter(AccumulatorName.CassandraTime));
             } catch (Exception e) {
                 if (e instanceof JedisException) {
                 	brokenJedis = true;
                 }
-                logger.error("event=cache_filler", e);
+                //logger.error("event=cache_filler", e);
+                logger.error("event=cache_filler_failed", e);
                 trySettingCacheState(queueUrl, shard, QCacheState.Unavailable);
             } finally {
                 returnResource(jedis, brokenJedis);

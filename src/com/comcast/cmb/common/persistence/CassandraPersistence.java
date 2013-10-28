@@ -884,11 +884,6 @@ public class CassandraPersistence {
 	       
 	    	Keyspace keyspace = keyspaces.get(level);
 	    	
-	    	//HFactory.createMultigetSuperSliceQuery(keyspace, keySerializer, superNameSerializer, columnNameSerializer, valueSerializer)
-	    	//.setColumnNames(null, null)
-	    	//.setKeys(null, null);
-	    	
-
 	        SuperColumnQuery<K, SN, N, V> superColumnQuery = HFactory.createSuperColumnQuery(keyspace, keySerializer, superNameSerializer, columnNameSerializer, valueSerializer)
 	        		.setColumnFamily(columnFamily)
 	                .setSuperName(columnName)
