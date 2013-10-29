@@ -30,4 +30,8 @@ public class PersistenceException extends CMBException {
     public PersistenceException(CMBErrorCodes error, String message) {
         super(error, message);
     }
+    
+    public PersistenceException(Exception ex) {
+        super(CMBErrorCodes.InternalError, ex.getMessage());
+    }
 }

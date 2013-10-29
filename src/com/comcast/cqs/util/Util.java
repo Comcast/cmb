@@ -15,6 +15,12 @@
  */
 package com.comcast.cqs.util;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -25,6 +31,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 import me.prettyprint.cassandra.serializers.CompositeSerializer;
 import me.prettyprint.cassandra.serializers.StringSerializer;
@@ -35,6 +43,7 @@ import me.prettyprint.hector.api.beans.HSuperColumn;
 import me.prettyprint.hector.api.beans.SuperSlice;
 import javax.servlet.http.HttpServletRequest;
 
+import org.apache.commons.codec.binary.Base64;
 import org.apache.log4j.Logger;
 
 import com.comcast.cmb.common.persistence.CassandraPersistence;
@@ -42,6 +51,7 @@ import com.comcast.cmb.common.util.CMBErrorCodes;
 import com.comcast.cmb.common.util.CMBException;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.PersistenceException;
+import com.comcast.cqs.controller.CQSCache;
 import com.comcast.cqs.model.CQSMessage;
 import com.comcast.cqs.model.CQSQueue;
 /**
@@ -427,39 +437,6 @@ public class Util {
 	    return sb.toString();
 	}
 	
-	public static List<CQSMessage> readMessageFromSuperCfResult(SuperCfResult<String, Composite, String> result) throws NoSuchAlgorithmException, UnsupportedEncodingException {
-		
-		List<CQSMessage> messageList = new ArrayList<CQSMessage>();
-		
-		if (result == null) {
-			return messageList;
-		}
-		
-		SuperCfResult<String, Composite, String> curResult = result;
-		
-		while (curResult != null) {
-			
-			Composite superColumnName = curResult.getActiveSuperColumn();
-			Map<String, String> messageMap = new HashMap<String, String>();
-			
-			for (String columnName : curResult.getColumnNames()) {
-				messageMap.put(columnName, curResult.getString(superColumnName, columnName));
-			}
-			
-			CQSMessage message = buildMessageFromMap(messageMap);
-			message.setTimebasedId(superColumnName);
-			messageList.add(message);
-			
-			if (curResult.hasNext()) {
-				curResult = curResult.next();
-			} else {
-				break;
-			}
-		}
-		
-		return messageList;
-	}
-	
 	public static CQSMessage buildMessageFromMap(Map<String, String> messageMap) throws NoSuchAlgorithmException, UnsupportedEncodingException {
 		
 		if (messageMap == null || messageMap.size() == 0) {
@@ -487,10 +464,10 @@ public class Util {
 		return message;
 	}
 	
-	public static List<CQSMessage> readMessagesFromSuperColumns(int length,	Composite previousHandle, Composite nextHandle,	SuperSlice<Composite, String, String> superSlice, boolean ignoreFirstLastColumn) throws NoSuchAlgorithmException, UnsupportedEncodingException {
+	public static List<CQSMessage> readMessagesFromSuperColumns(String queueUrl, int length, Composite previousHandle, Composite nextHandle, SuperSlice<Composite, String, String> superSlice, boolean ignoreFirstLastColumn) throws PersistenceException, NoSuchAlgorithmException, IOException  {
 		
 		List<CQSMessage> messageList = new ArrayList<CQSMessage>();
-		
+
 		if (superSlice != null && superSlice.getSuperColumns() != null) {
 			
 			boolean noMatch = true;
@@ -506,7 +483,8 @@ public class Util {
 					continue;
 				}
 				
-				CQSMessage message = extractMessageFromSuperColumn(superColumn);
+				CQSMessage message = extractMessageFromSuperColumn(queueUrl, superColumn);
+				
 				messageList.add(message);
 			}
 			
@@ -518,12 +496,11 @@ public class Util {
 		return messageList;
 	}
 	
-    /*
-     * process Attribute.n requests start from 1 ordinal, ignore rest if there is a break
-     */
     public static List<String> fillGetAttributesRequests(HttpServletRequest request) {
         
-    	List<String> filterRequests = new ArrayList<String>();
+        // process Attribute.n requests start from 1 ordinal, ignore rest if there is a break
+
+        List<String> filterRequests = new ArrayList<String>();
         int index = 1;
         String attr = request.getParameter(CQSConstants.ATTRIBUTE_NAME + "." + index);
         
@@ -536,9 +513,21 @@ public class Util {
         return filterRequests;
     }
     
-	public static CQSMessage extractMessageFromSuperColumn(HSuperColumn<Composite, String, String> superColumn)	throws NoSuchAlgorithmException, UnsupportedEncodingException {
+	public static CQSMessage extractMessageFromSuperColumn(String queueUrl, HSuperColumn<Composite, String, String> superColumn) throws NoSuchAlgorithmException, PersistenceException, IOException {
 		
 		Map<String, String> messageMap = new HashMap<String, String>();
+		
+		CQSQueue queue = null;
+		
+		try {
+			queue = CQSCache.getCachedQueue(queueUrl);
+		} catch (Exception ex) {
+			throw new PersistenceException(ex);
+		}
+		
+		if (queue == null) {
+			throw new PersistenceException(CMBErrorCodes.InternalError, "Unknown queue " + queueUrl);
+		}
 		
 		for (HColumn<String, String> column : superColumn.getColumns()) {
 			messageMap.put(column.getName(), column.getValue());
@@ -546,6 +535,11 @@ public class Util {
 		
 		Composite columnName = superColumn.getName();
 		CQSMessage message = buildMessageFromMap(messageMap);
+		
+		if (queue.isCompressed()) {
+			message.setBody(Util.decompress(message.getBody()));
+		}
+		
 		message.setTimebasedId(columnName);
 		return message;
 	}
@@ -599,5 +593,56 @@ public class Util {
     	}
     	
     	return Integer.parseInt(keyParts[1]);
+    }
+    
+    public static String compress(String decompressed) throws IOException{
+        if (decompressed == null || decompressed.equals("")) {
+            return decompressed;
+        }
+        ByteArrayOutputStream out = new ByteArrayOutputStream(decompressed.length());
+        GZIPOutputStream gzip = new GZIPOutputStream(out);
+        gzip.write(decompressed.getBytes());
+        gzip.close();
+        out.close();
+        String compressed = Base64.encodeBase64String(out.toByteArray());
+        logger.info("event=compressed from=" + decompressed.length() + " to=" + compressed.length());
+		return compressed;
+     }
+    
+    public static String decompress(String compressed) throws IOException {
+        if (compressed == null || compressed.equals("")) {
+            return compressed;
+        }
+        Reader reader = null;
+        StringWriter writer = null;
+        try {
+        	if (!compressed.startsWith("H4sIA")) {
+        		String prefix = compressed;
+        		if (compressed.length() > 100) {
+        			prefix = prefix.substring(0, 99);
+        		}
+        		logger.warn("event=content_does_not_appear_to_be_zipped message=" + prefix);
+        		return compressed;
+        	}
+	        byte[] unencodedEncrypted = Base64.decodeBase64(compressed);
+	        ByteArrayInputStream in = new ByteArrayInputStream(unencodedEncrypted);
+	        GZIPInputStream gzip = new GZIPInputStream(in);
+	        reader = new InputStreamReader(gzip, "UTF-8");
+	        writer = new StringWriter();
+	        char[] buffer = new char[10240];
+	        for (int length = 0; (length = reader.read(buffer)) > 0;) {
+	            writer.write(buffer, 0, length);
+	        }
+        } finally {
+        	if (writer != null) {
+        		writer.close();
+        	}
+        	if (reader != null) {
+        		reader.close();
+        	}
+        }
+        String decompressed = writer.toString();
+        logger.info("event=decompressed from=" + compressed.length() + " to=" + decompressed.length());
+        return decompressed;
     }
 }

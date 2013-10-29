@@ -19,6 +19,9 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.StringWriter;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
@@ -170,34 +173,7 @@ public class Util {
         }
         return true;
     }
-    
-    public static String compress(String uncompressed) throws IOException{
-        if (uncompressed == null || uncompressed.length() == 0) {
-            return uncompressed;
-        }
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        GZIPOutputStream gzip = new GZIPOutputStream(out);
-        gzip.write(uncompressed.getBytes());
-        gzip.close();
-		String compressed = Base64.encodeBase64String(out.toByteArray());
-		return compressed;
-     }
-    
-    public static String decompress(String compressed) throws IOException {
-    	int len = CMBProperties.getInstance().getCQSMaxMessageSize();
-        if (compressed == null || compressed.trim().isEmpty()) {
-            return compressed;
-        }
-		byte[] unencodedEncrypted = Base64.decodeBase64(compressed);
-        ByteArrayInputStream in = new ByteArrayInputStream(unencodedEncrypted);
-        GZIPInputStream gzip = new GZIPInputStream(in);
-        byte[] buf = new byte[len];
-        int length = gzip.read(buf, 0, len);
-        gzip.close();
-        String decompressed = new String(buf, 0, length);
-		return decompressed;
-    }
-    
+
     /**
      * Split a passed in list into multiple lists of a given size
      * @param <T>

@@ -280,6 +280,7 @@ public class CQSUserPageServlet extends AdminServletBase {
 		out.println("<th>Wait Time Seconds</th>");
 		out.println("<th>Num Partitions</th>");
 		out.println("<th>Num Shards</th>");
+		out.println("<th>Compressed</th>");
 		out.println("<th>Approx Num Msg</th>");
 		out.println("<th>&nbsp;</th><th>&nbsp;</th><th>&nbsp;</th><th>&nbsp;</th></tr>");
 
@@ -289,16 +290,12 @@ public class CQSUserPageServlet extends AdminServletBase {
 
 			if (showQueueAttributes) {
 				try {	
-
 					GetQueueAttributesRequest getQueueAttributesRequest = new GetQueueAttributesRequest(queueUrls.get(i));
-
 					getQueueAttributesRequest.setAttributeNames(
 							Arrays.asList("VisibilityTimeout", "MaximumMessageSize", "MessageRetentionPeriod", "DelaySeconds",
-									"ApproximateNumberOfMessages", "ReceiveMessageWaitTimeSeconds", "NumberOfPartitions", "NumberOfShards"));
-
+									"ApproximateNumberOfMessages", "ReceiveMessageWaitTimeSeconds", "NumberOfPartitions", "NumberOfShards", "IsCompressed"));
 					GetQueueAttributesResult getQueueAttributesResult = sqs.getQueueAttributes(getQueueAttributesRequest);
 					attributes = getQueueAttributesResult.getAttributes();
-
 				} catch (Exception ex) {
 					logger.error("event=get_queue_attributes url=" + queueUrls.get(i));
 				}
@@ -320,6 +317,7 @@ public class CQSUserPageServlet extends AdminServletBase {
 			out.println("<td>"+(attributes.get("ReceiveMessageWaitTimeSeconds") != null ? attributes.get("ReceiveMessageWaitTimeSeconds"):"")+"</td>");
 			out.println("<td>"+(attributes.get("NumberOfPartitions") != null ? attributes.get("NumberOfPartitions"):"")+"</td>");
 			out.println("<td>"+(attributes.get("NumberOfShards") != null ? attributes.get("NumberOfShards"):"")+"</td>");
+			out.println("<td>"+(attributes.get("IsCompressed") != null ? attributes.get("IsCompressed"):"")+"</td>");
 			out.println("<td>"+(attributes.get("ApproximateNumberOfMessages") != null ? attributes.get("ApproximateNumberOfMessages"):"")+"</td>");
 
 			out.println("<td><a href='/webui/cqsuser/message?userId=" + user.getUserId()+ "&queueName=" + Util.getNameForAbsoluteQueueUrl(queueUrls.get(i)) + "'>Messages</a></td>");

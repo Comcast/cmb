@@ -251,6 +251,11 @@ public class CQSCreateQueueAction extends CQSAction {
                 
                 newQueue.setNumberOfShards(numberOfShards);
                 
+            } else if (attributeName.equals(CQSConstants.IS_COMPRESSED)) {
+            	
+            	boolean isCompressed = Boolean.parseBoolean(attributeValue);
+            	newQueue.setCompressed(isCompressed);
+
             } else {
                 throw new CMBException(CMBErrorCodes.InvalidRequest, "Attribute: " + attributeName + " is not a valid attribute");
             }

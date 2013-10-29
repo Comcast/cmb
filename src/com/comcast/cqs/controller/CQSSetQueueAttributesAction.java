@@ -76,24 +76,24 @@ public class CQSSetQueueAttributesAction extends CQSAction {
                 }
                 
             	queue.setVisibilityTO(v);
-                postVars.put(CQSConstants.COL_VISIBILITY_TO, attributes.get(attributeName));
+                postVars.put(CQSConstants.COL_VISIBILITY_TO, value);
             
             } else if (attributeName.equals(CQSConstants.POLICY)) {
             	
-        		if (attributes.get(attributeName) != null && !attributes.get(attributeName).equals("")) {
+        		if (value != null && !value.equals("")) {
 	            	
         			// validate policy before updating
         			
         			try {
-        				new CMBPolicy(attributes.get(attributeName));
+        				new CMBPolicy(value);
         			} catch (Exception ex) {
-	                    logger.warn("event=invalid_policy queue_url=" + queue.getRelativeUrl() + " policy=" + attributes.get(attributeName), ex);
+	                    logger.warn("event=invalid_policy queue_url=" + queue.getRelativeUrl() + " policy=" + value, ex);
 	        			throw ex;
 	        		}
         		}
             	
-                queue.setPolicy(attributes.get(attributeName));
-                postVars.put(CQSConstants.COL_POLICY, attributes.get(attributeName));
+                queue.setPolicy(value);
+                postVars.put(CQSConstants.COL_POLICY, value);
             
             } else if (attributeName.equals(CQSConstants.MAXIMUM_MESSAGE_SIZE)) {
                 
@@ -108,7 +108,7 @@ public class CQSSetQueueAttributesAction extends CQSAction {
                 }
                 
             	queue.setMaxMsgSize(v);
-                postVars.put(CQSConstants.COL_MAX_MSG_SIZE, attributes.get(attributeName));
+                postVars.put(CQSConstants.COL_MAX_MSG_SIZE, value);
             
             } else if (attributeName.equals(CQSConstants.MESSAGE_RETENTION_PERIOD)) {
                 
@@ -123,7 +123,7 @@ public class CQSSetQueueAttributesAction extends CQSAction {
                 }
             	
                 queue.setMsgRetentionPeriod(v);
-                postVars.put(CQSConstants.COL_MSG_RETENTION_PERIOD, attributes.get(attributeName));
+                postVars.put(CQSConstants.COL_MSG_RETENTION_PERIOD, value);
             
             } else if (attributeName.equals(CQSConstants.DELAY_SECONDS)) {
                 
@@ -138,7 +138,7 @@ public class CQSSetQueueAttributesAction extends CQSAction {
                 }
                 
             	queue.setDelaySeconds(v);
-                postVars.put(CQSConstants.COL_DELAY_SECONDS, attributes.get(attributeName));
+                postVars.put(CQSConstants.COL_DELAY_SECONDS, value);
            
             } else if (attributeName.equals(CQSConstants.RECEIVE_MESSAGE_WAIT_TIME_SECONDS)) {
                 
@@ -153,7 +153,7 @@ public class CQSSetQueueAttributesAction extends CQSAction {
                 }
                 
             	queue.setReceiveMessageWaitTimeSeconds(v);
-                postVars.put(CQSConstants.COL_WAIT_TIME_SECONDS, attributes.get(attributeName));
+                postVars.put(CQSConstants.COL_WAIT_TIME_SECONDS, value);
            
             } else if (attributeName.equals(CQSConstants.NUMBER_OF_PARTITIONS)) {
                 
@@ -168,7 +168,7 @@ public class CQSSetQueueAttributesAction extends CQSAction {
                 }
                 
             	queue.setNumberOfPartitions(v);
-                postVars.put(CQSConstants.COL_NUMBER_PARTITIONS, attributes.get(attributeName));
+                postVars.put(CQSConstants.COL_NUMBER_PARTITIONS, value);
            
             } else if (attributeName.equals(CQSConstants.NUMBER_OF_SHARDS)) {
                 
@@ -183,12 +183,18 @@ public class CQSSetQueueAttributesAction extends CQSAction {
                 }
                 
             	queue.setNumberOfShards(v);
-                postVars.put(CQSConstants.COL_NUMBER_SHARDS, attributes.get(attributeName));
+                postVars.put(CQSConstants.COL_NUMBER_SHARDS, value);
                 
             	for (int shard=0; shard<v; shard++) {
                     RedisCachedCassandraPersistence.getInstance().checkCacheConsistency(queue.getRelativeUrl(), shard, false);
             	}
-           
+
+            } else if (attributeName.equals(CQSConstants.IS_COMPRESSED)) {
+            	
+            	boolean isCompressed = Boolean.parseBoolean(value);
+            	queue.setCompressed(isCompressed);
+                postVars.put(CQSConstants.COL_COMPRESSED, value);
+            	
             } else {
                 throw new CMBException(CMBErrorCodes.InvalidAttributeName, "Attribute.Name: " + attributeName + " is not a valid attribute");
             }

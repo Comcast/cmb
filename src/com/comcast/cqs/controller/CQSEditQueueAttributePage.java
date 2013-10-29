@@ -70,6 +70,7 @@ public class CQSEditQueueAttributePage extends AdminServletBase {
 				String receiveMessageWaitTimeSeconds = request.getParameter("receiveMessageWaitTimeSeconds");
 				String numberOfPartitions = request.getParameter("numberOfPartitions");
 				String numberOfShards = request.getParameter("numberOfShards");
+				String isCompressed =  request.getParameter("isCompressed");
 				
 				try {
 
@@ -102,6 +103,10 @@ public class CQSEditQueueAttributePage extends AdminServletBase {
 					if (numberOfPartitions != null && !numberOfPartitions.equals("")) {
 						attributes.put("NumberOfShards", numberOfShards);
 					}
+					
+					if (isCompressed != null && !isCompressed.equals("")) {
+						attributes.put("IsCompressed", isCompressed);
+					}
 
 					SetQueueAttributesRequest setQueueAttributesRequest = new SetQueueAttributesRequest(queueUrl, attributes);
 					sqs.setQueueAttributes(setQueueAttributesRequest);
@@ -124,6 +129,7 @@ public class CQSEditQueueAttributePage extends AdminServletBase {
 				String receiveMessageWaitTimeSeconds = "";
 				String numberOfPartitions = "";
 				String numberOfShards = "";
+				String isCompressed = "";
 				
 				if (queueUrl != null) {
 				
@@ -131,10 +137,9 @@ public class CQSEditQueueAttributePage extends AdminServletBase {
 					
 					try {
 						GetQueueAttributesRequest getQueueAttributesRequest = new GetQueueAttributesRequest(queueUrl);
-						getQueueAttributesRequest.setAttributeNames(Arrays.asList("VisibilityTimeout", "MaximumMessageSize", "MessageRetentionPeriod", "DelaySeconds", "ReceiveMessageWaitTimeSeconds", "NumberOfPartitions", "NumberOfShards"));
+						getQueueAttributesRequest.setAttributeNames(Arrays.asList("VisibilityTimeout", "MaximumMessageSize", "MessageRetentionPeriod", "DelaySeconds", "ReceiveMessageWaitTimeSeconds", "NumberOfPartitions", "NumberOfShards", "IsCompressed"));
 						GetQueueAttributesResult getQueueAttributesResult = sqs.getQueueAttributes(getQueueAttributesRequest);
 						attributes = getQueueAttributesResult.getAttributes();
-						
 						visibilityTimeout = attributes.get("VisibilityTimeout");
 						maximumMessageSize = attributes.get("MaximumMessageSize");
 						messageRetentionPeriod = attributes.get("MessageRetentionPeriod");
@@ -142,7 +147,7 @@ public class CQSEditQueueAttributePage extends AdminServletBase {
 						receiveMessageWaitTimeSeconds = attributes.get("ReceiveMessageWaitTimeSeconds");
 						numberOfPartitions = attributes.get("NumberOfPartitions");
 						numberOfShards = attributes.get("NumberOfShards");
-						
+						isCompressed = attributes.get("IsCompressed");
 					} catch (Exception ex) {
 						logger.error("event=failed_to_get_attributes queue_url=" + queueUrl, ex);
 						throw new ServletException(ex);
@@ -178,6 +183,9 @@ public class CQSEditQueueAttributePage extends AdminServletBase {
 
 				out.println("<tr><td>Number Of Shards:</td><td><input type='text' name='numberOfShards' size='50' value='" + numberOfShards + "'></td></tr>");
 				out.println("<tr><td>&nbsp;</td><td><I><font color='grey'>Default 1, maximum 100 shards</font></I></td></tr>");
+
+				out.println("<tr><td>Compressed:</td><td><input type='text' name='isCompressed' size='50' value='" + isCompressed + "'></td></tr>");
+				out.println("<tr><td>&nbsp;</td><td><I><font color='grey'>Valid values: true or false</font></I></td></tr>");
 
 				out.println("<tr><td>&nbsp;</td><td>&nbsp;</td></tr>");
 				

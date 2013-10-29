@@ -42,6 +42,7 @@ public class CQSQueue {
     private int receiveMessageWaitTimeSeconds = 0;
     private int numberOfPartitions = 100;
     private int numberOfShards = 1;
+    private boolean compressed = false;
     
 	public CQSQueue(String name, String ownerId) {
     	
@@ -56,8 +57,17 @@ public class CQSQueue {
         this.delaySeconds = CMBProperties.getInstance().getCQSMessageDelaySeconds();
         this.numberOfPartitions = CMBProperties.getInstance().getCQSNumberOfQueuePartitions();
         this.numberOfShards = 1;
+        this.compressed = false;
 	}
 	
+	public boolean isCompressed() {
+		return compressed;
+	}
+
+	public void setCompressed(boolean compressed) {
+		this.compressed = compressed;
+	}
+
 	@Override 
 	public Object clone() throws CloneNotSupportedException {
 		CQSQueue queue = (CQSQueue)super.clone();

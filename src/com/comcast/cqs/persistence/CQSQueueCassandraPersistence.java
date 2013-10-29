@@ -78,6 +78,7 @@ public class CQSQueueCassandraPersistence extends CassandraPersistence implement
 		queueData.put(CQSConstants.COL_WAIT_TIME_SECONDS, (new Long(queue.getReceiveMessageWaitTimeSeconds())).toString());
 		queueData.put(CQSConstants.COL_NUMBER_PARTITIONS, (new Long(queue.getNumberOfPartitions())).toString());
 		queueData.put(CQSConstants.COL_NUMBER_SHARDS, (new Long(queue.getNumberOfShards())).toString());
+		queueData.put(CQSConstants.COL_COMPRESSED, (new Boolean(queue.isCompressed())).toString());
 
 		insertOrUpdateRow(queue.getRelativeUrl(), COLUMN_FAMILY_QUEUES, queueData, CMBProperties.getInstance().getWriteConsistencyLevel());
 		
@@ -214,6 +215,7 @@ public class CQSQueueCassandraPersistence extends CassandraPersistence implement
 			String policy = slice.getColumnByName(CQSConstants.COL_POLICY).getValue();
 			long createdTime = (new Long(slice.getColumnByName(CQSConstants.COL_CREATED_TIME).getValue())).longValue();
 			String hostName = slice.getColumnByName(CQSConstants.COL_HOST_NAME) == null ? null : slice.getColumnByName(CQSConstants.COL_HOST_NAME).getValue();
+			boolean isCompressed = slice.getColumnByName(CQSConstants.COL_COMPRESSED) == null ? false : (new Boolean(slice.getColumnByName(CQSConstants.COL_COMPRESSED).getValue())).booleanValue();
 			CQSQueue queue = new CQSQueue(name, ownerUserId);
 			queue.setRelativeUrl(url);
 			queue.setServiceEndpoint(hostName);
@@ -228,6 +230,7 @@ public class CQSQueueCassandraPersistence extends CassandraPersistence implement
 			queue.setNumberOfPartitions(numPartitions);
 			queue.setNumberOfShards(numShards);
 			queue.setCreatedTime(createdTime);
+			queue.setCompressed(isCompressed);
 			return queue;
 		} catch (Exception ex) {
 			return null;
@@ -235,13 +238,10 @@ public class CQSQueueCassandraPersistence extends CassandraPersistence implement
 	}
 
 	private CQSQueue getQueueByUrl(String queueUrl) {
-
 		ColumnSlice<String, String> slice = readColumnSlice(COLUMN_FAMILY_QUEUES, queueUrl, 15, StringSerializer.get(), StringSerializer.get(), StringSerializer.get(), CMBProperties.getInstance().getReadConsistencyLevel());
-
 		if (slice == null) {		    
 			return null;
 		}
-		
 	    CQSQueue queue = fillQueueFromCqlSlice(queueUrl, slice);
 	    return queue;
 	}
@@ -259,11 +259,9 @@ public class CQSQueueCassandraPersistence extends CassandraPersistence implement
 
 	@Override
 	public boolean updatePolicy(String queueUrl, String policy) {
-		
 		if (queueUrl == null || queueUrl.trim().isEmpty() || policy == null || policy.trim().isEmpty()) {
 			return false;
 		}
-		
 		update(queuesTemplateString, queueUrl, CQSConstants.COL_POLICY, policy, StringSerializer.get(), StringSerializer.get(), StringSerializer.get());
 		return true;
 	}

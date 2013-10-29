@@ -129,6 +129,7 @@ public interface ICQSMessagePersistence {
      * @return The list of messages with those ids in any order
      * @throws UnsupportedEncodingException 
      * @throws NoSuchAlgorithmException 
+     * @throws IOException 
      */
-	Map<String, CQSMessage> getMessages(String queueUrl, List<String> ids) throws PersistenceException, NoSuchAlgorithmException, UnsupportedEncodingException;
+	Map<String, CQSMessage> getMessages(String queueUrl, List<String> ids) throws PersistenceException, NoSuchAlgorithmException, UnsupportedEncodingException, IOException;
 }

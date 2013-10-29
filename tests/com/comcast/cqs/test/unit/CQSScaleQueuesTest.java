@@ -4,6 +4,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -31,6 +32,7 @@ import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
 import com.amazonaws.services.sqs.model.ReceiveMessageResult;
 import com.amazonaws.services.sqs.model.SendMessageRequest;
 import com.amazonaws.services.sqs.model.SendMessageResult;
+import com.amazonaws.services.sqs.model.SetQueueAttributesRequest;
 import com.comcast.cmb.common.controller.CMBControllerServlet;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.test.tools.CMBAWSBaseTest;
@@ -55,6 +57,9 @@ public class CQSScaleQueuesTest extends CMBAWSBaseTest {
     
     private static String queueName = null;
     private static int numBatchReceive = 1;
+    private static boolean zipped = false;
+    private static String messageFile = null;
+    private static String messageFromFile = null;
     
     private static AtomicLong totalMessagesFound = new AtomicLong(0);
     private static AtomicLong totalMessagesSent = new AtomicLong(0);
@@ -106,8 +111,20 @@ public class CQSScaleQueuesTest extends CMBAWSBaseTest {
 				deleteQueues = Boolean.parseBoolean(arg.substring(4));
 			} else if (arg.startsWith("-br")) {
 				numBatchReceive = Integer.parseInt(arg.substring(4));
+			} else if (arg.startsWith("-zp")) {
+				zipped = Boolean.parseBoolean(arg.substring(4));
+			} else if (arg.startsWith("-mf")) {
+				messageFile = arg.substring(4);
+	    	    StringBuffer sb = new StringBuffer("");
+	    		BufferedReader br = new BufferedReader(new FileReader(messageFile));
+	        	String line;
+	        	while ((line = br.readLine()) != null) {
+	        	   sb.append(line);
+	        	}
+	        	br.close();
+	        	messageFromFile = sb.toString();
 			} else {
-				System.out.println("Usage: CQSScaleQueuesTest -Dcmb.log4j.propertyFile=config/log4j.properties -Dcmb.propertyFile=config/cmb.properties -nq=<number_queues_per_thread> -nm=<number_messages_per_queue> -nt=<number_threads> -np=<number_partitions> -ns=<number_shards> -ml=<message_length> -dq=<delete_queues_at_end_true_or_false> -qn=<queue_name_for_single_queue_tests> -ak=<access_key> -as=<access_secret> -br=<num_batch_receive>");
+				System.out.println("Usage: CQSScaleQueuesTest -Dcmb.log4j.propertyFile=config/log4j.properties -Dcmb.propertyFile=config/cmb.properties -nq=<number_queues_per_thread> -nm=<number_messages_per_queue> -nt=<number_threads> -np=<number_partitions> -ns=<number_shards> -ml=<message_length> -dq=<delete_queues_at_end_true_or_false> -qn=<queue_name_for_single_queue_tests> -ak=<access_key> -as=<access_secret> -br=<num_batch_receive> -zp=<zipped_true_or_false> -mf=<path_to_message_file>");
 				System.out.println("Example: java CQSScaleQueuesTest -Dcmb.log4j.propertyFile=config/log4j.properties -Dcmb.propertyFile=config/cmb.properties -nq=10 -nm=10 -nt=10 -np=100 -ns=1 -dq=true -br=1");
 				System.exit(1);
 			}
@@ -122,6 +139,12 @@ public class CQSScaleQueuesTest extends CMBAWSBaseTest {
 		System.out.println("Number of shards: " + numShards);
 		System.out.println("Delete queues: " + deleteQueues);
 		System.out.println("Number of messages received in batch: " + numBatchReceive);
+		System.out.println("Zipped: " + zipped);
+		System.out.println("Message File: " + messageFile);
+		
+		if (messageFromFile != null) {
+			System.out.println("Message File Size: " + messageFromFile.length());
+		}
 		
 		if (queueName != null) {
 			System.out.println("Queue name: " + queueName);
@@ -436,6 +459,16 @@ public class CQSScaleQueuesTest extends CMBAWSBaseTest {
 					queueUrls.add(queueUrl);
 					logger.info("created queue " + counter + ": " + queueUrl + " " + numPartitions + " partitions, " + numShards + " shards");
 					counter++;
+					
+					if (zipped) {
+				    	Map<String, String> attributes = new HashMap<String, String>();
+				    	attributes.put("IsCompressed", "true");
+				    	cqs1.setQueueAttributes(new SetQueueAttributesRequest(queueUrl,attributes));
+					} else {
+				    	Map<String, String> attributes = new HashMap<String, String>();
+				    	attributes.put("IsCompressed", "false");
+				    	cqs1.setQueueAttributes(new SetQueueAttributesRequest(queueUrl,attributes));
+					}
 
 				} catch (Exception ex) {
 					logger.error("create failure", ex);
@@ -459,9 +492,13 @@ public class CQSScaleQueuesTest extends CMBAWSBaseTest {
 					try {
 
 						String msg = "" + messagesSent;
+						
 						if (messageLength > 0) {
 							msg += "-" + generateRandomMessage(messageLength);
+						} else if (messageFromFile != null) {
+							msg += "-" + messageFromFile + generateRandomMessage(100);
 						}
+						
 						long start = System.currentTimeMillis();
 						SendMessageResult result = cqs1.sendMessage(new SendMessageRequest(queueUrl, msg));
 						long end = System.currentTimeMillis();

@@ -95,7 +95,9 @@ public class CQSMessagePartitionedCassandraPersistence extends CassandraPersiste
 		int partition = rand.nextInt(queue.getNumberOfPartitions());
 		String key = Util.hashQueueUrl(queue.getRelativeUrl()) + "_" + shard + "_" + partition;
 		
-		// String compressedMessage = Util.compress(message);
+		if (queue.isCompressed()) {
+			message.setBody(Util.compress(message.getBody()));
+		}
 
 		message.setMessageId(key + ":" + superColumnName.get(0) + ":" + superColumnName.get(1));
 
@@ -130,6 +132,10 @@ public class CQSMessagePartitionedCassandraPersistence extends CassandraPersiste
 
 			if (message == null) {
 				throw new PersistenceException(CQSErrorCodes.InvalidMessageContents, "The supplied message is invalid");
+			}
+			
+			if (queue.isCompressed()) {
+				message.setBody(Util.compress(message.getBody()));
 			}
 			
 			int delaySeconds = 0;
@@ -265,7 +271,7 @@ public class CQSMessagePartitionedCassandraPersistence extends CassandraPersiste
 					new CompositeSerializer(), StringSerializer.get(),
 					StringSerializer.get(), CMBProperties.getInstance().getReadConsistencyLevel());
 			
-			messageList.addAll(Util.readMessagesFromSuperColumns(length-messageList.size(), previousHandle, nextHandle, superSlice, true));
+			messageList.addAll(Util.readMessagesFromSuperColumns(queueUrl, length-messageList.size(), previousHandle, nextHandle, superSlice, true));
 			
 			if (messageList.size() < length && -1 < partitionNumber && partitionNumber < numberPartitions) {
 				
@@ -310,7 +316,7 @@ public class CQSMessagePartitionedCassandraPersistence extends CassandraPersiste
 	}
 
 	@Override
-	public Map<String, CQSMessage> getMessages(String queueUrl, List<String> ids) throws PersistenceException, NoSuchAlgorithmException, UnsupportedEncodingException {
+	public Map<String, CQSMessage> getMessages(String queueUrl, List<String> ids) throws PersistenceException, NoSuchAlgorithmException, IOException {
 		
 		Map<String, CQSMessage> messageMap = new HashMap<String, CQSMessage>();
 		
@@ -341,7 +347,7 @@ public class CQSMessagePartitionedCassandraPersistence extends CassandraPersiste
 			CQSMessage message = null;
 			
 			if (superColumn != null) {
-				message = Util.extractMessageFromSuperColumn(superColumn);
+				message = Util.extractMessageFromSuperColumn(queueUrl, superColumn);
 			}
 			
 			messageMap.put(id, message);
@@ -388,7 +394,7 @@ public class CQSMessagePartitionedCassandraPersistence extends CassandraPersiste
 		return messageMap;
 	}
 	
-	private Map<String, CQSMessage> getMessagesBulk(String queueUrl, List<String> ids) throws NoSuchAlgorithmException, UnsupportedEncodingException {
+	private Map<String, CQSMessage> getMessagesBulk(String queueUrl, List<String> ids) throws NoSuchAlgorithmException, PersistenceException, IOException {
 		
 		logger.debug("event=get_message_bulk ids=" + ids);
 		
@@ -413,7 +419,7 @@ public class CQSMessagePartitionedCassandraPersistence extends CassandraPersiste
 					new CompositeSerializer(), StringSerializer.get(),
 					StringSerializer.get(), CMBProperties.getInstance().getReadConsistencyLevel());
 			
-			List<CQSMessage> messageList = Util.readMessagesFromSuperColumns(messageCount, null, null, superSlice, false);
+			List<CQSMessage> messageList = Util.readMessagesFromSuperColumns(queueUrl, messageCount, null, null, superSlice, false);
 			
 			for (CQSMessage message: messageList) {
 				
@@ -542,7 +548,7 @@ public class CQSMessagePartitionedCassandraPersistence extends CassandraPersiste
                         new CompositeSerializer(), StringSerializer.get(),
                         StringSerializer.get(), CMBProperties.getInstance().getReadConsistencyLevel());
                
-                List<CQSMessage> messages = Util.readMessagesFromSuperColumns(1, null, null, superSlice, false);
+                List<CQSMessage> messages = Util.readMessagesFromSuperColumns(queueUrl, 1, null, null, superSlice, false);
                 numFound += messages.size();
                 messageList.addAll(messages);
             }
