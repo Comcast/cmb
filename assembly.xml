@@ -54,6 +54,13 @@
 			</includes>
 		</fileSet>
 		<fileSet>
+			<directory>${basedir}</directory>
+			<includes>
+				<include>packaging/linux/centos/*</include>
+				<include>packaging/common/*</include>
+			</includes>
+		</fileSet>
+		<fileSet>
 			<directory>${project.build.directory}/lib</directory>
 			<outputDirectory>lib</outputDirectory>
 			<excludes>
