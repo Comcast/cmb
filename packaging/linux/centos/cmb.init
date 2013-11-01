@@ -1,0 +1,40 @@
+#!/bin/sh
+# chkconfig: 345 20 80
+# description: Cloud Message Bus API server
+# /etc/initd.d/cmb
+CLASS=com.comcast.cmb.common.controller.CMB
+USER=cmb
+
+restart() {
+  # start does a stop
+  start
+}
+
+start() {
+  stop
+  cd /opt/cmb
+  su $USER -c "nohup /opt/cmb/bin/cmb.sh > logs/cmb.stdout.log 2> logs/cmb.stderr.log &"		
+}
+
+stop() {
+  pkill -f $CLASS
+  sleep 1
+  pkill -9 -f $CLASS
+  sleep 1
+}
+
+status() {
+  pgrep -f $CLASS
+  exit $?
+}
+
+case $1 in
+  start|stop|restart|status)
+    $1
+    ;;
+  *)
+    echo "USAGE: $0 <start|stop|restart|status>"
+    exit 1
+    ;;
+esac
+
