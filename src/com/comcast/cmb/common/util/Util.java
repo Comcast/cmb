@@ -15,21 +15,12 @@
  */
 package com.comcast.cmb.common.util;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.io.StringWriter;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.zip.GZIPOutputStream;
-import java.util.zip.GZIPInputStream;
 
-import org.apache.commons.codec.binary.Base64;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 
@@ -43,9 +34,6 @@ public class Util {
     private static volatile boolean log4jInitialized = false;
     private static Logger logger = Logger.getLogger(Util.class.getName());
 	
-    // We don't synchronize here so its possible to call this method multiple times
-    // and initialize log4j multiple times but currently the servlet only calls this
-    // during the init
     public static void initLog4j(String defaultFile) throws Exception {
 		
         if (!log4jInitialized) {
@@ -81,25 +69,23 @@ public class Util {
     }
 
     public static boolean isEqual(Object f1, Object f2) {
-        
         if ((f1 == null && f2 != null) || (f1 != null && f2 == null) || (f1 != null && !f1.equals(f2))) { 
             return false;
         }
-        
         return true;
     }
     
     /**
-     * COmpare two collections. Method should be called form equals() method impls
+     * Compare two collections. Method should be called form equals() method impls
      * Note: The order of collections does not matter
      * @param f1 Collection
      * @param f2 Collection
      * @return true if collections have the same size and each element is present in the other
      */
     public static boolean isCollectionsEqual(Collection f1, Collection f2) {
-        if ((f1 == null && f2 != null) || (f1 != null && f2 == null)) return false;
-
-        //compare the collection of players. This is inefficient. TODO use hashing instead
+        if ((f1 == null && f2 != null) || (f1 != null && f2 == null)) {
+        	return false;
+        }
         if (f1 != null) {
             if ((f1.size() != f2.size()) || !isC2InC1(f1, f2) || !isC2InC1(f2, f1)) {
                 return false;
@@ -120,20 +106,26 @@ public class Util {
      * @return truw if two maps are the same. false otherwise
      */
     public static <K,V> boolean isMapsEquals(Map<K, V> m1, Map<K, V> m2) {
-        if (m1 == m2) return true;
-        if ((m1 == null && m2 != null) || (m1 != null && m2 == null)) return false;        
-        if (m1.size() != m2.size()) return false;
-        
+        if (m1 == m2) {
+        	return true;
+        }
+        if ((m1 == null && m2 != null) || (m1 != null && m2 == null)) {
+        	return false;        
+        }
+        if (m1.size() != m2.size()) {
+        	return false;
+        }
         for (Map.Entry<K, V> entry : m1.entrySet()) {
             K key = entry.getKey();
             V val = entry.getValue();
             V val2 = m2.get(key);
-            if (val2 == null) return false;
+            if (val2 == null) {
+            	return false;
+            }
             if (!val.equals(val2)) {
                 return false;
             }
         }
-        
         return true;        
     }
     
@@ -145,27 +137,25 @@ public class Util {
      * @return
      */
     public static <T> boolean isC2InC1(Collection<T> c1, Collection<T> c2) {
-        for (T ourPlayer : c1) {
-            boolean ourPlayerFound = false;        
+        for (T e1 : c1) {
+            boolean e1found = false;        
             for (T theirPlayer : c2) {
-                if (ourPlayer.equals(theirPlayer)) {
-                    ourPlayerFound = true;
+                if (e1.equals(theirPlayer)) {
+                    e1found = true;
                     break;
                 }
             }
-            if (!ourPlayerFound) {
+            if (!e1found) {
                 return false;            
             }
         }
         return true;
     }
-
     
     public static boolean isValidUnicode(String msg) {
         char[] chs = msg.toCharArray();
-
         for (int i = 0; i < chs.length; i++) {
-            if (chs[i] == '\n' || chs[i] == '\t' || chs[i] == '\r' || (chs[i] >= '\u0020' && chs[i] <= '\u07ff') || (chs[i] >= '\ue000' && chs[i] <= '\ufffd')) {
+            if (chs[i] == '\n' || chs[i] == '\t' || chs[i] == '\r' || (chs[i] >= '\u0020' && chs[i] <= '\uD7FF') || (chs[i] >= '\uE000' && chs[i] <= '\uFFFD')) {
                 continue;    			
             } else {
                 return false;
@@ -190,6 +180,4 @@ public class Util {
         }
         return lofl;        
     }
-   
-
 }
