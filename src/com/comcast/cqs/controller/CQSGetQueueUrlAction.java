@@ -58,7 +58,7 @@ public class CQSGetQueueUrlAction extends CQSAction {
         }
         
         String out = CQSQueuePopulator.getQueueUrlResponse(queue);
-        response.getWriter().print(out);
+        writeResponse(out, response);
         
         return true;
 	}

@@ -95,7 +95,7 @@ public class CQSDeleteMessageBatchAction extends CQSAction {
         }
         
         String out = CQSMessagePopulator.getDeleteMessageBatchResponse(new ArrayList<String>(idMap.keySet()), failedList);
-        response.getWriter().println(out);
+        writeResponse(out, response);
         
         return true;
     }

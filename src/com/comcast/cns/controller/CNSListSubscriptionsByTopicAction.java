@@ -100,8 +100,8 @@ public class CNSListSubscriptionsByTopicAction extends CNSAction {
 			}
 		}
 
-		String res = CNSSubscriptionPopulator.getListSubscriptionByTopicResponse(subscriptions, nextToken);
-		response.getWriter().println(res);	
+		String out = CNSSubscriptionPopulator.getListSubscriptionByTopicResponse(subscriptions, nextToken);
+        writeResponse(out, response);
 		return true;
 	}
 }

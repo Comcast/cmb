@@ -71,13 +71,15 @@ public class CQSManageServiceAction extends CQSAction {
 		if (task.equals("ClearCache")) {
 
 	    	RedisCachedCassandraPersistence.flushAll();
-	    	response.getWriter().println(CQSPopulator.getResponseMetadata());
+	    	String out = CQSPopulator.getResponseMetadata();
+            writeResponse(out, response);
 	        return true;
         
 		} else if (task.equals("ClearAPIStats")) {
 
             CMBControllerServlet.initStats();
-	    	response.getWriter().println(CQSPopulator.getResponseMetadata());
+            String out = CQSPopulator.getResponseMetadata();
+            writeResponse(out, response);
 	    	return true;
 			
 		} else if (task.equals("RemoveRecord")) {
@@ -85,9 +87,8 @@ public class CQSManageServiceAction extends CQSAction {
 			CassandraPersistence cassandraHandler = new CassandraPersistence(CMBProperties.getInstance().getCQSKeyspace());
 			ColumnFamilyTemplate<String, String> usersTemplate = new ThriftColumnFamilyTemplate<String, String>(cassandraHandler.getKeySpace(CMBProperties.getInstance().getWriteConsistencyLevel()), "CQSAPIServers", StringSerializer.get(), StringSerializer.get());
 			cassandraHandler.delete(usersTemplate, host, null);
-			
-	    	response.getWriter().println(CNSPopulator.getResponseMetadata());
-			
+			String out = CNSPopulator.getResponseMetadata();
+            writeResponse(out, response);
 			return true;
 			
 		} else {

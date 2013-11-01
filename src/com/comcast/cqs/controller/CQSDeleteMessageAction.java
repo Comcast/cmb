@@ -81,8 +81,7 @@ public class CQSDeleteMessageAction extends CQSAction {
         PersistenceFactory.getCQSMessagePersistence().deleteMessage(queue.getRelativeUrl(), receiptHandle);
         
         String out = CQSMessagePopulator.getDeleteMessageResponse();
-
-        response.getWriter().println(out);
+        writeResponse(out, response);
         
         return true;
     }

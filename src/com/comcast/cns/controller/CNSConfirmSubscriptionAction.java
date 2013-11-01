@@ -81,8 +81,8 @@ public class CNSConfirmSubscriptionAction extends CNSAction {
     	
     	logger.debug("event=cns_confirm_subscription token=" + token + " topicArn=" + topicArn);
     	CNSSubscription sub = PersistenceFactory.getSubscriptionPersistence().confirmSubscription(authenticateOnUnsubscribe, token, topicArn);
-    	String res = CNSSubscriptionPopulator.getConfirmSubscriptionResponse(sub);
-		response.getWriter().println(res);	
+    	String out = CNSSubscriptionPopulator.getConfirmSubscriptionResponse(sub);
+        writeResponse(out, response);
 		return true;
 	}
 	

@@ -129,7 +129,7 @@ public class CQSSendMessageAction extends CQSAction {
         message.setReceiptHandle(receiptHandle);
         message.setMessageId(receiptHandle);
         String out = CQSMessagePopulator.getSendMessageResponse(message);
-        response.getWriter().println(out);
+        writeResponse(out, response);
         CQSMonitor.getInstance().addNumberOfMessagesReceived(queue.getRelativeUrl(), 1);
         
         try {

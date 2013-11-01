@@ -67,8 +67,8 @@ public class CNSUnsubscribeAction extends CNSAction {
     	}
     	
     	PersistenceFactory.getSubscriptionPersistence().unsubscribe(arn);
-        String res = CNSSubscriptionPopulator.getUnsubscribeResponse();
-		response.getWriter().println(res);
+        String out = CNSSubscriptionPopulator.getUnsubscribeResponse();
+        writeResponse(out, response);
 		return true;
 	}
 }

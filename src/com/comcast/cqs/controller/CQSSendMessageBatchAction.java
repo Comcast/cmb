@@ -163,7 +163,7 @@ public class CQSSendMessageBatchAction extends CQSAction {
         
         request.setReceiptHandles(receiptHandles);
         String out = CQSMessagePopulator.getSendMessageBatchResponse(msgList, invalidBodyIdList);
-        response.getWriter().println(out);
+        writeResponse(out, response);
         
         CQSMonitor.getInstance().addNumberOfMessagesReceived(queue.getRelativeUrl(), msgList.size());
         

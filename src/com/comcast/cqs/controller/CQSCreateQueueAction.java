@@ -277,7 +277,7 @@ public class CQSCreateQueueAction extends CQSAction {
     	}
         
         String out = CQSQueuePopulator.getCreateQueueResponse(newQueue);
-        response.getWriter().println(out);
+        writeResponse(out, response);
         
         return true;
 	}

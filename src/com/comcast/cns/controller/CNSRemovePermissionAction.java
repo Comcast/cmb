@@ -89,7 +89,8 @@ public class CNSRemovePermissionAction extends CNSAction {
             }
         }
         
-        response.getWriter().print(CNSAttributePopulator.getRemovePermissionResponse());	
+        String out = CNSAttributePopulator.getRemovePermissionResponse();
+        writeResponse(out, response);
         return true;
 	}
 }

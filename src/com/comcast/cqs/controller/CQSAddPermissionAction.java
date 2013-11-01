@@ -116,7 +116,7 @@ public class CQSAddPermissionAction extends CQSAction {
         }
         
         String out = CQSQueuePopulator.getAddPermissionResponse();
-        response.getWriter().print(out);
+        writeResponse(out, response);
         
         return true;
     }

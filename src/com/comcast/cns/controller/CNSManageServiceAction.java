@@ -165,24 +165,23 @@ public class CNSManageServiceAction extends CNSAction {
 			
 			ColumnFamilyTemplate<String, String> usersTemplate = new ThriftColumnFamilyTemplate<String, String>(cassandraHandler.getKeySpace(CMBProperties.getInstance().getWriteConsistencyLevel()), "CNSWorkers", StringSerializer.get(), StringSerializer.get());
 			cassandraHandler.delete(usersTemplate, host, null);
-			
-	    	response.getWriter().println(CNSPopulator.getResponseMetadata());
-			
+			String out = CNSPopulator.getResponseMetadata();
+	        writeResponse(out, response);
 			return true;
 			
 		} else if (task.equals("ClearAPIStats")) {
 			
             CMBControllerServlet.initStats();
-	    	response.getWriter().println(CNSPopulator.getResponseMetadata());
+            String out = CNSPopulator.getResponseMetadata();
+	        writeResponse(out, response);
 	    	return true;
 
 		} else if (task.equals("RemoveRecord")) {
 			
 			ColumnFamilyTemplate<String, String> usersTemplate = new ThriftColumnFamilyTemplate<String, String>(cassandraHandler.getKeySpace(CMBProperties.getInstance().getWriteConsistencyLevel()), "CNSAPIServers", StringSerializer.get(), StringSerializer.get());
 			cassandraHandler.delete(usersTemplate, host, null);
-			
-	    	response.getWriter().println(CNSPopulator.getResponseMetadata());
-			
+			String out = CNSPopulator.getResponseMetadata();
+	        writeResponse(out, response);
 			return true;
 			
 		} else {

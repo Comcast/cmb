@@ -43,7 +43,7 @@ import com.comcast.cqs.util.CQSConstants;
 public class CQSReceiveMessageAction extends CQSAction {
 	
     private static Logger logger = Logger.getLogger(CQSReceiveMessageAction.class);
-
+    
 	public CQSReceiveMessageAction() {
 		super("ReceiveMessage");
 	}
@@ -146,7 +146,7 @@ public class CQSReceiveMessageAction extends CQSAction {
             
             request.setReceiptHandles(receiptHandles);
             String out = CQSMessagePopulator.getReceiveMessageResponseAfterSerializing(messageList, filterAttributes);
-            response.getWriter().println(out);
+            writeResponse(out, response);
         }
         
         return messageList != null && messageList.size() > 0 ? true : false;

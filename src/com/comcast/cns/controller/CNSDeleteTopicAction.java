@@ -61,8 +61,8 @@ public class CNSDeleteTopicAction extends CNSAction {
 		}
 		
 		PersistenceFactory.getTopicPersistence().deleteTopic(arn);			
-		String res = CNSTopicPopulator.getDeleteTopicResponse();
-		response.getWriter().println(res);		
+		String out = CNSTopicPopulator.getDeleteTopicResponse();
+        writeResponse(out, response);
 		return true;
 	}
 }

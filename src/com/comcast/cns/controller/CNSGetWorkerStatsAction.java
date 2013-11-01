@@ -170,8 +170,8 @@ public class CNSGetWorkerStatsAction extends CNSAction {
 		
         HttpServletResponse response = (HttpServletResponse)asyncContext.getResponse();
         List<CNSWorkerStats> statsList = getWorkerStats();
-    	String res = CNSWorkerStatsPopulator.getGetWorkerStatsResponse(statsList);	
-		response.getWriter().println(res);
+    	String out = CNSWorkerStatsPopulator.getGetWorkerStatsResponse(statsList);	
+        writeResponse(out, response);
 
     	return true;
 	}

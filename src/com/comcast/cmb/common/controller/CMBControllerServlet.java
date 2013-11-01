@@ -440,9 +440,8 @@ abstract public class CMBControllerServlet extends HttpServlet {
 			}
 
 			String errXml = createErrorResponse(code, message);
-
 			response.setStatus(httpCode);
-			response.getWriter().println(errXml);
+			Action.writeResponse(errXml, response);
 
 			if (CMBProperties.getInstance().isCMBStatsEnabled() && action != null && !action.equals("")) {
 
@@ -557,9 +556,9 @@ abstract public class CMBControllerServlet extends HttpServlet {
 				}
 
 				String errXml = CMBControllerServlet.createErrorResponse(code, message);
-
-				((HttpServletResponse)asyncEvent.getSuppliedResponse()).setStatus(httpCode);
-				asyncEvent.getSuppliedResponse().getWriter().println(errXml);
+				HttpServletResponse response = ((HttpServletResponse)asyncEvent.getSuppliedResponse());
+				response.setStatus(httpCode);
+				Action.writeResponse(errXml, response);
 
 				if (!(asyncEvent.getSuppliedRequest() instanceof CQSHttpServletRequest)) {
 					logger.error("event=invalid_request stage=on_error");
@@ -640,7 +639,7 @@ abstract public class CMBControllerServlet extends HttpServlet {
 			}
 		});
 	}
-
+	
 	public static String createErrorResponse(String code, String errorMsg) {
 		StringBuffer message = new StringBuffer("<ErrorResponse>\n")
 		.append("\t<Error>\n")

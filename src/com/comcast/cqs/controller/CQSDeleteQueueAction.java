@@ -54,7 +54,7 @@ public class CQSDeleteQueueAction extends CQSAction {
         }
         
         String out = CQSQueuePopulator.getDeleteQueueResponse();
-        response.getWriter().print(out);
+        writeResponse(out, response);
         
         return true;
 	}

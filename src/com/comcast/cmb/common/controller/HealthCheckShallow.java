@@ -138,9 +138,8 @@ public class HealthCheckShallow extends CQSAction {
     	} else {
     		response.setStatus(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
     	}
-
-    	response.getOutputStream().print(sb.toString());
-        response.flushBuffer();
+    	
+    	writeResponse(sb.toString(), response);
         
         return true;
     }

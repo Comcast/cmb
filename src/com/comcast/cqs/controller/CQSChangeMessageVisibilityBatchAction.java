@@ -113,7 +113,7 @@ public class CQSChangeMessageVisibilityBatchAction extends CQSAction {
         }
         
         String out = CQSMessagePopulator.getChangeMessageVisibilityBatchResponse(successList, failedList);
-        response.getWriter().println(out);
+        writeResponse(out, response);
         
         return true;
 	}

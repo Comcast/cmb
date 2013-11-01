@@ -56,10 +56,10 @@ public class CNSGetTopicAttributesAction extends CNSAction {
     	}
     	
     	CNSTopicAttributes attr = PersistenceFactory.getCNSAttributePersistence().getTopicAttributes(topicArn);
-    	String res = CNSAttributePopulator.getGetTopicAttributesResponse(attr);
+    	String out = CNSAttributePopulator.getGetTopicAttributesResponse(attr);
     	
     	logger.debug("event=cns_get_topic_attributes topic_arn=" + topicArn + " user_id=" + userId);
-    	response.getWriter().println(res);
+        writeResponse(out, response);
     	return true;
     }
 }

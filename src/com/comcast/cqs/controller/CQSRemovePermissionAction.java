@@ -62,9 +62,8 @@ public class CQSRemovePermissionAction extends CQSAction {
         }
         
         String out = CQSQueuePopulator.getRemovePermissionResponse();
+        writeResponse(out, response);
 
-        response.getWriter().print(out);
-        
         return true;
     }
 }

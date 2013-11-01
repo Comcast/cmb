@@ -54,8 +54,7 @@ public class CQSListQueuesAction extends CQSAction {
         List<CQSQueue> queues = PersistenceFactory.getQueuePersistence().listQueues(user.getUserId(), prefix, containingMessagesOnly);
 
         String out = CQSQueuePopulator.getListQueuesResponse(queues);
-
-        response.getWriter().print(out);
+        writeResponse(out, response);
         
         return true;
 	}

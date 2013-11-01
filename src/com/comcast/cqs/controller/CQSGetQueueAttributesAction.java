@@ -61,7 +61,7 @@ public class CQSGetQueueAttributesAction extends CQSAction {
         }
 
         String out = CQSQueuePopulator.getQueueAttributesResponse(queue, attributesList);
-        response.getWriter().print(out);
+        writeResponse(out, response);
         
         return true;
 	}

@@ -88,8 +88,8 @@ public class CNSListSubscriptionsAction extends CNSAction {
 			}
 		}
 		
-		String res = CNSSubscriptionPopulator.getListSubscriptionResponse(subscriptions,nextToken);
-		response.getWriter().println(res);
+		String out = CNSSubscriptionPopulator.getListSubscriptionResponse(subscriptions,nextToken);
+        writeResponse(out, response);
 		return true;
 	}
 	

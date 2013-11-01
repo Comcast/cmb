@@ -143,7 +143,9 @@ public class CNSAddPermissionAction extends CNSAction {
         	throw new CMBException(CMBErrorCodes.InvalidParameterValue, "Value " + label + " for parameter Label is invalid. Reason: Already exists.");
         }
 
-        response.getWriter().print(CNSAttributePopulator.getAddPermissionResponse());	
+        String out = CNSAttributePopulator.getAddPermissionResponse();
+        writeResponse(out, response);
+
         return true;
 	}
 }

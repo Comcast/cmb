@@ -77,8 +77,8 @@ public class CNSListTopicsAction extends CNSAction {
 			}
 		}
 		
-		String res = CNSTopicPopulator.getListTopicsResponse(topics,nextToken);			
-		response.getWriter().println(res);
+		String out = CNSTopicPopulator.getListTopicsResponse(topics,nextToken);			
+        writeResponse(out, response);
 		return true;
 	}
 	

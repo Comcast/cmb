@@ -68,7 +68,7 @@ public class CQSChangeMessageVisibilityAction extends CQSAction {
 		boolean res = PersistenceFactory.getCQSMessagePersistence().changeMessageVisibility(queue, receiptHandle, visibilityTO);
 
         String out = CQSMessagePopulator.getChangeMessageVisibilityResponse();
-        response.getWriter().println(out);
+        writeResponse(out, response);
         
         return true;
 	}

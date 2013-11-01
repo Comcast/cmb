@@ -47,7 +47,7 @@ public class CQSClearQueueAction extends CQSAction {
         }
 		
 		String out = CQSMessagePopulator.getClearQueueResponse();
-		response.getWriter().println(out);
+        writeResponse(out, response);
 		
 		return true;
 	}

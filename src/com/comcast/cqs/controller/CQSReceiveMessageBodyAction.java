@@ -66,8 +66,8 @@ public class CQSReceiveMessageBodyAction extends CQSReceiveMessageAction {
 	        }
         }
 
-        response.getWriter().println(out);		
-        
+        writeResponse(out, response);
+
         return true;
     }
 }

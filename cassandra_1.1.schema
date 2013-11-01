@@ -354,7 +354,7 @@ create column family CQSQueuesByUserId
   and key_validation_class = 'UTF8Type'
   and read_repair_chance = 0
   and dclocal_read_repair_chance = 0.05
-  and gc_grace = 0
+  and gc_grace = 5
   and min_compaction_threshold = 4
   and max_compaction_threshold = 32
   and replicate_on_write = true

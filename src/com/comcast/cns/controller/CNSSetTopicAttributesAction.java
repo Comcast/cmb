@@ -118,9 +118,9 @@ public class CNSSetTopicAttributesAction extends CNSAction {
     	}
     	
     	PersistenceFactory.getCNSAttributePersistence().setTopicAttributes(topicAttributes, topicArn);
-    	String res = CNSAttributePopulator.getSetTopicAttributesResponse();
-    	logger.error("event=cns_set_topic_attributes attribute_name=" + attributeName + " attribute_value=" + attributeValue + " topic_arn=" + topicArn + " user_id=" + userId);
-    	response.getWriter().println(res);
+    	String out = CNSAttributePopulator.getSetTopicAttributesResponse();
+    	logger.debug("event=cns_set_topic_attributes attribute_name=" + attributeName + " attribute_value=" + attributeValue + " topic_arn=" + topicArn + " user_id=" + userId);
+        writeResponse(out, response);
     	return true;
     }
 }

@@ -203,7 +203,7 @@ public class CQSSetQueueAttributesAction extends CQSAction {
         PersistenceFactory.getQueuePersistence().updateQueueAttribute(queue.getRelativeUrl(), postVars);
         
         String out = CQSQueuePopulator.setQueueAttributesResponse();
-        response.getWriter().print(out);
+        writeResponse(out, response);
         
         return true;
 	}

@@ -73,8 +73,8 @@ public class CNSCreateTopicAction extends CNSAction {
 		CNSTopic newTopic;
 		newTopic = PersistenceFactory.getTopicPersistence().createTopic(name, displayName, userId);
 		String topicArn = newTopic.getArn();
-		String res = CNSTopicPopulator.getCreateTopicResponse(topicArn);
-		response.getWriter().print(res);
+		String out = CNSTopicPopulator.getCreateTopicResponse(topicArn);
+        writeResponse(out, response);
 		return true;
 	}
 	

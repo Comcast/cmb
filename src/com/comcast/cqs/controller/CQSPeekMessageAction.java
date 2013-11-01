@@ -70,8 +70,7 @@ public class CQSPeekMessageAction extends CQSAction {
         }
         
         String out = CQSMessagePopulator.getReceiveMessageResponseAfterSerializing(messageList, filterAttributes);
-        
-        response.getWriter().println(out);
+        writeResponse(out, response);
         
         return messageList == null ? false : true;
 	}

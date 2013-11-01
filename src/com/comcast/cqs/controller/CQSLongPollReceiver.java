@@ -22,6 +22,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executors;
 
 import javax.servlet.AsyncContext;
+import javax.servlet.http.HttpServletResponse;
 
 import org.apache.log4j.Logger;
 import org.jboss.netty.bootstrap.ServerBootstrap;
@@ -36,6 +37,7 @@ import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.channel.SimpleChannelHandler;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 
+import com.comcast.cmb.common.controller.Action;
 import com.comcast.cmb.common.persistence.PersistenceFactory;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cqs.io.CQSMessagePopulator;
@@ -179,7 +181,7 @@ public class CQSLongPollReceiver {
 
 				CQSMonitor.getInstance().addNumberOfMessagesReturned(queue.getRelativeUrl(), messageList.size());
 		        String out = CQSMessagePopulator.getReceiveMessageResponseAfterSerializing(messageList, request.getFilterAttributes());
-		        asyncContext.getResponse().getWriter().println(out);
+		        Action.writeResponse(out, (HttpServletResponse)asyncContext.getResponse());
 		        asyncContext.complete();
 			
 			} else {
@@ -196,7 +198,7 @@ public class CQSLongPollReceiver {
 			logger.error("event=longpoll_queue_error queue_arn=" + queueArn, ex);
 		}
 	}
-
+	
 	public static void listen() {
 		
 		if (!initialized) {

@@ -159,8 +159,8 @@ public class CNSGetAPIStatsAction extends CNSAction {
 			}
 		}
 
-    	String res = CQSAPIStatsPopulator.getGetAPIStatsResponse(statsList);	
-		response.getWriter().println(res);
+    	String out = CQSAPIStatsPopulator.getGetAPIStatsResponse(statsList);	
+        writeResponse(out, response);
 
     	return true;
 	}

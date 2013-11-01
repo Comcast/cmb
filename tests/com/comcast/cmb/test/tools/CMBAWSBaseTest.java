@@ -30,21 +30,28 @@ public class CMBAWSBaseTest {
 	public enum USR { USER1, USER2, USER3 }
 	
 	public static final String userName1 = "cmb_unit_test_1";
-	public static final String accessKey1 = null;
-	public static final String accessSecret1 = null;
+	
+	public static String accessKey1 = null;
+	public static String accessSecret1 = null;
+
+	//public static String accessKey1 = "JEBRNE0IMZFU96SRE3MF"; //null;
+	//public static String accessSecret1 = "LJEdWxSNdmI0Pp7gynHgdZVJJ2IfCpATG4vr1jzA";//null;
 	
 	public static final String userName2 = "cmb_unit_test_2";
-	public static final String accessKey2 = null;
-	public static final String accessSecret2 = null;
+	public static String accessKey2 = null;
+	public static String accessSecret2 = null;
 	
 	public static final String userName3 = "cmb_unit_test_3";
-	public static final String accessKey3 = null;
-	public static final String accessSecret3 = null;
+	public static String accessKey3 = null;
+	public static String accessSecret3 = null;
 
 	public static final String PREFIX = "T";
 	
 	public static final String cnsServiceUrl = CMBProperties.getInstance().getCNSServiceUrl();
 	public static final String cqsServiceUrl = CMBProperties.getInstance().getCQSServiceUrl();
+
+	//public static final String cnsServiceUrl = "http://cmbstage.sv.comcast.com:8080/";
+	//public static final String cqsServiceUrl = "http://cmbstage.sv.comcast.com:8080/";
 
 	public static final String cqsServiceUrlAlt = null;
 	public static final String cnsServiceUrlAlt = null;
@@ -89,6 +96,8 @@ public class CMBAWSBaseTest {
 				user1 =  userHandler.createUser(userName1, userName1);
 			}
 			credentials1 = new BasicAWSCredentials(user1.getAccessKey(), user1.getAccessSecret());
+			accessKey1 = user1.getAccessKey();
+			accessSecret1 = user1.getAccessSecret();
 		}
 		
 		if (accessKey2 != null && accessSecret2 != null) {
@@ -99,6 +108,8 @@ public class CMBAWSBaseTest {
 				user2 =  userHandler.createUser(userName2, userName2);
 			}
 			credentials2 = new BasicAWSCredentials(user2.getAccessKey(), user2.getAccessSecret());
+			accessKey2 = user2.getAccessKey();
+			accessSecret2 = user2.getAccessSecret();
 		}		
 		
 		if (accessKey3 != null && accessSecret3 != null) {
@@ -109,6 +120,8 @@ public class CMBAWSBaseTest {
 				user3 =  userHandler.createUser(userName3, userName3);
 			}
 			credentials3 = new BasicAWSCredentials(user3.getAccessKey(), user3.getAccessSecret());
+			accessKey3 = user3.getAccessKey();
+			accessSecret3 = user3.getAccessSecret();
 		}		
 
 		if (cnsServiceUrl != null) {

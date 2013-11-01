@@ -236,8 +236,8 @@ public class CQSGetAPIStatsAction extends CQSAction {
 			}
 		}
 
-    	String res = CQSAPIStatsPopulator.getGetAPIStatsResponse(statsList);	
-		response.getWriter().println(res);
+    	String out = CQSAPIStatsPopulator.getGetAPIStatsResponse(statsList);	
+        writeResponse(out, response);
 
     	return true;
 	}

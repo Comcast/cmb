@@ -15,8 +15,12 @@
  */
 package com.comcast.cmb.common.controller;
 
+import java.io.IOException;
+
 import javax.servlet.AsyncContext;
+import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import com.comcast.cmb.common.model.CMBPolicy;
 import com.comcast.cmb.common.model.User;
@@ -47,7 +51,7 @@ public abstract class Action {
 	public abstract boolean doAction(User user, AsyncContext asyncContext) throws Exception;
 	
 	/**
-	 * check if an action on resource is allowed
+	 * Check if an action on resource is allowed
 	 * @param policy  contains a set of statement for user's permission of actions on resource
 	 * @param user  authenticated user to perform the action
 	 * @param action  a string for action
@@ -61,4 +65,32 @@ public abstract class Action {
     public boolean isAuthRequired() {
         return true;
     }
+    
+    /**
+     * Write response back
+     * @param content
+     * @param res
+     * @throws IOException
+     */
+    public static void writeResponse(String content, HttpServletResponse response) throws IOException {
+    	
+    	byte buffer[] = content.getBytes();
+    	int blockSize = Math.min(Math.max(buffer.length/4096, 1)*4096, 16*4096);
+        response.setBufferSize(blockSize);
+    	response.setContentLength(buffer.length);
+    	ServletOutputStream out = response.getOutputStream();
+    	int numBlocks = buffer.length/blockSize;
+    	for (int i=0; i<numBlocks;i++) {
+    		out.write(buffer, i*blockSize, blockSize);
+    	}
+    	int remainingBytes = buffer.length-(numBlocks*blockSize);
+    	if (remainingBytes > 0) {
+    		out.write(buffer, numBlocks*blockSize, remainingBytes);
+    	}
+    	out.flush();
+    	
+    	//response.setContentLength(content.length());
+    	//response.getWriter().println(content);
+    	//response.getWriter().flush();
+    }    
 }

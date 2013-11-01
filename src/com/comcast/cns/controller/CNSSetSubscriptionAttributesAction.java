@@ -85,9 +85,9 @@ public class CNSSetSubscriptionAttributesAction extends CNSAction {
     	
     	PersistenceFactory.getCNSAttributePersistence().setSubscriptionAttributes(subscriptionAttributes, subscriptionArn);
     	
-    	String res = CNSAttributePopulator.getSetSubscriptionAttributesResponse();
+    	String out = CNSAttributePopulator.getSetSubscriptionAttributesResponse();
     	logger.debug("event=cns_set_subscription_attributes attribute_name=" + attributeName + " attribute_value=" + attributeValue + " subscription_arn=" + subscriptionArn + " user_id=" + userId);
-    	response.getWriter().println(res);
+        writeResponse(out, response);
     	return true;
     }
 }

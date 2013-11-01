@@ -207,8 +207,8 @@ public class CNSPublishAction extends CNSAction {
 	    	logger.debug("event=cns_publish subject= " + subject + " topic_arn=" + topicArn + " user_id=" + userId + " message_id=" + sendMessageResult.getMessageId() + " queue_url=" + queueUrl);
     	}    	
     	
-    	String res = CNSSubscriptionPopulator.getPublishResponse(cnsMessage);
-    	response.getWriter().println(res);
+    	String out = CNSSubscriptionPopulator.getPublishResponse(cnsMessage);
+        writeResponse(out, response);
     	
     	return true;
 	}

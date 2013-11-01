@@ -128,8 +128,8 @@ public class CNSSubscribeAction extends CNSAction {
     		logger.info("event=cns_subscribe_confirmation_request_sent endpoint=" + endpoint + " protocol=" + protocol + " user_id=" + userId + " topic_arn=" + topicArn + " token=" + sub.getToken());
     	}
     	
-    	String res = CNSSubscriptionPopulator.getSubscribeResponse(subscriptionArn);			
-		response.getWriter().println(res);
+    	String out = CNSSubscriptionPopulator.getSubscribeResponse(subscriptionArn);			
+        writeResponse(out, response);
 		return true;
 	}
 }
