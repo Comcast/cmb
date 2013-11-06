@@ -1198,7 +1198,7 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
                     
                 	if (rank == null) {
                         logger.error("event=change_message_visibility error_code=message_not_found_in_hidden_set_or_revisibility_set receipt_handle=" + receiptHandle);
-                        throw new RuntimeException("Could not find hidden message with receipt handle " + receiptHandle);
+                        throw new PersistenceException(CQSErrorCodes.ReceiptHandleInvalid, "The input receipt handle is invalid");
                     }
                 	
                 } else {
