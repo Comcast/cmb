@@ -294,6 +294,7 @@ http://secondarycqsserviceurl/?Action=ManageService&Task=ClearCache&AWSAccessKey
 - Known Limitations
 --------------------------------------------------------------------------------------
 
+
 1. Compatibility with AWS SDK has been tested up to version 1.5.7.
  
 2. AWS4 signatures are currently not supported (V1 and V2 ok).
