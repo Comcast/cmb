@@ -249,7 +249,8 @@ public class CQSUserPageServlet extends AdminServletBase {
 		if (showQueueAttributes) {
 			out.println("<input type='hidden' name='ShowAttributes' value='true'/>");
 		}
-		out.println("<td><input type='submit' value='DeleteAll' name='DeleteAll'/></td></form></tr>");
+    	out.println("<td><input type='submit' value='Delete All' name='DeleteAll' onclick=\"return confirm('Are you sure you want to delete all?')\" /></td></form></tr>");
+
 
 		out.println("<tr><td>Clear all queues:</td><td></td></tr>");
 		out.println("<tr><form action=\"/webui/cqsuser?userId="+user.getUserId() + "\" " + "method=POST><td><input type='hidden' name='userId' value='"+ userId + "'/>");
@@ -260,7 +261,7 @@ public class CQSUserPageServlet extends AdminServletBase {
 		if (showQueueAttributes) {
 			out.println("<input type='hidden' name='ShowAttributes' value='true'/>");
 		}
-		out.println("<td><input type='submit' value='ClearAll' name='ClearAllQueues'/></td></form></tr>");
+		out.println("<td><input type='submit' value='Clear All' name='ClearAllQueues'/></td></form></tr>");
 
 		out.println("</table></p>");
 
@@ -332,7 +333,8 @@ public class CQSUserPageServlet extends AdminServletBase {
 				out.println("<input type='hidden' name='ShowAttributes' value='true'/>");
 			}
 			
-			out.println("<td><input type='submit' value='Clear' name='ClearQueue'/> <br/><input type='submit' value='Delete' name='Delete'/></td></tr></form>");
+        	out.println("<td><input type='submit' value='Clear' name='ClearQueue'/> <br/><input type='submit' value='Delete' name='Delete' onclick=\"return confirm('Are you sure you want to delete queue "+Util.getNameForAbsoluteQueueUrl(queueUrls.get(i))+"?')\" /></td></tr></form>");
+
 		}
 
 		out.println("</table></span></p>");

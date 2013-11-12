@@ -139,7 +139,7 @@ public class AdminServlet extends AdminServletBase {
         	
         	out.println("<form action=\"/"+response.encodeURL("webui")+"\" method=POST>");
         	out.println("<tr><td>"+user.getUserName() +"<input type='hidden' name='user' value="+user.getUserName()+">" +
-        			(user.getDescription().isEmpty()? "":"<br/><i>" + user.getDescription()) + "</i>" +
+        			(user.getDescription().isEmpty()? "":"<br/><i>" + user.getDescription() + "</i>") +
         			"</td>");
         	out.println("<td>"+user.getUserId()+"</td>");
         	out.println("<td>"+user.getIsAdmin()+"</td>");
@@ -148,7 +148,7 @@ public class AdminServlet extends AdminServletBase {
         	out.println("<td><a href='/webui/cnsuser?userId="+user.getUserId()+"'>CNS</a></td>");
         	out.println("<td><a href='/webui/cqsuser?userId="+user.getUserId()+"'>CQS</a></td>");
 		    
-        	out.println("<td><input type='submit' value='Delete' name='Delete'/></td></tr></form>");
+        	out.println("<td><input type='submit' value='Delete' name='Delete' onclick=\"return confirm('Are you sure you want to delete user "+user.getUserName()+"?')\" /></td></tr></form>");
         }
         
         out.println("</table></span></body></html>");

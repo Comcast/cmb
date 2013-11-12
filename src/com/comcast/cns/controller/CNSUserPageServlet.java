@@ -168,7 +168,7 @@ public class CNSUserPageServlet extends AdminServletBase {
 		
 		out.println("<p><table>");
         out.println("<form action=\"/webui/cnsuser?userId=" + userId + "\" " + "method=POST>");
-        out.println("<tr><td><input type='hidden' name='userId' value='"+ userId + "'></td><td><input type='submit' value='DeleteAll' name='DeleteAll'/></td></tr></form></table></p>");
+    	out.println("<tr><td><input type='hidden' name='userId' value='"+ userId + "'></td><td><input type='submit' value='Delete All' name='DeleteAll' onclick=\"return confirm('Are you sure you want to delete all topics?')\" /></td></tr></form></table></p>");
 
         ListTopicsResult listTopicResult = null;
         
@@ -219,8 +219,8 @@ public class CNSUserPageServlet extends AdminServletBase {
         	out.println("<td><a href='/webui/cnsuser/publish?userId="+ userId + "&topicArn="+ t.getTopicArn() + "' target='_blank'>Publish</a></td>");
         	out.println("<td><a href='' onclick=\"window.open('/webui/cnsuser/editdeliverypolicy?topicArn="+ t.getTopicArn() + "&userId="+userId+"', 'EditDeliveryPolicy', 'height=630,width=580,toolbar=no')\">View/Edit Topic Delivery Policy</a></td>");
 		    out.println("<td><a href='/webui/cnsuser/permission?topicArn="+ t.getTopicArn() + "&userId=" + userId + "'>Permission</a></td>");
-        	out.println("<td><input type='submit' value='Delete' name='Delete' /></td></tr></form>");
-        }
+           	out.println("<td><input type='submit' value='Delete' name='Delete' onclick=\"return confirm('Are you sure you want to delete topic "+Util.getNameFromTopicArn(t.getTopicArn())+"?')\" /></td></tr></form>");
+		}
         
         out.println("</table></span></p>");
         
