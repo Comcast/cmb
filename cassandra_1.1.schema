@@ -34,10 +34,8 @@ create column family CNSTopics
   and key_validation_class = 'UTF8Type'
   and read_repair_chance = 0
   and dclocal_read_repair_chance = 0.05
-  and min_compaction_threshold = 4
-  and max_compaction_threshold = 32
   and replicate_on_write = true
-  and compaction_strategy = 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy'
+  and compaction_strategy = 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy'
   and column_metadata = [
     {column_name : 'userId',
     validation_class : UTF8Type},
@@ -60,10 +58,8 @@ create column family CNSTopicsByUserId
   and key_validation_class = 'UTF8Type'
   and read_repair_chance = 0
   and dclocal_read_repair_chance = 0.05
-  and min_compaction_threshold = 4
-  and max_compaction_threshold = 32
   and replicate_on_write = true
-  and compaction_strategy = 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy';
+  and compaction_strategy = 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy';
 
 --
 -- CNSTopicSubscriptions Column Family
@@ -80,10 +76,8 @@ create column family CNSTopicSubscriptions
   and key_validation_class = 'UTF8Type'
   and read_repair_chance = 0
   and dclocal_read_repair_chance = 0.05
-  and min_compaction_threshold = 4
-  and max_compaction_threshold = 32
   and replicate_on_write = true
-  and compaction_strategy = 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy'
+  and compaction_strategy = 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy'
   and column_metadata = [
     {column_name : 'endPoint',
     validation_class : UTF8Type},
@@ -119,10 +113,8 @@ create column family CNSTopicSubscriptionsIndex
   and key_validation_class = 'UTF8Type'
   and read_repair_chance = 0
   and dclocal_read_repair_chance = 0.05
-  and min_compaction_threshold = 4
-  and max_compaction_threshold = 32
   and replicate_on_write = true
-  and compaction_strategy = 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy';
+  and compaction_strategy = 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy';
 
 --
 -- CNSTopicSubscriptionsUserIndex Column Family
@@ -138,10 +130,8 @@ create column family CNSTopicSubscriptionsUserIndex
   and key_validation_class = 'UTF8Type'
   and read_repair_chance = 0
   and dclocal_read_repair_chance = 0.05
-  and min_compaction_threshold = 4
-  and max_compaction_threshold = 32
   and replicate_on_write = true
-  and compaction_strategy = 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy';
+  and compaction_strategy = 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy';
 
 --
 -- CNSTopicSubscriptionsTokenIndex Column Family
@@ -157,10 +147,8 @@ create column family CNSTopicSubscriptionsTokenIndex
   and key_validation_class = 'UTF8Type'
   and read_repair_chance = 0
   and dclocal_read_repair_chance = 0.05
-  and min_compaction_threshold = 4
-  and max_compaction_threshold = 32
   and replicate_on_write = true
-  and compaction_strategy = 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy';
+  and compaction_strategy = 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy';
 
 --
 -- CNSTopicAttributes Column Family
@@ -176,10 +164,8 @@ create column family CNSTopicAttributes
   and key_validation_class = 'UTF8Type'
   and read_repair_chance = 0
   and dclocal_read_repair_chance = 0.05
-  and min_compaction_threshold = 4
-  and max_compaction_threshold = 32
   and replicate_on_write = true
-  and compaction_strategy = 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy'
+  and compaction_strategy = 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy'
   and column_metadata = [
     {column_name : 'effectiveDeliveryPolicy',
     validation_class : UTF8Type},
@@ -202,10 +188,8 @@ create column family CNSSubscriptionAttributes
   and key_validation_class = 'UTF8Type'
   and read_repair_chance = 0
   and dclocal_read_repair_chance = 0.05
-  and min_compaction_threshold = 4
-  and max_compaction_threshold = 32
   and replicate_on_write = true
-  and compaction_strategy = 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy'
+  and compaction_strategy = 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy'
   and column_metadata = [
     {column_name : 'effectiveDeliveryPolicy',
     validation_class : UTF8Type},
@@ -246,10 +230,8 @@ create column family CNSWorkers
   and key_validation_class = 'UTF8Type'
   and read_repair_chance = 0
   and dclocal_read_repair_chance = 0.05
-  and min_compaction_threshold = 4
-  and max_compaction_threshold = 32
   and replicate_on_write = true
-  and compaction_strategy = 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy';
+  and compaction_strategy = 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy';
 
 --
 -- CNSAPIServers Column Family
@@ -265,10 +247,8 @@ create column family CNSAPIServers
   and key_validation_class = 'UTF8Type'
   and read_repair_chance = 0
   and dclocal_read_repair_chance = 0.05
-  and min_compaction_threshold = 4
-  and max_compaction_threshold = 32
   and replicate_on_write = true
-  and compaction_strategy = 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy';
+  and compaction_strategy = 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy';
 
 --
 -- CQS Column Families
@@ -290,10 +270,8 @@ create column family CQSQueues
   and key_validation_class = 'UTF8Type'
   and read_repair_chance = 0
   and dclocal_read_repair_chance = 0.05
-  and min_compaction_threshold = 4
-  and max_compaction_threshold = 32
   and replicate_on_write = true
-  and compaction_strategy = 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy'
+  and compaction_strategy = 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy'
   and column_metadata = [
     {column_name : 'arn',
     validation_class : UTF8Type,
@@ -334,10 +312,8 @@ create column family CQSQueuesByUserId
   and key_validation_class = 'UTF8Type'
   and read_repair_chance = 0
   and dclocal_read_repair_chance = 0.05
-  and min_compaction_threshold = 4
-  and max_compaction_threshold = 32
   and replicate_on_write = true
-  and compaction_strategy = 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy';
+  and compaction_strategy = 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy';
 
 --
 -- CQSPartitionedQueueMessages Column Family
@@ -355,10 +331,8 @@ create column family CQSQueuesByUserId
   and read_repair_chance = 0
   and dclocal_read_repair_chance = 0.05
   and gc_grace = 5
-  and min_compaction_threshold = 4
-  and max_compaction_threshold = 32
   and replicate_on_write = true
-  and compaction_strategy = 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy'
+  and compaction_strategy = 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy'
   and column_metadata = [
     {column_name : 'ApproximateFirstReceiveTimestamp',
     validation_class : UTF8Type},
@@ -390,10 +364,8 @@ create column family CQSAPIServers
   and key_validation_class = 'UTF8Type'
   and read_repair_chance = 0
   and dclocal_read_repair_chance = 0.05
-  and min_compaction_threshold = 4
-  and max_compaction_threshold = 32
   and replicate_on_write = true
-  and compaction_strategy = 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy';
+  and compaction_strategy = 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy';
 
 --
 -- Generic Column Families
@@ -415,10 +387,8 @@ create column family Users
   and key_validation_class = 'UTF8Type'
   and read_repair_chance = 0
   and dclocal_read_repair_chance = 0.05
-  and min_compaction_threshold = 4
-  and max_compaction_threshold = 32
   and replicate_on_write = true
-  and compaction_strategy = 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy'
+  and compaction_strategy = 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy'
   and column_metadata = [
     {column_name : 'accessKey',
     validation_class : UTF8Type,
