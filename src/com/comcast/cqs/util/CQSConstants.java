@@ -27,6 +27,8 @@ public class CQSConstants {
     public static final String APPROXIMATE_FIRST_RECEIVE_TIMESTAMP = "ApproximateFirstReceiveTimestamp";	
 	public static final String APPROXIMATE_RECEIVE_COUNT = "ApproximateReceiveCount";
 	public static final String APPROXIMATE_NUMBER_OF_MESSAGES = "ApproximateNumberOfMessages";
+	public static final String APPROXIMATE_NUMBER_OF_MESSAGES_NOTVISIBLE = "ApproximateNumberOfMessagesNotVisible";
+	public static final String APPROXIMATE_NUMBER_OF_MESSAGES_DELAYED = "ApproximateNumberOfMessagesDelayed";
     public static final String ATTRIBUTE_NAME = "AttributeName";
     public static final String DELAY_SECONDS = "DelaySeconds";
     public static final String LABEL = "Label";

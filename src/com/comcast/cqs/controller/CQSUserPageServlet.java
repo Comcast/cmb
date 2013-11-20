@@ -283,6 +283,8 @@ public class CQSUserPageServlet extends AdminServletBase {
 		out.println("<th>Num Shards</th>");
 		out.println("<th>Compressed</th>");
 		out.println("<th>Approx Num Msg</th>");
+		out.println("<th>Approx Num Msg Not Visible</th>");
+		out.println("<th>Approx Num Msg Delayed</th>");
 		out.println("<th>&nbsp;</th><th>&nbsp;</th><th>&nbsp;</th><th>&nbsp;</th></tr>");
 
 		for (int i = 0; queueUrls != null && i < queueUrls.size(); i++) {
@@ -294,7 +296,10 @@ public class CQSUserPageServlet extends AdminServletBase {
 					GetQueueAttributesRequest getQueueAttributesRequest = new GetQueueAttributesRequest(queueUrls.get(i));
 					getQueueAttributesRequest.setAttributeNames(
 							Arrays.asList("VisibilityTimeout", "MaximumMessageSize", "MessageRetentionPeriod", "DelaySeconds",
-									"ApproximateNumberOfMessages", "ReceiveMessageWaitTimeSeconds", "NumberOfPartitions", "NumberOfShards", "IsCompressed"));
+									"ApproximateNumberOfMessages", 
+									"ApproximateNumberOfMessagesNotVisible", 
+									"ApproximateNumberOfMessagesDelayed", 				
+									"ReceiveMessageWaitTimeSeconds", "NumberOfPartitions", "NumberOfShards", "IsCompressed"));
 					GetQueueAttributesResult getQueueAttributesResult = sqs.getQueueAttributes(getQueueAttributesRequest);
 					attributes = getQueueAttributesResult.getAttributes();
 				} catch (Exception ex) {
@@ -320,7 +325,9 @@ public class CQSUserPageServlet extends AdminServletBase {
 			out.println("<td>"+(attributes.get("NumberOfShards") != null ? attributes.get("NumberOfShards"):"")+"</td>");
 			out.println("<td>"+(attributes.get("IsCompressed") != null ? attributes.get("IsCompressed"):"")+"</td>");
 			out.println("<td>"+(attributes.get("ApproximateNumberOfMessages") != null ? attributes.get("ApproximateNumberOfMessages"):"")+"</td>");
-
+			out.println("<td>"+(attributes.get("ApproximateNumberOfMessagesNotVisible") != null ? attributes.get("ApproximateNumberOfMessagesNotVisible"):"")+"</td>");
+			out.println("<td>"+(attributes.get("ApproximateNumberOfMessagesDelayed") != null ? attributes.get("ApproximateNumberOfMessagesDelayed"):"")+"</td>");
+			
 			out.println("<td><a href='/webui/cqsuser/message?userId=" + user.getUserId()+ "&queueName=" + Util.getNameForAbsoluteQueueUrl(queueUrls.get(i)) + "'>Messages</a></td>");
 			out.println("<td><a href='/webui/cqsuser/permissions?userId="+ user.getUserId() + "&queueName="+ Util.getNameForAbsoluteQueueUrl(queueUrls.get(i)) + "'>Permissions</a></td>");
 			out.println("<td><a href='' onclick=\"window.open('/webui/cqsuser/editqueueattributes?queueName="+ Util.getNameForAbsoluteQueueUrl(queueUrls.get(i)) + "&userId="+userId+"', 'EditQueueAttributes', 'height=630,width=580,toolbar=no')\">Attributes</a></td>");

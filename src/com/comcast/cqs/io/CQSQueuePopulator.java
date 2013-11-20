@@ -95,6 +95,8 @@ public class CQSQueuePopulator extends CQSPopulator {
             out.append("\t\t").append(fillAttribute(CQSConstants.NUMBER_OF_PARTITIONS, "" + queue.getNumberOfPartitions())).append("\n");
             out.append("\t\t").append(fillAttribute(CQSConstants.NUMBER_OF_SHARDS, "" + queue.getNumberOfShards())).append("\n");
             out.append("\t\t").append(fillAttribute(CQSConstants.APPROXIMATE_NUMBER_OF_MESSAGES, "" + RedisCachedCassandraPersistence.getInstance().getQueueMessageCount(queue.getRelativeUrl(), true))).append("\n");
+            out.append("\t\t").append(fillAttribute(CQSConstants.APPROXIMATE_NUMBER_OF_MESSAGES_NOTVISIBLE, "" + RedisCachedCassandraPersistence.getInstance().getQueueNotVisibleMessageCount(queue.getRelativeUrl(), true))).append("\n");
+            out.append("\t\t").append(fillAttribute(CQSConstants.APPROXIMATE_NUMBER_OF_MESSAGES_DELAYED, "" + RedisCachedCassandraPersistence.getInstance().getQueueDelayedMessageCount(queue.getRelativeUrl(), true))).append("\n");
             out.append("\t\t").append(fillAttribute(CQSConstants.IS_COMPRESSED, "" + queue.isCompressed())).append("\n");
 
         } else {
@@ -129,6 +131,12 @@ public class CQSQueuePopulator extends CQSPopulator {
                 }
                 if (attributeName.equals(CQSConstants.APPROXIMATE_NUMBER_OF_MESSAGES)) {
                 	out.append("\t\t").append(fillAttribute(attributeName, "" + RedisCachedCassandraPersistence.getInstance().getQueueMessageCount(queue.getRelativeUrl(), true))).append("\n");
+                }
+                if (attributeName.equals(CQSConstants.APPROXIMATE_NUMBER_OF_MESSAGES_NOTVISIBLE)) {
+                	out.append("\t\t").append(fillAttribute(attributeName, "" + RedisCachedCassandraPersistence.getInstance().getQueueNotVisibleMessageCount(queue.getRelativeUrl(), true))).append("\n");
+                }
+                if (attributeName.equals(CQSConstants.APPROXIMATE_NUMBER_OF_MESSAGES_DELAYED)) {
+                	out.append("\t\t").append(fillAttribute(attributeName, "" + RedisCachedCassandraPersistence.getInstance().getQueueDelayedMessageCount(queue.getRelativeUrl(), true))).append("\n");
                 }
                 if (attributeName.equals(CQSConstants.IS_COMPRESSED)) {
                     out.append("\t\t").append(fillAttribute(attributeName, "" + queue.isCompressed())).append("\n");

@@ -551,10 +551,10 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
      *  <Q>-H = The hashtable of hidden message-ids along with the timestamp for when they should become re-visible
      *  <Q>-R = Existence implies recent processing of revisibility
      *  <Q>-F = Existence implies currently running CacheFiller
-     *  <Q>-V = The re-visibility set implemented as a sorted set. Items are moved from Hidden set to re-visibility set
+     *  <Q>-V = The delayed set implemented as a sorted set. It contains the set for delayed messages 
      *    on changeMessageVisibility. Assumed users cannot delete from re-visibility set. We synchronously go through this
      *    set every so often as part of receivemessage
-     *  <Q>-VR = the sentinel flag the absence of which implies its time to process the re-visible set.
+     *  <Q>-VR = the sentinel flag the absence of which implies its time to process the delayed set.
      *  <Q>-A-<messageId> = The attributes for a message in a queue. Note; This requires that the messageId remain the same
      *    throughout the life-time of a message.
      */
@@ -816,7 +816,7 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
             	memId = getMemQueueMessage(messageId, System.currentTimeMillis()+delaySeconds*1000, 0); //TODO: currently initialDelay is 0
             	jedis = getResource();
             	if (delaySeconds > 0) {
-            	    jedis.hset(queue.getRelativeUrl() + "-" + shard + "-H", memId, Long.toString(System.currentTimeMillis() + (delaySeconds * 1000)));
+                    jedis.zadd(queue.getRelativeUrl() + "-" + shard + "-V", System.currentTimeMillis() + (delaySeconds * 1000), memId); //insert or update already existing            	    
             	} else {
 	                jedis.rpush(queue.getRelativeUrl() + "-" + shard + "-Q", memId);
             	}
@@ -871,7 +871,7 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
                 if (cacheAvailable) {      
                     try {
                     	if (delaySeconds > 0) {
-                    	    jedis.hset(queue.getRelativeUrl() + "-" + shard + "-H", memId, Long.toString(System.currentTimeMillis() + (delaySeconds * 1000)));
+                            jedis.zadd(queue.getRelativeUrl() + "-" + shard + "-V", System.currentTimeMillis() + (delaySeconds * 1000), memId); //insert or update already existing            	    
                     	} else {
                     		jedis.rpush(queue.getRelativeUrl() + "-" + shard + "-Q", memId);
                     	}
@@ -1189,32 +1189,14 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
             	
                 jedis = getResource();
                 long ts1 = System.currentTimeMillis();
-                String currentVisibilityTO = jedis.hget(queue.getRelativeUrl() + "-" + shard + "-H", receiptHandle);
-                
-                if (currentVisibilityTO == null) {
-                    
-                	//doesn't exist in Hidden set. Check in the RevisibilitySet
-                    
-                	Long rank = jedis.zrank(queue.getRelativeUrl() + "-" + shard + "-V", receiptHandle);
-                    
-                	if (rank == null) {
-                        logger.error("event=change_message_visibility error_code=message_not_found_in_hidden_set_or_revisibility_set receipt_handle=" + receiptHandle);
-                        throw new PersistenceException(CQSErrorCodes.ReceiptHandleInvalid, "The input receipt handle is invalid");
-                    }
-                	
-                } else {
-                    jedis.hdel(queue.getRelativeUrl() + "-" + shard + "-H", receiptHandle);
-                }
-
                 if (visibilityTO == 0) { //make immediately visible
                     jedis.rpush(queue.getRelativeUrl() + "-" + shard + "-Q", receiptHandle);
+               		jedis.hdel(queue.getRelativeUrl() + "-" + shard + "-H", receiptHandle);
                     return true;
+                } else { //update new visibilityTO
+            	    jedis.hset(queue.getRelativeUrl() + "-" + shard + "-H", receiptHandle, Long.toString(System.currentTimeMillis() + (visibilityTO * 1000)));                	
                 }
                 
-                //extend from now to provided visibilityTO
-                double newVisibilityTO = System.currentTimeMillis() + (visibilityTO * 1000);
-                jedis.zadd(queue.getRelativeUrl() + "-" + shard + "-V", newVisibilityTO, receiptHandle); //insert or update already existing
-
                 long ts2 = System.currentTimeMillis();
                 CQSControllerServlet.valueAccumulator.addToCounter(AccumulatorName.RedisTime, (ts2 - ts1));
                 return true; 
@@ -1539,6 +1521,117 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
         	messageCount = getQueueMessageCount(queueUrl, false);
         } catch (Exception ex) {
     		logger.error("event=failed_to_get_number_of_messages queue_url=" + queueUrl);
+        }
+        
+    	return messageCount;
+    }
+
+    /**
+     * This method get the count from redis based ont he suffix
+     * @param queueUrl
+     * @param processFlag if true, run visibility or delay clean processing.
+     * @return number of mem-ids in Redis Queue
+     * @throws Exception 
+     */
+    private long getCount(String queueUrl, String suffix, boolean processFlag) throws Exception  {
+    	
+    	long messageCount = 0;
+    	CQSQueue queue = CQSCache.getCachedQueue(queueUrl);
+    	int numberOfShards = 1;
+    	
+    	if (queue != null) {
+    		numberOfShards = queue.getNumberOfShards();
+    	}
+
+		ShardedJedis jedis = null;
+        boolean brokenJedis = false;
+        
+        try {
+
+        	jedis = getResource();
+            
+        	for (int shard=0; shard<numberOfShards; shard++) {
+            
+        		boolean cacheAvailable = checkCacheConsistency(queueUrl, shard, true);
+                
+                if (!cacheAvailable) {
+                	throw new IllegalStateException("Redis cache not available");
+                }
+                //if check for hidden message, and processFlag is true, move the message from H to Q
+                if(suffix.equals("-H")&&(processFlag)){
+                	checkAndSetVisibilityProcessing(queueUrl, shard, CMBProperties.getInstance().getRedisRevisibleFrequencySec());                                                 
+                }
+                //if check for delayed message, and processFlag is true, move the message from V to Q                	
+                if (suffix.equals("-V")&&(processFlag)) {
+                    tryCheckAndProcessRevisibleSet(queueUrl, shard, CMBProperties.getInstance().getRedisRevisibleSetFrequencySec());
+                }
+            	
+                //get the count number from
+                if(suffix.equals("-H")){
+                	messageCount += jedis.hlen(queueUrl + "-" + shard + suffix);
+                } else if (suffix.equals("-V")){
+                	messageCount += jedis.zcard(queueUrl + "-" + shard + suffix);
+                }
+            }
+        	
+        } catch (JedisException e) {
+            brokenJedis = true;
+            throw e;
+        } finally {
+            if (jedis != null) {
+                returnResource(jedis, brokenJedis);
+            }
+        }  
+        
+        return messageCount;
+    }
+    
+    
+    /**
+     * 
+     * @param queueUrl
+     * @param visibilityProcessFlag if true, run visibility processing.
+     * @return number of mem-ids in Redis Queue
+     * @throws Exception 
+     */
+    public long getQueueNotVisibleMessageCount(String queueUrl, boolean visibilityProcessFlag) throws Exception  {
+    	
+    	return getCount(queueUrl, "-H", visibilityProcessFlag);
+    }
+
+    public long getQueueNotVisibleMessageCount(String queueUrl) {
+        
+    	long messageCount = 0;
+        
+    	try {
+        	messageCount = getQueueNotVisibleMessageCount(queueUrl, false);
+        } catch (Exception ex) {
+    		logger.error("event=failed_to_get_number_of_not_visible_messages queue_url=" + queueUrl);
+        }
+        
+    	return messageCount;
+    }
+
+    /**
+     * 
+     * @param queueUrl
+     * @param visibilityProcessFlag if true, run visibility processing.
+     * @return number of mem-ids in Redis Queue
+     * @throws Exception 
+     */
+    public long getQueueDelayedMessageCount(String queueUrl, boolean visibilityProcessFlag) throws Exception  {
+    	
+    	return getCount(queueUrl, "-V", visibilityProcessFlag);
+    }
+    
+    public long getQueueDelayedMessageCount(String queueUrl) {
+        
+    	long messageCount = 0;
+        
+    	try {
+        	messageCount = getQueueDelayedMessageCount(queueUrl, false);
+        } catch (Exception ex) {
+    		logger.error("event=failed_to_get_number_of_delayed_messages queue_url=" + queueUrl);
         }
         
     	return messageCount;
