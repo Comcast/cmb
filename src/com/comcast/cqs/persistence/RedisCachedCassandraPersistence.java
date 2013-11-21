@@ -55,13 +55,12 @@ import com.comcast.cqs.controller.CQSMonitor.CacheType;
 import com.comcast.cqs.model.CQSMessage;
 import com.comcast.cqs.model.CQSQueue;
 import com.comcast.cqs.util.CQSConstants;
-import com.comcast.cqs.util.CQSErrorCodes;
 import com.comcast.cqs.util.Util;
 
 /**
  * This class uses Redis as cache in front of our Cassandra access.
- * Currently we only cache message-ids and hidden state of messages.
- * The payloads are fetched from underlying persistence layer
+ * Currently we only cache message-ids and hidden/delayed state of messages.
+ * The payloads are fetched from underlying persistence layer.
  * 
  * The class must exist as a singleton
  * @author aseem, bwolf, vvenkatraman
@@ -96,9 +95,6 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
         initializePool();
     }
     
-    /**
-     * Check config for payload cache
-     */
     private static void initializeInstance() {
         CQSMessagePartitionedCassandraPersistence cassandraPersistence = new CQSMessagePartitionedCassandraPersistence();
         logger.info("event=initialize_redis");
@@ -111,7 +107,7 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
         this.persistenceStorage = persistenceStorage;
     }
     /**
-     * Initialize the redis connection pool
+     * Initialize the Redis connection pool
      */
     private static void initializePool() {
     	
@@ -246,7 +242,7 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
     }
 
     /**
-     * Class represents the race condition where the caller was beaten by someone else
+     * Class represents the race condition where the caller was beaten by someone else.
      * In case of this exception, check the initial state again and retry if necessary.
      */
     static class SetFailedException extends Exception {
@@ -282,7 +278,7 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
     
     /**
      * Set the state for a queue or throw exception if someone else beat us to it.
-     * This is an atomic operation
+     * This is an atomic operation.
      * @param queueUrl
      * @param checkOldState - check the oldState in transaction
      * @param oldState If checkOldstate is set we check within the WATCH..EXEC scope
@@ -330,8 +326,9 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
             CQSControllerServlet.valueAccumulator.addToCounter(AccumulatorName.RedisTime, (ts2 - ts1));
         }
     }
+    
     /**
-     * Sets the sentinel flag in redis denoting either visibility processor is running or cache filler is
+     * Sets the sentinel flag in Redis denoting either visibility processor is running or cache filler is
      * running to prevent multiple from running and auto-expiring older runs.
      * @param queueUrl
      * @param visibilityOrCacheFiller
@@ -397,8 +394,8 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
     }
         
     /**
-     * Check weather a visibility processing was kicked off in the last exp seconds. If not, kick one off
-     * Method is atomic
+     * Check whether a visibility processing was kicked off within the last exp seconds. If not, kick one off.
+     * Method is atomic.
      * @param queueUrl
      * @param exp in seconds
      * @return true if sentinel was set. false otherwise
@@ -412,7 +409,7 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
     }
     
     /**
-     * Processes the re-visible set once every exp seconds synchronously
+     * Processes the re-visible set once every exp seconds synchronously.
      * @param queueUrl
      * @param exp
      * @return true if Revisible set processing was done. false otherwise
@@ -479,11 +476,12 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
         }        
     }
     
-    //------below are helper methods for encoding Cassandra-message-id into in-memory message-id
+    //below are helper methods for encoding Cassandra-message-id into in-memory message-id
+    
     /**
-     * In memory message has format addedTS:initialDely:<messge-id>
+     * In memory message has format addedTS:initialDelay:<messge-id>
      * example - 1335302314:0:ABCDEFGHIJK
-     * @param messageId The Cassandra-message-id
+     * @param messageId The Cassandra message-id
      * @return The in-memory message-id
      */
     private static String getMemQueueMessage(String messageId, long ts, int initialDelay) {
@@ -509,7 +507,7 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
     public static long getMemQueueMessageCreatedTS(String memId) {
         String []arr = memId.split(":");
         if (arr.length < 3) {
-            throw new IllegalArgumentException("Bad format for memId. Must be of the form addedTS:initialDely:<messge-id>. Got:" + memId);
+            throw new IllegalArgumentException("Bad format for memId. Must be of the form addedTS:initialDelay:<messge-id>. Got: " + memId);
         }
         return Long.parseLong(arr[0]);        
     }
@@ -522,7 +520,7 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
     private static int getMemQueueMessageInitialDelay(String memId) {
         String []arr = memId.split(":");
         if (arr.length < 3) {
-            throw new IllegalArgumentException("Bad format for memId. Must be of the form addedTS:initialDely:<messge-id>. Got:" + memId);
+            throw new IllegalArgumentException("Bad format for memId. Must be of the form addedTS:initialDelay:<messge-id>. Got: " + memId);
         }
         return Integer.parseInt(arr[1]);                
     }
@@ -534,7 +532,7 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
     static String getMemQueueMessageMessageId(String memId) {        
         String []arr = memId.split(":");
         if (arr.length < 3) {
-            throw new IllegalArgumentException("Bad format for memId. Must be of the form addedTS:initialDely:<messge-id>. Got:" + memId);
+            throw new IllegalArgumentException("Bad format for memId. Must be of the form addedTS:initialDelay:<messge-id>. Got: " + memId);
         }
         StringBuffer sb = new StringBuffer(arr[2]);
         for (int i = 3; i < arr.length; i++) {
@@ -547,15 +545,14 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
      * Class clears and then fills the cache for a given queue
      * When its done, it updates the following cache keys are available:
      *  <Q>-S = OK
-     *  <Q>-Q = The in-memory list ("queue") of message-ids
-     *  <Q>-H = The hashtable of hidden message-ids along with the timestamp for when they should become re-visible
+     *  <Q>-Q = The in-memory list ("queue") of message ids
+     *  <Q>-H = The hash table of hidden message ids along with the timestamp for when they should become re-visible
      *  <Q>-R = Existence implies recent processing of revisibility
      *  <Q>-F = Existence implies currently running CacheFiller
-     *  <Q>-V = The delayed set implemented as a sorted set. It contains the set for delayed messages 
-     *    on changeMessageVisibility. Assumed users cannot delete from re-visibility set. We synchronously go through this
-     *    set every so often as part of receivemessage
+     *  <Q>-V = Set of delayed message ids implemented as a sorted set. Delayed messages cannot be deleted before they
+     *          become visible. We synchronously retrieve due message ids from this set every so often as part of receivemessage()
      *  <Q>-VR = the sentinel flag the absence of which implies its time to process the delayed set.
-     *  <Q>-A-<messageId> = The attributes for a message in a queue. Note; This requires that the messageId remain the same
+     *  <Q>-A-<messageId> = The attributes for a message in a queue. Note, this requires that the messageId remain the same
      *    throughout the life-time of a message.
      */
     private class CacheFiller implements Runnable {
@@ -659,7 +656,7 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
                         memIds.add(key);
                     }
                 }
-                //process memIds that should be revisible
+                //process memIds that should be re-visible
                 for (String memId : memIds) {
                     String messageId = getMemQueueMessageMessageId(memId);
                     long origCreatedTS = getMemQueueMessageCreatedTS(memId);
@@ -693,27 +690,27 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
      */
     public boolean checkCacheConsistency(String queueUrl, int shard, boolean trueOnFiller) {
         try {
-            //Check if cache's state exists, if not return false and initializeCache
-            //if cache's state is not OK, return false
+            // check if cache's state exists, if not return false and initialize cache
+            // if cache's state is not OK, return false
             QCacheState state = getCacheState(queueUrl, shard);
             if (state == null || state == QCacheState.Unavailable) {
                 try {
-                    setCacheFillerProcessing(queueUrl, shard, 20 * 60); //This must be before setCacheState or else a race-condition                    
+                    setCacheFillerProcessing(queueUrl, shard, 20 * 60); // this must be before setCacheState or else a race-condition                    
                     setCacheState(queueUrl, shard, QCacheState.Filling, state, true);
-                    //we successfully set the stae to filling. queueup filling job
+                    // we successfully set the state to filling, so we queue up filling job
                     executor.submit(new CacheFiller(queueUrl, shard));
                     logger.debug("event=initialize_queue_cache cache_state=" + (state == null ? "null" : state.name()) + " queue_url=" + queueUrl + " shard=" + shard);                        
                 } catch (SetFailedException e) {
-                    //someone beat us to it. return false for now and check again next time
+                    // someone beat us to it, so we return false for now and check again next time
                     logger.debug("event=initialize_queue_cache cache_state=" + (state == null ? "null" : state.name()) + " queue_url=" + queueUrl + " shard=" + shard);
                     state = getCacheState(queueUrl, shard);
                     if (state != null && state == QCacheState.Filling && trueOnFiller) {
-                        return true; //otherwise continue and return false
+                        return true; // otherwise continue and return false
                     }
                 }
                 return false;
-            } else if (state != QCacheState.OK) { //must be Filling
-                //check if its a stale filler.
+            } else if (state != QCacheState.OK) { //must be filling
+                // check if this is a stale filler
                 if (!getProcessingState(queueUrl, shard, false)) {
                     try {
                         setCacheState(queueUrl, shard, null, null, false);
@@ -787,14 +784,13 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
         CQSControllerServlet.valueAccumulator.addToCounter(AccumulatorName.RedisTime, (ts2 - ts1));
     }
     
-    @Override
     /**
-     * @return the method will always return the memid generated by this layer which encodes the id provided
-     * by underlying persistence layer.
-     * Note: method updates the expire time of the Queue attributes in cache
+     * @return the method will always return the mem-id generated by this layer which encodes the id provided by underlying persistence layer
+     * Note: method updates the expire time of the queue attributes in cache.
      */
+    @Override
     public String sendMessage(CQSQueue queue, int shard, CQSMessage message) throws PersistenceException, IOException, InterruptedException, NoSuchAlgorithmException {
-    	//first persist to Cassandra and get message-id to put into cache        
+    	// first persist to Cassandra and get message-id to put into cache        
         String messageId = persistenceStorage.sendMessage(queue, shard, message);        
         if (messageId == null) {
         	throw new IllegalStateException("Could not get id from underlying storage");
@@ -813,7 +809,7 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
             	if (message.getAttributes().containsKey(CQSConstants.DELAY_SECONDS)) {
             		delaySeconds = Integer.parseInt(message.getAttributes().get(CQSConstants.DELAY_SECONDS));
             	}
-            	memId = getMemQueueMessage(messageId, System.currentTimeMillis()+delaySeconds*1000, 0); //TODO: currently initialDelay is 0
+            	memId = getMemQueueMessage(messageId, System.currentTimeMillis()+delaySeconds*1000, 0); 
             	jedis = getResource();
             	if (delaySeconds > 0) {
                     jedis.zadd(queue.getRelativeUrl() + "-" + shard + "-V", System.currentTimeMillis() + (delaySeconds * 1000), memId); //insert or update already existing            	    
@@ -854,7 +850,7 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
                 trySettingCacheState(queue.getRelativeUrl(), shard, QCacheState.Unavailable);
             }
         }
-        //add messages in the same order as messages list
+        // add messages in the same order as messages list
         boolean brokenJedis = false;
         try {
             for (CQSMessage message : messages) {
@@ -1156,7 +1152,7 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
                 msg.setAttributes(msgAttrs);
                 ret.add(msg);
             }
-            //Note: In this case there is no message hiding.            
+            // in this case there is no message hiding          
             CQSMonitor.getInstance().registerCacheHit(queue.getRelativeUrl(), 0, ret.size(), CacheType.QCache); //all ids missed cache
             logger.debug("event=messages_found cache=unavailable num_messages=" + ret.size());
         }
@@ -1168,13 +1164,12 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
         return ret;
     }
 
-    @Override
     /**
-     * Assumed only hidden messages or revisible set messages can hve there visibility changed
-     * method moves the memId from hidden set -> re-visibility set
-     * If the new visibilityTO is 0 we shortcut and make the method immediately visible
-     * @return true if visibility was changed. false otherwise
+     * Only hidden messages can have their visibility changed. Method updates timestamp for the memId in hidden hashtable.
+     * If the new visibilityTO is 0 we shortcut and make the message immediately visible.
+     * @return true if visibility was changed, false otherwise
      */
+    @Override
     public boolean changeMessageVisibility(CQSQueue queue, String receiptHandle, int visibilityTO) throws PersistenceException, IOException, NoSuchAlgorithmException, InterruptedException {
         
     	int shard = Util.getShardFromReceiptHandle(receiptHandle);
@@ -1217,12 +1212,11 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
         }
     }
 
-    @Override
     /**
-     * Note: If cache is unavailable, we will return different id for a message than when the cache is available
-     * So we will have duplicates in that case.
-     * Note: we currently don't respect nextReceiptHandle only previousReceiptHandle and length
+     * Note: If cache is unavailable, we will return different id for a message than when the cache is available,
+     * so we will have duplicates in that case. Also, we currently don't respect nextReceiptHandle rather only previousReceiptHandle and length.
      */
+    @Override
     public List<CQSMessage> peekQueue(String queueUrl, int shard, String previousReceiptHandle, String nextReceiptHandle, int length) throws PersistenceException, IOException, NoSuchAlgorithmException {
         
     	boolean cacheAvailable = checkCacheConsistency(queueUrl, shard, false);
@@ -1403,7 +1397,7 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
         
         	jedis = getResource();
             
-            // process revisible-set before getting from queue
+            // process re-visible set before getting from queue
             
             tryCheckAndProcessRevisibleSet(queueUrl, shard, CMBProperties.getInstance().getRedisRevisibleSetFrequencySec());
 
@@ -1591,7 +1585,7 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
      * 
      * @param queueUrl
      * @param visibilityProcessFlag if true, run visibility processing.
-     * @return number of mem-ids in Redis Queue
+     * @return number of mem-ids in Redis list
      * @throws Exception 
      */
     public long getQueueNotVisibleMessageCount(String queueUrl, boolean visibilityProcessFlag) throws Exception  {
@@ -1616,7 +1610,7 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
      * 
      * @param queueUrl
      * @param visibilityProcessFlag if true, run visibility processing.
-     * @return number of mem-ids in Redis Queue
+     * @return number of mem-ids in Redis set for delayed messages
      * @throws Exception 
      */
     public long getQueueDelayedMessageCount(String queueUrl, boolean visibilityProcessFlag) throws Exception  {
@@ -1689,6 +1683,7 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
 	        returnResource(jedis, brokenJedis);
 	    }
 	}
+	
 	/**
 	 * Get number of redis shards
 	 * @return number of redis shards
@@ -1707,6 +1702,7 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
 	        returnResource(jedis, brokenJedis);
 	    }
 	}
+	
 	/**
 	 * Clear cache across all shards. Useful for data center fail-over scenarios.
 	 */
