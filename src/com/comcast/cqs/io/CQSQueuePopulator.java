@@ -64,14 +64,14 @@ public class CQSQueuePopulator extends CQSPopulator {
     public static String getListQueuesResponse(List<CQSQueue> queues) {
         
     	StringBuffer out = new StringBuffer("<ListQueuesResponse>\n");
+        out.append("\t<ListQueuesResult>\n");
 
         for (CQSQueue queue : queues) {
         	
-            out.append("\t<ListQueuesResult>\n");
         	out.append("\t\t<QueueUrl>").append(queue.getAbsoluteUrl()).append("</QueueUrl>\n");
-            out.append("\t</ListQueuesResult>\n");
         }
 
+        out.append("\t</ListQueuesResult>\n");
         out.append("\t").append(getResponseMetadata()).append("\n");
         out.append("</ListQueuesResponse>\n");
         

@@ -102,12 +102,13 @@ public class CQSUserPageServlet extends AdminServletBase {
 
 			String apiStateXml = httpGet(url);
 			Element root = XmlUtil.buildDoc(apiStateXml);
-			List<Element> queueUrlList = XmlUtil.getCurrentLevelChildNodes(root, "ListQueuesResult");
+			List<Element> resultList = XmlUtil.getCurrentLevelChildNodes(root, "ListQueuesResult");
 
-			for (Element urlElement : queueUrlList) {
-				String u = XmlUtil.getCurrentLevelChildNodes(urlElement, "QueueUrl").get(0).getTextContent().trim();
-				queueUrls.add(u);
-				logger.info("found:" + u);
+			for (Element resultElement : resultList) {
+				List<Element> urls = XmlUtil.getCurrentLevelChildNodes(resultElement, "QueueUrl");
+				for (Element urlElement : urls) {
+					queueUrls.add(urlElement.getTextContent().trim());
+				}
 			}
 
 		} catch (Exception ex) {
