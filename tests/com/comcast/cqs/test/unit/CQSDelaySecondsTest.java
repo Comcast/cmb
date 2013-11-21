@@ -20,6 +20,9 @@ import static org.junit.Assert.*;
 import java.util.HashMap;
 import org.junit.Test;
 
+import com.amazonaws.services.sqs.model.ChangeMessageVisibilityRequest;
+import com.amazonaws.services.sqs.model.DeleteMessageRequest;
+import com.amazonaws.services.sqs.model.Message;
 import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
 import com.amazonaws.services.sqs.model.ReceiveMessageResult;
 import com.amazonaws.services.sqs.model.SendMessageRequest;
@@ -32,13 +35,10 @@ public class CQSDelaySecondsTest extends CMBAWSBaseTest {
     
     static {
         attributeParams.put("MessageRetentionPeriod", "600");
-        attributeParams.put("VisibilityTimeout", "30");
-        attributeParams.put("DelaySeconds", "20");
+        attributeParams.put("VisibilityTimeout", "20");
+        //attributeParams.put("DelaySeconds", "20");
     }
     
-    /**
-     * Test queue with default delay seconds of 20
-     */
     @Test
     public void testDelayQueue() {
 
@@ -85,9 +85,6 @@ public class CQSDelaySecondsTest extends CMBAWSBaseTest {
 		}
     }
     
-    /**
-     * Overwrite default delay with message delay
-     */
     @Test
     public void testDelayMessage() {
 
@@ -136,6 +133,112 @@ public class CQSDelaySecondsTest extends CMBAWSBaseTest {
 			fail(ex.getMessage());
 		}
     }
+
+    @Test
+    public void testMultipleDelayMessage() {
+
+    	try {
+
+    		String queueUrl = getQueueUrl(1, USR.USER1);
+    		cqs1.setQueueAttributes(new SetQueueAttributesRequest(queueUrl, attributeParams));
+
+    		Thread.sleep(1000);
+            long ts1 = System.currentTimeMillis();
+
+    		for (int i=0; i<1000; i++) {
+    			logger.info("event=sending_message no=" + i);
+    			SendMessageRequest sendMessageRequest = new SendMessageRequest(queueUrl, "test message " + i);
+	    		sendMessageRequest.setDelaySeconds(30);
+	            cqs1.sendMessage(sendMessageRequest);
+    		}
+
+            int count = 0;
+            
+            while (true) {
+            
+				logger.info("event=scanning_for_delayed_messages found_so_far=" + count + " seconds_passed=" + ((System.currentTimeMillis()-ts1)/1000));
+
+				ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest();
+				receiveMessageRequest.setQueueUrl(queueUrl);
+				receiveMessageRequest.setMaxNumberOfMessages(10);
+				receiveMessageRequest.setWaitTimeSeconds(1);
+				ReceiveMessageResult receiveMessageResult = cqs1.receiveMessage(receiveMessageRequest);
+
+				count += receiveMessageResult.getMessages().size();
+				
+				if (count >=1000) {
+					break;
+				}
+
+				if (System.currentTimeMillis() - ts1 > 120*1000) {
+					fail("only " + count + " messages found in 120 seconds");
+				}
+            }
+
+            ts1 = System.currentTimeMillis();
+            count = 0;
+            
+            while (true) {
+                
+				logger.info("event=scanning_for_revisible_messages found_so_far=" + count + " seconds_passed=" + ((System.currentTimeMillis()-ts1)/1000));
+
+				ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest();
+				receiveMessageRequest.setQueueUrl(queueUrl);
+				receiveMessageRequest.setMaxNumberOfMessages(10);
+				receiveMessageRequest.setWaitTimeSeconds(1);
+				receiveMessageRequest.setVisibilityTimeout(20);
+				ReceiveMessageResult receiveMessageResult = cqs1.receiveMessage(receiveMessageRequest);
+
+				count += receiveMessageResult.getMessages().size();
+				
+				for (Message msg : receiveMessageResult.getMessages()) {
+					ChangeMessageVisibilityRequest changeMessageVisibilityRequest = new ChangeMessageVisibilityRequest(queueUrl, msg.getReceiptHandle(), 23);
+					cqs1.changeMessageVisibility(changeMessageVisibilityRequest);
+				}
+				
+				if (count >=1000) {
+					break;
+				}
+
+				if (System.currentTimeMillis() - ts1 > 120*1000) {
+					fail("only " + count + " messages found in 120 seconds");
+				}
+            }
+            
+            ts1 = System.currentTimeMillis();
+            count = 0;
+
+            while (true) {
+                
+				logger.info("event=deleting_newly_revisible_messages found_so_far=" + count + " seconds_passed=" + ((System.currentTimeMillis()-ts1)/1000));
+
+				ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest();
+				receiveMessageRequest.setQueueUrl(queueUrl);
+				receiveMessageRequest.setMaxNumberOfMessages(10);
+				receiveMessageRequest.setWaitTimeSeconds(1);
+				ReceiveMessageResult receiveMessageResult = cqs1.receiveMessage(receiveMessageRequest);
+
+				count += receiveMessageResult.getMessages().size();
+				
+				for (Message msg : receiveMessageResult.getMessages()) {
+					DeleteMessageRequest deleteMessageRequest = new DeleteMessageRequest(queueUrl, msg.getReceiptHandle());
+					cqs1.deleteMessage(deleteMessageRequest);
+				}
+
+				if (count >=1000) {
+					break;
+				}
+
+				if (System.currentTimeMillis() - ts1 > 120*1000) {
+					fail("only " + count + " messages found in 120 seconds");
+				}
+            }
+			
+		} catch (Exception ex) {
+			logger.error("test failed", ex);
+			fail(ex.getMessage());
+		}
+    }    
     
     /**
      * Change queue attributes to turn queue into a standard non-delay queue and check functionality
