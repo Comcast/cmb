@@ -475,7 +475,7 @@ public class CQSIntegrationTest extends CMBAWSBaseTest {
             cqs1.changeMessageVisibilityBatch(batchRequest);
             fail("missing expected exception");
         } catch (AmazonServiceException ase) {
-            assertTrue("Did not get internal error exception", ase.getErrorCode().contains(CQSErrorCodes.InternalError.getCMBCode()));
+            assertTrue("Did not get internal error exception", ase.getErrorCode().contains(CQSErrorCodes.BatchEntryIdsNotDistinct.getCMBCode()));
         }
     }
 
@@ -1226,9 +1226,13 @@ public class CQSIntegrationTest extends CMBAWSBaseTest {
 
             // check if messages revisible
             
-            messages = new ArrayList<Message>();
+            messages = null;
             receiveMessageRequest.setMaxNumberOfMessages(10);
-            messages = cqs1.receiveMessage(receiveMessageRequest).getMessages();
+            receiveMessageRequest.setWaitTimeSeconds(1);
+            while (messages == null || messages.size() == 0) {
+            	logger.info("event=scanning_for_messages");
+            	messages = cqs1.receiveMessage(receiveMessageRequest).getMessages();
+            }
 
             assertTrue("Expected 5 messages, received " + messages.size(), messages.size() == 5);
             

@@ -90,7 +90,8 @@ public class CQSMessagePartitionedCassandraPersistence extends CassandraPersiste
 		}
 		
 		long ts = System.currentTimeMillis() + delaySeconds*1000;
-		final Composite superColumnName = new Composite(newTime(ts, false),	UUIDGen.getClockSeqAndNode());
+		final Composite superColumnName = new Composite(newTime(ts, false), UUIDGen.getClockSeqAndNode());
+		//final Composite superColumnName = new Composite(ts,	rand.nextLong());
 		int ttl = queue.getMsgRetentionPeriod();
 		int partition = rand.nextInt(queue.getNumberOfPartitions());
 		String key = Util.hashQueueUrl(queue.getRelativeUrl()) + "_" + shard + "_" + partition;

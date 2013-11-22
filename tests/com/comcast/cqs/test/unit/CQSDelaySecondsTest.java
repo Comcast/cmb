@@ -36,7 +36,7 @@ public class CQSDelaySecondsTest extends CMBAWSBaseTest {
     static {
         attributeParams.put("MessageRetentionPeriod", "600");
         attributeParams.put("VisibilityTimeout", "20");
-        //attributeParams.put("DelaySeconds", "20");
+        attributeParams.put("DelaySeconds", "20");
     }
     
     @Test
@@ -143,15 +143,15 @@ public class CQSDelaySecondsTest extends CMBAWSBaseTest {
     		cqs1.setQueueAttributes(new SetQueueAttributesRequest(queueUrl, attributeParams));
 
     		Thread.sleep(1000);
-            long ts1 = System.currentTimeMillis();
 
     		for (int i=0; i<1000; i++) {
     			logger.info("event=sending_message no=" + i);
     			SendMessageRequest sendMessageRequest = new SendMessageRequest(queueUrl, "test message " + i);
-	    		sendMessageRequest.setDelaySeconds(30);
+	    		sendMessageRequest.setDelaySeconds(20);
 	            cqs1.sendMessage(sendMessageRequest);
     		}
 
+            long ts1 = System.currentTimeMillis();
             int count = 0;
             
             while (true) {
@@ -161,6 +161,7 @@ public class CQSDelaySecondsTest extends CMBAWSBaseTest {
 				ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest();
 				receiveMessageRequest.setQueueUrl(queueUrl);
 				receiveMessageRequest.setMaxNumberOfMessages(10);
+				receiveMessageRequest.setVisibilityTimeout(15);
 				receiveMessageRequest.setWaitTimeSeconds(1);
 				ReceiveMessageResult receiveMessageResult = cqs1.receiveMessage(receiveMessageRequest);
 
@@ -186,7 +187,7 @@ public class CQSDelaySecondsTest extends CMBAWSBaseTest {
 				receiveMessageRequest.setQueueUrl(queueUrl);
 				receiveMessageRequest.setMaxNumberOfMessages(10);
 				receiveMessageRequest.setWaitTimeSeconds(1);
-				receiveMessageRequest.setVisibilityTimeout(20);
+				receiveMessageRequest.setVisibilityTimeout(10);
 				ReceiveMessageResult receiveMessageResult = cqs1.receiveMessage(receiveMessageRequest);
 
 				count += receiveMessageResult.getMessages().size();
@@ -240,6 +241,148 @@ public class CQSDelaySecondsTest extends CMBAWSBaseTest {
 		}
     }    
     
+    @Test
+    public void testDelayOutlierMessage() {
+
+    	try {
+
+    		String queueUrl = getQueueUrl(1, USR.USER1);
+    		cqs1.setQueueAttributes(new SetQueueAttributesRequest(queueUrl, attributeParams));
+
+    		Thread.sleep(1000);
+
+    		for (int i=0; i<1000; i++) {
+    			logger.info("event=sending_message no=" + i);
+    			SendMessageRequest sendMessageRequest = new SendMessageRequest(queueUrl, "test message " + i);
+	    		sendMessageRequest.setDelaySeconds(60);
+	            cqs1.sendMessage(sendMessageRequest);
+    		}
+
+			logger.info("event=sending_message no=" + 1001);
+			SendMessageRequest sendMessageRequest = new SendMessageRequest(queueUrl, "test message 1001");
+    		sendMessageRequest.setDelaySeconds(4);
+            cqs1.sendMessage(sendMessageRequest);
+
+            long ts1 = System.currentTimeMillis();
+            int count = 0;
+            
+            for (int i=0; i<30; i++) {
+            
+				logger.info("event=scanning_for_delayed_messages found_so_far=" + count + " seconds_passed=" + ((System.currentTimeMillis()-ts1)/1000));
+
+				ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest();
+				receiveMessageRequest.setQueueUrl(queueUrl);
+				receiveMessageRequest.setMaxNumberOfMessages(10);
+				receiveMessageRequest.setVisibilityTimeout(15);
+				receiveMessageRequest.setWaitTimeSeconds(1);
+				ReceiveMessageResult receiveMessageResult = cqs1.receiveMessage(receiveMessageRequest);
+
+				count += receiveMessageResult.getMessages().size();
+				
+				for (Message msg : receiveMessageResult.getMessages()) {
+					DeleteMessageRequest deleteMessageRequest = new DeleteMessageRequest(queueUrl, msg.getReceiptHandle());
+					cqs1.deleteMessage(deleteMessageRequest);
+				}
+				
+				if (count > 1) {
+					fail("expected 1 message but found " + count);
+				}
+            }
+            
+            if (count != 1) {
+				fail("expected 1 message but found " + count);
+            }
+			
+		} catch (Exception ex) {
+			logger.error("test failed", ex);
+			fail(ex.getMessage());
+		}
+    }    
+
+    @Test
+    public void testVTOOutlierMessage() {
+
+    	try {
+
+    		String queueUrl = getQueueUrl(1, USR.USER1);
+    		cqs1.setQueueAttributes(new SetQueueAttributesRequest(queueUrl, attributeParams));
+
+    		Thread.sleep(1000);
+
+    		for (int i=0; i<1000; i++) {
+    			logger.info("event=sending_message no=" + i);
+    			SendMessageRequest sendMessageRequest = new SendMessageRequest(queueUrl, "test message " + i);
+	    		sendMessageRequest.setDelaySeconds(0);
+	            cqs1.sendMessage(sendMessageRequest);
+    		}
+
+            long ts1 = System.currentTimeMillis();
+            int count = 0;
+            boolean first = true;
+            
+            while (true) {
+            
+				logger.info("event=scanning_for_messages found_so_far=" + count + " seconds_passed=" + ((System.currentTimeMillis()-ts1)/1000));
+
+				ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest();
+				receiveMessageRequest.setQueueUrl(queueUrl);
+				receiveMessageRequest.setMaxNumberOfMessages(10);
+				if (first) {
+					first = false;
+					receiveMessageRequest.setVisibilityTimeout(20);
+				} else {
+					receiveMessageRequest.setVisibilityTimeout(120);
+				}
+				receiveMessageRequest.setWaitTimeSeconds(1);
+				ReceiveMessageResult receiveMessageResult = cqs1.receiveMessage(receiveMessageRequest);
+
+				count += receiveMessageResult.getMessages().size();
+				
+				if (count >= 1000) {
+					break;
+				}
+				
+				if (System.currentTimeMillis() - ts1 > 120*1000) {
+					fail("only " + count + " messages found in 120 seconds");
+				}
+            }
+            
+            count = 0;
+            ts1 = System.currentTimeMillis();
+            
+            for (int i=0; i<30; i++) {
+                
+				logger.info("event=scanning_for_delayed_messages found_so_far=" + count + " seconds_passed=" + ((System.currentTimeMillis()-ts1)/1000));
+
+				ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest();
+				receiveMessageRequest.setQueueUrl(queueUrl);
+				receiveMessageRequest.setMaxNumberOfMessages(10);
+				receiveMessageRequest.setVisibilityTimeout(15);
+				receiveMessageRequest.setWaitTimeSeconds(1);
+				ReceiveMessageResult receiveMessageResult = cqs1.receiveMessage(receiveMessageRequest);
+
+				count += receiveMessageResult.getMessages().size();
+				
+				for (Message msg : receiveMessageResult.getMessages()) {
+					DeleteMessageRequest deleteMessageRequest = new DeleteMessageRequest(queueUrl, msg.getReceiptHandle());
+					cqs1.deleteMessage(deleteMessageRequest);
+				}
+				
+				if (count > 10) {
+					fail("expected 1 message but found " + count);
+				}
+            }
+            
+            if (count != 10) {
+				fail("expected 1 message but found " + count);
+            }
+            
+		} catch (Exception ex) {
+			logger.error("test failed", ex);
+			fail(ex.getMessage());
+		}
+    }    
+
     /**
      * Change queue attributes to turn queue into a standard non-delay queue and check functionality
      */

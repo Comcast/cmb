@@ -153,6 +153,7 @@ public class Util {
     }
     
     public static boolean isValidUnicode(String msg) {
+    	//[\u0020-\uD7FF\uE000-\uFFFD\uD800\uDC00-\uDBFF\uDFFF\r\n\t]
         char[] chs = msg.toCharArray();
         for (int i = 0; i < chs.length; i++) {
             if (chs[i] == '\n' || chs[i] == '\t' || chs[i] == '\r' || (chs[i] >= '\u0020' && chs[i] <= '\uD7FF') || (chs[i] >= '\uE000' && chs[i] <= '\uFFFD')) {

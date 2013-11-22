@@ -1462,7 +1462,7 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
      * @return number of mem-ids in Redis Queue
      * @throws Exception 
      */
-    public long getQueueMessageCount(String queueUrl, boolean processRevisibilitySet) throws Exception  {
+    public long getQueueMessageCount(String queueUrl, boolean processHiddenIds) throws Exception  {
     	
     	long messageCount = 0;
     	CQSQueue queue = CQSCache.getCachedQueue(queueUrl);
@@ -1487,7 +1487,8 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
                 	throw new IllegalStateException("Redis cache not available");
                 }
                 
-                if (processRevisibilitySet) {
+                if (processHiddenIds) {
+                	checkAndSetVisibilityProcessing(queueUrl, shard, CMBProperties.getInstance().getRedisRevisibleFrequencySec());
                     tryCheckAndProcessRevisibleSet(queueUrl, shard, CMBProperties.getInstance().getRedisRevisibleSetFrequencySec());
                 }
             	
@@ -1527,7 +1528,7 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
      * @return number of mem-ids in Redis Queue
      * @throws Exception 
      */
-    private long getCount(String queueUrl, String suffix, boolean processFlag) throws Exception  {
+    private long getCount(String queueUrl, String suffix, boolean processHiddenIds) throws Exception  {
     	
     	long messageCount = 0;
     	CQSQueue queue = CQSCache.getCachedQueue(queueUrl);
@@ -1552,11 +1553,11 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
                 	throw new IllegalStateException("Redis cache not available");
                 }
                 //if check for hidden message, and processFlag is true, move the message from H to Q
-                if(suffix.equals("-H")&&(processFlag)){
+                if(suffix.equals("-H")&&(processHiddenIds)){
                 	checkAndSetVisibilityProcessing(queueUrl, shard, CMBProperties.getInstance().getRedisRevisibleFrequencySec());                                                 
                 }
                 //if check for delayed message, and processFlag is true, move the message from V to Q                	
-                if (suffix.equals("-V")&&(processFlag)) {
+                if (suffix.equals("-V")&&(processHiddenIds)) {
                     tryCheckAndProcessRevisibleSet(queueUrl, shard, CMBProperties.getInstance().getRedisRevisibleSetFrequencySec());
                 }
             	
