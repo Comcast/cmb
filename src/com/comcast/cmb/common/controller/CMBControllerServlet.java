@@ -226,6 +226,36 @@ abstract public class CMBControllerServlet extends HttpServlet {
 		return params.toString();
 	}
 
+	private String getUrlQueryString(AsyncContext asyncContext) {
+
+		HttpServletRequest request = (HttpServletRequest)asyncContext.getRequest();
+		Enumeration<String> keys = request.getParameterNames();
+		StringBuffer params = new StringBuffer("?");
+
+		while (keys.hasMoreElements()) {
+
+			String key = keys.nextElement();
+			String value = request.getParameter(key);
+
+			if (value != null && value.length() > CMBProperties.getInstance().getCMBRequestParameterValueMaxLength()) {
+				value = value.substring(0, CMBProperties.getInstance().getCMBRequestParameterValueMaxLength()) + "...";
+			}
+
+			if (value != null) {
+				if (value.indexOf('\n') >= 0) {
+					value = value.replace("\n", "\\n");
+				}
+				if (value.indexOf('\r') >= 0) {
+					value = value.replace("\r", "\\r");
+				}
+			}
+
+			params.append(key).append("=").append(value).append("&");
+		}
+
+		return params.toString();
+	}
+
 	private void logStats(String action, long responseTimeMS, long redisTimeMS, long cassandraTimeMS) {
 
 		try {
@@ -380,6 +410,11 @@ abstract public class CMBControllerServlet extends HttpServlet {
 
 		return logLine.toString();
 	}
+	
+	private String getFullRequestUrl(AsyncContext asyncContext) {
+		HttpServletRequest request = (HttpServletRequest)asyncContext.getRequest();
+		return "event=raw_request url="  + request.getRequestURL() + "/" + this.getUrlQueryString(asyncContext);
+	}
 
 	private void handleRequest(AsyncContext asyncContext) throws ServletException, IOException {  
 
@@ -418,6 +453,8 @@ abstract public class CMBControllerServlet extends HttpServlet {
 			long ts2 = System.currentTimeMillis();
 			String logLine = getLogLine(asyncContext, request, user, ts2-ts1, "success");
 			logger.info(logLine);
+			//String rawRequest = this.getFullRequestUrl(asyncContext);
+			//logger.info(rawRequest);
 
 			if (CMBProperties.getInstance().isCMBStatsEnabled()) {
 				logStats(action, ts2-ts1, valueAccumulator.getCounter(AccumulatorName.RedisTime), valueAccumulator.getCounter(AccumulatorName.CassandraTime));
