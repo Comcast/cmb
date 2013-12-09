@@ -164,6 +164,7 @@ public class CMBProperties {
     private final int cqsNumberOfQueuePartitions;
         
     private final boolean enableSignatureAuth;
+    private final boolean allowGetRequest;
     private final boolean requireSubscriptionConfirmation;
     private final boolean cnsServiceEnabled;
     private final boolean cqsServiceEnabled;
@@ -287,6 +288,7 @@ public class CMBProperties {
             workStealerDelayMS = Integer.parseInt(props.getProperty("cmb.cns.publisher.workStealerDelayMS", "60000"));
 
             enableSignatureAuth = Boolean.parseBoolean(props.getProperty("cmb.enableSignatureAuth", "false"));
+            allowGetRequest = Boolean.parseBoolean(props.getProperty("cmb.allowGetRequest", "true"));
             requireSubscriptionConfirmation = Boolean.parseBoolean(props.getProperty("cmb.cns.requireSubscriptionConfirmation", "true"));
             cnsServiceEnabled = Boolean.parseBoolean(props.getProperty("cmb.cns.serviceEnabled", "true"));
             cqsServiceEnabled = Boolean.parseBoolean(props.getProperty("cmb.cqs.serviceEnabled", "true"));
@@ -451,6 +453,10 @@ public class CMBProperties {
         return enableSignatureAuth;
     }
 
+    public boolean getAllowGetRequest() {
+        return allowGetRequest;
+    }
+    
     public boolean getCNSRequireSubscriptionConfirmation() {
         return requireSubscriptionConfirmation;
     }
