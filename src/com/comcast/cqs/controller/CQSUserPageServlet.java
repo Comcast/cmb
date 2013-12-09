@@ -30,6 +30,8 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.log4j.Logger;
 import org.w3c.dom.Element;
 
+import com.amazonaws.auth.AWSCredentials;
+import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.sqs.model.CreateQueueRequest;
 import com.amazonaws.services.sqs.model.CreateQueueResult;
 import com.amazonaws.services.sqs.model.DeleteQueueRequest;
@@ -99,8 +101,9 @@ public class CQSUserPageServlet extends AdminServletBase {
 			if (showQueuesWithMessagesOnly) {
 				url += "&ContainingMessagesOnly=true";
 			}
-
-			String apiStateXml = httpGet(url);
+			
+			AWSCredentials awsCredentials=new BasicAWSCredentials(user.getAccessKey(),user.getAccessSecret());
+			String apiStateXml = httpPOST(cqsServiceBaseUrl, url,awsCredentials);
 			Element root = XmlUtil.buildDoc(apiStateXml);
 			List<Element> resultList = XmlUtil.getCurrentLevelChildNodes(root, "ListQueuesResult");
 
@@ -110,6 +113,7 @@ public class CQSUserPageServlet extends AdminServletBase {
 					queueUrls.add(urlElement.getTextContent().trim());
 				}
 			}
+	
 
 		} catch (Exception ex) {
 			logger.error("event=list_queues user_id= " + userId, ex);

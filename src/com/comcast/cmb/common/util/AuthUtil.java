@@ -17,10 +17,20 @@
 package com.comcast.cmb.common.util;
 
 import org.apache.commons.codec.binary.Base64;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.utils.URLEncodedUtils;
+import org.apache.http.message.BasicNameValuePair;
 import org.apache.log4j.Logger;
+
+import com.amazonaws.AmazonClientException;
+import com.amazonaws.auth.SigningAlgorithm;
+import com.amazonaws.util.BinaryUtils;
+import com.amazonaws.util.HttpUtils;
+import com.comcast.cqs.controller.CQSHttpServletRequest;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
+import javax.servlet.http.HttpServletRequest;
 
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
@@ -31,6 +41,7 @@ import java.security.SecureRandom;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.Map.Entry;
 
 /**
  * Utility functions for authentication
@@ -42,6 +53,7 @@ public class AuthUtil {
     private static final Logger logger = Logger.getLogger(AuthUtil.class);
     private static final int REQUEST_VALIDITY_PERIOD_MS = 900000; //15 mins
     private static final Random rand = new SecureRandom();
+    protected static final String DEFAULT_ENCODING = "UTF-8";
     
     public static String hashPassword(String password) throws Exception {
 
@@ -125,7 +137,16 @@ public class AuthUtil {
     
     public static void checkTimeStamp(String ts) throws AuthenticationException {
         
-    	SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+    	checkTimeStampWithFormat(ts, "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+    }
+
+    public static void checkTimeStampV4(String ts) throws AuthenticationException {
+    	checkTimeStampWithFormat(ts, "yyyyMMdd'T'HHmmss'Z'");
+    }
+    
+    public static void checkTimeStampWithFormat(String ts, String format) throws AuthenticationException {
+        
+    	SimpleDateFormat dateFormat = new SimpleDateFormat(format);
         dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
 
         Date timeStamp;
@@ -146,7 +167,6 @@ public class AuthUtil {
         logger.error("event=checking_timestamp timestamp=" + ts + " serverTime=" + dateFormat.format(now) + " error_code=timestamp_out_of_range");
         throw new AuthenticationException(CMBErrorCodes.RequestExpired, "Request timestamp " + ts + " must be within 900 seconds of the server time");
     }
-
     public static void checkExpiration(String expiration) throws AuthenticationException {
     	
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
@@ -192,6 +212,107 @@ public class AuthUtil {
         return signature;
     }
 
+    public static String generateSignatureV4(HttpServletRequest request, URL url, Map<String, String> parameters, Map<String, String> headers, String version, String algorithm, String accessSecret) throws Exception {
+
+    	/* Example of authorization header value
+    	 * AWS4-HMAC-SHA256 Credential=XK1MWJAYYGQ41ECH06WG/20131126/us-east-1/us-east-1/aws4_request, SignedHeaders=host;user-agent;x-amz-date, Signature=18541c4db00d098414c0bae7394450d1deada902699a45de02849dbcb336f9e3
+    	*/
+    	String authorizationHeader = request.getHeader("authorization");
+    	String credentialPart=authorizationHeader.substring(authorizationHeader.indexOf("Credential=") + "Credential=".length());
+    	String [] credentialPartArray=credentialPart.split("/");
+    	
+        String regionName = credentialPartArray[2];
+        String serviceName = credentialPartArray[3];
+
+        String dateTime=request.getHeader("X-Amz-Date");
+        String dateStamp = credentialPartArray[1];
+
+        String scope=credentialPart.substring(credentialPart.indexOf("/")+1, credentialPart.indexOf(","));
+    	
+    	String payloadString=getPayload(request);
+        String contentSha256= BinaryUtils.toHex(hash(payloadString));
+        Map <String, String> filteredHeaders= filterHeader(headers);
+        
+        String stringToSign = getStringToSign("AWS4-"+algorithm, dateTime, scope, getCanonicalRequest(request,contentSha256, parameters, filteredHeaders ));
+
+
+        byte[] secret = ("AWS4" + accessSecret).getBytes();
+        byte[] date = sign(dateStamp, secret, SigningAlgorithm.HmacSHA256);
+        byte[] region = sign(regionName, date, SigningAlgorithm.HmacSHA256);
+        byte[] service = sign(serviceName, region, SigningAlgorithm.HmacSHA256);
+        byte[] signing = sign("aws4_request", service, SigningAlgorithm.HmacSHA256);
+
+        byte[] signatureBytes = sign(stringToSign.getBytes(), signing, SigningAlgorithm.HmacSHA256);
+
+
+        String signature= BinaryUtils.toHex(signatureBytes);
+        
+        return signature;
+    }
+    
+    public static byte[] sign(String stringData, byte[] key, SigningAlgorithm algorithm) throws AmazonClientException {
+        try {
+            byte[] data = stringData.getBytes("UTF-8");
+            return sign(data, key, algorithm);
+        } catch (Exception e) {
+            throw new AmazonClientException("Unable to calculate a request signature: " + e.getMessage(), e);
+        }
+    }
+
+    protected static byte[] sign(byte[] data, byte[] key, SigningAlgorithm algorithm) throws AmazonClientException {
+        try {
+            Mac mac = Mac.getInstance(algorithm.toString());
+            mac.init(new SecretKeySpec(key, algorithm.toString()));
+            return mac.doFinal(data);
+        } catch (Exception e) {
+            throw new AmazonClientException("Unable to calculate a request signature: " + e.getMessage(), e);
+        }
+    }
+    
+    protected static String getStringToSign(String algorithm, String dateTime, String scope, String canonicalRequest) {
+        String stringToSign =
+                algorithm + "\n" +
+                        dateTime + "\n" +
+                        scope + "\n" +
+                        BinaryUtils.toHex(hash(canonicalRequest));
+        logger.debug("AWS4 String to Sign: '\"" + stringToSign + "\"");
+        return stringToSign;
+    }
+
+    public static byte[] hash(String text) throws AmazonClientException {
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+            md.update(text.getBytes("UTF-8"));
+            return md.digest();
+        } catch (Exception e) {
+            throw new AmazonClientException("Unable to compute hash while signing request: " + e.getMessage(), e);
+        }
+    }
+    
+    protected static String getCanonicalRequest(HttpServletRequest request, String contentSha256, Map<String, String> parameters, Map<String, String> headers) {
+
+
+    	
+        String canonicalRequest = null;
+        canonicalRequest=request.getMethod() + "\n" +
+						getResourcePath(request)+"\n"+
+						getCanonicalizedQueryString(request, parameters) + "\n" +
+                        getCanonicalizedHeaderString(headers) + "\n" +
+                        getSignedHeadersString(headers) + "\n" +
+                        contentSha256;
+        logger.debug("AWS4 Canonical Request: '\"" + canonicalRequest + "\"");
+        
+        return canonicalRequest;
+    }
+   
+    protected static String getCanonicalizedQueryString(HttpServletRequest request, Map <String, String> parameters) {
+    		return "";
+    }
+    
+    private static String getResourcePath(HttpServletRequest request){
+    	String path=request.getRequestURI();
+    	return path;
+    }
     private static String constructV1DataToSign(Map<String, String> parameters) {
 
     	StringBuilder data = new StringBuilder();
@@ -206,6 +327,26 @@ public class AuthUtil {
         return data.toString();
     }
 
+    private static Map< String, String> filterHeader(Map<String, String> headers){
+    	Map <String, String> filteredHeaders =new HashMap<String, String>();
+    	String authorizationString =headers.get("Authorization");
+    	String singnedHeadersString = authorizationString.substring(authorizationString.indexOf("SignedHeaders=")+ new String("SignedHeaders=").length(),
+    																authorizationString.indexOf(", Signature"));
+    	String [] headersArray=singnedHeadersString.split(";");
+    	//dealing with lower case letter
+    	Map <String, String> lowerCaseHeaders =new HashMap<String, String>();
+    	for(Entry <String, String> entry:headers.entrySet()){
+    			lowerCaseHeaders.put(entry.getKey().toLowerCase(), entry.getKey());
+    	}
+    	
+    	for(String currentHeaderName:headersArray){
+    		if(lowerCaseHeaders.containsKey(currentHeaderName.trim())){
+    			filteredHeaders.put(lowerCaseHeaders.get(currentHeaderName.trim()), headers.get(lowerCaseHeaders.get(currentHeaderName.trim())));
+    		}
+    	}
+    	return filteredHeaders;
+    }
+    
     private static String constructV2DataToSign(URL url, Map<String, String> parameters) throws UnsupportedEncodingException {
         
     	StringBuilder sb = new StringBuilder();
@@ -243,6 +384,48 @@ public class AuthUtil {
         return normalizedResourcePath;
     }
 
+    protected static String getCanonicalizedResourcePath(String resourcePath) {
+        if (resourcePath == null || resourcePath.length() == 0) {
+            return "/";
+        } else {
+            String value = HttpUtils.urlEncode(resourcePath, true);
+            if (value.startsWith("/")) {
+                return value;
+            } else {
+                return "/".concat(value);
+            }
+        }
+    }
+    
+    protected static String getCanonicalizedHeaderString(Map<String, String> headers) {
+        List<String> sortedHeaders = new ArrayList<String>();
+        sortedHeaders.addAll(headers.keySet());
+        Collections.sort(sortedHeaders, String.CASE_INSENSITIVE_ORDER);
+
+        StringBuilder buffer = new StringBuilder();
+        for (String header : sortedHeaders) {
+            buffer.append(header.toLowerCase().replaceAll("\\s+", " ") + ":" + headers.get(header).replaceAll("\\s+", " "));
+            buffer.append("\n");
+        }
+
+        return buffer.toString();
+    }
+    
+    protected static String getSignedHeadersString(Map<String, String> headers) {
+        List<String> sortedHeaders = new ArrayList<String>();
+        sortedHeaders.addAll(headers.keySet());
+        Collections.sort(sortedHeaders, String.CASE_INSENSITIVE_ORDER);
+
+        StringBuilder buffer = new StringBuilder();
+        for (String header : sortedHeaders) {
+            if (buffer.length() > 0) buffer.append(";");
+            buffer.append(header.toLowerCase());
+        }
+
+        return buffer.toString();
+    }
+    
+
     private static String normalizeQueryString(Map<String, String> parameters) throws UnsupportedEncodingException {
 
         SortedMap<String, String> sorted = new TreeMap<String, String>();
@@ -268,6 +451,42 @@ public class AuthUtil {
         return builder.toString();
     }
     
+    private static String getPayload(HttpServletRequest reqeust) throws UnsupportedEncodingException {
+
+    	return encodeParameters(reqeust);
+    }
+    
+    /**
+     * Creates an encoded query string from all the parameters in the specified
+     * request.
+     *
+     * @param request
+     *            The request containing the parameters to encode.
+     *
+     * @return Null if no parameters were present, otherwise the encoded query
+     *         string for the parameters present in the specified request.
+     */
+    public static String encodeParameters(HttpServletRequest request) {
+    	CQSHttpServletRequest wrappedRequest=(CQSHttpServletRequest)request;
+        List<NameValuePair> nameValuePairs = null;
+        String parameterName=null;
+        if (wrappedRequest.getPostParameterNames().hasMoreElements()) {
+            nameValuePairs = new ArrayList<NameValuePair>();
+            while (wrappedRequest.getPostParameterNames().hasMoreElements()) {
+            	parameterName=wrappedRequest.getPostParameterNames().nextElement();
+                nameValuePairs.add(new BasicNameValuePair(parameterName, 
+                		wrappedRequest.getPostParameter(parameterName)));
+            }
+        }
+
+        String encodedParams = "";
+        if (nameValuePairs != null) {
+            encodedParams = URLEncodedUtils.format(nameValuePairs, DEFAULT_ENCODING);
+        }
+
+        return encodedParams;
+    }    
+
     private static String urlEncode(String value, boolean isPath) throws UnsupportedEncodingException {
         
     	if (value == null) {

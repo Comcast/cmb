@@ -31,6 +31,8 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.log4j.Logger;
 import org.w3c.dom.Element;
 
+import com.amazonaws.auth.AWSCredentials;
+import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.sqs.model.DeleteMessageRequest;
 import com.amazonaws.services.sqs.model.GetQueueAttributesRequest;
 import com.amazonaws.services.sqs.model.GetQueueAttributesResult;
@@ -167,7 +169,9 @@ public class CQSQueueMessagesPageServlet extends AdminServletBase {
 					peekRequestUrl += "&NextReceiptHandle=" + nextHandle; 
 				}
 
-				String peekXml = httpGet(peekRequestUrl);
+
+				AWSCredentials awsCredentials=new BasicAWSCredentials(user.getAccessKey(),user.getAccessSecret());
+				String peekXml = httpPOST(cqsServiceBaseUrl, peekRequestUrl,awsCredentials);
 				Element root = XmlUtil.buildDoc(peekXml);
 				
 				List<Element> messageElements = XmlUtil.getCurrentLevelChildNodes(XmlUtil.getCurrentLevelChildNodes(root, "ReceiveMessageResult").get(0), "Message");

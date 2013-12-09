@@ -80,6 +80,18 @@ public class UserAuthModule implements IAuthModule {
         return parameters;
     }
 
+    private Map<String, String> getAllHeaders(HttpServletRequest requestUrl) {
+        
+    	Enumeration<String> enumeration = requestUrl.getHeaderNames();
+        Map<String, String> parameters = new HashMap<String, String>();
+
+        while (enumeration.hasMoreElements()) {
+            String name = enumeration.nextElement();
+            parameters.put(name, requestUrl.getHeader(name));
+        }
+
+        return parameters;
+    }
     @Override
     public User authenticateByRequest(HttpServletRequest request) throws CMBException {
         
@@ -102,6 +114,7 @@ public class UserAuthModule implements IAuthModule {
         
         String accessKey = parameters.get("AWSAccessKeyId");
         String authorizationHeader = request.getHeader("authorization");
+        Map<String, String> headers = getAllHeaders(request);
         
         if (accessKey == null && authorizationHeader != null) {
         	
@@ -109,10 +122,6 @@ public class UserAuthModule implements IAuthModule {
         		
         		accessKey = authorizationHeader.substring(authorizationHeader.indexOf("Credential=") + "Credential=".length(), authorizationHeader.indexOf("/"));
         		
-        		if (CMBProperties.getInstance().getEnableSignatureAuth()) {
-                    logger.error("event=authenticate error_code=aws4_not_supported");
-        			throw new AuthenticationException(CMBErrorCodes.InvalidAccessKeyId, "AWS4 signatures currently not supported");
-        		}
         	}
         }
         
@@ -153,63 +162,121 @@ public class UserAuthModule implements IAuthModule {
         	}
         }
 
-        if (!CMBProperties.getInstance().getEnableSignatureAuth()) {
+        if ((!CMBProperties.getInstance().getEnableSignatureAuth())||
+        		(request.getMethod().equals("GET")&&CMBProperties.getInstance().getAllowGetRequest())) {
             if (!user.getUserName().equals(CMBProperties.getInstance().getCNSUserName())) {
             	logger.debug("event=authenticate verify_signature=not_required");
             }
             return user;
         }
         
+        //version 1 and 2 is from parameters
         String version = parameters.get("SignatureVersion");
+ 
+        //version 4 is recommended from header
+        if((version == null)&&(authorizationHeader != null)){
+        	if(authorizationHeader.trim().startsWith("AWS4")){
+        		version="4";
+        	}
+        }
         
-        if (!version.equals("1") && !version.equals("2")) {
+        if (!version.equals("1") && !version.equals("2")&&!version.equals("4")) {
         	logger.error("event=authenticate signature_version="+version+" error_code=unsupported_signature_version");
             throw new AuthenticationException(CMBErrorCodes.NoSuchVersion, "SignatureVersion="+version+" is not valid");
         }
-
-        String signatureToCheck = parameters.get("Signature");
         
-        if (signatureToCheck == null) {
-            logger.error("event=authenticate error_code=no_signature_provided");
-            throw new AuthenticationException(CMBErrorCodes.MissingParameter, "Signature not found");
+        //validate signature for version 1 and 2
+        if (version.equals("1")||version.equals("2")){
+	        String signatureToCheck = parameters.get("Signature");
+	        
+	        if (signatureToCheck == null) {
+	            logger.error("event=authenticate error_code=no_signature_provided");
+	            throw new AuthenticationException(CMBErrorCodes.MissingParameter, "Signature not found");
+	        }
+	
+	        String timeStamp = parameters.get("Timestamp");
+	        String expiration = parameters.get("Expires");
+	        
+	        if (timeStamp != null) {
+	            AuthUtil.checkTimeStamp(timeStamp);
+	        } else if (expiration != null) {
+	            AuthUtil.checkExpiration(expiration);
+	        } else {
+	            logger.error("event=authenticate error_code=no_time_stamp_or_expiration");
+	            throw new AuthenticationException(CMBErrorCodes.MissingParameter, "Request must provide either Timestamp or Expires parameter");
+	        }
+	
+	        String signatureMethod = parameters.get("SignatureMethod");
+	        
+	        if (!signatureMethod.equals("HmacSHA256") && !signatureMethod.equals("HmacSHA1")) {	
+	            logger.error("event=authenticate signature_method=" + signatureMethod + " error_code=unsupported_signature_method");
+	            throw new AuthenticationException(CMBErrorCodes.InvalidParameterValue, "Signature method " + signatureMethod + " is not supported");
+	        }
+	       
+	        URL url = null;
+	        String signature = null;
+	        
+	        try {
+	            url = new URL(request.getRequestURL().toString());
+	            parameters.remove("Signature");
+	        	signature = AuthUtil.generateSignature(url, parameters, version, signatureMethod, user.getAccessSecret());
+	        } catch (Exception ex) {
+	            logger.error("event=authenticate url="+url+" error_code=invalid_url");
+	            throw new AuthenticationException(CMBErrorCodes.InternalError, "Invalid Url " + url);
+	        }
+	
+	        if (signature == null || !signature.equals(signatureToCheck)) {
+	            logger.error("event=authenticate signature_calculated=" + signature + " signature_given=" + signatureToCheck + " error_code=signature_mismatch");
+	            throw new AuthenticationException(CMBErrorCodes.InvalidSignature, "Invalid signature");
+	        }
         }
-
-        String timeStamp = parameters.get("Timestamp");
-        String expiration = parameters.get("Expires");
         
-        if (timeStamp != null) {
-            AuthUtil.checkTimeStamp(timeStamp);
-        } else if (expiration != null) {
-            AuthUtil.checkExpiration(expiration);
-        } else {
-            logger.error("event=authenticate error_code=no_time_stamp_or_expiration");
-            throw new AuthenticationException(CMBErrorCodes.MissingParameter, "Request must provide either Timestamp or Expires parameter");
+        //validate signature for version 4
+        if (version.equals("4")){
+        	//get the signature from head
+       		String signatureToCheck = authorizationHeader.substring(authorizationHeader.indexOf("Signature=") + "Signature=".length());
+	        
+	        if (signatureToCheck == null) {
+	            logger.error("event=authenticate error_code=no_signature_provided");
+	            throw new AuthenticationException(CMBErrorCodes.MissingParameter, "Signature not found");
+	        }
+	        
+	        String timeStamp = request.getHeader("X-Amz-Date");
+	        
+	        if (timeStamp != null) {
+	            AuthUtil.checkTimeStampV4(timeStamp);
+	        } else {
+	            logger.error("event=authenticate error_code=no_time_stamp_or_expiration");
+	            throw new AuthenticationException(CMBErrorCodes.MissingParameter, "Request must provide either Timestamp or Expires parameter");
+	        }
+	
+	        String signatureMethod = authorizationHeader.substring("AWS4-".length(), authorizationHeader.indexOf("Credential=")).trim();
+	        //currently support HMAC-SHA256
+	        if (!signatureMethod.equals("HMAC-SHA256")) {	
+	            logger.error("event=authenticate signature_method=" + signatureMethod + " error_code=unsupported_signature_method");
+	            throw new AuthenticationException(CMBErrorCodes.InvalidParameterValue, "Signature method " + signatureMethod + " is not supported");
+	        }
+	       
+	        URL url = null;
+	        String signature = null;
+	        
+	        try {
+	        	String urlOriginal=request.getRequestURL().toString();
+	        	if(urlOriginal==null || urlOriginal.length()==0){
+	        		urlOriginal="/";
+	        	}
+	            url = new URL(urlOriginal);
+	            signature = AuthUtil.generateSignatureV4(request, url, parameters, headers, version, signatureMethod, user.getAccessSecret());
+	        } catch (Exception ex) {
+	            logger.error("event=authenticate url="+url+" error_code=invalid_url");
+	            throw new AuthenticationException(CMBErrorCodes.InternalError, "Invalid Url " + url);
+	        }
+	
+	        if (signature == null || !signature.equals(signatureToCheck)) {
+	            logger.error("event=authenticate signature_calculated=" + signature + " signature_given=" + signatureToCheck + " error_code=signature_mismatch");
+	            throw new AuthenticationException(CMBErrorCodes.InvalidSignature, "Invalid signature");
+	        }
         }
-
-        String signatureMethod = parameters.get("SignatureMethod");
-        
-        if (!signatureMethod.equals("HmacSHA256") && !signatureMethod.equals("HmacSHA1")) {	
-            logger.error("event=authenticate signature_method=" + signatureMethod + " error_code=unsupported_signature_method");
-            throw new AuthenticationException(CMBErrorCodes.InvalidParameterValue, "Signature method " + signatureMethod + " is not supported");
-        }
-       
-        URL url = null;
-        String signature = null;
-        
-        try {
-            url = new URL(request.getRequestURL().toString());
-            parameters.remove("Signature");
-        	signature = AuthUtil.generateSignature(url, parameters, version, signatureMethod, user.getAccessSecret());
-        } catch (Exception ex) {
-            logger.error("event=authenticate url="+url+" error_code=invalid_url");
-            throw new AuthenticationException(CMBErrorCodes.InternalError, "Invalid Url " + url);
-        }
-
-        if (signature == null || !signature.equals(signatureToCheck)) {
-            logger.error("event=authenticate signature_calculated=" + signature + " signature_given=" + signatureToCheck + " error_code=signature_mismatch");
-            throw new AuthenticationException(CMBErrorCodes.InvalidSignature, "Invalid signature");
-        }
-
         logger.debug("event=authenticated_by_signature username=" + user.getUserName());
 
         return user;

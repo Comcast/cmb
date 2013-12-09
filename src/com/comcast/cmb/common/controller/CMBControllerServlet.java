@@ -479,14 +479,14 @@ abstract public class CMBControllerServlet extends HttpServlet {
 		if (!request.isAsyncSupported()) {
 			throw new ServletException("Servlet container does not support asynchronous calls");
 		}
-
-		final AsyncContext asyncContext = request.startAsync(new CQSHttpServletRequest(request), response);
+		
+		HttpServletRequest wrappedRequest = new CQSHttpServletRequest(request);
+		final AsyncContext asyncContext = request.startAsync(wrappedRequest, response);
 
 		// jetty appears to require calling setTimeout on http handler thread so we are setting 
 		// wait time seconds for long polling receive message here
-		
-		String actionParam = request.getParameter("Action");
-		String waitTimeSecondsParam = request.getParameter(CQSConstants.WAIT_TIME_SECONDS);
+		String actionParam = wrappedRequest.getParameter("Action");
+		String waitTimeSecondsParam = wrappedRequest.getParameter(CQSConstants.WAIT_TIME_SECONDS);
 
 		if (actionParam != null && actionParam.equals("ReceiveMessage") && waitTimeSecondsParam != null) {
 
