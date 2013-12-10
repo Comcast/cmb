@@ -4,7 +4,7 @@
 	<!-- Use this pom.xml file to create a single jar build for all cmb components using the embedded Jetty option (recommended) -->
 
 	<properties>
-	    <buildnum>2.2.37</buildnum>
+	    <buildnum>2.2.38</buildnum>
 	    <projectname>cmb</projectname>
 	</properties>
 
@@ -103,6 +103,7 @@
 			<groupId>org.apache.cassandra</groupId>
 			<artifactId>cassandra-thrift</artifactId>
 			<version>1.0.6</version>
+			<!--<version>1.1.0</version>-->
 		</dependency>
 
 		<dependency>
@@ -170,6 +171,7 @@
 			<groupId>org.apache.thrift</groupId>
 			<artifactId>libthrift</artifactId>
 			<version>0.6.1</version>
+			<!--<version>0.9.1</version>-->
 		</dependency>
 
 		<dependency>

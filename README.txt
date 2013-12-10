@@ -289,7 +289,6 @@ data center does not contain any stale data.
 
 http://secondarycqsserviceurl/?Action=ManageService&Task=ClearCache&AWSAccessKeyId=<adminaccesskey>
 
-
 --------------------------------------------------------------------------------------
 - Known Limitations
 --------------------------------------------------------------------------------------
@@ -297,12 +296,10 @@ http://secondarycqsserviceurl/?Action=ManageService&Task=ClearCache&AWSAccessKey
 
 1. Compatibility with AWS SDK has been tested up to version 1.5.7.
  
-2. AWS4 signatures are currently not supported (V1 and V2 ok).
-
 3. CNS does not support SMS protocol.
 
 4. CNS does not support Throttle Policy.
 
-5. CNS does not support push notifications to mobile endpoints.
+5. CNS does not support Mobile Push notifications.
 
 

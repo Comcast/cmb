@@ -1,7 +1,7 @@
 CMB VERSION 2.2.37
 --------------------------------------------------------------------
 
-New features and bug fixes:
+New features:
 
 - ability to clear queues in web ui and improved queue search
 - confirmation dialog in web ui before deleting queues, topic or users
