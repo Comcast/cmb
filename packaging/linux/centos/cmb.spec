@@ -1,6 +1,6 @@
 Summary: Cloud Message Bus - a clone of SQS/SNS
 Name: cmb
-Version: 2.2.37
+Version: 2.2.38
 BuildArch: noarch
 Release: 1
 Group: Applications
