@@ -17,6 +17,7 @@ package com.comcast.cns.test.unit;
 
 import static org.junit.Assert.*;
 
+import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -31,6 +32,7 @@ import org.junit.Test;
 import com.comcast.cmb.common.controller.CMBControllerServlet;
 import com.comcast.cmb.common.persistence.PersistenceFactory;
 import com.comcast.cmb.test.tools.CMBTestingConstants;
+import com.comcast.cns.model.CNSSubscription.CnsSubscriptionProtocol;
 import com.comcast.cns.util.Util;
 import com.comcast.cqs.util.RandomNumberCollection;
 
@@ -52,7 +54,22 @@ public class UtilsTest {
 		assertTrue(Util.isValidTopicArn(Util.generateCnsTopicArn("Foo", "myregion", "12345")));
 		assertTrue(Util.isValidTopicName("Foo-9"));
 		assertFalse(Util.isValidTopicName("Foo!"));
-		assertTrue(Util.isValidSubscriptionArn(Util.generateCnsTopicSubscriptionArn(Util.generateCnsTopicArn("Foo", "myregion", "12345"))));
+		try {
+			assertTrue(Util.isValidSubscriptionArn(Util.generateCnsTopicSubscriptionArn(Util.generateCnsTopicArn("Foo", "myregion", "12345"), CnsSubscriptionProtocol.http, "http://abc.com")));
+			String sarn1 = Util.generateCnsTopicSubscriptionArn(Util.generateCnsTopicArn("Foo", "myregion", "12345"), CnsSubscriptionProtocol.http, "http://abc.com");
+			String sarn2 = Util.generateCnsTopicSubscriptionArn(Util.generateCnsTopicArn("Foo", "myregion", "12345"), CnsSubscriptionProtocol.http, "http://abc.com");
+			String sarn3 = Util.generateCnsTopicSubscriptionArn(Util.generateCnsTopicArn("Foo", "myregion", "12345"), CnsSubscriptionProtocol.http, "http://xyz.com");
+			String sarn4 = Util.generateCnsTopicSubscriptionArn(Util.generateCnsTopicArn("Foo", "myregion", "12345"), CnsSubscriptionProtocol.cqs, "http://abc.com");
+			logger.info("sarn1=" + sarn1);
+			logger.info("sarn2=" + sarn2);
+			logger.info("sarn3=" + sarn3);
+			logger.info("sarn4=" + sarn4);
+			assertTrue("sub arn mismatch", sarn1.equals(sarn2));
+			assertTrue("sub arn mismatch", !sarn1.equals(sarn3));
+			assertTrue("sub arn mismatch", !sarn1.equals(sarn4));
+		} catch (NoSuchAlgorithmException e) {
+			fail("faild to test valid subscription arn");
+		}
 	}
 
 	@Test

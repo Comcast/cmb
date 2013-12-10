@@ -216,15 +216,9 @@ public class CNSSubscriptionCassandraPersistence extends CassandraPersistence im
                 new CompositeSerializer(), getColumnValues(subscription), 
                 StringSerializer.get(), StringSerializer.get(), CMBProperties.getInstance().getWriteConsistencyLevel());
         
-        if (ttl == null) {
-            insertOrUpdateRow(subscription.getArn(), columnFamilySubscriptionsIndex, getIndexColumnValues(subscription.getEndpoint(), subscription.getProtocol()), CMBProperties.getInstance().getWriteConsistencyLevel());
-            insertOrUpdateRow(subscription.getUserId(), columnFamilySubscriptionsUserIndex, new HashMap<String, String>() {{ put(subscription.getArn(), "");}}, CMBProperties.getInstance().getWriteConsistencyLevel());
-            insertOrUpdateRow(subscription.getToken(), columnFamilySubscriptionsTokenIndex, new HashMap<String, String>() {{ put(subscription.getArn(), "");}}, CMBProperties.getInstance().getWriteConsistencyLevel());
-        } else {
-            insertRow(subscription.getArn(), columnFamilySubscriptionsIndex, getIndexColumnValues(subscription.getEndpoint(), subscription.getProtocol()), CMBProperties.getInstance().getWriteConsistencyLevel(), ttl);
-            insertRow(subscription.getUserId(), columnFamilySubscriptionsUserIndex, new HashMap<String, String>() {{ put(subscription.getArn(), "");}}, CMBProperties.getInstance().getWriteConsistencyLevel(), ttl);
-            insertRow(subscription.getToken(), columnFamilySubscriptionsTokenIndex, new HashMap<String, String>() {{ put(subscription.getArn(), "");}}, CMBProperties.getInstance().getWriteConsistencyLevel(), ttl);
-        }
+        insertRow(subscription.getArn(), columnFamilySubscriptionsIndex, getIndexColumnValues(subscription.getEndpoint(), subscription.getProtocol()), CMBProperties.getInstance().getWriteConsistencyLevel(), ttl);
+        insertRow(subscription.getUserId(), columnFamilySubscriptionsUserIndex, new HashMap<String, String>() {{ put(subscription.getArn(), "");}}, CMBProperties.getInstance().getWriteConsistencyLevel(), ttl);
+        insertRow(subscription.getToken(), columnFamilySubscriptionsTokenIndex, new HashMap<String, String>() {{ put(subscription.getArn(), "");}}, CMBProperties.getInstance().getWriteConsistencyLevel(), ttl);
 	}
 	
 	@Override
@@ -251,11 +245,11 @@ public class CNSSubscriptionCassandraPersistence extends CassandraPersistence im
 			}
 		}
 		
-		subscription.setArn(Util.generateCnsTopicSubscriptionArn(topicArn));
+		subscription.setArn(Util.generateCnsTopicSubscriptionArn(topicArn, protocol, endpoint));
 	
 		// attempt to delete existing subscription
 		
-		Composite superColumnName = new Composite(subscription.getEndpoint(), subscription.getProtocol().name());
+		/*Composite superColumnName = new Composite(subscription.getEndpoint(), subscription.getProtocol().name());
 		
 		HSuperColumn<Composite, String, String> superCol = readColumnFromSuperColumnFamily(columnFamilySubscriptions, subscription.getTopicArn(), superColumnName, new StringSerializer(), new CompositeSerializer(), StringSerializer.get(), StringSerializer.get(), CMBProperties.getInstance().getReadConsistencyLevel());
 		
@@ -263,7 +257,7 @@ public class CNSSubscriptionCassandraPersistence extends CassandraPersistence im
 			CNSSubscription exisitingSub = extractSubscriptionFromSuperColumn(superCol, topicArn);
             deleteIndexes(exisitingSub.getArn(), exisitingSub.getUserId(), exisitingSub.getToken());
 			deleteSuperColumn(subscriptionsTemplate, exisitingSub.getTopicArn(), superColumnName);
-		}	
+		}*/	
 		
 		// then set confirmation stuff and update cassandra
 

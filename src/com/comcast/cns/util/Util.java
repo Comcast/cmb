@@ -18,6 +18,8 @@ package com.comcast.cns.util;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintWriter;
 import java.io.Writer;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.UUID;
@@ -45,8 +47,11 @@ public class Util {
 		return "arn:cmb:cns:" + region + ":" + userId + ":" + topicName;
 	}
 	
-	public static String generateCnsTopicSubscriptionArn(String topicArn) {
-		return topicArn + ":" + UUID.randomUUID().toString();
+	public static String generateCnsTopicSubscriptionArn(String topicArn, CnsSubscriptionProtocol protocol, String endpoint) throws NoSuchAlgorithmException {
+		MessageDigest m = MessageDigest.getInstance("MD5");
+		String name = protocol + ":" + endpoint;
+		byte bytes[] = m.digest(name.getBytes());
+		return topicArn + ":" + UUID.nameUUIDFromBytes(bytes).toString();
 	}
 	
 	public static String getNameFromTopicArn(String topicArn) {
