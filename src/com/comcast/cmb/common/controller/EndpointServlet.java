@@ -301,7 +301,7 @@ public class EndpointServlet extends HttpServlet {
     	if (msg.length()>30){
     		msg=msg.substring(0,29);
     	}
-    	logger.info("event=Endpoint_dolog_Message url="+request.getRequestURI()+ " msg="+msg+"...");
+    	logger.info("event=Endpoint_dolog_Message url="+request.getRequestURI()+ " msg="+msg+"..." + " ts="+System.currentTimeMillis());
     	doRawOutput(200, response, "OK");
     }
     
