@@ -4,7 +4,9 @@ import java.awt.Color;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
 import javax.servlet.ServletException;
@@ -118,25 +120,29 @@ public class CMBVisualizerServlet extends HttpServlet {
     private byte[] generateApiDistributionPieChart() throws IOException {
     	
     	DefaultPieDataset piedataset = new DefaultPieDataset();
-    	List<String> apis = new ArrayList<String>();
-    	List<Long> counts = new ArrayList<Long>();
+    	Map<String, Long> apiCounts = new HashMap<String, Long>();
     	long total = 0;
     	String topApi = null;
     	long topCount = 0;
-
-    	for (String api : CMBControllerServlet.callStats.keySet()) {
-    		apis.add(api);
-    		long count = CMBControllerServlet.callStats.get(api).longValue();
-    		counts.add(new Long(count));
-    		total += count;
+    	
+		for (String api : CMBControllerServlet.callStats.keySet()) {
+			AtomicLong[][] rt = CMBControllerServlet.callResponseTimesByApi.get(api);
+			long count = 0;
+			for (int i=0; i<rt.length; i++) {
+				for (int k=0; k<rt[0].length; k++) {
+					count += rt[i][k].longValue();
+				}
+			}
+			total+=count;
+    		apiCounts.put(api, count);
     		if (count > topCount) {
     			topCount = count;
     			topApi = api;
     		}
-    	}
+		}
 
-    	for (int i=0; i<apis.size(); i++) {
-    		piedataset.setValue(apis.get(i), 1.0*counts.get(i)/total);
+    	for (String api : apiCounts.keySet()) {
+    		piedataset.setValue(api, 1.0*apiCounts.get(api)/total);
     	}
 
     	JFreeChart chart = ChartFactory.createPieChart("API Call Distribution", piedataset, true, true, false);
@@ -160,8 +166,10 @@ public class CMBVisualizerServlet extends HttpServlet {
     	palette.add(new Color(0xFF99FF));
     	palette.add(new Color(0xFF6633));
     	
-    	for (int i=0; i<apis.size(); i++) {
-    		pieplot.setSectionPaint(apis.get(i), palette.get(i%palette.size()));
+    	int i=0;
+    	for (String api : apiCounts.keySet()) {
+    		pieplot.setSectionPaint(api, palette.get(i%palette.size()));
+    		i++;
     	}
     	
     	pieplot.setNoDataMessage("No data available");

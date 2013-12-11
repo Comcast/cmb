@@ -225,6 +225,7 @@ public abstract class AdminServletBase extends HttpServlet {
     			out.println("<a href='/webui'>All Users</a>" + " | ");
     			out.println("<a href='/webui/cnsworkerstate'>CNS Dashboard</a>" + " | ");
     			out.println("<a href='/webui/cqsapistate'>CQS Dashboard</a>" + " | ");
+    			out.println("<a href='/webui/cmbcallstats'>Stats</a>" + " | ");
     		}
     		
     		out.println("<a href='/webui/userlogin?Logout=Logout'>logout</a></td></tr></table>");
