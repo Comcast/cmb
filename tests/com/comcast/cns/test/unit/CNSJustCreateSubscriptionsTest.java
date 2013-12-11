@@ -50,14 +50,15 @@ public class CNSJustCreateSubscriptionsTest extends CMBAWSBaseTest {
 			for (int i=0; i<numSubscriptions; i++) {
 				String endpointUrl = null;
 				try {
-					endpointUrl = endpointIPs.get(rand.nextInt(endpointIPs.size())) + "Endpoint/recv/" + rand.nextInt();
+					String action = "nop";//"recv";
+					endpointUrl = endpointIPs.get(rand.nextInt(endpointIPs.size())) + "Endpoint/"+action+"/" + rand.nextInt();
 					SubscribeRequest subscribeRequest = new SubscribeRequest();
 					subscribeRequest.setEndpoint(endpointUrl);
 					subscribeRequest.setProtocol("http");
 					subscribeRequest.setTopicArn(topicArn);
 					String subscriptionArn = cns1.subscribe(subscribeRequest).getSubscriptionArn();
 					String lastMessageUrl = endpointUrl.replace("recv", "info") + "?showLast=true";
-					if (subscriptionArn.equals("pending confirmation")) {
+					/*if (subscriptionArn.equals("pending confirmation")) {
 						String resp = CNSTestingUtils.sendHttpMessage(lastMessageUrl, "");
 		    			JSONObject o = new JSONObject(resp);
 		    			if (!o.has("SubscribeURL")) {
@@ -68,7 +69,7 @@ public class CNSJustCreateSubscriptionsTest extends CMBAWSBaseTest {
 						resp = CNSTestingUtils.sendHttpMessage(subscriptionUrl, "");
 						logger.info("event=subscribed_endpoint url=" + endpointUrl);
 						count++;
-					}
+					}*/
 				} catch (Exception ex) {
 					logger.error("event=failed_to_subscribe url=" + endpointUrl + " topic_arn=" + topicArn, ex);
 				}
@@ -81,7 +82,7 @@ public class CNSJustCreateSubscriptionsTest extends CMBAWSBaseTest {
     public void justCreateSubscriptionsFast() {
 		long start = System.currentTimeMillis();
 		String topicName = "BigTopic100";
-    	int numThreads = 10;
+    	int numThreads = 1;
     	int numSubscriptions = 100;
     	topicArn = cns1.createTopic(new CreateTopicRequest(topicName)).getTopicArn();
 		ScheduledThreadPoolExecutor ep = new ScheduledThreadPoolExecutor(numThreads + 2);
