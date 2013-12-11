@@ -297,7 +297,11 @@ public class EndpointServlet extends HttpServlet {
 
     protected void doLogMessage(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
     	globalMessageCounter.incrementAndGet();
-    	logger.info("OK");
+    	String msg=parseMessage(request).msg;
+    	if (msg.length()>30){
+    		msg=msg.substring(0,29);
+    	}
+    	logger.info("event=Endpoint_dolog_Message url="+request.getRequestURI()+ " msg="+msg+"...");
     	doRawOutput(200, response, "OK");
     }
     
