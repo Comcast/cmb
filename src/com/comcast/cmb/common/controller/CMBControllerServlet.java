@@ -82,6 +82,8 @@ abstract public class CMBControllerServlet extends HttpServlet {
 	public final static ValueAccumulator valueAccumulator = new ValueAccumulator();
 
 	public final static String VERSION = "2.2.38";
+	
+	public final static int HARD_TIMEOUT_SEC = 20;
 
 	public volatile static ConcurrentHashMap<String, AtomicLong> callStats;
 	public volatile static ConcurrentHashMap<String, AtomicLong> callFailureStats;
@@ -532,8 +534,8 @@ abstract public class CMBControllerServlet extends HttpServlet {
 				int waitTimeSeconds = Integer.parseInt(waitTimeSecondsParam);
 
 				if (waitTimeSeconds >= 1 && waitTimeSeconds <= 20) {
-					asyncContext.setTimeout(waitTimeSeconds * 1000);
-					((CQSHttpServletRequest)asyncContext.getRequest()).setWaitTime(waitTimeSeconds * 1000);
+					asyncContext.setTimeout(waitTimeSeconds*1000);
+					((CQSHttpServletRequest)asyncContext.getRequest()).setWaitTime(waitTimeSeconds*1000);
 					logger.debug("event=set_message_timeout secs=" + waitTimeSeconds);
 				}
 
@@ -560,16 +562,16 @@ abstract public class CMBControllerServlet extends HttpServlet {
 			}
 
 			if (waitTimeSeconds > 0) {
-				asyncContext.setTimeout(waitTimeSeconds * 1000);
-				((CQSHttpServletRequest)asyncContext.getRequest()).setWaitTime(waitTimeSeconds * 1000);
+				asyncContext.setTimeout(waitTimeSeconds*1000);
+				((CQSHttpServletRequest)asyncContext.getRequest()).setWaitTime(waitTimeSeconds*1000);
 				logger.debug("event=set_queue_timeout secs=" + waitTimeSeconds + " queue_url=" + queueUrl);
 			} else {
-				asyncContext.setTimeout(20 * 1000);
+				asyncContext.setTimeout(HARD_TIMEOUT_SEC*1000);
 				logger.debug("event=set_default_timeout secs=20");
 			}
 
 		} else {
-			asyncContext.setTimeout(20 * 1000);
+			asyncContext.setTimeout(HARD_TIMEOUT_SEC*1000);
 			logger.debug("event=set_default_timeout secs=20");
 		}
 
