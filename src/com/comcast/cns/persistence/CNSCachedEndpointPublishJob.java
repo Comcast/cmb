@@ -166,13 +166,27 @@ public class CNSCachedEndpointPublishJob extends CNSEndpointPublishJob {
         public LinkedHashMap<String, CNSCachedEndpointSubscriptionInfo> call() throws Exception {
             long ts1 = System.currentTimeMillis();
             ICNSSubscriptionPersistence subscriptionPersistence = PersistenceFactory.getSubscriptionPersistence();
-            List<CNSSubscription> subs = subscriptionPersistence.listSubscriptionsByTopic(null, topicArn, null, Integer.MAX_VALUE); //get all in one call
+            List<CNSSubscription> subs = null;
+    		String nextToken = null;
             LinkedHashMap<String, CNSCachedEndpointSubscriptionInfo> val = new LinkedHashMap<String, CNSCachedEndpointPublishJob.CNSCachedEndpointSubscriptionInfo>();
-            for (CNSSubscription sub : subs) {
-                if (!sub.getArn().equals("PendingConfirmation")) {
-                    val.put(sub.getArn(), new CNSCachedEndpointSubscriptionInfo(sub.getProtocol(), sub.getEndpoint(), sub.getArn(), sub.getRawMessageDelivery()));
-                }
-            }
+    		while (true) {
+    			//get subscription by page
+    			subs = subscriptionPersistence.listSubscriptionsByTopic(nextToken, topicArn, null, 1000);
+    	        
+    			if (subs == null || subs.size() == 0) {
+    	            break;
+    	        }
+    	        
+                for (CNSSubscription sub : subs) {
+                    if (!sub.getArn().equals("PendingConfirmation")) {
+                        val.put(sub.getArn(), new CNSCachedEndpointSubscriptionInfo(sub.getProtocol(), sub.getEndpoint(), sub.getArn(), sub.getRawMessageDelivery()));
+                        nextToken = sub.getArn();
+                    }
+                    
+                } 	        
+    			   			
+    	    }
+
             long ts2 = System.currentTimeMillis();
             logger.debug("event=populated_subscription_cache topic_arn=" + topicArn + " res_ts=" + (ts2 - ts1));
             return val;
