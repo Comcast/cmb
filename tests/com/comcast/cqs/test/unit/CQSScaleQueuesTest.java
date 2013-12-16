@@ -1,4 +1,18 @@
-package com.comcast.cqs.test.unit;
+/**
+ * Copyright 2012 Comcast Corporation
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */package com.comcast.cqs.test.unit;
 
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -23,7 +37,6 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.w3c.dom.Element;
 
 import com.amazonaws.services.sqs.model.ChangeMessageVisibilityRequest;
 import com.amazonaws.services.sqs.model.CreateQueueRequest;
@@ -34,9 +47,7 @@ import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
 import com.amazonaws.services.sqs.model.ReceiveMessageResult;
 import com.amazonaws.services.sqs.model.SendMessageRequest;
 import com.amazonaws.services.sqs.model.SendMessageResult;
-import com.amazonaws.services.sqs.model.SetQueueAttributesRequest;
 import com.comcast.cmb.common.controller.CMBControllerServlet;
-import com.comcast.cmb.common.util.XmlUtil;
 import com.comcast.cmb.test.tools.CMBAWSBaseTest;
 
 public class CQSScaleQueuesTest extends CMBAWSBaseTest {
@@ -661,8 +672,8 @@ public class CQSScaleQueuesTest extends CMBAWSBaseTest {
 				
 			//for (int i=0; i<1.5*Math.max(numMessages/numBatchReceive,1); i++) {
 
-				if (System.currentTimeMillis() - lastReceiveTime > 20*1000) {
-					logger.info("NO MESSAGES FOR MORE THAN 10 SEC!");
+				if (System.currentTimeMillis() - lastReceiveTime > 1*1000) {
+					logger.info("NO MESSAGES FOR MORE THAN 1 SEC!");
 					break;
 				}
 				

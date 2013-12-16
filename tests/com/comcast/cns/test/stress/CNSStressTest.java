@@ -120,7 +120,7 @@ public class CNSStressTest {
 		NUM_TOPICS = 1;
 		NUM_SUBSCRIBERS_PER_TOPIC = 2;
 		NUM_MESSAGES_PER_SEC = 10;
-		TEST_DURATION_SECS = 60;
+		TEST_DURATION_SECS = 20;
 		NUM_THREADS_PER_TOPIC = 10;
 
 		report += stressTest(true) + "\n";
