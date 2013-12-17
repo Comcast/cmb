@@ -195,6 +195,8 @@ public class CNSUserPageServlet extends AdminServletBase {
 		out.println("<th>Topic Name</th>");
 		out.println("<th>Topic Display Name</th>");
 		out.println("<th>User ID</th>");
+		out.println("<th>Subscriptions Pending</th>");
+		out.println("<th>Subscriptions Confirmed</th>");
 		out.println("<th>&nbsp;</th>");
 		out.println("<th>&nbsp;</th>");
 		out.println("<th>&nbsp;</th>");
@@ -204,7 +206,7 @@ public class CNSUserPageServlet extends AdminServletBase {
 		for (int i = 0; topics != null && i < topics.size(); i++) {
         	
         	Topic t = topics.get(i);
-        	
+       	
 			GetTopicAttributesRequest getTopicAttributesRequest = new GetTopicAttributesRequest(t.getTopicArn());
 			GetTopicAttributesResult getTopicAttributesResult = sns.getTopicAttributes(getTopicAttributesRequest);
 			Map<String, String> attributes = getTopicAttributesResult.getAttributes();
@@ -215,6 +217,8 @@ public class CNSUserPageServlet extends AdminServletBase {
         	out.println("<td>"+Util.getNameFromTopicArn(t.getTopicArn())+"</td>");
         	out.println("<td><a href='' onclick=\"window.open('/webui/cnsuser/editdisplayname?topicArn="+ t.getTopicArn() + "&userId="+userId+"', 'EditDisplayName', 'height=300,width=700,toolbar=no')\">"+(attributes.get("DisplayName") == null ? "{unset}" : attributes.get("DisplayName"))+"</a></td>");
         	out.println("<td>"+user.getUserId()+"<input type='hidden' name='userId' value="+user.getUserId()+"></td>");
+        	out.println("<td>"+attributes.get("SubscriptionsPending")+"</td>");
+        	out.println("<td>"+attributes.get("SubscriptionsConfirmed")+"</td>");
         	out.println("<td><a href='/webui/cnsuser/subscription?userId="+ userId + "&topicArn=" + t.getTopicArn() + "'>Subscriptions</a></td>");
         	out.println("<td><a href='/webui/cnsuser/publish?userId="+ userId + "&topicArn="+ t.getTopicArn() + "' target='_blank'>Publish</a></td>");
         	out.println("<td><a href='' onclick=\"window.open('/webui/cnsuser/editdeliverypolicy?topicArn="+ t.getTopicArn() + "&userId="+userId+"', 'EditDeliveryPolicy', 'height=630,width=580,toolbar=no')\">View/Edit Topic Delivery Policy</a></td>");
