@@ -35,8 +35,8 @@ public class CQSEnduranceTest extends CMBAWSBaseTest {
 	private static int sendDelay = 10;
 	private static int receiveDelay = 0;
 	private static int monitorDelay = 5000;
-	private static int numSenders = 1;
-	private static int numReceivers = 1;
+	private static int numSenders = 3;
+	private static int numReceivers = 3;
 	private static int maxQueueDepth = 1000;
 
 	private static final String ALPHABET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -62,6 +62,7 @@ public class CQSEnduranceTest extends CMBAWSBaseTest {
 	public void start() throws Exception {
 		setup();
 		queueUrl = this.getQueueUrl(1, USR.USER1);
+		logger.info("event=created_queue queue_url=" + queueUrl);
 		ScheduledThreadPoolExecutor ep = new ScheduledThreadPoolExecutor(100);
 		logger.info("event=launching_monitor");
 		ep.submit(new MonitorDaemon());
@@ -107,17 +108,17 @@ public class CQSEnduranceTest extends CMBAWSBaseTest {
 					if (numMsg > maxQueueDepth || numInvisible > maxQueueDepth) {
 						if (sendDelay == 10) {
 							sendDelay = 1000;
-							logger.warn("event=slowing_send queueUrl=" + queueUrl + " queue_depth=" + numMsg + " num_invisible=" + numInvisible);
+							logger.warn("event=slowing_send queue_depth=" + numMsg + " num_invisible=" + numInvisible);
 						}
 					} else {
 						sendDelay = 10;
 					}
 					long end = System.currentTimeMillis();
 					attribSuccessCount.incrementAndGet();
-					logger.info("event=get_attributes rt="+(end-start)+" queue_url=" + queueUrl + " success_count=" + attribSuccessCount.get() + " failure_count=" + attribFailureCount.get() + " queue_depth=" + numMsg + " num_invisible=" + numInvisible);
+					logger.info("event=get_attributes rt="+(end-start)+" success_count=" + attribSuccessCount.get() + " failure_count=" + attribFailureCount.get() + " queue_depth=" + numMsg + " num_invisible=" + numInvisible);
 				} catch (Exception ex) {
 					attribFailureCount.incrementAndGet();
-					logger.error("event=get_attributes queue_url=" + queueUrl + " success_count=" + attribSuccessCount.get() + " failure_count=" + attribFailureCount.get(), ex);
+					logger.error("event=get_attributes success_count=" + attribSuccessCount.get() + " failure_count=" + attribFailureCount.get(), ex);
 				}
 			}
 		}
@@ -139,10 +140,10 @@ public class CQSEnduranceTest extends CMBAWSBaseTest {
 					SendMessageResult result = cqs1.sendMessage(sendMessageRequest);
 					long end = System.currentTimeMillis();
 					sendSuccessCount.incrementAndGet();
-					logger.info("event=message_sent rt="+(end-start)+" queue_url=" + queueUrl + " success_count=" + sendSuccessCount.get() + " failure_count=" + sendFailureCount.get());
+					logger.info("event=message_sent rt="+(end-start)+" success_count=" + sendSuccessCount.get() + " failure_count=" + sendFailureCount.get());
 				} catch (Exception ex) {
 					sendFailureCount.incrementAndGet();
-					logger.error("event=send_error queue_url=" + queueUrl + " success_count=" + sendSuccessCount.get() + " failure_count=" + sendFailureCount.get(), ex);
+					logger.error("event=send_error success_count=" + sendSuccessCount.get() + " failure_count=" + sendFailureCount.get(), ex);
 				}
 			}
 		}
@@ -159,10 +160,10 @@ public class CQSEnduranceTest extends CMBAWSBaseTest {
 				cqs1.deleteMessage(deleteMessageRequest);
 				long end = System.currentTimeMillis();
 				deleteSuccessCount.incrementAndGet();
-				logger.info("event=delete rt="+(end-start)+" queue_url=" + queueUrl + " receipt_handle=" + receiptHandle + " success_count=" + deleteSuccessCount.get() + " failure_count=" + deleteFailureCount);
+				logger.info("event=delete rt="+(end-start)+" receipt_handle=" + receiptHandle + " success_count=" + deleteSuccessCount.get() + " failure_count=" + deleteFailureCount);
 			} catch (Exception ex) {
 				deleteFailureCount.incrementAndGet();
-				logger.error("event=send_error queue_url=" + queueUrl + " receipt_handle=" + receiptHandle + " success_count=" + deleteSuccessCount.get() + " failure_count=" + deleteFailureCount, ex);
+				logger.error("event=send_error receipt_handle=" + receiptHandle + " success_count=" + deleteSuccessCount.get() + " failure_count=" + deleteFailureCount, ex);
 			}
     	}
 
@@ -184,16 +185,16 @@ public class CQSEnduranceTest extends CMBAWSBaseTest {
 					receiveSuccessCount.incrementAndGet();
 					actualMessagesReceivedCount.addAndGet(receiveMessageResult.getMessages().size());
 					if (receiveMessageResult.getMessages().size() > 0) {
-						logger.info("event=messages_received rt="+(end-start)+" queue_url=" + queueUrl + " batch_count=" + receiveMessageResult.getMessages().size() + " success_count" + receiveSuccessCount.get() + " failure_count=" + receiveFailureCount.get() + " total_count=" + actualMessagesReceivedCount.get());
+						logger.info("event=messages_received rt="+(end-start)+" batch_count=" + receiveMessageResult.getMessages().size() + " success_count" + receiveSuccessCount.get() + " failure_count=" + receiveFailureCount.get() + " total_count=" + actualMessagesReceivedCount.get());
 						for (Message msg : receiveMessageResult.getMessages()) {
 							deleteMessage(msg.getReceiptHandle());
 						}
 					} else {
-						logger.info("event=empty_receive rt="+(end-start)+" queue_url=" + queueUrl + " batch_count=" + receiveMessageResult.getMessages().size());
+						logger.info("event=empty_receive rt="+(end-start)+" batch_count=" + receiveMessageResult.getMessages().size());
 					}
 				} catch (Exception ex) {
 					receiveFailureCount.incrementAndGet();
-					logger.error("event=send_error queue_url=" + queueUrl + " success_count" + receiveSuccessCount.get() + " failure_count=" + receiveFailureCount.get() + " total_count=" + actualMessagesReceivedCount.get(), ex);
+					logger.error("event=send_error success_count" + receiveSuccessCount.get() + " failure_count=" + receiveFailureCount.get() + " total_count=" + actualMessagesReceivedCount.get(), ex);
 				}
 			}
 		}
