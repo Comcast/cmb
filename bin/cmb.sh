@@ -26,13 +26,13 @@ workingDir="$( cd "$( dirname "$0" )" && pwd )"
 cd $workingDir
 cd ..
 
-THE_CLASSPATH=config
+export CLASSPATH=".:config"
 for i in `ls lib/*.jar`
 do
-  THE_CLASSPATH=${THE_CLASSPATH}:${i}
+  CLASSPATH=${CLASSPATH}:${i}
 done
 
-echo ${THE_CLASSPATH}
+echo ${CLASSPATH}
 
 if [ -f CMB_INSTANCE_NAME ] 
 then
@@ -47,4 +47,4 @@ else
   AGENT_OPTION=""
 fi
 
-java $AGENT_OPTION -Xmx2048m -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.port=${JMX_PORT} -Dcmb.log4j.propertyFile=${LOG4J_PROPS} -Dcmb.propertyFile=${CMB_PROPS} -classpath ".:${THE_CLASSPATH}" com.comcast.cmb.common.controller.CMB ${CMB_INSTANCE_NAME}
+java $AGENT_OPTION -Xmx2048m -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.port=${JMX_PORT} -Dcmb.log4j.propertyFile=${LOG4J_PROPS} -Dcmb.propertyFile=${CMB_PROPS}  com.comcast.cmb.common.controller.CMB ${CMB_INSTANCE_NAME}
