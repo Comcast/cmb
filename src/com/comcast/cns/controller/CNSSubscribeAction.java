@@ -70,7 +70,7 @@ public class CNSSubscribeAction extends CNSAction {
 		}
     	
     	if (!Util.isValidTopicArn(topicArn)) {
-    		logger.error("event=cns_subscribe error_code=InvalidParameters user_id="+userId+ " topic_arn=" + topicArn +" endpoint=" + endpoint + " protocol=" + protocol);
+    		logger.error("event=cns_subscribe error_code=InvalidParameters problem=invalid_arn user_id="+userId+ " topic_arn=" + topicArn +" endpoint=" + endpoint + " protocol=" + protocol);
     		throw new CMBException(CNSErrorCodes.CNS_InvalidParameter,"request parameter does not comply with the associated constraints.");
     	}
     	CNSSubscription.CnsSubscriptionProtocol subProtocol = null;
