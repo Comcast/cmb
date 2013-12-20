@@ -174,8 +174,7 @@ persist to disk!).
    row_cache_size_in_mb: 100
    
    To install the schema, use the appropriate command based on your Cassandra version
-   NOTE: If you want the keyspaces to be replicated, you will need to change the keyspace definitions
-   before adding the schema
+   NOTE: If you want the keyspaces to be replicated, you will need to change the keyspace definitions before adding the schema
    
    /<path_to_cassandra>/bin/cassandra-cli -h localhost -f cmb/schema/cassandra_1.0.schema
 
