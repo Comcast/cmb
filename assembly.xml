@@ -42,15 +42,15 @@
 			</includes>
 		</fileSet>
 		<fileSet>
-			<directory>${basedir}</directory>
+			<directory>${basedir}/schema</directory>
 			<includes>
-				<include>*.txt</include>
+				<include>*.schema</include>
 			</includes>
 		</fileSet>
 		<fileSet>
 			<directory>${basedir}</directory>
 			<includes>
-				<include>*.schema</include>
+				<include>*.txt</include>
 			</includes>
 		</fileSet>
 		<fileSet>

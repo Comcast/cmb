@@ -166,21 +166,22 @@ persist to disk!).
    cmb.cns.publisherEnabled=true
    cmb.cns.publisherMode=Consumer,Producer 
 
-4. Install the correct schema in your Cassandra ring (use cassandra_1.0.schema for
-   Cassandra version 1.0.x and cassandra_1.1.schema for Cassandra version 1.1.x).
+4. Install the correct schema version in your Cassandra ring
    
    NOTE: CMB does not work with Cassandra versions prior to 1.0.10. For Cassandra 
    versions 1.1.X and 1.2.X edit cassandra.yaml to activate the global row cache:
    
    row_cache_size_in_mb: 100
    
-   To install the schema using Cassandra 1.0.X:
+   To install the schema, use the appropriate command based on your Cassandra version
+   NOTE: If you want the keyspaces to be replicated, you will need to change the keyspace definitions
+   before adding the schema
    
-   /<path_to_cassandra>/bin/cassandra-cli -h localhost -f cmb/cassandra_1.0.schema
-   
-   To install the schema using Cassandra 1.1.X or 1.2.X:
-   
-   /<path_to_cassandra>/bin/cassandra-cli -h localhost -f cmb/cassandra_1.1.schema
+   /<path_to_cassandra>/bin/cassandra-cli -h localhost -f cmb/schema/cassandra_1.0.schema
+
+   /<path_to_cassandra>/bin/cassandra-cli -h localhost -f cmb/schema/cassandra_1.1.schema
+
+   /<path_to_cassandra>/bin/cassandra-cli -h localhost -f cmb/schema/cassandra_1.2.schema
 
 5. Ensure Redis does not persist to disk.
 

@@ -30,7 +30,7 @@ cp -r %{_builddir}/cmb/lib  %{buildroot}/opt/cmb
 cp -r %{_builddir}/cmb/bin  %{buildroot}/opt/cmb
 cp -r %{_builddir}/cmb/WebContent %{buildroot}/opt/cmb
 cp -r %{_builddir}/cmb/config %{buildroot}/opt/cmb
-cp %{_builddir}/cmb/cassandra*  %{buildroot}/opt/cmb/schema
+cp -r %{_builddir}/cmb/schema  %{buildroot}/opt/cmb
 cp %{_builddir}/cmb/[A-Z]*.txt %{buildroot}/opt/cmb/docs
 cp %{_builddir}/cmb/packaging/common/log4j.properties %{buildroot}/opt/cmb/config/log4j.properties
 
