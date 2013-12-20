@@ -125,12 +125,13 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
         for (int i = 0; i < arr.length; i++) {
             
         	String []hostPort = arr[i].trim().split(":");
-            
+        	JedisShardInfo shardInfo = null;
         	if (hostPort.length != 2) {
-                throw new RuntimeException("Invalid redis server list: " + serverList);
+        		// use Redis default port if one wasn't specified
+        		 shardInfo = new JedisShardInfo(hostPort[0].trim(), 6379, 4000);
+            } else {
+            	 shardInfo = new JedisShardInfo(hostPort[0].trim(), Integer.parseInt(hostPort[1].trim()), 4000);
             }
-            
-        	JedisShardInfo shardInfo = new JedisShardInfo(hostPort[0].trim(), Integer.parseInt(hostPort[1].trim()), 4000);
             shardInfos.add(shardInfo);
         }
         
