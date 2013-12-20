@@ -17,10 +17,12 @@ package com.comcast.cns.model;
 
 import java.util.Date;
 import java.util.UUID;
+import java.util.regex.Matcher;
 
 import com.comcast.cmb.common.util.CMBErrorCodes;
 import com.comcast.cmb.common.util.CMBException;
 import com.comcast.cmb.common.util.Util;
+
 
 /**
  * Represents a Subscription
@@ -30,8 +32,23 @@ import com.comcast.cmb.common.util.Util;
  */
 public class CNSSubscription {
 
-    public enum CnsSubscriptionProtocol { http, https, email, email_json, cqs, sqs;
-
+    public enum CnsSubscriptionProtocol { http, https, email, email_json, cqs, sqs, redis;
+    
+    
+    /**
+     * 
+     * @return true if this protocol supports subscription confirmation
+     */
+    
+    public boolean canConfirmSubscription() {
+    	switch (this) {
+    	case redis:
+    		return false;
+    	default: 
+    		return true;
+    	}
+    }
+    
     /**
      * 
      * @param endpoint
@@ -57,6 +74,9 @@ public class CNSSubscription {
                 return false;
             }
             break;
+        case redis:
+        	Matcher m = com.comcast.cns.util.Util.redisPubSubPattern.matcher(endpoint);
+        	return m.matches();
         case sqs:
             if (!com.comcast.cqs.util.Util.isValidQueueArn(endpoint) && !com.comcast.cqs.util.Util.isValidQueueUrl(endpoint)) {
                 return false;

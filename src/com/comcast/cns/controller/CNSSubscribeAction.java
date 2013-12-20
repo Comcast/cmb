@@ -73,25 +73,23 @@ public class CNSSubscribeAction extends CNSAction {
     		logger.error("event=cns_subscribe error_code=InvalidParameters user_id="+userId+ " topic_arn=" + topicArn +" endpoint=" + endpoint + " protocol=" + protocol);
     		throw new CMBException(CNSErrorCodes.CNS_InvalidParameter,"request parameter does not comply with the associated constraints.");
     	}
-    	
     	CNSSubscription.CnsSubscriptionProtocol subProtocol = null;
     	
     	if (protocol.equals("email-json")) {
     		subProtocol = CNSSubscription.CnsSubscriptionProtocol.email_json;
-    	} else if(protocol.equals("email") || protocol.equals("sqs") || protocol.equals("cqs") || protocol.equals("http") || protocol.equals("https")) {
-    		subProtocol = CNSSubscription.CnsSubscriptionProtocol.valueOf(protocol);
     	} else {
-    		logger.error("event=cns_subscribe error_code=InvalidParameters user_id="+userId+ " topic_arn=" + topicArn +" endpoint=" + endpoint + " protocol=" + protocol);
-    		throw new CMBException(CNSErrorCodes.CNS_InvalidParameter,"request parameter does not comply with the associated constraints.");
+    		try {
+    			subProtocol = CNSSubscription.CnsSubscriptionProtocol.valueOf(protocol);
+    		} catch (IllegalArgumentException iae) {
+        		logger.error("event=cns_subscribe error_code=InvalidParameters problem=unknown_protocol user_id="+userId+ " topic_arn=" + topicArn +" endpoint=" + endpoint + " protocol=" + protocol);
+        		throw new CMBException(CNSErrorCodes.CNS_InvalidParameter,"request parameter does not comply with the associated constraints.");
+    		}
     	}
-
     	logger.debug("event=cns_subscribe endpoint=" + endpoint + " protocol=" + protocol + " user_id=" + userId + " topic_arn=" + topicArn);
 		
-    	boolean inputError = false;
-    	inputError = !subProtocol.isValidEnpoint(endpoint);
     	
-    	if (inputError) {
-    		logger.error("event=cns_subscribe error_code=InvalidParameters user_id="+userId+ " topic_arn=" + topicArn +" endpoint=" + endpoint + " protocol=" + protocol);
+    	if (!subProtocol.isValidEnpoint(endpoint)) {
+    		logger.error("event=cns_subscribe error_code=InvalidParameters problem=invalidEndpoint user_id="+userId+ " topic_arn=" + topicArn +" endpoint=" + endpoint + " protocol=" + protocol);
 			throw new CMBException(CNSErrorCodes.CNS_InvalidParameter,"request parameter does not comply with the associated constraints.");
     	}
     	

@@ -42,6 +42,8 @@ public class EndpointPublisherFactory {
     		return new SQSEndpointPublisher();
 		case cqs:		
 			return new CQSEndpointPublisher();
+		case redis:
+			return new RedisPubSubEndpointPublisher();
     	} 
 				
 		return null;

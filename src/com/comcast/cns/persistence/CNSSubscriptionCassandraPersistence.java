@@ -271,9 +271,15 @@ public class CNSSubscriptionCassandraPersistence extends CassandraPersistence im
 			
 		} else {
 		
-			// auto confirm subscription to cqs queue by owner
-			
-			if (protocol.equals(CnsSubscriptionProtocol.cqs)) {
+			// protocols that cannot confirm subscriptions (e.g. redisPubSub)
+			// get an automatic confirmation here
+			if (! protocol.canConfirmSubscription()) {
+				subscription.setConfirmed(true);
+				subscription.setConfirmDate(new Date());
+				insertOrUpdateSubsAndIndexes(subscription, null);
+				
+				// auto confirm subscription to cqs queue by owner
+			} else if (protocol.equals(CnsSubscriptionProtocol.cqs)) {
 			
 				String queueOwner = com.comcast.cqs.util.Util.getQueueOwnerFromArn(endpoint);
 				

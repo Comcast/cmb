@@ -146,6 +146,8 @@ public class CMBProperties {
     private final int httpPublisherEndpointConnectionPoolSize;
     private final int httpPublisherEndpointConnectionsPerRouteSize;
     
+    private final int redisPubSubEndpointConnectionTimeoutMS;
+    
     private final int cqsCacheExpiring;
     private final int cqsCacheSizeLimit;
 
@@ -287,6 +289,7 @@ public class CMBProperties {
             pingDelayMS = Integer.parseInt(props.getProperty("cmb.cns.publisher.pingDelayMS", "60000"));
             workStealerDelayMS = Integer.parseInt(props.getProperty("cmb.cns.publisher.workStealerDelayMS", "60000"));
 
+            redisPubSubEndpointConnectionTimeoutMS = Integer.parseInt(props.getProperty("cmb.cns.publisher.redisPubSub.connectionTimeoutMS","3000"));
             enableSignatureAuth = Boolean.parseBoolean(props.getProperty("cmb.enableSignatureAuth", "false"));
             allowGetRequest = Boolean.parseBoolean(props.getProperty("cmb.allowGetRequest", "true"));
             requireSubscriptionConfirmation = Boolean.parseBoolean(props.getProperty("cmb.cns.requireSubscriptionConfirmation", "true"));
@@ -812,4 +815,9 @@ public class CMBProperties {
 	public String getCmbUnsubscribeUrl() {
 		return cmbUnsubscribeUrl;
 	}
+	
+	public int getRedisPubSubEndpointConnectionTimeoutMS() {
+		return redisPubSubEndpointConnectionTimeoutMS;
+	}
+
 }

@@ -41,7 +41,11 @@ import com.comcast.cns.model.CNSSubscription.CnsSubscriptionProtocol;
  */
 public class Util {
 	
-	public static final int CNS_USER_TOPIC_LIMIT = 100; 
+	public static final int CNS_USER_TOPIC_LIMIT = 100;
+	
+	// redisPubSubRegex matches redis://[password@]hostname:port/channelname
+	public static final String redisPubSubRegex = "redis://(([^@]+)@)?([a-z0-9.]+):([0-9]+)/(\\S+)";
+	public static final Pattern redisPubSubPattern = Pattern.compile(redisPubSubRegex);
 	
 	public static String generateCnsTopicArn(String topicName, String region, String userId) {
 		return "arn:cmb:cns:" + region + ":" + userId + ":" + topicName;
