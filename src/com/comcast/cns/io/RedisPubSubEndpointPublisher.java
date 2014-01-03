@@ -15,13 +15,19 @@
  */
 package com.comcast.cns.io;
 
+import org.apache.commons.pool.impl.GenericObjectPool.Config;
 import org.apache.log4j.Logger;
 
 
 import com.comcast.cmb.common.util.CMBProperties;
 import java.util.regex.*;
+import java.util.Map;
 import redis.clients.jedis.Jedis;
+import redis.clients.jedis.JedisPool;
+import redis.clients.jedis.JedisPoolConfig;
 
+
+import java.util.concurrent.ConcurrentHashMap;
 
 
 /**
@@ -31,32 +37,43 @@ import redis.clients.jedis.Jedis;
  */
 public class RedisPubSubEndpointPublisher extends AbstractEndpointPublisher {
 	protected static Logger logger = Logger.getLogger(RedisPubSubEndpointPublisher.class);
-
+	private static Map<String,JedisPool> jedisPoolMap = new ConcurrentHashMap<String,JedisPool>();
+	protected static int timeoutMS = CMBProperties.getInstance().getRedisPubSubEndpointConnectionTimeoutMS();
 	
 	@Override
 	public void send() throws Exception {
-		// TODO: Add a CNSRedisPubSubPublisherTimeoutSeconds property and getter
-		int timeoutMS = CMBProperties.getInstance().getRedisPubSubEndpointConnectionTimeoutMS();
-
-			
-		Matcher m = com.comcast.cns.util.Util.redisPubSubPattern.matcher(endpoint);
-		if (m.matches()) {
-			String password = m.group(2);
-			String host = m.group(3);
-			String port = m.group(4);
-			String channel = m.group(5);
-			String msg = message.getMessage();
+		if (jedisPoolMap.containsKey(endpoint)) {
 			long startTime = System.currentTimeMillis();
-			Jedis jedis = new Jedis(host, Integer.parseInt(port),timeoutMS);
-			if (password != null) {
-				jedis.auth(password);
-			}
-			
-			long clients = jedis.publish(channel, msg);
-			long durationMS = System.currentTimeMillis() - startTime;
-			logger.info("event=send_redis endpoint=" + host + ":" + port + "/" + channel + " num_clients=" + clients + " resp_ms=" + durationMS);
+			JedisPool pool = jedisPoolMap.get(endpoint);
+			Jedis connection = pool.getResource();
+			String []tokens = endpoint.split("/");
+			String channel = tokens[tokens.length-1];
+			long numClients = connection.publish(channel, message.getMessage());
+			long timeTaken = System.currentTimeMillis() - startTime;
+			pool.returnResource(connection);
+			logger.info("event=send_redis endpoint="+ endpoint + " num_clients=" + numClients + " conn=reuse resp_ms=" + timeTaken);
+			return;
 		} else {
-			logger.info("event=send_redis error=badEndpoint endpoint="+endpoint + " topicArn=" + message.getTopicArn());
-		}
+			long startTime = System.currentTimeMillis();
+			Matcher m = com.comcast.cns.util.Util.redisPubSubPattern.matcher(endpoint);
+			if (m.matches()) {
+				String password = m.group(2);
+				String host = m.group(3);
+				String port = m.group(4);
+				String channel = m.group(5);
+				JedisPool pool = new JedisPool( new JedisPoolConfig(), host, Integer.parseInt(port), timeoutMS, password);
+				Jedis connection = pool.getResource();
+				long numClients = connection.publish(channel, message.getMessage());
+				long timeTaken = System.currentTimeMillis() - startTime;
+				logger.info("event=send_redis endpoint=" + endpoint + " num_clients=" + numClients + " conn=new resp_ms=" + timeTaken);
+				pool.returnResource(connection);
+				jedisPoolMap.put(endpoint, pool);
+				return;
+			} else {
+				logger.error("event=send_redis error=badEndpoint endpoint="+endpoint + " topicArn=" + message.getTopicArn());
+				return;
+			}
+		} 
 	}
+
 }
