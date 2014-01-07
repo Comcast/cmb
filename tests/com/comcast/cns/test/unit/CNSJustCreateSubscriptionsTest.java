@@ -8,30 +8,33 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import org.json.JSONObject;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.amazonaws.services.sns.model.CreateTopicRequest;
+import com.amazonaws.services.sns.model.PublishRequest;
 import com.amazonaws.services.sns.model.SubscribeRequest;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.test.tools.CMBAWSBaseTest;
 import com.comcast.cmb.test.tools.CNSTestingUtils;
 
 public class CNSJustCreateSubscriptionsTest extends CMBAWSBaseTest {
-	
+
+	private static int counter=0;	
     private static List<String> endpointIPs = new ArrayList<String>(Arrays.asList(
     		CMBProperties.getInstance().getCNSServiceUrl()
-    		/*"10.1.36.102:10159",
-    		"10.1.36.105:10159",
-    		"10.1.36.100:10159",
-    		"10.1.1.91:10159",
-    		"10.1.36.107:10159",
-    		"10.1.36.104:10159",
-    		"10.1.36.101:10159",
-    		"10.1.36.106:10159",
-    		"10.1.36.109:10159",
-    		"10.1.1.90:10159",
-    		"10.1.36.108:10159",
-    		"10.1.36.103:10159"*/));
+/*    		"http://10.1.36.102:10162/",
+    		"http://10.1.36.105:10162/",
+    		"http://10.1.36.100:10162/",
+    		"http://10.1.1.99:10162/",
+    		"http://10.1.36.107:10162/",
+    		"http://10.1.36.104:10162/",
+    		"http://10.1.36.101:10162/",
+    		"http://10.1.36.106:10162/",
+    		"http://10.1.36.109:10162/",
+    		"http://10.1.1.100:10162/",
+    		"http://10.1.36.108:10162/",
+    		"http://10.1.36.103:10162/"*/));
     
     private static Random rand = new Random();
     private static String topicArn = null;
@@ -47,17 +50,23 @@ public class CNSJustCreateSubscriptionsTest extends CMBAWSBaseTest {
     	@Override
     	public void run() {
 			int count = 0;
+			int id=0;
 			for (int i=0; i<numSubscriptions; i++) {
 				String endpointUrl = null;
 				try {
-					String action = "nop";//"recv";
-					endpointUrl = endpointIPs.get(rand.nextInt(endpointIPs.size())) + "Endpoint/"+action+"/" + rand.nextInt();
+					String action = "log";//"recv";
+					
+					synchronized(CNSJustCreateSubscriptionsTest.class){
+						id=CNSJustCreateSubscriptionsTest.counter;
+						CNSJustCreateSubscriptionsTest.counter++;
+					}
+					endpointUrl = endpointIPs.get(rand.nextInt(endpointIPs.size())) + "Endpoint/"+action+"/" + id;
 					SubscribeRequest subscribeRequest = new SubscribeRequest();
 					subscribeRequest.setEndpoint(endpointUrl);
 					subscribeRequest.setProtocol("http");
 					subscribeRequest.setTopicArn(topicArn);
 					String subscriptionArn = cns1.subscribe(subscribeRequest).getSubscriptionArn();
-					String lastMessageUrl = endpointUrl.replace("recv", "info") + "?showLast=true";
+					String lastMessageUrl = endpointUrl.replace("log", "info") + "?showLast=true";
 					/*if (subscriptionArn.equals("pending confirmation")) {
 						String resp = CNSTestingUtils.sendHttpMessage(lastMessageUrl, "");
 		    			JSONObject o = new JSONObject(resp);
@@ -96,6 +105,23 @@ public class CNSJustCreateSubscriptionsTest extends CMBAWSBaseTest {
 		} catch (InterruptedException ex) {
 			logger.error("event=failure", ex);
 		}
+		long end = System.currentTimeMillis();
+		logger.info("event=done duration=" + (end-start));
+    }
+    
+    @Ignore
+    public void PublishMessage() {
+		long start = System.currentTimeMillis();    	
+		String message = "test message";
+
+		PublishRequest publishRequest = new PublishRequest();
+		publishRequest.setMessage(message);
+
+		publishRequest.setTopicArn("arn:cmb:cns:ccp:387575094310:BigTopic100k");
+//		publishRequest.setTopicArn("arn:cmb:cns:ccp:388781650676:BigTopic100k");
+		
+		cns1.publish(publishRequest);
+		
 		long end = System.currentTimeMillis();
 		logger.info("event=done duration=" + (end-start));
     }

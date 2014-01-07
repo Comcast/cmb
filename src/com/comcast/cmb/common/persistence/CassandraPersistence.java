@@ -1187,6 +1187,41 @@ public class CassandraPersistence {
 	 *            column family
 	 * @param key
 	 *            row key
+	 * @param column
+	 *            column name. If column is null, the entire row is deleted
+	 * @throws HectorException
+	 */
+	public <K, N> void deleteBatch(String columnFamily, List<K> keyList, List<N> columnList,
+			Serializer<K> keySerializer,
+			HConsistencyLevel level,
+			Serializer<N> columnSerializer) throws HectorException {
+		
+        long ts1 = System.currentTimeMillis();
+        
+		Mutator<K> mutator = HFactory.createMutator(keyspaces.get(level), keySerializer);
+		if(columnList==null ||columnList.isEmpty()){
+			for (int i=0; i< keyList.size();i++) {
+				mutator.addDeletion(keyList.get(i), columnFamily);
+			}			
+		}else{
+			for (int i=0; i< keyList.size();i++) {
+				mutator.addDeletion(keyList.get(i), columnFamily, columnList.get(i), columnSerializer);
+			}
+		}
+		
+		mutator.execute();
+			
+		CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CassandraWrite, 1L);
+        long ts2 = System.currentTimeMillis();
+        CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CassandraTime, (ts2 - ts1));      
+	}
+	/**
+	 * Delete single column value or the entire row
+	 * 
+	 * @param template
+	 *            column family
+	 * @param key
+	 *            row key
 	 * @param superColumn
 	 *            column name. If column is null, the entire row is deleted
 	 * @throws HectorException

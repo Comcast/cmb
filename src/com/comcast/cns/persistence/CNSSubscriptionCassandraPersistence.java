@@ -18,6 +18,7 @@ package com.comcast.cns.persistence;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -260,15 +261,16 @@ public class CNSSubscriptionCassandraPersistence extends CassandraPersistence im
 		}*/	
 		
 		// then set confirmation stuff and update cassandra
-
+		CNSSubscription retrievedSubscription = getSubscription(subscription.getArn());
 		if (!CMBProperties.getInstance().getCNSRequireSubscriptionConfirmation()) {
 
 			subscription.setConfirmed(true);
 			subscription.setConfirmDate(new Date());
 			
 			insertOrUpdateSubsAndIndexes(subscription, null);
-			incrementCounter(columnFamilyTopicStats, subscription.getTopicArn(), "subscriptionConfirmed", 1, new StringSerializer(), new StringSerializer(), CMBProperties.getInstance().getWriteConsistencyLevel());
-			
+			if(retrievedSubscription==null){
+				incrementCounter(columnFamilyTopicStats, subscription.getTopicArn(), "subscriptionConfirmed", 1, new StringSerializer(), new StringSerializer(), CMBProperties.getInstance().getWriteConsistencyLevel());
+			}
 		} else {
 		
 			// protocols that cannot confirm subscriptions (e.g. redisPubSub)
@@ -289,20 +291,25 @@ public class CNSSubscriptionCassandraPersistence extends CassandraPersistence im
 					subscription.setConfirmDate(new Date());
 					
 		            insertOrUpdateSubsAndIndexes(subscription, null);
-		    		incrementCounter(columnFamilyTopicStats, subscription.getTopicArn(), "subscriptionConfirmed", 1, new StringSerializer(), new StringSerializer(), CMBProperties.getInstance().getWriteConsistencyLevel());
-					
+		            if(retrievedSubscription==null){
+		            	incrementCounter(columnFamilyTopicStats, subscription.getTopicArn(), "subscriptionConfirmed", 1, new StringSerializer(), new StringSerializer(), CMBProperties.getInstance().getWriteConsistencyLevel());
+		            }
 				} else {
 
                     // use cassandra ttl to implement expiration after 3 days 
 		            insertOrUpdateSubsAndIndexes(subscription, 3*24*60*60);
-		    		incrementCounter(columnFamilyTopicStats, subscription.getTopicArn(), "subscriptionPending", 1, new StringSerializer(), new StringSerializer(), CMBProperties.getInstance().getWriteConsistencyLevel());
+		            if(retrievedSubscription==null){
+		            	incrementCounter(columnFamilyTopicStats, subscription.getTopicArn(), "subscriptionPending", 1, new StringSerializer(), new StringSerializer(), CMBProperties.getInstance().getWriteConsistencyLevel());
+		            }
 				}
 			
 			} else {
 				
 				// use cassandra ttl to implement expiration after 3 days 
 			    insertOrUpdateSubsAndIndexes(subscription, 3*24*60*60);			    
-				incrementCounter(columnFamilyTopicStats, subscription.getTopicArn(), "subscriptionPending", 1, new StringSerializer(), new StringSerializer(), CMBProperties.getInstance().getWriteConsistencyLevel());
+			    if(retrievedSubscription==null){
+			    	incrementCounter(columnFamilyTopicStats, subscription.getTopicArn(), "subscriptionPending", 1, new StringSerializer(), new StringSerializer(), CMBProperties.getInstance().getWriteConsistencyLevel());
+			    }
 			}
 		}
 
@@ -589,6 +596,20 @@ public class CNSSubscriptionCassandraPersistence extends CassandraPersistence im
         return s;
 	}
 
+	private void deleteIndexesAll(List <CNSSubscription> subscriptionList) {
+		List <String> subArnList=new LinkedList<String>();
+		List <String> userIdList=new LinkedList<String>();
+		List <String> tokenList=new LinkedList<String>();
+		for(CNSSubscription sub:subscriptionList){
+			subArnList.add(sub.getArn());
+			userIdList.add(sub.getUserId());
+			tokenList.add(sub.getToken());
+		}
+        deleteBatch(columnFamilySubscriptionsIndex, subArnList, null, StringSerializer.get(),CMBProperties.getInstance().getWriteConsistencyLevel(), StringSerializer.get()); //delete from the index cf
+        deleteBatch(columnFamilySubscriptionsUserIndex, userIdList, subArnList, StringSerializer.get(),CMBProperties.getInstance().getWriteConsistencyLevel(), StringSerializer.get()); //delete from the index cf
+        deleteBatch(columnFamilySubscriptionsTokenIndex, tokenList, subArnList, StringSerializer.get(),CMBProperties.getInstance().getWriteConsistencyLevel(), StringSerializer.get()); //delete from the index cf
+ 	}
+	
 	private void deleteIndexes(String subArn, String userId, String token) {
         delete(subscriptionsIndexTemplate, subArn, null); //delete from the index cf
         delete(subscriptionsUserIndexTemplate, userId, subArn);
@@ -623,37 +644,35 @@ public class CNSSubscriptionCassandraPersistence extends CassandraPersistence im
     @Override
     public void unsubscribeAll(String topicArn) throws Exception {
     	
+    	int pageSize=1000;
+    	
 		String nextToken = null;
-		List<CNSSubscription> subs = listSubscriptionsByTopic(nextToken, topicArn, null, 1000, false);
+		List<CNSSubscription> subs = listSubscriptionsByTopic(nextToken, topicArn, null, pageSize, false);
 
 		//Note: for pagination to work we need the nextToken's corresponding sub to not be deleted.
-
+		CNSSubscription nextTokenSub=null;
 		while (subs.size() > 0) {
-
-			for (int i = 0; i < subs.size() - 1; i++) {
-				
-				CNSSubscription sub = subs.get(i);
-				
-				if (sub.isConfirmed()) {
-					decrementCounter(columnFamilyTopicStats, sub.getTopicArn(), "subscriptionConfirmed", 1, new StringSerializer(), new StringSerializer(), CMBProperties.getInstance().getWriteConsistencyLevel());
-				} else {
-					decrementCounter(columnFamilyTopicStats, sub.getTopicArn(), "subscriptionPending", 1, new StringSerializer(), new StringSerializer(), CMBProperties.getInstance().getWriteConsistencyLevel());
-				}
-				
-				deleteIndexes(sub.getArn(), sub.getUserId(), sub.getToken());
-				incrementCounter(columnFamilyTopicStats, sub.getTopicArn(), "subscriptionDeleted", 1, new StringSerializer(), new StringSerializer(), CMBProperties.getInstance().getWriteConsistencyLevel());
+			//if retrieve subscription is less than page size, delete all index. 
+			if(subs.size()<pageSize){
+				deleteIndexesAll(subs);
+				break;
 			}
-
-			CNSSubscription nextTokenSub = subs.get(subs.size() - 1);
-			nextToken = nextTokenSub.getArn();
-			subs = listSubscriptionsByTopic(nextToken, topicArn, null, 1000, false);
-
-			if (subs.size() > 0) {
-				subs.remove(0);
+			else{
+				//keep the last subscription for pagination purpose.
+				nextTokenSub = subs.get(subs.size() - 1);
+				nextToken = nextTokenSub.getArn();
+				subs.remove(subs.size() - 1);
+				deleteIndexesAll(subs);
+				subs = listSubscriptionsByTopic(nextToken, topicArn, null, pageSize, false);	
+				deleteIndexes(nextTokenSub.getArn(), nextTokenSub.getUserId(), nextTokenSub.getToken());
 			}
-
-			deleteIndexes(nextTokenSub.getArn(), nextTokenSub.getUserId(), nextTokenSub.getToken());
 		}
+		//set counter;
+		int subscriptionConfirmedNum=(int)getCounter(columnFamilyTopicStats, topicArn, "subscriptionConfirmed", StringSerializer.get(), new StringSerializer(), CMBProperties.getInstance().getReadConsistencyLevel());
+		int subscriptionPendingNum=(int)getCounter(columnFamilyTopicStats, topicArn, "subscriptionPending", StringSerializer.get(), new StringSerializer(), CMBProperties.getInstance().getReadConsistencyLevel());
+		incrementCounter(columnFamilyTopicStats, topicArn, "subscriptionDeleted", subscriptionConfirmedNum+subscriptionPendingNum, new StringSerializer(), new StringSerializer(), CMBProperties.getInstance().getWriteConsistencyLevel());			
+		decrementCounter(columnFamilyTopicStats, topicArn, "subscriptionConfirmed", subscriptionConfirmedNum, new StringSerializer(), new StringSerializer(), CMBProperties.getInstance().getWriteConsistencyLevel());
+		decrementCounter(columnFamilyTopicStats, topicArn, "subscriptionPending", subscriptionPendingNum, new StringSerializer(), new StringSerializer(), CMBProperties.getInstance().getWriteConsistencyLevel());
 
 		//delete the entire row from Subscriptions cf    
 
