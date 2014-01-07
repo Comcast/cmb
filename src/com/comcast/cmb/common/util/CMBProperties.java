@@ -354,8 +354,8 @@ public class CMBProperties {
             numReDeliveryHandlers = Integer.parseInt(props.getProperty("cmb.cns.publisher.numReDeliveryHandlers", "128"));
             deliveryHandlerJobQueueLimit = Integer.parseInt(props.getProperty("cmb.cns.publisher.deliveryHandlerJobQueueLimit", "1000"));
             reDeliveryHandlerJobQueueLimit = Integer.parseInt(props.getProperty("cmb.cns.publisher.reDeliveryHandlerJobQueueLimit", "5000"));
-            publishJobVTO = Integer.parseInt(props.getProperty("cmb.cns.publisher.publichJobVTO", "10"));
-            EPPublishJobVTO = Integer.parseInt(props.getProperty("cmb.cns.publisher.EPPublishJobVTO", "10"));
+            publishJobVTO = Integer.parseInt(props.getProperty("cmb.cns.publisher.publishJobVTO", "30"));
+            EPPublishJobVTO = Integer.parseInt(props.getProperty("cmb.cns.publisher.EPPublishJobVTO", "30"));
             maxSubscriptionsPerEPPublishJob = Integer.parseInt(props.getProperty("cmb.cns.publisher.maxSubscriptionsPerEPPublishJob", "100"));
             producerProcessingMaxDelay = Integer.parseInt(props.getProperty("cmb.cns.publisher.producerProcessingMaxDelay", "1000"));
             consumerProcessingMaxDelay = Integer.parseInt(props.getProperty("cmb.cns.publisher.consumerProcessingMaxDelay", "1000"));

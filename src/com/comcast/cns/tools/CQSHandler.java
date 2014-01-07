@@ -14,7 +14,9 @@
  * limitations under the License.
  */package com.comcast.cns.tools;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.log4j.Logger;
@@ -117,7 +119,7 @@ public class CQSHandler {
         long ts1 = System.currentTimeMillis();
         ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest(queueUrl);
         receiveMessageRequest.setMaxNumberOfMessages(1);
-        receiveMessageRequest.setVisibilityTimeout(CMBProperties.getInstance().getCNSPublishJobVisibilityTimeout());
+        //receiveMessageRequest.setVisibilityTimeout(CMBProperties.getInstance().getCNSPublishJobVisibilityTimeout());
         
         if (waitTimeSeconds > 0) {
         	receiveMessageRequest.setWaitTimeSeconds(waitTimeSeconds);
@@ -188,6 +190,15 @@ public class CQSHandler {
                 if (ex.getStatusCode() == 400) {
                 	
                     CreateQueueRequest createQueueRequest = new CreateQueueRequest(queueNamePrefix + i);
+                    Map<String, String> attributes = new HashMap<String, String>();
+                    
+                    if (queueNamePrefix.startsWith(CMBProperties.getInstance().getCNSEndpointPublishQueueNamePrefix())) {
+                    	attributes.put("VisibilityTimeout", CMBProperties.getInstance().getCNSEndpointPublishJobVisibilityTimeout()+"");
+                    } else {
+                        attributes.put("VisibilityTimeout", CMBProperties.getInstance().getCNSPublishJobVisibilityTimeout()+"");
+                    }
+
+                    createQueueRequest.setAttributes(attributes);
                     CreateQueueResult createQueueResponse = sqs.createQueue(createQueueRequest);
                     
                     if (createQueueResponse.getQueueUrl() == null) {
