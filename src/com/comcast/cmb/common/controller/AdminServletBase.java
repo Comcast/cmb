@@ -296,10 +296,15 @@ protected String httpPOST(String baseUrl, String urlString, AWSCredentials awsCr
 		}
 		request.setParameters(requestParameters);
 		//get endpoint from url
-		request.setEndpoint(new URI(baseUrl));
+		URI uri = new URI(baseUrl);
+		request.setEndpoint(uri);
 		String resourcePath=urlString.substring(baseUrl.length(), urlString.indexOf("?"));
 		request.setResourcePath(resourcePath);
-		new AWS4Signer().sign(request, awsCredentials);
+		
+		AWS4Signer aws4Signer=new AWS4Signer();
+		String host = uri.getHost();
+		aws4Signer.setServiceName(host);
+		aws4Signer.sign(request, awsCredentials);
 		
 		//set headers for real request
 		for (Entry <String, String>entry:request.getHeaders().entrySet()){
