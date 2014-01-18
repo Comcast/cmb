@@ -122,4 +122,36 @@ border: 0px;
 font: small bold Verdana, Arial, Sans-serif;
 padding:1px 1px 1px;
 }
+.alternatecolortable
+{
+border-collapse:collapse;
+font: small Verdana, Arial, Sans-serif;
+padding:1px 1px 1px;
+margin: 5px;
+}
+.alternatecolortable td{ 
+border: 1px solid black;
+/*background-color:#BBBBDD;*/
+font: small bold Verdana, Arial, Sans-serif;
+padding: 1px 1px 1px;
+}
+provide some minimal visual accomodation for IE8 and below */
+.alternatecolortable tr{
+background: #BBBBDD;
+}
+/*  Define the background color for all the ODD background rows */
+.alternatecolortable tr:nth-child(odd){ 
+background: #BBBBDD;
+}
+/*  Define the background color for all the EVEN background rows  */
+.alternatecolortable tr:nth-child(even){
+background: #DDDDFF;
+}
+.alternatecolortable th
+{
+border: 1px solid black;
+background-color:#9999BB;
+font: small bold Verdana, Arial, Sans-serif;
+padding: 1px 1px 1px;
+}
 

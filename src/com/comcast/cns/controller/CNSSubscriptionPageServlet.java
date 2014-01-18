@@ -153,21 +153,21 @@ public class CNSSubscriptionPageServlet extends AdminServletBase {
         out.println("</form></table>");
        
 		out.println("<p><hr width='100%' align='left' />");
-		out.println("<p><span class='content'><table border='1'>");
+		out.println("<p><table class = 'alternatecolortable' border='1'>");
 		out.println("<tr><th>Row</th>");
 		out.println("<th>Arn</th>");
 		out.println("<th>Protocol</th>");
 		out.println("<th>End Point</th>");
 		out.println("<th>Subscription Attributes</th>");
 		out.println("<th>Raw Message Delivery</th>");
-		out.println("<th>&nbsp;</th>");
 		out.println("<th>&nbsp;</th></tr>");
 
 		for (int i = 0; subscriptions != null && i < subscriptions.size(); i++) {
         
         	Subscription s = subscriptions.get(i);
+        	out.println("<tr>");
         	out.println("<form action=\"/webui/cnsuser/subscription/?userId="+user.getUserId()+"&arn="+s.getSubscriptionArn()+"&topicArn="+topicArn+"\" method=POST>");
-        	out.println("<tr><td>"+i+"</td>");
+        	out.println("<td>"+i+"</td>");
         	out.println("<td>"+s.getSubscriptionArn() +"<input type='hidden' name='arn' value="+s.getSubscriptionArn()+"></td>");
         	out.println("<td>"+s.getProtocol()+"</td>");
         	out.println("<td>"+s.getEndpoint()+"</td>");
@@ -192,10 +192,10 @@ public class CNSSubscriptionPageServlet extends AdminServletBase {
         		out.println("<td><input type='submit' value='Unsubscribe' name='Unsubscribe'/></td>");
         	}
         	
-        	out.println("</tr></form>");
+        	out.println("</form></tr>");
         }
         
-        out.println("</table></span></p>");
+        out.println("</table></p>");
         
         if (listSubscriptionsByTopicResult != null && listSubscriptionsByTopicResult.getNextToken() != null) {
         	out.println("<p><a href='/webui/cnsuser/subscription/?userId="+userId+"&topicArn="+topicArn+"&nextToken="+response.encodeURL(listSubscriptionsByTopicResult.getNextToken())+"'>next&nbsp;&gt;</a></p>");

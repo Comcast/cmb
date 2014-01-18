@@ -189,7 +189,7 @@ public class CNSUserPageServlet extends AdminServletBase {
 		}
         
 		out.println("<p><hr width='100%' align='left' /></p>");
-		out.println("<p><span class='content'><table border='1'>");
+		out.println("<p><table class = 'alternatecolortable' border='1'>");
 		out.println("<tr><th>&nbsp;</th>");
 		out.println("<th>Topic Arn</th>");
 		out.println("<th>Topic Name</th>");
@@ -211,8 +211,9 @@ public class CNSUserPageServlet extends AdminServletBase {
 			GetTopicAttributesResult getTopicAttributesResult = sns.getTopicAttributes(getTopicAttributesRequest);
 			Map<String, String> attributes = getTopicAttributesResult.getAttributes();
 
+			out.println("<tr>");
 			out.println("<form action=\"/webui/cnsuser?userId="+userId+"\" method=POST>");
-        	out.println("<tr><td>"+i+"</td>");
+        	out.println("<td>"+i+"</td>");
         	out.println("<td>"+t.getTopicArn() +"<input type='hidden' name='arn' value="+t.getTopicArn()+"></td>");
         	out.println("<td>"+Util.getNameFromTopicArn(t.getTopicArn())+"</td>");
         	out.println("<td><a href='' onclick=\"window.open('/webui/cnsuser/editdisplayname?topicArn="+ t.getTopicArn() + "&userId="+userId+"', 'EditDisplayName', 'height=300,width=700,toolbar=no')\">"+(attributes.get("DisplayName") == null ? "{unset}" : attributes.get("DisplayName"))+"</a></td>");
@@ -223,10 +224,10 @@ public class CNSUserPageServlet extends AdminServletBase {
         	out.println("<td><a href='/webui/cnsuser/publish?userId="+ userId + "&topicArn="+ t.getTopicArn() + "' target='_blank'>Publish</a></td>");
         	out.println("<td><a href='' onclick=\"window.open('/webui/cnsuser/editdeliverypolicy?topicArn="+ t.getTopicArn() + "&userId="+userId+"', 'EditDeliveryPolicy', 'height=630,width=580,toolbar=no')\">View/Edit Topic Delivery Policy</a></td>");
 		    out.println("<td><a href='/webui/cnsuser/permission?topicArn="+ t.getTopicArn() + "&userId=" + userId + "'>Permission</a></td>");
-           	out.println("<td><input type='submit' value='Delete' name='Delete' onclick=\"return confirm('Are you sure you want to delete topic "+Util.getNameFromTopicArn(t.getTopicArn())+"?')\" /></td></tr></form>");
+           	out.println("<td><input type='submit' value='Delete' name='Delete' onclick=\"return confirm('Are you sure you want to delete topic "+Util.getNameFromTopicArn(t.getTopicArn())+"?')\" /></td></form></tr>");
 		}
         
-        out.println("</table></span></p>");
+        out.println("</table></p>");
         
         if (listTopicResult != null && listTopicResult.getNextToken() != null) {
         	out.println("<p><a href='/webui/cnsuser?userId="+userId+"&nextToken="+response.encodeURL(listTopicResult.getNextToken())+"'>next&nbsp;&gt;</a></p>");

@@ -236,7 +236,7 @@ public class CQSQueueMessagesPageServlet extends AdminServletBase {
         	}
         	
         	if (i == 0) {
-        		out.println("<p><hr width='100%' align='left' /><p><span class='content'><table>");
+        		out.println("<p><hr width='100%' align='left' /><p><table class = 'alternatecolortable'>");
         		out.println("<tr><th></th><th>Receipt Handle</th><th>MD5</th><th>Body</th><th>Time Sent</th><th>Time First Received (Appr.)</th><th>Receive Count (Appr.)</th><th>Sender</th><th>&nbsp;</th></tr>");
         		previousHandle = message.getReceiptHandle();
         	}
@@ -257,7 +257,7 @@ public class CQSQueueMessagesPageServlet extends AdminServletBase {
 		    }
         }
 		
-        out.println("</table></span>");
+        out.println("</table>");
         
         if (prevHandle != null) {
         	

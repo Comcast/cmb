@@ -272,7 +272,7 @@ public class CQSUserPageServlet extends AdminServletBase {
 
 		out.println("<p><hr width='100%' align='left' /></p>");
 
-		out.println("<p><span class='content'><table border='1'>");
+		out.println("<p><table class = 'alternatecolortable' border='1'>");
 		out.println("<tr><th>&nbsp;</th>");
 		out.println("<th>Queue Url</th>");
 		out.println("<th>Queue Arn</th>");
@@ -312,8 +312,8 @@ public class CQSUserPageServlet extends AdminServletBase {
 				}
 			}
 
-			out.println("<form action=\"/webui/cqsuser?userId="+user.getUserId()+"\" method=POST>");
 			out.println("<tr>");
+			out.println("<form action=\"/webui/cqsuser?userId="+user.getUserId()+"\" method=POST>");
 			out.println("<td>"+i+"</td>");
 			out.println("<td>"+queueUrls.get(i)+"<input type='hidden' name='qUrl' value="+queueUrls.get(i)+"><input type='hidden' name='qName' value="+Util.getNameForAbsoluteQueueUrl(queueUrls.get(i))+"></td>");
 			out.println("<td>"+Util.getArnForAbsoluteQueueUrl(queueUrls.get(i)) +"<input type='hidden' name='arn' value="+Util.getArnForAbsoluteQueueUrl(queueUrls.get(i))+"></td>");
@@ -345,11 +345,11 @@ public class CQSUserPageServlet extends AdminServletBase {
 				out.println("<input type='hidden' name='ShowAttributes' value='true'/>");
 			}
 			
-        	out.println("<td><input type='submit' value='Clear' name='ClearQueue'/> <br/><input type='submit' value='Delete' name='Delete' onclick=\"return confirm('Are you sure you want to delete queue "+Util.getNameForAbsoluteQueueUrl(queueUrls.get(i))+"?')\" /></td></tr></form>");
+        	out.println("<td><input type='submit' value='Clear' name='ClearQueue'/> <br/><input type='submit' value='Delete' name='Delete' onclick=\"return confirm('Are you sure you want to delete queue "+Util.getNameForAbsoluteQueueUrl(queueUrls.get(i))+"?')\" /></td></form></tr>");
 
 		}
 
-		out.println("</table></span></p>");
+		out.println("</table></p>");
 		out.println("<h5 style='text-align:center;'><a href='/webui'>ADMIN HOME</a></h5>");
 		out.println("</body></html>");
 

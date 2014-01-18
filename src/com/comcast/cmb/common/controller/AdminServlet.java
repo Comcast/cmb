@@ -127,7 +127,7 @@ public class AdminServlet extends AdminServletBase {
         
         	if (i == 0) {
         		out.println("<p><hr width='80%' align='left' /><p>");
-        		out.println("<span class='content'><table border='1' width='80%'>");
+        		out.println("<table  class='alternatecolortable' border='1' width='80%' >");
         		out.println("<tr><th>User Name</th>");
         		out.println("<th>User ID</th>");
         		out.println("<th>Is Admin</th>");
@@ -137,8 +137,9 @@ public class AdminServlet extends AdminServletBase {
         	
         	User user = (User)users.get(i);
         	
+        	out.println("<tr>");
         	out.println("<form action=\"/"+response.encodeURL("webui")+"\" method=POST>");
-        	out.println("<tr><td>"+user.getUserName() +"<input type='hidden' name='user' value="+user.getUserName()+">" +
+        	out.println("<td>"+user.getUserName() +"<input type='hidden' name='user' value="+user.getUserName()+">" +
         			(user.getDescription().isEmpty()? "":"<br/><i>" + user.getDescription() + "</i>") +
         			"</td>");
         	out.println("<td>"+user.getUserId()+"</td>");
@@ -148,10 +149,10 @@ public class AdminServlet extends AdminServletBase {
         	out.println("<td><a href='/webui/cnsuser?userId="+user.getUserId()+"'>CNS</a></td>");
         	out.println("<td><a href='/webui/cqsuser?userId="+user.getUserId()+"'>CQS</a></td>");
 		    
-        	out.println("<td><input type='submit' value='Delete' name='Delete' onclick=\"return confirm('Are you sure you want to delete user "+user.getUserName()+"?')\" /></td></tr></form>");
+        	out.println("<td><input type='submit' value='Delete' name='Delete' onclick=\"return confirm('Are you sure you want to delete user "+user.getUserName()+"?')\" /></td></form></tr>");
         }
         
-        out.println("</table></span></body></html>");
+        out.println("</table></body></html>");
         
         CMBControllerServlet.valueAccumulator.deleteAllCounters();
 	}
