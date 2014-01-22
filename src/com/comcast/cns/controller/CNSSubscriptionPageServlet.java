@@ -31,7 +31,7 @@ import com.comcast.cmb.common.controller.CMBControllerServlet;
 import com.comcast.cmb.common.persistence.PersistenceFactory;
 import com.comcast.cns.model.CNSTopic;
 import com.comcast.cns.persistence.ICNSTopicPersistence;
-
+import com.comcast.cqs.util.Util;
 import com.amazonaws.services.sns.model.ListSubscriptionsByTopicRequest;
 import com.amazonaws.services.sns.model.ListSubscriptionsByTopicResult;
 import com.amazonaws.services.sns.model.SubscribeRequest;
@@ -170,7 +170,11 @@ public class CNSSubscriptionPageServlet extends AdminServletBase {
         	out.println("<td>"+i+"</td>");
         	out.println("<td>"+s.getSubscriptionArn() +"<input type='hidden' name='arn' value="+s.getSubscriptionArn()+"></td>");
         	out.println("<td>"+s.getProtocol()+"</td>");
-        	out.println("<td>"+s.getEndpoint()+"</td>");
+        	if(s.getProtocol().toLowerCase().equals("cqs")&&isAdmin(request)){
+       			out.println("<td><a href='/webui/cqsuser?userId="+Util.getUserIdForQueueArn(s.getEndpoint())+"'>"+s.getEndpoint()+"</a></td>");
+        	} else {
+        		out.println("<td>"+s.getEndpoint()+"</td>");
+        	}
         	
         	if (s.getProtocol().toString().equals("http") && !s.getSubscriptionArn().equals("PendingConfirmation")) {
         		out.println("<td><a href='#' onclick=\"window.open('/webui/cnsuser/subscription/editdeliverypolicy?subscriptionArn="+ s.getSubscriptionArn() + "&userId=" + userId + "', 'EditDeliveryPolicy', 'height=630,width=580,toolbar=no')\">View/Edit Delivery Policy</a></td>");

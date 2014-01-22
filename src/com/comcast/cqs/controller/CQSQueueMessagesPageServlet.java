@@ -153,6 +153,8 @@ public class CQSQueueMessagesPageServlet extends AdminServletBase {
 				out.println(">" + i + "</option>");
 			}
 			out.println("</form></select></td></tr></table></p>");
+		} else {
+			out.println("</table></p>");
 		}
 		
         List<CQSMessage> messages = null;
@@ -216,6 +218,10 @@ public class CQSQueueMessagesPageServlet extends AdminServletBase {
 
 		String previousHandle = null;
 		nextHandle = null;
+		
+		if((messages==null) || (messages.size()==0)){
+			out.println("No Message");
+		}
         
 		for (int i = 0; messages != null && i < messages.size(); i++) {
         

@@ -223,11 +223,24 @@ public abstract class AdminServletBase extends HttpServlet {
     		
     		if (isAdmin(request)) {
     			out.println("<a href='/webui'>All Users</a>" + " | ");
+    			if(user!=null){
+            	out.println("<a href='/webui/cnsuser?userId="+user.getUserId()+"'>"+user.getUserName()+"'s Topics</a>" + " | ");
+            	out.println("<a href='/webui/cqsuser?userId="+user.getUserId()+"'>"+user.getUserName()+"'s Queues</a>" + " | ");
+    			} else {
+    				User mainUser = getAuthenticatedUser(request);
+                	out.println("<a href='/webui/cnsuser?userId="+mainUser.getUserId()+"'>"+mainUser.getUserName()+"'s Topics</a>" + " | ");
+                	out.println("<a href='/webui/cqsuser?userId="+mainUser.getUserId()+"'>"+mainUser.getUserName()+"'s Queues</a>" + " | ");
+    			}
     			out.println("<a href='/webui/cnsworkerstate'>CNS Dashboard</a>" + " | ");
     			out.println("<a href='/webui/cqsapistate'>CQS Dashboard</a>" + " | ");
-    			out.println("<a href='/webui/cmbcallstats'>Stats</a>" + " | ");
+    			if(CMBProperties.getInstance().isCMBStatsEnabled()){
+    				out.println("<a href='/webui/cmbcallstats'>Stats</a>" + " | ");
+    			}
+    		} else {
+				User mainUser = getAuthenticatedUser(request);
+            	out.println("<a href='/webui/cnsuser?userId="+mainUser.getUserId()+"'> Topics</a>" + " | ");
+            	out.println("<a href='/webui/cqsuser?userId="+mainUser.getUserId()+"'> Queues</a>" + " | ");
     		}
-    		
     		out.println("<a href='/webui/userlogin?Logout=Logout'>logout</a></td></tr></table>");
     		out.println("</span>");
     	}

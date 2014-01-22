@@ -264,6 +264,20 @@ public class Util {
 		return elements[0];
 	}
 
+	public static String getUserIdForQueueArn(String queueArn) {
+		
+		if (queueArn == null) {
+			return null;
+		}
+		
+		String elements[] = queueArn.split(":");
+		
+		if (elements.length != 6) {
+			return null;
+		}
+		
+		return elements[4];
+	}
 	public static String getArnForAbsoluteQueueUrl(String url) {
 		
 		if (url == null) {

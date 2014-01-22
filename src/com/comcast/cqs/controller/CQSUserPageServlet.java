@@ -271,7 +271,10 @@ public class CQSUserPageServlet extends AdminServletBase {
 		out.println("</table></p>");
 
 		out.println("<p><hr width='100%' align='left' /></p>");
-
+		
+		if((queueUrls!=null) && (queueUrls.size()>=1000)){
+			out.println("Warning: Only first 1000 queues listed.  Use the search prefix method to find queues");
+		}
 		out.println("<p><table class = 'alternatecolortable' border='1'>");
 		out.println("<tr><th>&nbsp;</th>");
 		out.println("<th>Queue Url</th>");

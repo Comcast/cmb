@@ -124,7 +124,7 @@ public class CQSAPIStatePageServlet extends AdminServletBase {
 			out.println("<h2 align='left'>CQS API Stats</h2>");
 			
 			out.println("<span class='simple'><table border='1'>");
-			out.println("<tr><th>Ip Address</th><th>Url</th><th>JMX Port</th><th>Long Poll Port</th><th>Data Center</th><th>Time Stamp</th><th>Num Long Poll Receives</th><th>Redis Servers</th><th>Num Redis Keys</th><th>Num Redis Shards</th><th>Cassandra Cluster</th><th>Cassandra Nodes</th><th>Status</th><th></th><th></th><th></th><th></th></tr>");
+			out.println("<tr><th>Ip Address</th><th>Url</th><th>JMX Port</th><th>Long Poll Port</th><th>Data Center</th><th>Time Stamp</th><th>Num Long Poll Receives</th><th>Redis Servers</th><th>Num Redis Keys</th><th>Num Redis Shards</th><th>Cassandra Cluster</th><th>Cassandra Nodes</th><th>Status</th><th></th><th></th><th></th></tr>");
 
 			Map<String, Long> aggregateCallStats = new HashMap<String, Long>();
 			Map<String, Long> aggregateCallFailureStats = new HashMap<String, Long>();
@@ -159,8 +159,6 @@ public class CQSAPIStatePageServlet extends AdminServletBase {
 				out.println("<td><form action=\"\" method=\"POST\"><input type='hidden' name='Url' value='"+endpoint+"'><input type='submit' value='Clear Cache' name='ClearCache'/></form></td>");
 				out.println("<td><form action=\"\" method=\"POST\"><input type='hidden' name='Url' value='"+endpoint+"'><input type='submit' value='Clear API Stats' name='ClearAPIStats'/></form></td>");
 				out.println("<td><form action=\"\" method=\"POST\"><input type='hidden' name='Host' value='"+host+"'><input type='submit' value='Remove Record' name='RemoveRecord'/></form></td>");
-				//out.println("<td><a href='http://"+host+"/webui/cmbcallstats'>Stats</a></td>");
-				out.println("<td><a href='/webui/cmbcallstats'>Stats</a></td>");
 				out.println("</tr>");
 				
 				Element callStats = XmlUtil.getChildNodes(stats, "CallStats").get(0);
