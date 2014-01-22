@@ -356,20 +356,28 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
         }        
     }
     
+    // TODO: once we can expect people to have Redis 2.6.12 or newer, the set command takes additional arguments that will make this
+    // much simpler.  It will also require a newer version of the Jedis library to support it.
+    // Example:
+    // String resp = j.set(redisKey,"Y","NX","EX",exp)
+    // return ( resp == nil)
+    // 
     private static boolean checkAndSetFlag(String queueUrl, int shard, String suffix, int exp) throws SetFailedException {
         if (exp <= 0) {
         	throw new IllegalArgumentException("Redis expiration cannot be less than 0");
         }
         long ts1 = System.currentTimeMillis();
         boolean brokenJedis = false;
+        String redisKey = queueUrl + "-" + shard + suffix;
         ShardedJedis jedis = getResource();
         try {
-            if (jedis.exists(queueUrl + "-" + shard + suffix)) {
+            if (jedis.exists(redisKey)) {
                 return false;
             }
-            Jedis j = jedis.getShard(queueUrl + "-" + shard + suffix);
-            j.watch(queueUrl + "-" + shard + suffix);
-            String val = j.get(queueUrl + "-" + shard + suffix);
+            Jedis j = jedis.getShard(redisKey);
+            j.watch(redisKey);
+           
+            String val = j.get(redisKey);
             if (val != null) {
                 j.unwatch();
                 return false;
@@ -377,13 +385,13 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
             Transaction tr = j.multi();
 
             //sentinel expired. kick off new RevisibleProcessor job
-            tr.set(queueUrl + "-" + shard + suffix, "Y");
-            tr.expire(queueUrl + "-" + shard + suffix, exp); //expire after exp seconds
+            tr.set(redisKey, "Y");
+            tr.expire(redisKey, exp); //expire after exp seconds
+            // since we have called watch, tr.exec will return null in the case that someone else has modified
+            // the redisKey since we started our transaction.  If it doesn't return null, the value hasn't changed out from
+            // under us, so we return true since we set it
             List<Object> resp = tr.exec();
-            if (resp == null) {
-                throw new SetFailedException();
-            }
-            return true;
+            return resp != null; 
         } catch (JedisException e) {
             brokenJedis = true;
             throw e;
