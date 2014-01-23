@@ -36,6 +36,9 @@ import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.sqs.model.DeleteMessageRequest;
 import com.amazonaws.services.sqs.model.GetQueueAttributesRequest;
 import com.amazonaws.services.sqs.model.GetQueueAttributesResult;
+import com.amazonaws.services.sqs.model.Message;
+import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
+import com.amazonaws.services.sqs.model.ReceiveMessageResult;
 import com.amazonaws.services.sqs.model.SendMessageRequest;
 import com.comcast.cmb.common.controller.AdminServletBase;
 import com.comcast.cmb.common.controller.CMBControllerServlet;
@@ -70,7 +73,7 @@ public class CQSQueueMessagesPageServlet extends AdminServletBase {
 		String nextHandle = request.getParameter("nextHandle");
 		String receiptHandle = request.getParameter("receiptHandle");
 		Map<?, ?> parameters = request.getParameterMap();
-		
+		Message receivedMessage=null;
 		int shard = 0;
 		
 		if (request.getParameter("shard") != null) {
@@ -106,6 +109,25 @@ public class CQSQueueMessagesPageServlet extends AdminServletBase {
 				logger.error("event=delete_message queue_url= " + queueUrl + " receipt_handle=" + receiptHandle, ex);
 				throw new ServletException(ex);
 			}
+		} else if (parameters.containsKey("Receive")) {
+			
+			try {
+			
+				ReceiveMessageResult result = sqs.receiveMessage(new ReceiveMessageRequest(queueUrl));
+				logger.debug("event=receive_message queue_url= " + queueUrl + " user_id=" + userId);
+				List<Message> receivedMessages=null;
+				
+				if (result!=null){
+					receivedMessages=result.getMessages();
+					if(receivedMessages!=null&&receivedMessages.size()>0){
+						receivedMessage=receivedMessages.get(0);
+					}
+				}
+			} catch (Exception ex) {
+				logger.error("event=receive_message queue_url= " + queueUrl + " user_id=" + userId, ex);
+				throw new ServletException(ex);
+			}
+			
 		}
 		
 		int numberOfShards = 1;
@@ -123,6 +145,18 @@ public class CQSQueueMessagesPageServlet extends AdminServletBase {
 		}
 		
 		out.println("<html>");
+		
+		out.println("<script type='text/javascript' language='javascript'>");
+		out.println("function setVisibility(id, buttonid) {");
+		out.println("if(document.getElementById(buttonid).value=='Less'){");
+		out.println("document.getElementById(buttonid).value = 'More';");
+		out.println("document.getElementById(id).style.display = 'none';");
+		out.println("}else{");
+		out.println("document.getElementById(buttonid).value = 'Less';");
+		out.println("document.getElementById(id).style.display = 'inline';");
+		out.println("}");
+		out.println("}");
+		out.println("</script>");
 		
 		header(request, out, "Peek Messages for Queue " + queueName);
 		
@@ -156,6 +190,63 @@ public class CQSQueueMessagesPageServlet extends AdminServletBase {
 		} else {
 			out.println("</table></p>");
 		}
+		
+		//for receive message
+        out.println("<form id='formsendmessage' action=\"/webui/cqsuser/message/?userId="+userId+"&queueName="+queueName+"\" method=POST>");
+		out.println("<table><tr><td><b>Receive Message:</b></td>");
+        out.println("<td><input type='hidden' name='userId' value='"+ userId + "'></td><td valign='bottom'><input type='submit' value='Receive Message' name='Receive' /></td>");
+        out.println("</form></tr></table>");
+        
+        //showing received message
+        
+        if(receivedMessage!=null){
+        	
+			Map<String, String> attributes = receivedMessage.getAttributes();
+        	
+        	String timeSent = "";
+        	
+        	if (attributes.get("SentTimestamp") != null) {
+        		try { timeSent = new Date(Long.parseLong(attributes.get("SentTimestamp"))).toString(); } catch (Exception ex) {}
+        	}
+        	
+        	String timeReceived = "";
+        	
+        	if (attributes.get("ApproximateFirstReceiveTimestamp") != null) {
+        		try { timeReceived = new Date(Long.parseLong(attributes.get("ApproximateFirstReceiveTimestamp"))).toString(); } catch (Exception ex) {}
+        	}
+        	
+       		out.println("<p><hr width='100%' align='left' /><p>");
+       		out.println("Received Message");
+       		out.println("<table class = 'alternatecolortable'>");
+       		out.println("<tr><th></th><th>Receipt Handle</th><th>MD5</th><th>Body</th><th>Time Sent</th><th>Time First Received (Appr.)</th><th>Receive Count (Appr.)</th><th>Sender</th><th>&nbsp;</th></tr>");
+        	
+        	out.println("<tr>");
+        	out.println("<td>0</td>");
+        	out.println("<td>" + receivedMessage.getReceiptHandle() + "</td>");
+        	out.println("<td>" + receivedMessage.getMD5OfBody() + "</td>");
+        	String messageBody=receivedMessage.getBody();
+        	String messageBodyPart1=null;
+        	String messageBodyPart2=null;
+        	if((messageBody!=null)&&(messageBody.length()>300)){
+        		messageBodyPart1=messageBody.substring(0, 299);
+        		messageBodyPart2=messageBody.substring(299);
+
+        		out.println("<td>");
+        		out.println(messageBodyPart1);
+        		out.println("<div id='rdetail' style=\"display: none;\">"+messageBodyPart2+"</div>");
+        		out.println("<input type=button name=type id='rbt' value='More' onclick=\"setVisibility('rdetail', 'rbt');\";> ");
+        		out.println("</td>");
+        	} else {
+        		out.println("<td>"+ receivedMessage.getBody() + "</td>");
+        	}
+        	out.println("<td>"+ timeSent + "</td>");
+        	out.println("<td>"+ timeReceived + "</td>");
+        	out.println("<td>"+ attributes.get("ApproximateReceiveCount") + "</td>");
+        	out.println("<td>"+ attributes.get("SenderId") + "</td>");
+		    out.println("<td><form action=\"/webui/cqsuser/message/?userId="+user.getUserId()+"&queueName="+queueName+"&receiptHandle="+receivedMessage.getReceiptHandle()+"\" method=POST><input type='submit' value='Delete' name='Delete'/><input type='hidden' name='queueUrl' value='"+ queueUrl+ "' /></form></td></tr>");
+	        out.println("</table>");
+		    
+        }
 		
         List<CQSMessage> messages = null;
         
@@ -242,7 +333,11 @@ public class CQSQueueMessagesPageServlet extends AdminServletBase {
         	}
         	
         	if (i == 0) {
-        		out.println("<p><hr width='100%' align='left' /><p><table class = 'alternatecolortable'>");
+        		out.println("<p><hr width='100%' align='left' /><p>");
+        		if(receivedMessage!=null){
+        			out.println("Peek Message");
+        		}
+        		out.println("<table class = 'alternatecolortable'>");
         		out.println("<tr><th></th><th>Receipt Handle</th><th>MD5</th><th>Body</th><th>Time Sent</th><th>Time First Received (Appr.)</th><th>Receive Count (Appr.)</th><th>Sender</th><th>&nbsp;</th></tr>");
         		previousHandle = message.getReceiptHandle();
         	}
@@ -251,7 +346,21 @@ public class CQSQueueMessagesPageServlet extends AdminServletBase {
         	out.println("<td>" + i + "</td>");
         	out.println("<td>" + message.getReceiptHandle() + "</td>");
         	out.println("<td>" + message.getMD5OfBody() + "</td>");
-        	out.println("<td>" + message.getBody() + "</td>");
+        	String messageBody=message.getBody();
+        	String messageBodyPart1=null;
+        	String messageBodyPart2=null;
+        	if((messageBody!=null)&&(messageBody.length()>300)){
+        		messageBodyPart1=messageBody.substring(0, 299);
+        		messageBodyPart2=messageBody.substring(299);
+
+        		out.println("<td>");
+        		out.println(messageBodyPart1);
+        		out.println("<div id='detail"+i+"' style=\"display: none;\">"+messageBodyPart2+"</div>");
+        		out.println("<input type=button name=type id='bt"+i+"' value='More' onclick=\"setVisibility('detail"+ i+"', 'bt"+i+"');\";> ");
+        		out.println("</td>");
+        	} else {
+        		out.println("<td>"+ message.getBody() + "</td>");
+        	}
         	out.println("<td>"+ timeSent + "</td>");
         	out.println("<td>"+ timeReceived + "</td>");
         	out.println("<td>"+ attributes.get("ApproximateReceiveCount") + "</td>");
