@@ -293,11 +293,12 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
     	long ts1 = System.currentTimeMillis();
         boolean brokenJedis = false;
         ShardedJedis jedis = getResource();
+        String redisKey = queueUrl + "-" + shard + "-" + CQSConstants.REDIS_STATE;
         try {
-            Jedis j = jedis.getShard(queueUrl + "-" + shard + "-" + CQSConstants.REDIS_STATE);
-            j.watch(queueUrl + "-" + shard + "-" + CQSConstants.REDIS_STATE);
+            Jedis j = jedis.getShard(redisKey);
+            j.watch(redisKey);
             if (checkOldState) {
-                String oldStateStr = j.hget(queueUrl + "-" + shard + "-" + CQSConstants.REDIS_STATE, CQSConstants.REDIS_STATE);
+                String oldStateStr = j.hget(redisKey, CQSConstants.REDIS_STATE);
                 if (oldState == null && oldStateStr != null) {
                     throw new SetFailedException();
                 }
@@ -310,9 +311,9 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
             }
             Transaction tr = j.multi();
             if (state == null) {
-                tr.hdel(queueUrl + "-" + shard + "-" + CQSConstants.REDIS_STATE, CQSConstants.REDIS_STATE);
+                tr.hdel(redisKey, CQSConstants.REDIS_STATE);
             } else {
-                tr.hset(queueUrl + "-" + shard + "-" + CQSConstants.REDIS_STATE, CQSConstants.REDIS_STATE, state.name());
+                tr.hset(redisKey, CQSConstants.REDIS_STATE, state.name());
             }
             List<Object> resp = tr.exec();
             if (resp == null) {
@@ -339,12 +340,12 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
         boolean brokenJedis = false;
         ShardedJedis jedis = getResource();
         String suffix = "-F";
+        String redisKey = queueUrl  + "-" + shard + suffix;
         try {
             if (exp > 0) {
-                jedis.set(queueUrl  + "-" + shard + suffix, "Y");
-                jedis.expire(queueUrl + "-" + shard + suffix, exp); //expire after exp seconds
+                jedis.setex(redisKey, exp,"Y");
             } else {
-                jedis.del(queueUrl + "-" + shard + suffix);
+                jedis.del(redisKey);
             }
         } catch (JedisException e) {
             brokenJedis = true;
@@ -356,6 +357,63 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
         }        
     }
     
+    // determine if we have processed the particular operation recently
+    private static boolean processedRecently(String queueUrl, String suffix) {
+    	CQSQueue queue = null;
+    	try {
+    		queue = CQSCache.getCachedQueue(queueUrl);
+    	} catch (Exception e) {
+    		logger.error("call=processedRecently event=failed_to_get_queue queueUrl=" +queueUrl);
+    		return false;
+    	}
+    	long now = System.currentTimeMillis();
+    	long lastTime;
+    	if (suffix == "-R") {
+    		lastTime = queue.getLastVisibilityProcessingTime();
+    		if (now > (lastTime )) {
+    			logger.info("event=processed_recently status=expired suffix=" + suffix);
+    			return false;
+    		}
+    		logger.info("event=processed_recently status=cached suffix=" + suffix);
+    		return true;
+    	} else if (suffix == "-VR") {
+    		lastTime = queue.getLastRevisibleSetProcessingTime();
+    		if (now > (lastTime)) {
+        		logger.info("event=processed_recently status=expired suffix=" + suffix);
+    			return false;
+    		}
+    		logger.info("event=processed_recently status=cached suffix=" + suffix);
+    		return true;
+    			
+    	} else {
+    		logger.error("call=processedRecently event=unknown_suffix suffix=" + suffix);
+    		return false;
+    	}
+    	
+    }
+    
+    // update the last time we processed the visibility or revisibilityset
+    private static void setProcessedRecently(String queueUrl, int exp, String suffix) {
+    	long now = System.currentTimeMillis() + (1000 * exp);
+    	CQSQueue queue = null;
+    	try {
+    		queue = CQSCache.getCachedQueue(queueUrl);
+    	} catch (Exception e) {
+    		logger.error("call=setProcessedRecently event=failed_to_get_queue queueUrl=" +queueUrl);
+    		return;
+    	}
+    	if (suffix == "-R") {
+    		queue.setLastVisibilityProcessingTime(now);
+    		return;
+    	} else if (suffix == "-VR") {
+    		queue.setLastRevisibleSetProcessingTime(now);
+    		return;
+    	} else {
+    		logger.error("call=processedRecently event=unknown_suffix suffix=" + suffix);
+    		return;
+    	}
+    	
+    }
     // TODO: once we can expect people to have Redis 2.6.12 or newer, the set command takes additional arguments that will make this
     // much simpler.  It will also require a newer version of the Jedis library to support it.
     // Example:
@@ -370,8 +428,12 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
         boolean brokenJedis = false;
         String redisKey = queueUrl + "-" + shard + suffix;
         ShardedJedis jedis = getResource();
+        if (processedRecently(queueUrl,  suffix)) {
+        	return false;
+        }
         try {
             if (jedis.exists(redisKey)) {
+            	setProcessedRecently(queueUrl,exp, suffix);
                 return false;
             }
             Jedis j = jedis.getShard(redisKey);
@@ -380,17 +442,18 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
             String val = j.get(redisKey);
             if (val != null) {
                 j.unwatch();
+                setProcessedRecently(queueUrl, exp,suffix);
                 return false;
             }
             Transaction tr = j.multi();
 
             //sentinel expired. kick off new RevisibleProcessor job
-            tr.set(redisKey, "Y");
-            tr.expire(redisKey, exp); //expire after exp seconds
+            tr.setex(redisKey,exp, "Y");
             // since we have called watch, tr.exec will return null in the case that someone else has modified
             // the redisKey since we started our transaction.  If it doesn't return null, the value hasn't changed out from
             // under us, so we return true since we set it
             List<Object> resp = tr.exec();
+            setProcessedRecently(queueUrl, exp, suffix);
             return resp != null; 
         } catch (JedisException e) {
             brokenJedis = true;

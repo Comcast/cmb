@@ -42,6 +42,8 @@ public class CQSQueue {
     private int receiveMessageWaitTimeSeconds = 0;
     private int numberOfPartitions = 100;
     private int numberOfShards = 1;
+    private long lastRevisibleSetProcessingTime = 0;
+    private long lastVisibilityProcessingTime = 0;
     private boolean compressed = false;
     
 	public CQSQueue(String name, String ownerId) {
@@ -224,4 +226,21 @@ public class CQSQueue {
 	public void setNumberOfShards(int numberOfShards) {
 		this.numberOfShards = numberOfShards;
 	}
+	
+	public void setLastRevisibleSetProcessingTime(long time) {
+		this.lastRevisibleSetProcessingTime = time;
+	}
+	
+	public long getLastRevisibleSetProcessingTime() {
+		return lastRevisibleSetProcessingTime;
+	}
+	
+	public void setLastVisibilityProcessingTime(long time) {
+		this.lastVisibilityProcessingTime = time;
+	}
+	
+	public long getLastVisibilityProcessingTime() {
+		return lastVisibilityProcessingTime;
+	}
+	
 }
