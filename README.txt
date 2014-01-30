@@ -256,12 +256,13 @@ Finally the admin UI provides a dashboard like view of
 - Multi-Data-Center Deployment and Failover (CQS)
 --------------------------------------------------------------------------------------
 
+Active-Passive Mode
+
 A CQS deployment consists of a Cassandra ring, one or more Redis shards and one or 
-more Servlet API 3.0 compatible application servers (typically Jetty or Tomcat) to 
-host the CQS REST API front end and Admin UI web interface. A production deployment 
-typically consists of two (or more) identical deployments in separate data centers 
-with the ability to fail-over in case the service in one data center becomes 
-unavailable. 
+more CMB service endpoints hosting the CNS/CQS REST API front end and Web UI . A 
+production deployment typically consists of two (or more) identical deployments in 
+separate data centers with the ability to fail-over in case the service in one data 
+center becomes unavailable. 
 
 A small two-data-center deployment could look like this: One 8-Node Cassandra ring 
 (4 nodes in each data center), 2 independent redis shards per data center (4 machines 
@@ -278,7 +279,7 @@ currently active CQS service.
 http://primarycqsserviceurl/?Action=HealthCheck
 
 While the service is available this call will return some XML encoded information 
-along with HTTP 200. Should any of the service components (App Server, Redis or 
+along with HTTP 200. Should any of the service components (CMB, Redis or 
 Cassandra) fail the return code will change to HTTP 503 (service unavailable). The 
 global load balancer should detect this and start directing all CQS traffic to the 
 second data center. 
@@ -289,17 +290,27 @@ data center does not contain any stale data.
 
 http://secondarycqsserviceurl/?Action=ManageService&Task=ClearCache&AWSAccessKeyId=<adminaccesskey>
 
+Pseudo-Active-Active Mode
+
+You may wish to operate a deployment across two or more data centers in active-active
+mode, meaning you have clients sending and receiving messages in both data centers. 
+You can do this with the current version of CMB but there are some limitations. 
+Most notably, messages will never cross data center boundaries - in other words a 
+message sent by a client in data center A cannot be received by another client 
+in data center B. As long as you have redundant producers and consumers in both data 
+centers this is ok for many applications. An improved CMB design for active-active
+scenarios is currently discussed by the CMB community.  
+
 --------------------------------------------------------------------------------------
 - Known Limitations
 --------------------------------------------------------------------------------------
 
-
-1. Compatibility with AWS SDK has been tested up to version 1.5.7.
+1. Compatibility with AWS SDK has been tested with versions 1.5.7 and 1.6.12.
  
-3. CNS does not support SMS protocol.
+2. CNS does not support SMS protocol.
 
-4. CNS does not support Throttle Policy.
+3. CNS does not support Throttle Policy.
 
-5. CNS does not support Mobile Push notifications.
+4. CNS does not support Mobile Push notifications.
 
 
