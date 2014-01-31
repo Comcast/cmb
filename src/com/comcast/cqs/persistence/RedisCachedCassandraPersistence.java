@@ -358,7 +358,7 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
     }
     
     // determine if we have processed the particular operation recently
-    private static boolean processedRecently(String queueUrl, String suffix) {
+    private static boolean processedRecently(String queueUrl,  String suffix) {
     	CQSQueue queue = null;
     	try {
     		queue = CQSCache.getCachedQueue(queueUrl);
@@ -370,7 +370,7 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
     	long lastTime;
     	if (suffix == "-R") {
     		lastTime = queue.getLastVisibilityProcessingTime();
-    		if (now > (lastTime )) {
+    		if (now > lastTime ) {
     			logger.info("event=processed_recently status=expired suffix=" + suffix);
     			return false;
     		}
@@ -378,7 +378,7 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
     		return true;
     	} else if (suffix == "-VR") {
     		lastTime = queue.getLastRevisibleSetProcessingTime();
-    		if (now > (lastTime)) {
+    		if (now > lastTime) {
         		logger.info("event=processed_recently status=expired suffix=" + suffix);
     			return false;
     		}
@@ -393,8 +393,7 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
     }
     
     // update the last time we processed the visibility or revisibilityset
-    private static void setProcessedRecently(String queueUrl, int exp, String suffix) {
-    	long now = System.currentTimeMillis() + (1000 * exp);
+    private static void setProcessedRecently(String queueUrl, long time, String suffix) {
     	CQSQueue queue = null;
     	try {
     		queue = CQSCache.getCachedQueue(queueUrl);
@@ -403,10 +402,10 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
     		return;
     	}
     	if (suffix == "-R") {
-    		queue.setLastVisibilityProcessingTime(now);
+    		queue.setLastVisibilityProcessingTime(time);
     		return;
     	} else if (suffix == "-VR") {
-    		queue.setLastRevisibleSetProcessingTime(now);
+    		queue.setLastRevisibleSetProcessingTime(time);
     		return;
     	} else {
     		logger.error("call=processedRecently event=unknown_suffix suffix=" + suffix);
@@ -414,57 +413,72 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
     	}
     	
     }
-    // TODO: once we can expect people to have Redis 2.6.12 or newer, the set command takes additional arguments that will make this
-    // much simpler.  It will also require a newer version of the Jedis library to support it.
-    // Example:
-    // String resp = j.set(redisKey,"Y","NX","EX",exp)
-    // return ( resp == nil)
-    // 
-    private static boolean checkAndSetFlag(String queueUrl, int shard, String suffix, int exp) throws SetFailedException {
+    
+    private static boolean checkAndSetFlag(String queueUrl, int shard, String suffix, int exp) {
         if (exp <= 0) {
         	throw new IllegalArgumentException("Redis expiration cannot be less than 0");
         }
-        long ts1 = System.currentTimeMillis();
-        boolean brokenJedis = false;
-        String redisKey = queueUrl + "-" + shard + suffix;
-        ShardedJedis jedis = getResource();
-        if (processedRecently(queueUrl,  suffix)) {
+        
+        // we should shortcut here on busy queues
+        if (processedRecently(queueUrl, suffix)) {
         	return false;
         }
-        try {
-            if (jedis.exists(redisKey)) {
-            	setProcessedRecently(queueUrl,exp, suffix);
-                return false;
-            }
-            Jedis j = jedis.getShard(redisKey);
-            j.watch(redisKey);
-           
-            String val = j.get(redisKey);
-            if (val != null) {
-                j.unwatch();
-                setProcessedRecently(queueUrl, exp,suffix);
-                return false;
-            }
-            Transaction tr = j.multi();
-
-            //sentinel expired. kick off new RevisibleProcessor job
-            tr.setex(redisKey,exp, "Y");
-            // since we have called watch, tr.exec will return null in the case that someone else has modified
-            // the redisKey since we started our transaction.  If it doesn't return null, the value hasn't changed out from
-            // under us, so we return true since we set it
-            List<Object> resp = tr.exec();
-            setProcessedRecently(queueUrl, exp, suffix);
-            return resp != null; 
-        } catch (JedisException e) {
-            brokenJedis = true;
-            throw e;
-        } finally {
-            returnResource(jedis, brokenJedis);
-            long ts2 = System.currentTimeMillis();
-            CQSControllerServlet.valueAccumulator.addToCounter(AccumulatorName.RedisTime, (ts2 - ts1));
-        }         
-    }
         
+        boolean brokenJedis = false;
+        ShardedJedis jedis = getResource();
+        long ts1 = System.currentTimeMillis();
+        String redisKey = queueUrl + "-" + shard + suffix;
+        long processedTime = 0;
+        try {
+        	long now = System.currentTimeMillis();
+        	String result = jedis.get(redisKey);
+        	try {
+        		processedTime = Long.valueOf(result);
+        	} catch (NumberFormatException nfe) {
+        		processedTime = 0;
+        	}
+        	// missing or value that has expired
+        	if (processedTime < now) {
+        		 Jedis j = jedis.getShard(redisKey);
+        		 j.watch(redisKey);
+        		 result = j.get(redisKey);
+        		 try {
+        			 processedTime = Long.valueOf(result);
+        		 } catch (NumberFormatException nfe) {
+        			 processedTime = 0;
+        		 }
+        		 // someone else beat us to the update
+        		 if (processedTime > now) {
+        			 j.unwatch();
+        			 setProcessedRecently(queueUrl, processedTime, suffix);
+        			 return false;
+        		 } else {
+        			 Transaction tr = j.multi();
+        			 tr.set(redisKey, Long.toString(now + (exp * 1000)));
+        			 List<Object> resp = tr.exec();
+        	         setProcessedRecently(queueUrl, now + (exp * 1000), suffix);
+        	         if (resp == null) {
+        	        	 // someone else beat us to it
+        	        	 return false;
+        	         } else {
+        	        	 // since we set it, we own performing the action
+        	        	 return true;
+        	         }
+        		 }
+        	} else {
+        		setProcessedRecently(queueUrl,processedTime,suffix);
+        		return false;
+        	}
+        	} catch (JedisException e) {
+                brokenJedis = true;
+                throw e;
+            } finally {
+                returnResource(jedis, brokenJedis);
+                long ts2 = System.currentTimeMillis();
+                CQSControllerServlet.valueAccumulator.addToCounter(AccumulatorName.RedisTime, (ts2 - ts1));
+            }        
+    }
+  
     /**
      * Check whether a visibility processing was kicked off within the last exp seconds. If not, kick one off.
      * Method is atomic.
