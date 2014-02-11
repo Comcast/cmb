@@ -389,7 +389,7 @@ abstract public class CMBControllerServlet extends HttpServlet {
 
 		StringBuffer logLine = new StringBuffer("");
 
-		logLine.append("event=request status=success client=").append(request.getRemoteAddr());
+		logLine.append("event=request status="+success+" client=").append(request.getRemoteAddr());
 
 		logLine.append(((this instanceof CQSControllerServlet) ? (" queue_url=" + request.getRequestURL()) : ""));
 
