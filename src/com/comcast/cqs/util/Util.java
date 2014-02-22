@@ -36,7 +36,6 @@ import java.util.zip.GZIPOutputStream;
 
 import me.prettyprint.cassandra.serializers.CompositeSerializer;
 import me.prettyprint.cassandra.serializers.StringSerializer;
-import me.prettyprint.cassandra.service.template.SuperCfResult;
 import me.prettyprint.hector.api.beans.Composite;
 import me.prettyprint.hector.api.beans.HColumn;
 import me.prettyprint.hector.api.beans.HSuperColumn;
@@ -514,17 +513,24 @@ public class Util {
         
         // process Attribute.n requests start from 1 ordinal, ignore rest if there is a break
 
-        List<String> filterRequests = new ArrayList<String>();
+        List<String> attributeNames = new ArrayList<String>();
+        String attr = null;
+        
+        if (request.getParameter(CQSConstants.ATTRIBUTE_NAME) != null) {
+        	attr = request.getParameter(CQSConstants.ATTRIBUTE_NAME);
+        	attributeNames.add(attr);
+        }
+        
         int index = 1;
-        String attr = request.getParameter(CQSConstants.ATTRIBUTE_NAME + "." + index);
+        attr = request.getParameter(CQSConstants.ATTRIBUTE_NAME + "." + index);
         
         while (attr != null) {
-            filterRequests.add(attr);
+        	attributeNames.add(attr);
             index++;
             attr = request.getParameter(CQSConstants.ATTRIBUTE_NAME + "." + index);
         }
         
-        return filterRequests;
+        return attributeNames;
     }
     
 	public static CQSMessage extractMessageFromSuperColumn(String queueUrl, HSuperColumn<Composite, String, String> superColumn) throws NoSuchAlgorithmException, PersistenceException, IOException {
