@@ -42,6 +42,7 @@ import com.comcast.cmb.common.persistence.PersistenceFactory;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.PersistenceException;
 import com.comcast.cmb.common.util.ValueAccumulator.AccumulatorName;
+import com.comcast.cqs.util.Util;
 
 public class CQSHandler {
 	
@@ -50,6 +51,7 @@ public class CQSHandler {
     private static volatile boolean initialized = false;
     private static volatile BasicAWSCredentials awsCredentials = null;
     private static volatile AmazonSQSClient sqs = null;
+    private static String cnsInternalUserId = null;
     private static ConcurrentHashMap<String, String> queueUrlCache = new ConcurrentHashMap<String, String>();
     
     public static synchronized void initialize() throws PersistenceException {
@@ -73,7 +75,12 @@ public class CQSHandler {
 
 		    awsCredentials = new BasicAWSCredentials(cnsInternalUser.getAccessKey(), cnsInternalUser.getAccessSecret());
 		}
- 		
+		
+		
+		IUserPersistence userHandler = PersistenceFactory.getUserPersistence();
+		User cnsInternalUser = userHandler.getUserByAccessKey(awsCredentials.getAWSAccessKeyId());
+		cnsInternalUserId = cnsInternalUser.getUserId();
+		
         sqs = new AmazonSQSClient(awsCredentials);
         sqs.setEndpoint(CMBProperties.getInstance().getCQSServiceUrl());
 
@@ -212,5 +219,19 @@ public class CQSHandler {
                 }
             }
         }
+    }
+    
+    public static String getLocalQueueUrl(String queueName) {
+    	
+    	long ts1 = System.currentTimeMillis();
+    	
+    	//build the queue url
+    	String localQueueUrl = Util.getAbsoluteQueueUrlForName(queueName, cnsInternalUserId);
+       
+        long ts2 = System.currentTimeMillis();
+        CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CNSCQSTime, ts2 - ts1);
+		logger.info("event=get_local_queue_url queue_name=" + queueName + " queue_url=" + localQueueUrl);
+        
+        return localQueueUrl;
     }
 }

@@ -188,6 +188,20 @@ public class Util {
 		
 		return url;
 	}
+	
+	public static String getLocalAbsoluteQueueUrlForRelativeUrl(String relativeUrl) {
+		
+		
+		String url = CMBProperties.getInstance().getCQSServiceUrl();
+		
+		if (!url.endsWith("/")) {
+			url += "/";
+		}
+		
+		url += relativeUrl;
+		
+		return url;
+	}
 
 	public static String getRelativeQueueUrlForName(String queueName, String userId) {
 		

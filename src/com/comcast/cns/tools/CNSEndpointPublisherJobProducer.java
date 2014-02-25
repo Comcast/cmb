@@ -124,7 +124,7 @@ public class CNSEndpointPublisherJobProducer implements CNSPublisherPartitionRun
             }
 	        
 	        String publishJobQName = CNS_PRODUCER_QUEUE_NAME_PREFIX + partition;
-	        String queueUrl = CQSHandler.getQueueUrl(publishJobQName);
+	        String queueUrl = CQSHandler.getLocalQueueUrl(publishJobQName);
 	        Message msg = null;
 	        
 	        if (CMBProperties.getInstance().isCQSLongPollEnabled()) {
@@ -155,7 +155,7 @@ public class CNSEndpointPublisherJobProducer implements CNSPublisherPartitionRun
 	            }
 	            
 	            List<CNSEndpointPublishJob.CNSEndpointSubscriptionInfo> subscriptions = null;
-
+	            long t1=System.currentTimeMillis();
 	            try {
 	                subscriptions = getSubscriptionsForTopic(publishMessage.getTopicArn());
 	            } catch (TopicNotFoundException e) {
@@ -172,7 +172,7 @@ public class CNSEndpointPublisherJobProducer implements CNSPublisherPartitionRun
 	                CMBControllerServlet.valueAccumulator.deleteAllCounters();
 	                return true; // return true to avoid backoff
 	            }
-
+	            logger.debug("event=get_subscription_list ms="+(System.currentTimeMillis()-t1));
 	            if (subscriptions != null && subscriptions.size() > 0) {
 	            	
 	                messageFound = true;
@@ -181,7 +181,7 @@ public class CNSEndpointPublisherJobProducer implements CNSPublisherPartitionRun
 	                for (CNSEndpointPublishJob epPublishJob: epPublishJobs) {
 	                	
 	                	String epQueueName =  CMBProperties.getInstance().getCNSEndpointPublishQueueNamePrefix() + ((new Random()).nextInt(CMBProperties.getInstance().getCNSNumEndpointPublishJobQueues()));
-	                    String epQueueUrl = CQSHandler.getQueueUrl(epQueueName);
+	                    String epQueueUrl = CQSHandler.getLocalQueueUrl(epQueueName);
 	                    CQSHandler.sendMessage(epQueueUrl, epPublishJob.serialize());
 	                }
 	            }

@@ -86,4 +86,19 @@ public interface CNSWorkerMonitorMBean {
      * Clear all worker queues and reinitialize (potentially useful when worker is overloaded)
      */
     public boolean clearWorkerQueues();
+    
+    /**
+     * @return return status of cns workers
+     */
+    public boolean getCNSWorkerStatus();
+    
+    /**
+     * Start CNS Workers
+     */
+    public void startCNSWorkers () throws Exception;
+    
+    /**
+     * Stop CNS Workers
+     */
+    public void stopCNSWorkers();
 }

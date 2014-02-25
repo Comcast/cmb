@@ -17,6 +17,8 @@ package com.comcast.cns.tools;
 
 import org.apache.log4j.Logger;
 
+import com.comcast.cmb.common.util.CMBProperties;
+
 /**
  * This class represents Thread that backoff when no message exists in all the partitions
  * @author aseem 
@@ -39,6 +41,9 @@ public class CNSPublisherJobThread extends Thread {
     public void run() {
         while (true) {
         	runnable.run(this.partitionNumber);
+        	if(!CMBProperties.getInstance().isCNSPublisherEnabled()){
+        		break;
+        	}
         }
     }
 }
