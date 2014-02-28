@@ -72,6 +72,8 @@ public class CQSAPIStatePageServlet extends AdminServletBase {
 			throw new ServletException(ex);
 		}
 
+		String currentDataCenter = null;
+		
 		if (parameters.containsKey("ClearCache")) {
 			
 			try {
@@ -102,6 +104,12 @@ public class CQSAPIStatePageServlet extends AdminServletBase {
 				logger.error("event=failed_to_clear_queues", ex);
 				throw new ServletException(ex);
 			}
+		} else if(parameters.containsKey("currentDataCenter")){
+			currentDataCenter = request.getParameter("currentDataCenter");
+		}
+				
+		if(currentDataCenter == null){
+			currentDataCenter = CMBProperties.getInstance().getCMBDataCenter();
 		}
 		
 		out.println("<html>");
@@ -109,12 +117,43 @@ public class CQSAPIStatePageServlet extends AdminServletBase {
 		this.header(request, out, "CQS API State");
 		
 		out.println("<body>");
-		
+		//show drop down box for data center at the top
 		String url = null;
+		try{
+			url = cqsServiceBaseUrl + "?Action=GetAPIStats&SubTask=GetDataCenter&AWSAccessKeyId=" + cnsAdminUser.getAccessKey();
+			String workerStateXml = httpGet(url);
+			
+			Element root = XmlUtil.buildDoc(workerStateXml);
+			
+			List<Element> DataCenterList = XmlUtil.getCurrentLevelChildNodes(XmlUtil.getCurrentLevelChildNodes(root, "GetAPIStatsResult").get(0), "DataCenter");
+			out.println("<table cellspacing='0' cellpadding='0'><tr>");
+			out.println("<td valign='top'>Data Center: </td>");
+			out.println("<td><div>");
+			out.print("<form action=\"\" method=\"POST\">");
+			out.println("<select class=\"service-area\" name='currentDataCenter' onchange='this.form.submit()'>");
+			String dataCenter = null;
+			for(Element dataCenterElement:DataCenterList){
+				dataCenter=dataCenterElement.getFirstChild().getNodeValue();
+				if(dataCenter.equals(currentDataCenter)){
+					out.println("<option selected  value=\""+dataCenter+"\">"+dataCenter+"</option>");
+				}else {
+					out.println("<option value=\""+dataCenter+"\">"+dataCenter+"</option>");
+				}
+			}
+			out.println("</select>");
+			out.println("<noscript><input type=\"submit\" value=\"Submit\"></noscript>");
+			out.println("</form>");
+			out.println("</div></td></tr></table>");
+		} catch (Exception ex) {
+			out.println("<p>Unable to reach " + url + ": "+ex.getMessage()+"</p>");
+			logger.error("", ex);
+		}		
+		
+		url = null;
 
 		try {
 
-			url = cqsServiceBaseUrl + "?Action=GetAPIStats&AWSAccessKeyId=" + cnsAdminUser.getAccessKey();
+			url = cqsServiceBaseUrl + "?Action=GetAPIStats&DataCenter="+currentDataCenter+"&AWSAccessKeyId=" + cnsAdminUser.getAccessKey();
 			String apiStateXml = httpGet(url);
 			
 			Element root = XmlUtil.buildDoc(apiStateXml);

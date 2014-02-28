@@ -40,6 +40,7 @@ import com.comcast.cmb.common.persistence.CassandraPersistence;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cqs.io.CQSAPIStatsPopulator;
 import com.comcast.cqs.model.CQSAPIStats;
+import com.comcast.cqs.util.CQSAPIStatWrapper;
 /**
  * Subscribe action
  * @author bwolf, jorge
@@ -66,41 +67,24 @@ public class CNSGetAPIStatsAction extends CNSAction {
 	@Override
 	public boolean doAction(User user, AsyncContext asyncContext) throws Exception {
 		
-        HttpServletResponse response = (HttpServletResponse)asyncContext.getResponse();
+		HttpServletRequest request = (HttpServletRequest)asyncContext.getRequest();
+		HttpServletResponse response = (HttpServletResponse)asyncContext.getResponse();
 		
-		CassandraPersistence cassandraHandler = new CassandraPersistence(CMBProperties.getInstance().getCNSKeyspace());
-		
-		List<Row<String, String, String>> rows = cassandraHandler.readNextNNonEmptyRows("CNSAPIServers", null, 1000, 10, new StringSerializer(), new StringSerializer(), new StringSerializer(), CMBProperties.getInstance().getReadConsistencyLevel());
-		List<CQSAPIStats> statsList = new ArrayList<CQSAPIStats>();
-		
-		if (rows != null) {
-			
-			for (Row<String, String, String> row : rows) {
-				
-				CQSAPIStats stats = new CQSAPIStats();
-				stats.setIpAddress(row.getKey());
-				
-				if (row.getColumnSlice().getColumnByName("timestamp") != null) {
-					stats.setTimestamp(Long.parseLong(row.getColumnSlice().getColumnByName("timestamp").getValue()));
-				}
-				
-				if (row.getColumnSlice().getColumnByName("jmxport") != null) {
-					stats.setJmxPort(Long.parseLong(row.getColumnSlice().getColumnByName("jmxport").getValue()));
-				}
-
-				if (row.getColumnSlice().getColumnByName("dataCenter") != null) {
-					stats.setDataCenter(row.getColumnSlice().getColumnByName("dataCenter").getValue());
-				}
-				
-				if (row.getColumnSlice().getColumnByName("serviceUrl") != null) {
-					stats.setServiceUrl(row.getColumnSlice().getColumnByName("serviceUrl").getValue());
-				}
-
-				if (stats.getIpAddress().contains(":")) {
-					statsList.add(stats);
-				}
-			}
+		//if parameter includes GetDataCenter, only get Data center name and return
+		String  subTask= request.getParameter("SubTask");
+		if((subTask!=null)&&(subTask.equals("GetDataCenter"))){
+	    	String out = CQSAPIStatsPopulator.getGetAPIStatsDataCenterResponse(CQSAPIStatWrapper.getCNSDataCenterNames());	
+	        writeResponse(out, response);
+	    	return true;
 		}
+
+		List<CQSAPIStats> statsList = null;
+		String dataCenter = request.getParameter("DataCenter");
+    	if(dataCenter == null || dataCenter.length() == 0){
+    		statsList = CQSAPIStatWrapper.getCNSAPIStats();
+    	} else{
+    		statsList = CQSAPIStatWrapper.getCNSAPIStatsByDataCenter(dataCenter);
+    	}
 		
 		for (CQSAPIStats stats : statsList) {
 			

@@ -72,6 +72,8 @@ public class CNSWorkerStatePageServlet extends AdminServletBase {
 			throw new ServletException(ex);
 		}
 
+		String currentDataCenter = null;
+		
 		if (parameters.containsKey("ClearWorkerQueues")) {
 			
 			try {
@@ -111,6 +113,27 @@ public class CNSWorkerStatePageServlet extends AdminServletBase {
 				logger.error("event=failed_to_clear_queues", ex);
 				throw new ServletException(ex);
 			}
+		} else if (parameters.containsKey("StartWorker") ||parameters.containsKey("StopWorker")) {
+			
+			try {
+				String dataCenter = request.getParameter("DataCenter");
+				String actionString;
+				if(parameters.containsKey("StartWorker")){
+					actionString = "StartWorker";
+				} else {
+					actionString = "StopWorker";
+				}
+				httpGet(cnsServiceBaseUrl + "?Action=ManageService&DataCenter="+dataCenter+"&Task="+actionString+"&AWSAccessKeyId=" + cnsAdminUser.getAccessKey());
+			} catch (Exception ex) {
+				logger.error("event=failed_to_start_or_stop_worker ", ex);
+				throw new ServletException(ex);
+			}
+		} else if(parameters.containsKey("currentDataCenter")){
+			currentDataCenter = request.getParameter("currentDataCenter");
+		}
+		
+		if(currentDataCenter == null){
+			currentDataCenter = CMBProperties.getInstance().getCMBDataCenter();
 		}
 		
 		out.println("<html>");
@@ -119,11 +142,45 @@ public class CNSWorkerStatePageServlet extends AdminServletBase {
 		
 		out.println("<body>");
 		
+		//show drop down box for data center at the top
 		String url = null;
+		try{
+			url = cnsServiceBaseUrl + "?Action=GetAPIStats&SubTask=GetDataCenter&AWSAccessKeyId=" + cnsAdminUser.getAccessKey();
+			String workerStateXml = httpGet(url);
+			
+			Element root = XmlUtil.buildDoc(workerStateXml);
+			
+			List<Element> DataCenterList = XmlUtil.getCurrentLevelChildNodes(XmlUtil.getCurrentLevelChildNodes(root, "GetAPIStatsResult").get(0), "DataCenter");
+
+			out.println("<table cellspacing='0' cellpadding='0'><tr>");
+			out.println("<td valign='top'>Data Center: </td>");
+			out.println("<td><div>");
+			out.print("<form action=\"\" method=\"POST\">");
+			out.println("<select class=\"service-area\" name='currentDataCenter' onchange='this.form.submit()'>");
+			String dataCenter = null;
+			for(Element dataCenterElement:DataCenterList){
+				dataCenter=dataCenterElement.getFirstChild().getNodeValue();
+				if(dataCenter.equals(currentDataCenter)){
+					out.println("<option selected  value=\""+dataCenter+"\">"+dataCenter+"</option>");
+				}else {
+					out.println("<option value=\""+dataCenter+"\">"+dataCenter+"</option>");
+				}
+			}
+			out.println("</select>");
+			out.println("<noscript><input type=\"submit\" value=\"Submit\"></noscript>");
+			out.println("</form>");
+			out.println("</div></td></tr></table>");
+		} catch (Exception ex) {
+			out.println("<p>Unable to reach " + url + ": "+ex.getMessage()+"</p>");
+			logger.error("", ex);
+		}
+		
+		//show detailed stats
+		url = null;
 
 		try {
 
-			url = cnsServiceBaseUrl + "?Action=GetWorkerStats&AWSAccessKeyId=" + cnsAdminUser.getAccessKey();
+			url = cnsServiceBaseUrl + "?Action=GetWorkerStats&DataCenter="+currentDataCenter+"&AWSAccessKeyId=" + cnsAdminUser.getAccessKey();
 			String workerStateXml = httpGet(url);
 			
 			Element root = XmlUtil.buildDoc(workerStateXml);
@@ -194,6 +251,10 @@ public class CNSWorkerStatePageServlet extends AdminServletBase {
 			}
 			
 			out.println("</table></span>");
+			out.println("<table><tr>");
+			out.println("<td><form action=\"\" method=\"POST\"><input type='hidden' name='DataCenter' value='"+currentDataCenter+"'><input type='submit' value='Start Worker' name='StartWorker'/></form></td>");
+			out.println("<td><form action=\"\" method=\"POST\"><input type='hidden' name='DataCenter' value='"+currentDataCenter+"'><input type='submit' value='Stop Worker' name='StopWorker'/></form></td>");
+			out.println("</tr></table>");
 			
 			if (endpointErrorCounts.size() > 0) {
 			
@@ -225,7 +286,7 @@ public class CNSWorkerStatePageServlet extends AdminServletBase {
 			
 			// api call stats
 			
-			url = cnsServiceBaseUrl + "?Action=GetAPIStats&AWSAccessKeyId=" + cnsAdminUser.getAccessKey();
+			url = cnsServiceBaseUrl + "?Action=GetAPIStats&DataCenter="+currentDataCenter+"&AWSAccessKeyId=" + cnsAdminUser.getAccessKey();
 			String apiStateXml = httpGet(url);
 			
 			root = XmlUtil.buildDoc(apiStateXml);
