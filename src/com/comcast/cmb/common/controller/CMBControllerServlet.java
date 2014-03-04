@@ -409,6 +409,8 @@ abstract public class CMBControllerServlet extends HttpServlet {
 		logLine.append(" cass_num_wr=" + valueAccumulator.getCounter(AccumulatorName.CassandraWrite));
 		logLine.append(((this instanceof CNSControllerServlet) ? (" cnscqs_ms=" + CMBControllerServlet.valueAccumulator.getCounter(AccumulatorName.CNSCQSTime)) : ""));
 		logLine.append(((this instanceof CQSControllerServlet) ? (" redis_ms=" + valueAccumulator.getCounter(AccumulatorName.RedisTime)) : ""));
+		logLine.append(" io_ms=" + valueAccumulator.getCounter(AccumulatorName.IOTime));
+		logLine.append(" asyncq_ms=" + valueAccumulator.getCounter(AccumulatorName.AsyncQueueTime));
 
 		return logLine.toString();
 	}
@@ -514,7 +516,7 @@ abstract public class CMBControllerServlet extends HttpServlet {
 
 	@Override
 	public void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-
+		
 		if (!request.isAsyncSupported()) {
 			throw new ServletException("Servlet container does not support asynchronous calls");
 		}
@@ -666,6 +668,9 @@ abstract public class CMBControllerServlet extends HttpServlet {
 			public void run() {
 
 				try {
+					long ts1 = ((CQSHttpServletRequest)asyncContext.getRequest()).getRequestReceivedTimestamp();
+					long ts2 = System.currentTimeMillis();
+					valueAccumulator.addToCounter(AccumulatorName.AsyncQueueTime, ts2-ts1);
 					ReceiptModule.init();
 					handleRequest(asyncContext);
 				} catch (Exception ex) {

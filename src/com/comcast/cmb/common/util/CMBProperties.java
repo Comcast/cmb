@@ -38,6 +38,7 @@ public class CMBProperties {
 	    SYNC, ASYNC 
 	}
 	
+	private boolean useCmbIOBuffers;
 	private final String cmbUnsubscribeUrl;
 	
 	private final HConsistencyLevel consistencyLevel;
@@ -214,6 +215,8 @@ public class CMBProperties {
 			
 			FileInputStream fileStream = new FileInputStream(file);
 			props.load(fileStream);
+			
+			useCmbIOBuffers = Boolean.parseBoolean(props.getProperty("cmb.useCmbIOBuffers", "true"));
 			
 			consistencyLevel = HConsistencyLevel.valueOf(props.getProperty("cmb.cassandra.consistencyLevel","QUORUM"));
 			readConsistencyLevel = HConsistencyLevel.valueOf(props.getProperty("cmb.cassandra.readConsistencyLevel",consistencyLevel.name()));
@@ -822,6 +825,10 @@ public class CMBProperties {
 	
 	public int getRedisPubSubEndpointConnectionTimeoutMS() {
 		return redisPubSubEndpointConnectionTimeoutMS;
+	}
+	
+	public boolean useCmbIOBuffers() {
+		return useCmbIOBuffers;
 	}
 
 }

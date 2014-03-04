@@ -39,9 +39,11 @@ public final class ValueAccumulator {
         CQSPreDoAction,
         CNSCQSTime,
         CNSPublishSendTime,
-        UnitTestTime;
-        
+        UnitTestTime,
+        IOTime,
+        AsyncQueueTime;
     }
+
     static AccumulatorName[] accumulatorNameValues = AccumulatorName.values();
 
     private final ThreadLocal<long[]> keyToValue = new ThreadLocal<long[]> () {
@@ -56,7 +58,7 @@ public final class ValueAccumulator {
     };
     
     /**
-     * Initialize the counter for key. Should be called at the begenning of servicing a request
+     * Initialize the counter for key. Should be called at the beginning of servicing a request
      * @param key
      */
     public void initializeCounters(AccumulatorName ...keys) {
