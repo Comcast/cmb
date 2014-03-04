@@ -222,6 +222,8 @@ public class CNSPublishAction extends CNSAction {
 
     	    GetQueueUrlResult getQueueUrlResult = sqs.getQueueUrl(getQueueUrlRequest);
     	    queueUrl = getQueueUrlResult.getQueueUrl();
+    	    queueUrl = com.comcast.cqs.util.Util.getRelativeForAbsoluteQueueUrl(queueUrl);
+    	    queueUrl = com.comcast.cqs.util.Util.getLocalAbsoluteQueueUrlForRelativeUrl(queueUrl);
 
     	} catch (AmazonServiceException ex) {
 

@@ -241,7 +241,7 @@ public class CNSEndpointPublisherJobConsumer implements CNSPublisherPartitionRun
             }
 	        
 	        String queueName = CNS_CONSUMER_QUEUE_NAME_PREFIX + partition;
-	        String queueUrl = CQSHandler.getQueueUrl(queueName);
+	        String queueUrl = CQSHandler.getLocalQueueUrl(queueName);
 	        Message msg = null;
 	        
 	        if (CMBProperties.getInstance().isCQSLongPollEnabled()) {

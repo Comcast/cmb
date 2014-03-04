@@ -40,6 +40,7 @@ import com.comcast.cmb.common.persistence.CassandraPersistence;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cns.io.CNSWorkerStatsPopulator;
 import com.comcast.cns.model.CNSWorkerStats;
+import com.comcast.cns.util.CNSWorkerStatWrapper;
 /**
  * Subscribe action
  * @author bwolf, jorge
@@ -58,46 +59,16 @@ public class CNSGetWorkerStatsAction extends CNSAction {
     	return true;
     }
     
-    public static List<CNSWorkerStats> getWorkerStats() throws IOException {
+    public static List<CNSWorkerStats> getWorkerStats(String dataCenter) throws IOException {
     	
-		CassandraPersistence cassandraHandler = new CassandraPersistence(CMBProperties.getInstance().getCNSKeyspace());
-		
-		List<Row<String, String, String>> rows = cassandraHandler.readNextNNonEmptyRows("CNSWorkers", null, 1000, 10, new StringSerializer(), new StringSerializer(), new StringSerializer(), CMBProperties.getInstance().getReadConsistencyLevel());
-		List<CNSWorkerStats> statsList = new ArrayList<CNSWorkerStats>();
-		
-		if (rows != null) {
-			
-			for (Row<String, String, String> row : rows) {
-				
-				CNSWorkerStats stats = new CNSWorkerStats();
-				stats.setIpAddress(row.getKey());
-				
-				if (row.getColumnSlice().getColumnByName("producerTimestamp") != null) {
-					stats.setProducerTimestamp(Long.parseLong(row.getColumnSlice().getColumnByName("producerTimestamp").getValue()));
-				}
-				
-				if (row.getColumnSlice().getColumnByName("consumerTimestamp") != null) {
-					stats.setConsumerTimestamp(Long.parseLong(row.getColumnSlice().getColumnByName("consumerTimestamp").getValue()));
-				}
-
-				if (row.getColumnSlice().getColumnByName("jmxport") != null) {
-					stats.setJmxPort(Long.parseLong(row.getColumnSlice().getColumnByName("jmxport").getValue()));
-				}
-
-				if (row.getColumnSlice().getColumnByName("mode") != null) {
-					stats.setMode(row.getColumnSlice().getColumnByName("mode").getValue());
-				}
-
-				if (row.getColumnSlice().getColumnByName("dataCenter") != null) {
-					stats.setDataCenter(row.getColumnSlice().getColumnByName("dataCenter").getValue());
-				}
-
-				if (stats.getDataCenter() != null && stats.getDataCenter().equals(CMBProperties.getInstance().getCMBDataCenter())) {
-					statsList.add(stats);
-				}
-			}
-		}
-		
+	
+    	List<CNSWorkerStats> statsList = null;
+    	
+    	if(dataCenter == null || dataCenter.length() == 0){
+    		statsList = CNSWorkerStatWrapper.getCassandraWorkerStats();
+    	} else{
+    		statsList = CNSWorkerStatWrapper.getCassandraWorkerStatsByDataCenter(dataCenter);
+    	}
 		for (CNSWorkerStats stats : statsList) {
 			
 			long now = System.currentTimeMillis();
@@ -169,7 +140,9 @@ public class CNSGetWorkerStatsAction extends CNSAction {
 	public boolean doAction(User user, AsyncContext asyncContext) throws Exception {
 		
         HttpServletResponse response = (HttpServletResponse)asyncContext.getResponse();
-        List<CNSWorkerStats> statsList = getWorkerStats();
+        HttpServletRequest request = (HttpServletRequest)asyncContext.getRequest();
+		String dataCenter = request.getParameter("DataCenter");
+        List<CNSWorkerStats> statsList = getWorkerStats(dataCenter);
     	String out = CNSWorkerStatsPopulator.getGetWorkerStatsResponse(statsList);	
         writeResponse(out, response);
 

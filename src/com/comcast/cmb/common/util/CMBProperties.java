@@ -57,7 +57,7 @@ public class CMBProperties {
 	private final int cnsServerPort;
 	private final int cqsServerPort;
 	
-	private final boolean cnsPublisherEnabled;
+	private boolean cnsPublisherEnabled;
 	private final String cnsPublisherMode;
 	
 	private final int requestParameterValueMaxLength;
@@ -766,6 +766,10 @@ public class CMBProperties {
 
 	public boolean isCNSPublisherEnabled() {
 		return this.cnsPublisherEnabled;
+	}
+
+	public void setCNSPublisherEnabled(boolean cnsPublisherEnabled) {
+		this.cnsPublisherEnabled = cnsPublisherEnabled;
 	}
 	
 	public String getCNSPublisherMode() {

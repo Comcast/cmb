@@ -21,8 +21,10 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.apache.log4j.Logger;
 import org.jfree.util.Log;
 
+import com.comcast.cmb.common.controller.CMB;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.PersistenceException;
 import com.comcast.cmb.common.util.RollingWindowCapture;
@@ -38,6 +40,7 @@ import com.comcast.cns.tools.CNSPublisher;
 
 public class CNSWorkerMonitor implements CNSWorkerMonitorMBean {
 
+	private static Logger logger = Logger.getLogger(CNSWorkerMonitorMBean.class);
 	private static final CNSWorkerMonitor Inst = new CNSWorkerMonitor();
 
 	private CNSWorkerMonitor() {
@@ -116,6 +119,29 @@ public class CNSWorkerMonitor implements CNSWorkerMonitorMBean {
         return numNonZero;
     }
 
+    @Override
+    public boolean getCNSWorkerStatus() {
+    	return CMBProperties.getInstance().isCNSPublisherEnabled();
+    }
+    
+    @Override
+    public void startCNSWorkers() throws Exception{	
+    	if (CMBProperties.getInstance().isCNSPublisherEnabled()){
+    		return;
+    	}
+    	CMBProperties.getInstance().setCNSPublisherEnabled(true);
+    	try{
+    		CNSPublisher.start(CMBProperties.getInstance().getCNSPublisherMode());
+    	} catch (Exception e){
+    		logger.error("event=start_cnsworker_error exception="+e);
+    		throw e;
+    	}
+    }
+    
+    @Override
+    public void stopCNSWorkers() {
+        CMBProperties.getInstance().setCNSPublisherEnabled(false);
+    }
     public void clearBadEndpointsState() {
         badEndpoints.clear();
     }

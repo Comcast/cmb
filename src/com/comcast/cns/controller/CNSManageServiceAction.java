@@ -47,6 +47,7 @@ import com.comcast.cns.io.CNSWorkerStatsPopulator;
 import com.comcast.cns.model.CNSWorkerStats;
 import com.comcast.cns.tools.CNSWorkerMonitorMBean;
 import com.comcast.cns.util.CNSErrorCodes;
+import com.comcast.cns.util.CNSWorkerStatWrapper;
 /**
  * Subscribe action
  * @author bwolf
@@ -84,8 +85,8 @@ public class CNSManageServiceAction extends CNSAction {
 		}
 
 		String host = request.getParameter("Host");
-
-		if (!task.equals("ClearAPIStats") && (host == null || host.equals(""))) {
+		//for some task, Host is mandatory. Check it.
+		if (!task.equals("ClearAPIStats") && (!task.equals("StartWorker")) && (!task.equals("StopWorker")) && (host == null || host.equals(""))) {
 			logger.error("event=cns_manage_service error_code=missing_parameter_host");
 			throw new CMBException(CNSErrorCodes.MissingParameter,"Request parameter Host missing.");
 		}
@@ -180,6 +181,17 @@ public class CNSManageServiceAction extends CNSAction {
 			
 			ColumnFamilyTemplate<String, String> usersTemplate = new ThriftColumnFamilyTemplate<String, String>(cassandraHandler.getKeySpace(CMBProperties.getInstance().getWriteConsistencyLevel()), "CNSAPIServers", StringSerializer.get(), StringSerializer.get());
 			cassandraHandler.delete(usersTemplate, host, null);
+			String out = CNSPopulator.getResponseMetadata();
+	        writeResponse(out, response);
+			return true;
+			
+		} else if (task.equals("StartWorker")||task.equals("StopWorker")) {
+			String dataCenter = request.getParameter("DataCenter");
+			if(task.equals("StartWorker")){
+				CNSWorkerStatWrapper.startWorkers(dataCenter);
+			} else {
+				CNSWorkerStatWrapper.stopWorkers(dataCenter);
+			}
 			String out = CNSPopulator.getResponseMetadata();
 	        writeResponse(out, response);
 			return true;

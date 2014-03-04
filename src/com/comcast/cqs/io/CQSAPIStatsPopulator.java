@@ -85,4 +85,18 @@ public class CQSAPIStatsPopulator {
 
 		return out;
 	}
+	
+	//return data center names
+	public static String getGetAPIStatsDataCenterResponse(List<String> dataCenterNames) {
+
+		String out = "";
+		out += "<GetAPIStatsResponse>\n";
+		out +=  "\t<GetAPIStatsResult>\n";
+		for (String currentDataCenterName : dataCenterNames) {
+			out += "\t\t<DataCenter>"+currentDataCenterName+"</DataCenter>\n";
+		}
+		out += "\t</GetAPIStatsResult>\n";
+		out += "</GetAPIStatsResponse>";
+		return out;
+	}
 }
