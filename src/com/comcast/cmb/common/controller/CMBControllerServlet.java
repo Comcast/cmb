@@ -411,6 +411,7 @@ abstract public class CMBControllerServlet extends HttpServlet {
 		logLine.append(((this instanceof CQSControllerServlet) ? (" redis_ms=" + valueAccumulator.getCounter(AccumulatorName.RedisTime)) : ""));
 		logLine.append(" io_ms=" + valueAccumulator.getCounter(AccumulatorName.IOTime));
 		logLine.append(" asyncq_ms=" + valueAccumulator.getCounter(AccumulatorName.AsyncQueueTime));
+		logLine.append(" auth_ms=" + valueAccumulator.getCounter(AccumulatorName.CMBControllerPreHandleAction));
 
 		return logLine.toString();
 	}
@@ -432,6 +433,9 @@ abstract public class CMBControllerServlet extends HttpServlet {
 		try {
 
 			valueAccumulator.initializeAllCounters();
+			
+			valueAccumulator.addToCounter(AccumulatorName.AsyncQueueTime, System.currentTimeMillis()-request.getRequestReceivedTimestamp());
+
 			initRequest();
 			response.setContentType("text/xml");
 
@@ -457,6 +461,7 @@ abstract public class CMBControllerServlet extends HttpServlet {
 			long ts2 = System.currentTimeMillis();
 			String logLine = getLogLine(asyncContext, request, user, ts2-ts1, "success");
 			logger.info(logLine);
+			
 			//String rawRequest = this.getFullRequestUrl(asyncContext);
 			//logger.info(rawRequest);
 
@@ -516,6 +521,8 @@ abstract public class CMBControllerServlet extends HttpServlet {
 
 	@Override
 	public void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		
+		//logger.info("event=request_received");
 		
 		if (!request.isAsyncSupported()) {
 			throw new ServletException("Servlet container does not support asynchronous calls");
@@ -581,6 +588,7 @@ abstract public class CMBControllerServlet extends HttpServlet {
 
 			@Override
 			public void onComplete(AsyncEvent asyncEvent) throws IOException {
+				//logger.info("event=on_complete");
 			}
 
 			@Override
@@ -628,6 +636,8 @@ abstract public class CMBControllerServlet extends HttpServlet {
 
 			@Override
 			public void onTimeout(AsyncEvent asyncEvent) throws IOException {
+				
+				//logger.info("event=on_timeout");
 
 				String out = CQSMessagePopulator.getReceiveMessageResponseAfterSerializing(new ArrayList<CQSMessage>(), new ArrayList<String>());
 				asyncEvent.getSuppliedResponse().getWriter().println(out);
@@ -668,9 +678,7 @@ abstract public class CMBControllerServlet extends HttpServlet {
 			public void run() {
 
 				try {
-					long ts1 = ((CQSHttpServletRequest)asyncContext.getRequest()).getRequestReceivedTimestamp();
-					long ts2 = System.currentTimeMillis();
-					valueAccumulator.addToCounter(AccumulatorName.AsyncQueueTime, ts2-ts1);
+					//logger.info("event=switched_thread");
 					ReceiptModule.init();
 					handleRequest(asyncContext);
 				} catch (Exception ex) {
