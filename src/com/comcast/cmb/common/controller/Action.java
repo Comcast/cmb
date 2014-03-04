@@ -24,6 +24,8 @@ import javax.servlet.http.HttpServletResponse;
 
 import com.comcast.cmb.common.model.CMBPolicy;
 import com.comcast.cmb.common.model.User;
+import com.comcast.cmb.common.util.CMBProperties;
+import com.comcast.cmb.common.util.ValueAccumulator.AccumulatorName;
 /**
  * Abstract class representing all actions that can be performed by calling the API
  * @author aseem, bwolf, vvenkatraman, baosen
@@ -74,23 +76,33 @@ public abstract class Action {
      */
     public static void writeResponse(String content, HttpServletResponse response) throws IOException {
     	
-    	byte buffer[] = content.getBytes();
-    	int blockSize = Math.min(Math.max(buffer.length/4096, 1)*4096, 16*4096);
-        response.setBufferSize(blockSize);
-    	response.setContentLength(buffer.length);
-    	ServletOutputStream out = response.getOutputStream();
-    	int numBlocks = buffer.length/blockSize;
-    	for (int i=0; i<numBlocks;i++) {
-    		out.write(buffer, i*blockSize, blockSize);
-    	}
-    	int remainingBytes = buffer.length-(numBlocks*blockSize);
-    	if (remainingBytes > 0) {
-    		out.write(buffer, numBlocks*blockSize, remainingBytes);
-    	}
-    	out.flush();
+    	long ts1 = System.currentTimeMillis();
     	
-    	//response.setContentLength(content.length());
-    	//response.getWriter().println(content);
-    	//response.getWriter().flush();
+    	if (CMBProperties.getInstance().useCmbIOBuffers()) {
+    	
+	    	byte buffer[] = content.getBytes();
+	    	int blockSize = Math.min(Math.max(buffer.length/4096, 1)*4096, 16*4096);
+	        response.setBufferSize(blockSize);
+	    	response.setContentLength(buffer.length);
+	    	ServletOutputStream out = response.getOutputStream();
+	    	int numBlocks = buffer.length/blockSize;
+	    	for (int i=0; i<numBlocks;i++) {
+	    		out.write(buffer, i*blockSize, blockSize);
+	    	}
+	    	int remainingBytes = buffer.length-(numBlocks*blockSize);
+	    	if (remainingBytes > 0) {
+	    		out.write(buffer, numBlocks*blockSize, remainingBytes);
+	    	}
+	    	out.flush();
+    	
+    	} else {
+    	
+    		response.setContentLength(content.length());
+    		response.getWriter().println(content);
+    		response.getWriter().flush();
+    	}
+    	
+    	long ts2 = System.currentTimeMillis();
+    	CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.IOTime, ts2-ts1);
     }    
 }
