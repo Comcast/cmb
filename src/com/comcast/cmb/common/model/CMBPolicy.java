@@ -243,7 +243,10 @@ public class CMBPolicy {
         
         this.statements = new ArrayList<CMBStatement>();
         
-        id = json.getString("Id");
+        if (json.has("Id")) {
+        	id = json.getString("Id");
+        }
+        
         version = json.getString("Version");
 
         for (int i = 0; i < stmts.length(); i++) {
@@ -276,7 +279,10 @@ public class CMBPolicy {
                 statement.setAction(Arrays.asList(action));
             }
             
-            statement.setResource(obj.getString("Resource"));
+            if (obj.has("Resource")) {
+            	statement.setResource(obj.getString("Resource"));
+            }
+            
             this.statements.add(statement);
         }
 	}
