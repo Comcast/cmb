@@ -16,6 +16,7 @@
 package com.comcast.cqs.controller;
 
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -38,8 +39,10 @@ import org.jboss.netty.channel.SimpleChannelHandler;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 
 import com.comcast.cmb.common.controller.Action;
+import com.comcast.cmb.common.controller.CMBControllerServlet;
 import com.comcast.cmb.common.persistence.PersistenceFactory;
 import com.comcast.cmb.common.util.CMBProperties;
+import com.comcast.cmb.common.util.ValueAccumulator.AccumulatorName;
 import com.comcast.cqs.io.CQSMessagePopulator;
 import com.comcast.cqs.model.CQSMessage;
 import com.comcast.cqs.model.CQSQueue;
@@ -132,6 +135,8 @@ public class CQSLongPollReceiver {
 	}
 	
 	public static void processNotification(String queueArn, String remoteAddress) {
+		long ts1 = System.currentTimeMillis();
+		CMBControllerServlet.valueAccumulator.initializeAllCounters();
 		
 		contextQueues.putIfAbsent(queueArn, new ConcurrentLinkedQueue<AsyncContext>());
 		ConcurrentLinkedQueue<AsyncContext> contextQueue = contextQueues.get(queueArn);
@@ -154,6 +159,8 @@ public class CQSLongPollReceiver {
 		}
 		
         CQSHttpServletRequest request = (CQSHttpServletRequest)asyncContext.getRequest();
+        
+
 
 		// skip if request is already finished or outdated
 		
@@ -171,13 +178,21 @@ public class CQSLongPollReceiver {
 		
 			if (messageList.size() > 0) {
 				
-				StringBuffer handles = new StringBuffer("");
-				
+				List<String> receiptHandles = new ArrayList<String>();
 				for (CQSMessage message : messageList) {
-	            	handles.append(message.getReceiptHandle()+",");
+	            	receiptHandles.add(message.getReceiptHandle());
 	            }
-				
-				logger.info("event=messages_found_for_longpoll_receive receipt_handles=" + handles.toString() + " count=" + messageList.size() + " queue_arn=" + queueArn + " remote_address=" + remoteAddress);
+				request.setReceiptHandles(receiptHandles);
+		        //Set for long poll. first y means long poll, second means found message, also pass lp_ms and other useful info
+
+				request.setAttribute("lp", "yy");
+		        long lp_ms = System.currentTimeMillis() - ts1;
+		        request.setAttribute("lp_ms", lp_ms);
+		        String cass_msString = String.valueOf(CQSControllerServlet.valueAccumulator.getCounter(AccumulatorName.CassandraTime));
+   		        request.setAttribute("cass_ms",cass_msString);
+		        request.setAttribute("cass_num_rd",CQSControllerServlet.valueAccumulator.getCounter(AccumulatorName.CassandraRead));
+		        request.setAttribute("cass_num_wr",CQSControllerServlet.valueAccumulator.getCounter(AccumulatorName.CassandraWrite));
+		        request.setAttribute("redis_ms",CQSControllerServlet.valueAccumulator.getCounter(AccumulatorName.RedisTime));
 
 				CQSMonitor.getInstance().addNumberOfMessagesReturned(queue.getRelativeUrl(), messageList.size());
 		        String out = CQSMessagePopulator.getReceiveMessageResponseAfterSerializing(messageList, request.getFilterAttributes());
@@ -197,6 +212,9 @@ public class CQSLongPollReceiver {
         } catch (Exception ex) {
 			logger.error("event=longpoll_queue_error queue_arn=" + queueArn, ex);
 		}
+        finally{
+        	CMBControllerServlet.valueAccumulator.deleteAllCounters();
+        }
 	}
 	
 	public static void listen() {

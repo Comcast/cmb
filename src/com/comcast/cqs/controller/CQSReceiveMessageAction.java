@@ -123,7 +123,8 @@ public class CQSReceiveMessageAction extends CQSAction {
         // wait for long poll if desired
         
         if (messageList.size() == 0 && waitTimeSeconds > 0) {
-        	
+        	//start long poll. First y means long poll, second n means message not found yet.
+	        request.setAttribute("lp", "yn");
         	// put context on async queue to wait for long poll
         	
         	logger.debug("event=queueing_context queue_arn=" + queue.getArn() + " wait_time_sec=" + waitTimeSeconds);

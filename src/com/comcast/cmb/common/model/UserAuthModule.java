@@ -308,4 +308,42 @@ public class UserAuthModule implements IAuthModule {
             throw new AuthenticationException(CMBErrorCodes.AuthFailure, "User " + username + " not found");
         }
     }
+    
+    public User getUserByRequest(HttpServletRequest request) {
+    	Map<String, String> parameters = getAllParameters(request);
+        String authorizationHeader = request.getHeader("authorization");
+    	String accessKey = parameters.get("AWSAccessKeyId");
+        if (accessKey == null && authorizationHeader != null) {
+        	
+        	if (authorizationHeader.contains("Credential=") && authorizationHeader.contains("/")) {
+        		
+        		accessKey = authorizationHeader.substring(authorizationHeader.indexOf("Credential=") + "Credential=".length(), authorizationHeader.indexOf("/"));
+        		
+        	}
+        }
+    	if (accessKey==null){
+    		return null;
+    	}
+        User user = null;
+        
+        try {
+
+        	try {
+                user = userCache.getAndSetIfNotPresent(accessKey, new UserCallable(accessKey), CMBProperties.getInstance().getUserCacheExpiring() * 1000);
+            } catch (CacheFullException e) {
+                user = new UserCallable(accessKey).call();
+            }
+            
+            if (user == null) {
+                logger.error("event=get_user_by_request access_key=" + accessKey + " error_code=invalid_accesskey");
+                throw new AuthenticationException(CMBErrorCodes.InvalidAccessKeyId, "AccessKey " + accessKey + " is not valid");
+            }
+            
+        } catch (Exception ex) {
+            logger.error("event=get_user_by_request", ex);
+            return null;
+        }
+        return user;
+    	
+    }
 }

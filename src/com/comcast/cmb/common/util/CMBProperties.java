@@ -63,6 +63,8 @@ public class CMBProperties {
 	
 	private final int requestParameterValueMaxLength;
 	
+	private final int requestMaxWaitTimeoutSec;
+	
 	private final String cmbDataCenter;
 	
 	private final IO_MODE cnsIOMode;
@@ -242,6 +244,8 @@ public class CMBProperties {
 			cmbDataCenter = props.getProperty("cmb.dc.name", "default");
 			
 			requestParameterValueMaxLength = Integer.parseInt(props.getProperty("cmb.log.requestParameterValueMaxLength", "128"));
+			
+			requestMaxWaitTimeoutSec = Integer.parseInt(props.getProperty("cmb.request.MaxWaitTimeoutSec", "20"));
 			
 			cqsLongPollPort = Integer.parseInt(props.getProperty("cmb.cqs.longpoll.port", "5555"));
 			cqsLongPollEnabled = Boolean.parseBoolean(props.getProperty("cmb.cqs.longpoll.enable", "true"));
@@ -753,6 +757,10 @@ public class CMBProperties {
 	
 	public int getCMBRequestParameterValueMaxLength() {
 		return requestParameterValueMaxLength;
+	}
+	
+	public int getCMBRequestMaxWaitTimeoutSec() {
+		return requestMaxWaitTimeoutSec;
 	}
 	
     public boolean isHectorAutoDiscovery() {

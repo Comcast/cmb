@@ -51,4 +51,13 @@ public interface IAuthModule {
      * @throws CMBException
      */
     public User authenticateByPassword(String username, String password) throws CMBException;
+
+    /**
+     * Get the User by Request AWSAccessKeyId. 
+     * Assumed that the request has the following parameters:
+     *  - AWSAccessKeyId 
+     * @param request
+     * @return user or null
+     */
+    public User getUserByRequest(HttpServletRequest request);
 }
