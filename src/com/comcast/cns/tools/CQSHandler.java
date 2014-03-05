@@ -222,16 +222,7 @@ public class CQSHandler {
     }
     
     public static String getLocalQueueUrl(String queueName) {
-    	
-    	long ts1 = System.currentTimeMillis();
-    	
-    	//build the queue url
     	String localQueueUrl = Util.getAbsoluteQueueUrlForName(queueName, cnsInternalUserId);
-       
-        long ts2 = System.currentTimeMillis();
-        CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CNSCQSTime, ts2 - ts1);
-		logger.info("event=get_local_queue_url queue_name=" + queueName + " queue_url=" + localQueueUrl);
-        
         return localQueueUrl;
     }
 }

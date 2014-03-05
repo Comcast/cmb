@@ -118,11 +118,13 @@ public class CNSSubscriptionPopulator {
 		return out.toString();
 	}
 
-	public static String getPublishResponse(CNSMessage cnsMessage) {
+	public static String getPublishResponse(List<String> receiptHandles) {
 		
 		StringBuffer out = new StringBuffer("<PublishResponse xmlns=\"http://sns.amazonaws.com/doc/2010-03-31/\">\n");
 		out.append("\t<PublishResult>\n");
-		out.append("\t\t<MessageId>").append(cnsMessage.getMessageId()).append("</MessageId>\n");
+		for (String handle : receiptHandles) {
+			out.append("\t\t<MessageId>").append(handle).append("</MessageId>\n");
+		}
 		out.append("\t</PublishResult>\n");
 		out.append("\t").append(CNSPopulator.getResponseMetadata()).append("\n");
 		out.append("</PublishResponse>\n");

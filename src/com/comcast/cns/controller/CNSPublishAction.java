@@ -15,29 +15,28 @@
  */
 package com.comcast.cns.controller;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Random;
 
 import javax.servlet.AsyncContext;
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.http.conn.HttpHostConnectException;
 import org.apache.log4j.Logger;
 
+import com.amazonaws.AmazonClientException;
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.sqs.AmazonSQSClient;
-import com.amazonaws.services.sqs.model.CreateQueueRequest;
-import com.amazonaws.services.sqs.model.CreateQueueResult;
-import com.amazonaws.services.sqs.model.GetQueueUrlRequest;
-import com.amazonaws.services.sqs.model.GetQueueUrlResult;
 import com.amazonaws.services.sqs.model.SendMessageRequest;
 import com.amazonaws.services.sqs.model.SendMessageResult;
 import com.comcast.cmb.common.controller.CMBControllerServlet;
 import com.comcast.cmb.common.model.User;
 import com.comcast.cmb.common.persistence.IUserPersistence;
 import com.comcast.cmb.common.persistence.PersistenceFactory;
+import com.comcast.cmb.common.util.CMBErrorCodes;
 import com.comcast.cmb.common.util.CMBException;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.ValueAccumulator.AccumulatorName;
@@ -48,8 +47,11 @@ import com.comcast.cns.model.CNSTopic;
 import com.comcast.cns.model.CNSTopicAttributes;
 import com.comcast.cns.model.CNSMessage.CNSMessageType;
 import com.comcast.cns.tools.CNSEndpointPublisherJobProducer;
+import com.comcast.cns.tools.CNSWorkerMonitor;
+import com.comcast.cns.tools.CQSHandler;
 import com.comcast.cns.util.CNSErrorCodes;
 import com.comcast.cns.util.Util;
+import com.comcast.cqs.controller.CQSHttpServletRequest;
 
 /**
  * Publish action
@@ -82,7 +84,7 @@ public class CNSPublishAction extends CNSAction {
 	@Override
 	public boolean doAction(User user, AsyncContext asyncContext) throws Exception {
 		
-        HttpServletRequest request = (HttpServletRequest)asyncContext.getRequest();
+        CQSHttpServletRequest request = (CQSHttpServletRequest)asyncContext.getRequest();
         HttpServletResponse response = (HttpServletResponse)asyncContext.getResponse();
 		
 		if (cnsInternalUser == null) {
@@ -115,6 +117,8 @@ public class CNSPublishAction extends CNSAction {
     	cnsMessage.generateMessageId();
     	cnsMessage.setTimestamp(new Date());
     	cnsMessage.setMessage(message);
+    	
+    	//TODO: optional shortcut
     	
     	if (request.getParameter("MessageStructure") != null) {
     		
@@ -157,12 +161,21 @@ public class CNSPublishAction extends CNSAction {
     	cnsMessage.checkIsValid();
     	
     	CNSTopicAttributes topicAttributes = CNSCache.getTopicAttributes(topicArn);
+    	List<String> receiptHandles = new ArrayList<String>();
     	
-    	if (CMBProperties.getInstance().isCNSBypassPublishJobQueueForSmallTopics() && topicAttributes != null && topicAttributes.getSubscriptionsConfirmed() > 0 && topicAttributes.getSubscriptionsConfirmed() <= CMBProperties.getInstance().getCNSMaxSubscriptionsPerEndpointPublishJob()) {
+    	boolean success = true;
+    	
+    	if (topicAttributes != null && topicAttributes.getSubscriptionsConfirmed() == 0) {
     		
-    		// optimization: if we there's only one chunk due to few subscribers write directly into endpoint publish queue bypassing the publish job queue
+    		// optimization: don't do anything if there are no confirmed subscribers
     		
-    		logger.debug("event=using_job_queue_overpass");
+    		logger.warn("event=no_confirmed_subscribers action=publish topic_arn=" + topicArn);
+    	
+    	} else if (CMBProperties.getInstance().isCNSBypassPublishJobQueueForSmallTopics() && topicAttributes != null && topicAttributes.getSubscriptionsConfirmed() <= CMBProperties.getInstance().getCNSMaxSubscriptionsPerEndpointPublishJob()) {
+    		
+    		// optimization: if there's only one chunk due to few subscribers, write directly into endpoint publish queue bypassing the publish job queue
+    		
+    		logger.info("event=using_job_queue_overpass");
     		
     		List<CNSEndpointPublishJob.CNSEndpointSubscriptionInfo> subscriptions = CNSEndpointPublisherJobProducer.getSubscriptionsForTopic(topicArn);
     		
@@ -175,75 +188,74 @@ public class CNSPublishAction extends CNSAction {
                 }
                 
                 for (CNSEndpointPublishJob epPublishJob: epPublishJobs) {
-                	
-                	String queueName =  CNS_ENDPOINT_QUEUE_NAME_PREFIX + ((new Random()).nextInt(CMBProperties.getInstance().getCNSNumEndpointPublishJobQueues()));
-        	    	String queueUrl = ensureQueueExists(queueName);
-
-        	    	long ts1 = System.currentTimeMillis();
-        	    	SendMessageResult sendMessageResult = sqs.sendMessage(new SendMessageRequest(queueUrl, epPublishJob.serialize()));
-        	    	long ts2 = System.currentTimeMillis();
-
-        	    	CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CNSCQSTime, ts2 - ts1);
-
-        	    	logger.debug("event=cns_publish subject= " + subject + " topic_arn=" + topicArn + " user_id=" + userId + " message_id=" + sendMessageResult.getMessageId() + " queue_url=" + queueUrl);
+            		String handle = sendMessageOnRandomShardAndCreateQueueIfAbsent(CNS_ENDPOINT_QUEUE_NAME_PREFIX, CMBProperties.getInstance().getCNSNumEndpointPublishJobQueues(), epPublishJob.serialize(), cnsInternalUser.getUserId());
+            		if (handle != null && !handle.equals("")) {
+            			receiptHandles.add(handle);
+            		} else {
+            			success = false;
+            		}
                 }
             }
     		
     	} else {
     	
 	    	// otherwise pick publish job queue
-    		
+
     		logger.debug("event=going_through_job_queue_town_center");
-	    	
-	    	String queueName =  CNS_PUBLISH_QUEUE_NAME_PREFIX + (new Random()).nextInt(CMBProperties.getInstance().getCNSNumPublishJobQueues());
-	    	String queueUrl = ensureQueueExists(queueName);
-	
-	    	long ts1 = System.currentTimeMillis();
-	    	SendMessageResult sendMessageResult = sqs.sendMessage(new SendMessageRequest(queueUrl, cnsMessage.serialize()));
-	    	long ts2 = System.currentTimeMillis();
-
-	    	CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CNSCQSTime, ts2 - ts1);
-
-	    	logger.debug("event=cns_publish subject= " + subject + " topic_arn=" + topicArn + " user_id=" + userId + " message_id=" + sendMessageResult.getMessageId() + " queue_url=" + queueUrl);
-    	}    	
+    		
+    		String handle = sendMessageOnRandomShardAndCreateQueueIfAbsent(CNS_PUBLISH_QUEUE_NAME_PREFIX, CMBProperties.getInstance().getCNSNumPublishJobQueues(), cnsMessage.serialize(), cnsInternalUser.getUserId());
+    		if (handle != null && !handle.equals("")) {
+    			receiptHandles.add(handle);
+    		} else {
+    			success = false;
+    		}
+    	}  
     	
-    	String out = CNSSubscriptionPopulator.getPublishResponse(cnsMessage);
+    	if (!success) {
+    		throw new CMBException(CMBErrorCodes.InternalError, "Failed to place message on internal cns queue");
+    	}
+    	
+    	request.setReceiptHandles(receiptHandles);
+    	
+    	String out = CNSSubscriptionPopulator.getPublishResponse(receiptHandles);
         writeResponse(out, response);
     	
     	return true;
 	}
 	
-	private String ensureQueueExists(String queueName) throws Exception {
+	private String sendMessageOnRandomShardAndCreateQueueIfAbsent(String prefix, int numShards, String message, String userId) {
 		
-    	GetQueueUrlRequest getQueueUrlRequest = new GetQueueUrlRequest(queueName);
-    	String queueUrl = null;
+		String receiptHandle = null;
+		
+    	long ts1 = System.currentTimeMillis();
+
+    	String queueName =  prefix + (new Random()).nextInt(numShards);
+    	String queueUrl = com.comcast.cqs.util.Util.getAbsoluteQueueUrlForName(queueName, userId);
 
     	try {
-
-    	    GetQueueUrlResult getQueueUrlResult = sqs.getQueueUrl(getQueueUrlRequest);
-    	    queueUrl = getQueueUrlResult.getQueueUrl();
-    	    queueUrl = com.comcast.cqs.util.Util.getRelativeForAbsoluteQueueUrl(queueUrl);
-    	    queueUrl = com.comcast.cqs.util.Util.getLocalAbsoluteQueueUrlForRelativeUrl(queueUrl);
-
-    	} catch (AmazonServiceException ex) {
-
-    	    if (ex.getStatusCode() == 400) {
-
-    	        logger.info("event=cns_publish action=create_non_existent_queue queue_name=" + queueName);
-
-    	        CreateQueueRequest createQueueRequest = new CreateQueueRequest(queueName);
-    	        CreateQueueResult createQueueResult = sqs.createQueue(createQueueRequest);
-    	        queueUrl = createQueueResult.getQueueUrl();
-
-    	        if (queueUrl == null) {
-    	            throw new IllegalStateException("Could not create queue with name " + queueName);
-    	        }
-
-    	    } else {
-    	        throw ex;
-    	    }
+    		SendMessageResult sendMessageResult = sqs.sendMessage(new SendMessageRequest(queueUrl, message));
+			receiptHandle = sendMessageResult.getMessageId();
+    	} catch (AmazonClientException ex) {
+    		if (ex.getCause() instanceof HttpHostConnectException) {
+	    		logger.error("event=cqs_service_unavailable", ex);
+	    		CNSWorkerMonitor.getInstance().registerCQSServiceAvailable(false);
+	    	} else if (ex instanceof AmazonServiceException && ((AmazonServiceException)ex).getErrorCode().equals("NonExistentQueue")) {
+	    		try {
+	        		CQSHandler.initialize();
+	    			CQSHandler.ensureQueuesExist(prefix, numShards);
+	        	} catch (Exception e) {
+	        		logger.error("event=failed_to_check_consumer_queue_existence", e);
+	        	}
+	    	} else {
+	    		logger.error("event=cqs_service_failure", ex);
+	    		CNSWorkerMonitor.getInstance().registerCQSServiceAvailable(false);
+	    	}
     	}
     	
-    	return queueUrl;
+    	long ts2 = System.currentTimeMillis();
+
+    	CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CNSCQSTime, ts2 - ts1);
+    	
+    	return receiptHandle;
 	}
 }
