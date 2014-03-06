@@ -414,7 +414,7 @@ abstract public class CMBControllerServlet extends HttpServlet {
 			logLine.append(" asyncq_ms=" + valueAccumulator.getCounter(AccumulatorName.AsyncQueueTime));
 			logLine.append(" auth_ms=" + valueAccumulator.getCounter(AccumulatorName.CMBControllerPreHandleAction));
 
-		} else if(request.getAttribute("lp").equals("yy")){ //this is for long poll log with message return
+		} else if (request.getAttribute("lp").equals("yy")) {  // long poll receive with messages
 
 			logLine.append(" resp_ms=").append(responseTimeMS);
 			logLine.append(" cass_ms=" + request.getAttribute("cass_ms"));
@@ -424,7 +424,7 @@ abstract public class CMBControllerServlet extends HttpServlet {
 			logLine.append(" io_ms=" + request.getAttribute("io_ms"));
 			logLine.append(" lp_ms=").append(System.currentTimeMillis()-request.getRequestReceivedTimestamp());
 
-		} else if (request.getAttribute("lp").equals("yn")){ //this is for long poll log with no message
+		} else if (request.getAttribute("lp").equals("yn")) { // long poll receive without messages
 			logLine.append(" lp_ms=").append(System.currentTimeMillis()-request.getRequestReceivedTimestamp());			
 		}
 		
@@ -432,6 +432,20 @@ abstract public class CMBControllerServlet extends HttpServlet {
 		append(" async_pool_size=").append(CMBControllerServlet.workerPool.getActiveCount()).
 		append(" cqs_pool_size=").append(CMB.cqsServer.getThreadPool().getThreads()).
 		append(" cns_pool_size=").append(CMB.cnsServer.getThreadPool().getThreads());
+		
+		// log external headers from proxy if present
+		
+		String rid = request.getHeader("CMB-RID");
+
+		if (rid != null) {
+			logLine.append(" rid=").append(rid);
+		}
+		
+		String extStartTime = request.getHeader("START-TIME");
+		
+		if (extStartTime != null) {
+			logLine.append(" ext_ts=").append(extStartTime);
+		}
 
 		return logLine.toString();
 	}
