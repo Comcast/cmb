@@ -1,9 +1,11 @@
 package com.comcast.cns.util;
 
+import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.management.JMX;
+import javax.management.MBeanServer;
 import javax.management.MBeanServerConnection;
 import javax.management.ObjectName;
 import javax.management.remote.JMXConnector;
@@ -20,6 +22,7 @@ import com.comcast.cmb.common.util.CMBErrorCodes;
 import com.comcast.cmb.common.util.CMBException;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cns.model.CNSWorkerStats;
+import com.comcast.cns.tools.CNSWorkerMonitor;
 import com.comcast.cns.tools.CNSWorkerMonitorMBean;
 
 public class CNSWorkerStatWrapper {
@@ -77,6 +80,14 @@ public class CNSWorkerStatWrapper {
 	}
 	
 	private static void callOperation(String operation, List<CNSWorkerStats> cnsWorkerStats) throws Exception{
+		//register JMX Bean
+        MBeanServer mbs = ManagementFactory.getPlatformMBeanServer(); 
+        ObjectName name = new ObjectName("com.comcast.cns.tools:type=CNSWorkerMonitorMBean");
+        
+        if (!mbs.isRegistered(name)) {
+            mbs.registerMBean(CNSWorkerMonitor.getInstance(), name);
+        }
+		
 		if((operation!=null)&&(operation.equals("startWorker")||operation.equals("stopWorker"))){
 			JMXConnector jmxConnector = null;
 			String url = null;
@@ -102,7 +113,13 @@ public class CNSWorkerStatWrapper {
 				}
 			} catch(Exception e){
 				logger.error("event=error_in_"+operation+" Hose:"+host+" port:"+port+"Exception: "+e);
-				throw new CMBException(CMBErrorCodes.InternalError, "Cannot " + operation + "CNS workers");
+				String operationString = null;
+				if(operation.equals("startWorker")){
+					operationString = "start";
+				} else {
+					operationString = "stop";
+				}
+				throw new CMBException(CMBErrorCodes.InternalError, "Cannot " + operationString + " CNS workers");
 			}
 			finally {
 

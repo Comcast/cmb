@@ -252,8 +252,8 @@ public class CNSWorkerStatePageServlet extends AdminServletBase {
 			
 			out.println("</table></span>");
 			out.println("<table><tr>");
-			out.println("<td><form action=\"\" method=\"POST\"><input type='hidden' name='DataCenter' value='"+currentDataCenter+"'><input type='submit' value='Start Worker' name='StartWorker'/></form></td>");
-			out.println("<td><form action=\"\" method=\"POST\"><input type='hidden' name='DataCenter' value='"+currentDataCenter+"'><input type='submit' value='Stop Worker' name='StopWorker'/></form></td>");
+			out.println("<td><form action=\"\" method=\"POST\"><input type='hidden' name='DataCenter' value='"+currentDataCenter+"'><input type='submit' value='Start Workers' name='StartWorker'/></form></td>");
+			out.println("<td><form action=\"\" method=\"POST\"><input type='hidden' name='DataCenter' value='"+currentDataCenter+"'><input type='submit' value='Stop Workers' name='StopWorker'/></form></td>");
 			out.println("</tr></table>");
 			
 			if (endpointErrorCounts.size() > 0) {
