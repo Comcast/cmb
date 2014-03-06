@@ -98,20 +98,29 @@ public class CMBTutorial {
             
             // user "cqs_test_1"
             
-            BasicAWSCredentials user1Credentials = new BasicAWSCredentials("<access_key>", "<secret_key>");
+            //BasicAWSCredentials user1Credentials = new BasicAWSCredentials("<access_key>", "<secret_key>");
+            
+            BasicAWSCredentials user1Credentials = new BasicAWSCredentials("Z2DVBFRNZ2C2SSXDWS5F", "bH2UQiJkpctBaE3eaDob19fj5J9Q1FVafrZantBp");
 
             // user "cqs_test_2"
             
-            String user2Id = "<user_id>";
-            BasicAWSCredentials user2Credentials = new BasicAWSCredentials("<access_key>", "<secret_key>");
+            //String user2Id = "<user_id>";
+            String user2Id = "389653920093";
+
+            //BasicAWSCredentials user2Credentials = new BasicAWSCredentials("<access_key>", "<secret_key>");
             
+            BasicAWSCredentials user2Credentials = new BasicAWSCredentials("QL8Q1VOBCSJC5FZ2DMIU", "n6a82gyJZ04Z+Xqp7OgfqPtbbKqVc3UbuOTNrF+7");
+
             // service urls
             
             //TODO: add service URLs
             
-            String cqsServerUrl = "http://<host>:<port>";
-            String cnsServerUrl = "http://<host>:<port>";
+            //String cqsServerUrl = "http://<host>:<port>";
+            //String cnsServerUrl = "http://<host>:<port>";
             
+            String cqsServerUrl = "http://localhost:6059";
+            String cnsServerUrl = "http://localhost:6061";
+
             // initialize service
 
             AmazonSQSClient sqs = new AmazonSQSClient(user1Credentials);

@@ -427,7 +427,7 @@ public class QueueDepthSimulator {
 			transferStrategy = new DepthAndRateStrategy();
 			setupDualDCQueueAtCapacity();
 			simulate();
-			plotLineChart(logs, "/tmp/qsim_atcap_qdepthandrate.png", "Queue Sim At Capacity Queue Depth Strategy", "ts", "count");
+			plotLineChart(logs, "/tmp/qsim_atcap_qdepthandrate.png", "Queue Sim At Capacity Queue Depth and Rate Strategy", "ts", "count");
 			logger.info("event=done all_out_a=" + allAOut + " all_out_b=" + allBOut);
 			clear();
 			
@@ -435,7 +435,7 @@ public class QueueDepthSimulator {
 			transferStrategy = new DepthAndRateStrategy();
 			setupDualDCQueueDiminishedCapacity();
 			simulate();
-			plotLineChart(logs, "/tmp/qsim_dimcap_qdepthandrate.png", "Queue Sim Diminshed Capacity Queue Depth Strategy", "ts", "count");
+			plotLineChart(logs, "/tmp/qsim_dimcap_qdepthandrate.png", "Queue Sim Diminshed Capacity Queue Depth and Rate Strategy", "ts", "count");
 			logger.info("event=done all_out_a=" + allAOut + " all_out_b=" + allBOut);
 			clear();
 
@@ -443,7 +443,7 @@ public class QueueDepthSimulator {
 			transferStrategy = new DepthAndRateStrategy();
 			setupDualDCQueueFullFailover();
 			simulate();
-			plotLineChart(logs, "/tmp/qsim_fail_qdepthandrate.png", "Queue Sim Failover Queue Depth Strategy", "ts", "count");
+			plotLineChart(logs, "/tmp/qsim_fail_qdepthandrate.png", "Queue Sim Failover Queue Depth and Rate Strategy", "ts", "count");
 			logger.info("event=done all_out_a=" + allAOut + " all_out_b=" + allBOut);
 			clear();
 

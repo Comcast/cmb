@@ -27,6 +27,7 @@ import javax.servlet.AsyncContext;
 
 import org.apache.log4j.Logger;
 
+import com.comcast.cmb.common.controller.CMB;
 import com.comcast.cmb.common.controller.CMBControllerServlet;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.PersistenceException;
@@ -436,5 +437,40 @@ public class CQSMonitor implements CQSMonitorMBean {
 	@Override
 	public String getCassandraNodes() {
 		return CMBProperties.getInstance().getClusterUrl();
+	}
+
+	@Override
+	public int getAsyncWorkerPoolActiveCount() {
+		return CMBControllerServlet.workerPool.getActiveCount();
+	}
+
+	@Override
+	public int getAsyncWorkerPoolSize() {
+		return CMBControllerServlet.workerPool.getPoolSize();
+	}
+
+	@Override
+	public int getAsyncWorkerPoolQueueSize() {
+		return CMBControllerServlet.workerPool.getQueue().size();
+	}
+
+	@Override
+	public int getJettyCQSRequestHandlerPoolSize() {
+		return CMB.cqsServer.getThreadPool().getThreads();
+	}
+
+	@Override
+	public boolean isJettyCQSRequestHandlerPoolLowOnThreads() {
+		return CMB.cqsServer.getThreadPool().isLowOnThreads();
+	}
+
+	@Override
+	public int getJettyCNSRequestHandlerPoolSize() {
+		return CMB.cnsServer.getThreadPool().getThreads();
+	}
+
+	@Override
+	public boolean isJettyCNSRequestHandlerPoolLowOnThreads() {
+		return CMB.cnsServer.getThreadPool().isLowOnThreads();
 	}
 }

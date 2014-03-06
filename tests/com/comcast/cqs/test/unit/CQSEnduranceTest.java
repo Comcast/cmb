@@ -16,6 +16,7 @@
 
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
@@ -35,9 +36,11 @@ public class CQSEnduranceTest extends CMBAWSBaseTest {
 	private static int sendDelay = 10;
 	private static int receiveDelay = 0;
 	private static int monitorDelay = 5000;
-	private static int numSenders = 3;
-	private static int numReceivers = 3;
+	private static int numSenders = 10;
+	private static int numReceivers = 10;
 	private static int maxQueueDepth = 1000;
+	private static long maxInflightTime = 0;
+	private static ConcurrentHashMap<String,Long> transactions = new ConcurrentHashMap<String,Long>();
 
 	private static final String ALPHABET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 	private static String queueUrl;
@@ -138,6 +141,7 @@ public class CQSEnduranceTest extends CMBAWSBaseTest {
 					String body = generateRandomMessage(20000);
 					SendMessageRequest sendMessageRequest = new SendMessageRequest(queueUrl, body);
 					SendMessageResult result = cqs1.sendMessage(sendMessageRequest);
+					transactions.put(result.getMessageId(), System.currentTimeMillis());
 					long end = System.currentTimeMillis();
 					sendSuccessCount.incrementAndGet();
 					logger.info("event=message_sent rt="+(end-start)+" success_count=" + sendSuccessCount.get() + " failure_count=" + sendFailureCount.get());
@@ -187,6 +191,14 @@ public class CQSEnduranceTest extends CMBAWSBaseTest {
 					if (receiveMessageResult.getMessages().size() > 0) {
 						logger.info("event=messages_received rt="+(end-start)+" batch_count=" + receiveMessageResult.getMessages().size() + " success_count" + receiveSuccessCount.get() + " failure_count=" + receiveFailureCount.get() + " total_count=" + actualMessagesReceivedCount.get());
 						for (Message msg : receiveMessageResult.getMessages()) {
+							Long ts = transactions.remove(msg.getMessageId());
+							if (ts != null) {
+								long duration = System.currentTimeMillis()-ts;
+								if (duration>maxInflightTime) {
+									maxInflightTime = duration;
+								}
+								logger.info("num_msg_inflight=" + transactions.size() + " flight_time=" + duration + " max_flight_time=" + maxInflightTime);
+							}
 							deleteMessage(msg.getReceiptHandle());
 						}
 					} else {

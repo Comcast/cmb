@@ -37,6 +37,11 @@ public class CMB {
 	private static Logger logger = Logger.getLogger(CMB.class);
 	
 	private static final int MAX_REQUEST_LENGTH = Math.max(CMBProperties.getInstance().getCNSMaxMessageSize()*2, 500*1024);
+	
+	public static volatile Server cqsServer = null;
+	public static volatile WebAppContext cqsWebContext = null;
+	public static volatile Server cnsServer = null;
+	public static volatile WebAppContext cnsWebContext = null;
 	 
     public static void main(String argv[]) throws Exception {
     	
@@ -51,10 +56,10 @@ public class CMB {
     	
     	if (CMBProperties.getInstance().getCQSServiceEnabled()) {
         	
-        	Server cqsServer = new Server(CMBProperties.getInstance().getCQSServerPort());
+        	cqsServer = new Server(CMBProperties.getInstance().getCQSServerPort());
         	cqsServer.setAttribute("org.eclipse.jetty.server.Request.maxFormContentSize", MAX_REQUEST_LENGTH);
 
-        	WebAppContext cqsWebContext = new WebAppContext();
+        	cqsWebContext = new WebAppContext();
 	
 	        cqsWebContext.setDescriptor("config/WEB-INF-CQS/web.xml");
 	        cqsWebContext.setResourceBase("WebContent");      
@@ -80,7 +85,7 @@ public class CMB {
 
     	if (CMBProperties.getInstance().getCNSServiceEnabled()) {
 
-        	Server cnsServer = new Server(CMBProperties.getInstance().getCNSServerPort());
+        	cnsServer = new Server(CMBProperties.getInstance().getCNSServerPort());
         	cnsServer.setAttribute("org.eclipse.jetty.server.Request.maxFormContentSize", MAX_REQUEST_LENGTH);
 	    	
 	        WebAppContext cnsWebContext = new WebAppContext();

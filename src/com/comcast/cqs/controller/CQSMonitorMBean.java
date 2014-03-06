@@ -164,4 +164,46 @@ public interface CQSMonitorMBean {
      * Get Cassandra nodes this api server is aware of
      */
     public String getCassandraNodes();
+    
+    /**
+     * 
+     * @return
+     */
+    public int getAsyncWorkerPoolSize();
+    
+    /**
+     * 
+     * @return
+     */
+    public int getAsyncWorkerPoolQueueSize();
+    
+    /**
+     * 
+     * @return
+     */
+    public int getJettyCQSRequestHandlerPoolSize();
+
+    /**
+     * 
+     * @return
+     */
+	public boolean isJettyCQSRequestHandlerPoolLowOnThreads();
+
+	/**
+	 * 
+	 * @return
+	 */
+	public int getAsyncWorkerPoolActiveCount();
+
+	/**
+	 * 
+	 * @return
+	 */
+	public int getJettyCNSRequestHandlerPoolSize();
+
+	/**
+	 * 
+	 * @return
+	 */
+	boolean isJettyCNSRequestHandlerPoolLowOnThreads();
 }

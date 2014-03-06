@@ -68,7 +68,7 @@ abstract public class CMBControllerServlet extends HttpServlet {
 
 	private static Logger logger = Logger.getLogger(CMBControllerServlet.class);
 
-	private static volatile ScheduledThreadPoolExecutor workerPool; 
+	public static volatile ScheduledThreadPoolExecutor workerPool; 
 
 	private static volatile boolean initialized = false;
 
@@ -401,10 +401,9 @@ abstract public class CMBControllerServlet extends HttpServlet {
 
 		logLine.append(" ").append(getParameterString(asyncContext));
 		logLine.append((user != null ? "user=" + user.getUserName() : ""));
-
 		
-		//check if it is not longpoll receive
-		if(request.getAttribute("lp") == null){
+		if (request.getAttribute("lp") == null) {
+
 			logLine.append(" resp_ms=").append(responseTimeMS);
 			logLine.append(" cass_ms=" + valueAccumulator.getCounter(AccumulatorName.CassandraTime));
 			logLine.append(" cass_num_rd=" + valueAccumulator.getCounter(AccumulatorName.CassandraRead));
@@ -416,6 +415,7 @@ abstract public class CMBControllerServlet extends HttpServlet {
 			logLine.append(" auth_ms=" + valueAccumulator.getCounter(AccumulatorName.CMBControllerPreHandleAction));
 
 		} else if(request.getAttribute("lp").equals("yy")){ //this is for long poll log with message return
+
 			logLine.append(" resp_ms=").append(responseTimeMS);
 			logLine.append(" cass_ms=" + request.getAttribute("cass_ms"));
 			logLine.append(" cass_num_rd=" + request.getAttribute("cass_num_rd"));
@@ -423,9 +423,16 @@ abstract public class CMBControllerServlet extends HttpServlet {
 			logLine.append(" redis_ms=" + request.getAttribute("redis_ms"));
 			logLine.append(" io_ms=" + request.getAttribute("io_ms"));
 			logLine.append(" lp_ms=").append(System.currentTimeMillis()-request.getRequestReceivedTimestamp());
+
 		} else if (request.getAttribute("lp").equals("yn")){ //this is for long poll log with no message
 			logLine.append(" lp_ms=").append(System.currentTimeMillis()-request.getRequestReceivedTimestamp());			
 		}
+		
+		logLine.append(" async_pool_queue=").append(CMBControllerServlet.workerPool.getQueue().size()).
+		append(" async_pool_size=").append(CMBControllerServlet.workerPool.getActiveCount()).
+		append(" cqs_pool_size=").append(CMB.cqsServer.getThreadPool().getThreads()).
+		append(" cns_pool_size=").append(CMB.cnsServer.getThreadPool().getThreads());
+
 		return logLine.toString();
 	}
 	
