@@ -31,7 +31,7 @@ import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.sqs.model.Message;
 import com.comcast.cmb.common.controller.CMBControllerServlet;
 import com.comcast.cmb.common.model.User;
-import com.comcast.cmb.common.persistence.PersistenceFactory;
+import com.comcast.cmb.common.model.UserAuthModule;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.CMBProperties.IO_MODE;
 import com.comcast.cmb.common.util.PersistenceException;
@@ -266,7 +266,7 @@ public class CNSEndpointPublisherJobConsumer implements CNSPublisherPartitionRun
                 	
                     CNSEndpointPublishJob endpointPublishJob = (CMBProperties.getInstance().isCNSUseSubInfoCache()) ? CNSCachedEndpointPublishJob.parseInstance(msg.getBody()) : CNSEndpointPublishJob.parseInstance(msg.getBody());
                     logger.debug("endpoint_publish_job=" + endpointPublishJob.toString());
-                    User pubUser = PersistenceFactory.getUserPersistence().getUserById(endpointPublishJob.getMessage().getUserId());
+                    User pubUser =(new UserAuthModule()).getUserByUserId(endpointPublishJob.getMessage().getUserId());
                     List<? extends CNSEndpointSubscriptionInfo> subs = endpointPublishJob.getSubInfos();
                     
                     CNSWorkerMonitor.getInstance().registerSendsRemaining(endpointPublishJob.getMessage().getMessageId(), subs.size());

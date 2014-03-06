@@ -17,6 +17,7 @@
 package com.comcast.cmb.common.model;
 
 import com.comcast.cmb.common.persistence.IUserPersistence;
+import com.comcast.cmb.common.persistence.PersistenceFactory;
 import com.comcast.cmb.common.util.AuthUtil;
 import com.comcast.cmb.common.util.AuthenticationException;
 import com.comcast.cmb.common.util.CMBErrorCodes;
@@ -44,15 +45,16 @@ import java.util.concurrent.Callable;
 public class UserAuthModule implements IAuthModule {
 
 	private IUserPersistence userPersistence;
-    private static ExpiringCache<String, User> userCache = new ExpiringCache<String, User>(CMBProperties.getInstance().getUserCacheSizeLimit());
+    private static ExpiringCache<String, User> userCacheByAccessKey = new ExpiringCache<String, User>(CMBProperties.getInstance().getUserCacheSizeLimit());
+    private static ExpiringCache<String, User> userCacheByUserId = new ExpiringCache<String, User>(CMBProperties.getInstance().getUserCacheSizeLimit());
 
     private static final Logger logger = Logger.getLogger(UserAuthModule.class);
     
     private static final List<String> ADMIN_ACTIONS = Arrays.asList(new String[] { "HealthCheck", "ManageService", "GetAPIStats", "GetWorkerStats", "ManageWorker" });
     
-    public class UserCallable implements Callable<User> {
+    public class UserCallableByAccessKey implements Callable<User> {
         String accessKey = null;
-        public UserCallable(String k) {
+        public UserCallableByAccessKey(String k) {
             this.accessKey = k;
         }
         @Override
@@ -62,6 +64,17 @@ public class UserAuthModule implements IAuthModule {
         }
     }
     
+    public class UserCallableByUserId implements Callable<User> {
+        String userId = null;
+        public UserCallableByUserId(String k) {
+            this.userId = k;
+        }
+        @Override
+        public User call() throws Exception {
+            User u = userPersistence.getUserById(userId);
+            return u;
+        }
+    }
     @Override
     public void setUserPersistence(IUserPersistence up) {
         userPersistence = up;
@@ -135,9 +148,9 @@ public class UserAuthModule implements IAuthModule {
         try {
 
         	try {
-                user = userCache.getAndSetIfNotPresent(accessKey, new UserCallable(accessKey), CMBProperties.getInstance().getUserCacheExpiring() * 1000);
+                user = userCacheByAccessKey.getAndSetIfNotPresent(accessKey, new UserCallableByAccessKey(accessKey), CMBProperties.getInstance().getUserCacheExpiring() * 1000);
             } catch (CacheFullException e) {
-                user = new UserCallable(accessKey).call();
+                user = new UserCallableByAccessKey(accessKey).call();
             }
             
             if (user == null) {
@@ -329,9 +342,9 @@ public class UserAuthModule implements IAuthModule {
         try {
 
         	try {
-                user = userCache.getAndSetIfNotPresent(accessKey, new UserCallable(accessKey), CMBProperties.getInstance().getUserCacheExpiring() * 1000);
+                user = userCacheByAccessKey.getAndSetIfNotPresent(accessKey, new UserCallableByAccessKey(accessKey), CMBProperties.getInstance().getUserCacheExpiring() * 1000);
             } catch (CacheFullException e) {
-                user = new UserCallable(accessKey).call();
+                user = new UserCallableByAccessKey(accessKey).call();
             }
             
             if (user == null) {
@@ -345,5 +358,29 @@ public class UserAuthModule implements IAuthModule {
         }
         return user;
     	
+    }
+    
+    public User getUserByUserId(String userId){
+    	//set user Persistence
+		setUserPersistence(PersistenceFactory.getUserPersistence());
+        
+		User user = null;
+        
+        try {
+
+        	try {
+                user = userCacheByUserId.getAndSetIfNotPresent(userId, new UserCallableByUserId(userId), CMBProperties.getInstance().getUserCacheExpiring() * 1000);
+            } catch (CacheFullException e) {
+                user = new UserCallableByAccessKey(userId).call();
+            }
+            
+            if (user == null) {
+                logger.error("event=get_user_by_userid userId=" + userId + " error_code=invalid_userid");
+            }
+            
+        } catch (Exception ex) {
+            logger.error("event=get_user_by_userid", ex);
+        }
+        return user;
     }
 }
