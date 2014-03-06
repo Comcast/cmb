@@ -16,10 +16,11 @@
 package com.comcast.cns.controller;
 
 import java.io.IOException;
-import java.util.ArrayList;
+import java.lang.management.ManagementFactory;
 import java.util.List;
 import java.util.Map;
 
+import javax.management.MBeanServer;
 import javax.management.MBeanServerConnection;
 import javax.management.ObjectName;
 import javax.management.remote.JMXConnector;
@@ -36,10 +37,9 @@ import org.apache.log4j.Logger;
 
 import com.comcast.cmb.common.model.CMBPolicy;
 import com.comcast.cmb.common.model.User;
-import com.comcast.cmb.common.persistence.CassandraPersistence;
-import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cns.io.CNSWorkerStatsPopulator;
 import com.comcast.cns.model.CNSWorkerStats;
+import com.comcast.cns.tools.CNSWorkerMonitor;
 import com.comcast.cns.util.CNSWorkerStatWrapper;
 /**
  * Subscribe action
@@ -49,6 +49,20 @@ import com.comcast.cns.util.CNSWorkerStatWrapper;
 public class CNSGetWorkerStatsAction extends CNSAction {
 
 	private static Logger logger = Logger.getLogger(CNSGetWorkerStatsAction.class);
+	
+	static {
+		//register JMX Bean
+		try{
+	        MBeanServer mbs = ManagementFactory.getPlatformMBeanServer(); 
+	        ObjectName name = new ObjectName("com.comcast.cns.tools:type=CNSWorkerMonitorMBean");
+	        
+	        if (!mbs.isRegistered(name)) {
+	            mbs.registerMBean(CNSWorkerMonitor.getInstance(), name);
+	        }
+		} catch (Exception ex){
+			logger.error("event=failed_to_register_jmx_Bean", ex);
+		}
+	}
 	
 	public CNSGetWorkerStatsAction() {
 		super("GetWorkerStats");
