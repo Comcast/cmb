@@ -199,7 +199,7 @@ public class CQSCreateQueueAction extends CQSAction {
                     throw new CMBException(CMBErrorCodes.InvalidParameterValue, CQSConstants.RECEIVE_MESSAGE_WAIT_TIME_SECONDS + " must be an integer value");
                 }
                 
-        		if (receiveMessageWaitTimeSeconds < 0 || receiveMessageWaitTimeSeconds > 20) {
+        		if (receiveMessageWaitTimeSeconds < 0 || receiveMessageWaitTimeSeconds > CMBProperties.getInstance().getCMBRequestTimeoutSec()) {
                     throw new CMBException(CMBErrorCodes.InvalidParameterValue, CQSConstants.RECEIVE_MESSAGE_WAIT_TIME_SECONDS + " should be between 0 and " + CMBProperties.getInstance().getCQSMaxMessageDelaySeconds());
         		}
                 

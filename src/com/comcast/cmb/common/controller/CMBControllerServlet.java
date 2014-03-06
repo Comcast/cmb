@@ -83,7 +83,7 @@ abstract public class CMBControllerServlet extends HttpServlet {
 
 	public final static String VERSION = "2.2.38";
 	
-	public final static int HARD_TIMEOUT_SEC = CMBProperties.getInstance().getCMBRequestMaxWaitTimeoutSec()+1;
+	public final static int HARD_TIMEOUT_SEC = CMBProperties.getInstance().getCMBRequestTimeoutSec();
 
 	public volatile static ConcurrentHashMap<String, AtomicLong> callStats;
 	public volatile static ConcurrentHashMap<String, AtomicLong> callFailureStats;
@@ -411,12 +411,17 @@ abstract public class CMBControllerServlet extends HttpServlet {
 			logLine.append(" cass_num_wr=" + valueAccumulator.getCounter(AccumulatorName.CassandraWrite));
 			logLine.append(((this instanceof CNSControllerServlet) ? (" cnscqs_ms=" + CMBControllerServlet.valueAccumulator.getCounter(AccumulatorName.CNSCQSTime)) : ""));
 			logLine.append(((this instanceof CQSControllerServlet) ? (" redis_ms=" + valueAccumulator.getCounter(AccumulatorName.RedisTime)) : ""));
+			logLine.append(" io_ms=" + valueAccumulator.getCounter(AccumulatorName.IOTime));
+			logLine.append(" asyncq_ms=" + valueAccumulator.getCounter(AccumulatorName.AsyncQueueTime));
+			logLine.append(" auth_ms=" + valueAccumulator.getCounter(AccumulatorName.CMBControllerPreHandleAction));
+
 		} else if(request.getAttribute("lp").equals("yy")){ //this is for long poll log with message return
 			logLine.append(" resp_ms=").append(responseTimeMS);
 			logLine.append(" cass_ms=" + request.getAttribute("cass_ms"));
 			logLine.append(" cass_num_rd=" + request.getAttribute("cass_num_rd"));
 			logLine.append(" cass_num_wr=" + request.getAttribute("cass_num_wr"));
 			logLine.append(" redis_ms=" + request.getAttribute("redis_ms"));
+			logLine.append(" io_ms=" + request.getAttribute("io_ms"));
 			logLine.append(" lp_ms=").append(System.currentTimeMillis()-request.getRequestReceivedTimestamp());
 		} else if (request.getAttribute("lp").equals("yn")){ //this is for long poll log with no message
 			logLine.append(" lp_ms=").append(System.currentTimeMillis()-request.getRequestReceivedTimestamp());			
@@ -550,9 +555,9 @@ abstract public class CMBControllerServlet extends HttpServlet {
 
 				int waitTimeSeconds = Integer.parseInt(waitTimeSecondsParam);
 
-				if (waitTimeSeconds >= 1 && waitTimeSeconds <= CMBProperties.getInstance().getCMBRequestMaxWaitTimeoutSec()) {
-					asyncContext.setTimeout(waitTimeSeconds*1000+1000);
-					((CQSHttpServletRequest)asyncContext.getRequest()).setWaitTime(waitTimeSeconds*1000+1000);
+				if (waitTimeSeconds >= 1 && waitTimeSeconds <= CMBProperties.getInstance().getCMBRequestTimeoutSec()) {
+					asyncContext.setTimeout(waitTimeSeconds*1000);
+					((CQSHttpServletRequest)asyncContext.getRequest()).setWaitTime(waitTimeSeconds*1000);
 					logger.debug("event=set_message_timeout secs=" + waitTimeSeconds);
 				}
 
@@ -584,12 +589,12 @@ abstract public class CMBControllerServlet extends HttpServlet {
 				logger.debug("event=set_queue_timeout secs=" + waitTimeSeconds + " queue_url=" + queueUrl);
 			} else {
 				asyncContext.setTimeout(HARD_TIMEOUT_SEC*1000);
-				logger.debug("event=set_default_timeout secs="+CMBProperties.getInstance().getCMBRequestMaxWaitTimeoutSec());
+				logger.debug("event=set_default_timeout secs="+CMBProperties.getInstance().getCMBRequestTimeoutSec());
 			}
 
 		} else {
 			asyncContext.setTimeout(HARD_TIMEOUT_SEC*1000);
-			logger.debug("event=set_default_timeout secs=" + CMBProperties.getInstance().getCMBRequestMaxWaitTimeoutSec());
+			logger.debug("event=set_default_timeout secs=" + CMBProperties.getInstance().getCMBRequestTimeoutSec());
 		}
 
 		asyncContext.addListener(new AsyncListener() {
@@ -705,7 +710,7 @@ abstract public class CMBControllerServlet extends HttpServlet {
 				//for other Time out show log error and return error response.
 				int httpCode = CMBErrorCodes.InternalError.getHttpCode();
 				String code = CMBErrorCodes.InternalError.getCMBCode();
-				String message = "There is an timeout problem with CMB";
+				String message = "CMB timeout after "+CMBProperties.getInstance().getCMBRequestTimeoutSec()+" seconds";
 
 				if (asyncEvent.getThrowable() instanceof CMBException) {
 					httpCode = ((CMBException)asyncEvent.getThrowable()).getHttpCode();

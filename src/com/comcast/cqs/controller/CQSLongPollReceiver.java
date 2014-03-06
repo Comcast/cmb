@@ -186,6 +186,10 @@ public class CQSLongPollReceiver {
 		        //Set for long poll. first y means long poll, second means found message, also pass lp_ms and other useful info
 
 				request.setAttribute("lp", "yy");
+
+				CQSMonitor.getInstance().addNumberOfMessagesReturned(queue.getRelativeUrl(), messageList.size());
+		        String out = CQSMessagePopulator.getReceiveMessageResponseAfterSerializing(messageList, request.getFilterAttributes());
+		        Action.writeResponse(out, (HttpServletResponse)asyncContext.getResponse());
 		        long lp_ms = System.currentTimeMillis() - ts1;
 		        request.setAttribute("lp_ms", lp_ms);
 		        String cass_msString = String.valueOf(CQSControllerServlet.valueAccumulator.getCounter(AccumulatorName.CassandraTime));
@@ -193,10 +197,7 @@ public class CQSLongPollReceiver {
 		        request.setAttribute("cass_num_rd",CQSControllerServlet.valueAccumulator.getCounter(AccumulatorName.CassandraRead));
 		        request.setAttribute("cass_num_wr",CQSControllerServlet.valueAccumulator.getCounter(AccumulatorName.CassandraWrite));
 		        request.setAttribute("redis_ms",CQSControllerServlet.valueAccumulator.getCounter(AccumulatorName.RedisTime));
-
-				CQSMonitor.getInstance().addNumberOfMessagesReturned(queue.getRelativeUrl(), messageList.size());
-		        String out = CQSMessagePopulator.getReceiveMessageResponseAfterSerializing(messageList, request.getFilterAttributes());
-		        Action.writeResponse(out, (HttpServletResponse)asyncContext.getResponse());
+		        request.setAttribute("io_ms",CQSControllerServlet.valueAccumulator.getCounter(AccumulatorName.IOTime));
 		        asyncContext.complete();
 			
 			} else {

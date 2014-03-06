@@ -148,7 +148,7 @@ public class CQSSetQueueAttributesAction extends CQSAction {
                 
             	int v = Integer.parseInt(value);
                 
-            	if (v < 0 || v > 20) {
+            	if (v < 0 || v > CMBProperties.getInstance().getCMBRequestTimeoutSec()) {
                     throw new CMBException(CMBErrorCodes.InvalidAttributeValue, CQSConstants.RECEIVE_MESSAGE_WAIT_TIME_SECONDS + " must be 20 seconds or less");
                 }
                 

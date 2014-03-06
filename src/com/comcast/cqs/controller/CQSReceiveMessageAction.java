@@ -101,7 +101,7 @@ public class CQSReceiveMessageAction extends CQSAction {
         	}
         }
         	
-    	if (waitTimeSeconds < 0 || waitTimeSeconds > 20) {
+    	if (waitTimeSeconds < 0 || waitTimeSeconds > CMBProperties.getInstance().getCMBRequestTimeoutSec()) {
             throw new CMBException(CMBErrorCodes.InvalidParameterValue, CQSConstants.WAIT_TIME_SECONDS + " must be an integer number between 0 and 20.");
     	}
 

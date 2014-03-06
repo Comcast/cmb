@@ -128,7 +128,7 @@ public class CNSEndpointPublisherJobProducer implements CNSPublisherPartitionRun
 	        Message msg = null;
 	        
 	        if (CMBProperties.getInstance().isCQSLongPollEnabled()) {
-	        	msg = CQSHandler.receiveMessage(queueUrl, 20); 
+	        	msg = CQSHandler.receiveMessage(queueUrl, CMBProperties.getInstance().getCMBRequestTimeoutSec()); 
 	        } else {
 	        	msg = CQSHandler.receiveMessage(queueUrl, 0); 
 	        }
