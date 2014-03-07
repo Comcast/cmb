@@ -38,7 +38,9 @@ public class CMBProperties {
 	    SYNC, ASYNC 
 	}
 	
-	private boolean useCmbIOBuffers;
+	private final boolean cmbUseInlineApiCalls;
+	
+	private final boolean useCmbIOBuffers;
 	private final String cmbUnsubscribeUrl;
 	
 	private final HConsistencyLevel consistencyLevel;
@@ -218,6 +220,7 @@ public class CMBProperties {
 			FileInputStream fileStream = new FileInputStream(file);
 			props.load(fileStream);
 			
+			cmbUseInlineApiCalls = Boolean.parseBoolean(props.getProperty("cmb.useInlineApiCalls", "true"));
 			useCmbIOBuffers = Boolean.parseBoolean(props.getProperty("cmb.useCmbIOBuffers", "true"));
 			
 			consistencyLevel = HConsistencyLevel.valueOf(props.getProperty("cmb.cassandra.consistencyLevel","QUORUM"));
@@ -838,5 +841,8 @@ public class CMBProperties {
 	public boolean useCmbIOBuffers() {
 		return useCmbIOBuffers;
 	}
-
+	
+	public boolean useInlineApiCalls() {
+		return cmbUseInlineApiCalls;
+	}
 }

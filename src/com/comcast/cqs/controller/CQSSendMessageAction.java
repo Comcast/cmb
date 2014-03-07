@@ -16,7 +16,6 @@
 package com.comcast.cqs.controller;
 
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Random;
 
@@ -31,7 +30,6 @@ import com.comcast.cmb.common.util.CMBErrorCodes;
 import com.comcast.cmb.common.util.CMBException;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.Util;
-import com.comcast.cmb.common.util.ValueAccumulator.AccumulatorName;
 import com.comcast.cqs.io.CQSMessagePopulator;
 import com.comcast.cqs.model.CQSMessage;
 import com.comcast.cqs.model.CQSQueue;
@@ -56,8 +54,6 @@ public class CQSSendMessageAction extends CQSAction {
         CQSHttpServletRequest request = (CQSHttpServletRequest)asyncContext.getRequest();
         HttpServletResponse response = (HttpServletResponse)asyncContext.getResponse();
 		
-		long ts1 = System.currentTimeMillis();
-        
         String messageBody = request.getParameter(CQSConstants.MESSAGE_BODY);
 
         if (messageBody == null) {
@@ -94,15 +90,11 @@ public class CQSSendMessageAction extends CQSAction {
         }
         
         attributes.put(CQSConstants.SENDER_ID, user.getUserId());
-        attributes.put(CQSConstants.SENT_TIMESTAMP, "" + Calendar.getInstance().getTimeInMillis());
+        attributes.put(CQSConstants.SENT_TIMESTAMP, "" + System.currentTimeMillis());
         attributes.put(CQSConstants.APPROXIMATE_RECEIVE_COUNT, "0");
         attributes.put(CQSConstants.APPROXIMATE_FIRST_RECEIVE_TIMESTAMP, "");
         
         CQSMessage message = new CQSMessage(messageBody, attributes);
-        
-		long ts2 = System.currentTimeMillis();
-        CQSControllerServlet.valueAccumulator.addToCounter(AccumulatorName.SendMessageArgumentCheck, (ts2-ts1));
-
 	    CQSQueue queue = CQSCache.getCachedQueue(user, request);
 	    
 	    int shard = 0;

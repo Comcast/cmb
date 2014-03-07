@@ -86,7 +86,14 @@ public class CQSReceiveMessageAction extends CQSAction {
         }
 
         if (request.getParameter(CQSConstants.VISIBILITY_TIMEOUT) != null) {
-        	msgParam.put(CQSConstants.VISIBILITY_TIMEOUT, request.getParameter(CQSConstants.VISIBILITY_TIMEOUT));
+        	
+        	int visibilityTimeout = Integer.parseInt(request.getParameter(CQSConstants.VISIBILITY_TIMEOUT));
+        	
+        	if (visibilityTimeout < 0 || visibilityTimeout > CMBProperties.getInstance().getCQSMaxVisibilityTimeOut()) {
+                throw new CMBException(CMBErrorCodes.InvalidParameterValue, "The value for VisibilityTimeout is not valid (must be from 0 to " + CMBProperties.getInstance().getCQSMaxVisibilityTimeOut() + ").");
+        	}
+        	
+        	msgParam.put(CQSConstants.VISIBILITY_TIMEOUT, "" + visibilityTimeout);
         }
         
         // receive timeout overrides queue default timeout if present 

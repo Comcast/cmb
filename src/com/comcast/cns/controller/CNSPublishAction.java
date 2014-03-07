@@ -51,6 +51,7 @@ import com.comcast.cns.tools.CNSWorkerMonitor;
 import com.comcast.cns.tools.CQSHandler;
 import com.comcast.cns.util.CNSErrorCodes;
 import com.comcast.cns.util.Util;
+import com.comcast.cqs.api.CQSAPI;
 import com.comcast.cqs.controller.CQSHttpServletRequest;
 
 /**
@@ -230,25 +231,42 @@ public class CNSPublishAction extends CNSAction {
     	long ts1 = System.currentTimeMillis();
 
     	String queueName =  prefix + (new Random()).nextInt(numShards);
-    	String queueUrl = com.comcast.cqs.util.Util.getAbsoluteQueueUrlForName(queueName, userId);
-
-    	try {
-    		SendMessageResult sendMessageResult = sqs.sendMessage(new SendMessageRequest(queueUrl, message));
-			receiptHandle = sendMessageResult.getMessageId();
-    	} catch (AmazonClientException ex) {
-    		if (ex.getCause() instanceof HttpHostConnectException) {
-	    		logger.error("event=cqs_service_unavailable", ex);
-	    		CNSWorkerMonitor.getInstance().registerCQSServiceAvailable(false);
-	    	} else if (ex instanceof AmazonServiceException && ((AmazonServiceException)ex).getErrorCode().equals("NonExistentQueue")) {
+    	String absoluteQueueUrl = com.comcast.cqs.util.Util.getAbsoluteQueueUrlForName(queueName, userId);
+    	String relativeQueueUrl = com.comcast.cqs.util.Util.getRelativeQueueUrlForName(queueName, userId);
+    	
+    	if (CMBProperties.getInstance().useInlineApiCalls() && CMBProperties.getInstance().getCQSServiceEnabled()) {
+    		
+    		try {
+    			receiptHandle = CQSAPI.sendMessage(userId, relativeQueueUrl, message, null);
+    		} catch (Exception ex) {
 	    		try {
 	        		CQSHandler.initialize();
 	    			CQSHandler.ensureQueuesExist(prefix, numShards);
 	        	} catch (Exception e) {
 	        		logger.error("event=failed_to_check_consumer_queue_existence", e);
 	        	}
-	    	} else {
-	    		logger.error("event=cqs_service_failure", ex);
-	    		CNSWorkerMonitor.getInstance().registerCQSServiceAvailable(false);
+    		}
+    	
+    	} else {
+
+	    	try {
+	    		SendMessageResult sendMessageResult = sqs.sendMessage(new SendMessageRequest(absoluteQueueUrl, message));
+				receiptHandle = sendMessageResult.getMessageId();
+	    	} catch (AmazonClientException ex) {
+	    		if (ex.getCause() instanceof HttpHostConnectException) {
+		    		logger.error("event=cqs_service_unavailable", ex);
+		    		CNSWorkerMonitor.getInstance().registerCQSServiceAvailable(false);
+		    	} else if (ex instanceof AmazonServiceException && ((AmazonServiceException)ex).getErrorCode().equals("NonExistentQueue")) {
+		    		try {
+		        		CQSHandler.initialize();
+		    			CQSHandler.ensureQueuesExist(prefix, numShards);
+		        	} catch (Exception e) {
+		        		logger.error("event=failed_to_check_consumer_queue_existence", e);
+		        	}
+		    	} else {
+		    		logger.error("event=cqs_service_failure", ex);
+		    		CNSWorkerMonitor.getInstance().registerCQSServiceAvailable(false);
+		    	}
 	    	}
     	}
     	

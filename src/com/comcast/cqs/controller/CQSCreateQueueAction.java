@@ -53,22 +53,17 @@ public class CQSCreateQueueAction extends CQSAction {
 
 		String queueName = request.getParameter("QueueName");
         
-        if (queueName == null) {
-            throw new CMBException(CMBErrorCodes.MissingParameter, "This request must contain the parameter QueueName");
+        if (queueName == null || queueName.length() == 0) {
+            throw new CMBException(CMBErrorCodes.MissingParameter, "Missing parameter QueueName");
         }
         
         queueName = queueName.trim();
-        
-        Pattern p = Pattern.compile("[a-zA-Z0-9-_]+");
-
-        if (queueName == null || queueName.length() == 0) {
-            throw new CMBException(CMBErrorCodes.MissingParameter, "QueueName not found");
-        }
 
         if (queueName.length() > CMBProperties.getInstance().getCQSMaxNameLength()) {
             throw new CMBException(CMBErrorCodes.InvalidParameterValue, "QueueName " + queueName + " is too long. Maximum is " + CMBProperties.getInstance().getCQSMaxNameLength());
         }
 
+        Pattern p = Pattern.compile("[a-zA-Z0-9-_]+");
         Matcher m = p.matcher(queueName);
         
         if (!m.matches()) {

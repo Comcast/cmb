@@ -33,8 +33,6 @@ public final class ValueAccumulator {
         CassandraRead,
         RedisTime,
         CQSMonitorTime,
-        SendMessageArgumentCheck,
-        SendMessageXMLTime,
         CMBControllerPreHandleAction,
         CQSPreDoAction,
         CNSCQSTime,

@@ -259,7 +259,7 @@ abstract public class CMBControllerServlet extends HttpServlet {
 	}
 
 	private void logStats(String action, long responseTimeMS, long redisTimeMS, long cassandraTimeMS) {
-
+		
 		try {
 
 			if (action != null && !action.equals("")) {
@@ -353,7 +353,7 @@ abstract public class CMBControllerServlet extends HttpServlet {
 				} else if (responseTimeIdx < 0) {
 					responseTimeIdx = 0;
 				}
-
+				
 				callResponseTimes[newMinute][responseTimeIdx].incrementAndGet();
 
 				// redis time
