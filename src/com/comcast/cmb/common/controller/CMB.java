@@ -106,10 +106,9 @@ public class CMB {
     	// launch cns publish worker if enabled
     	
     	if (CMBProperties.getInstance().isCNSPublisherEnabled()) {
-
+        	Thread.sleep(1000);
     		CNSPublisher.start(CMBProperties.getInstance().getCNSPublisherMode());
-	        
-    		logger.info("event=laucnhed_cns_publisher mode=" + CMBProperties.getInstance().getCNSPublisherMode());
+    		logger.info("event=launched_cns_publisher mode=" + CMBProperties.getInstance().getCNSPublisherMode());
     	}
     }
 }

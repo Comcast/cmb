@@ -51,6 +51,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Enumeration;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -261,6 +262,10 @@ abstract public class CMBControllerServlet extends HttpServlet {
 	private void logStats(String action, long responseTimeMS, long redisTimeMS, long cassandraTimeMS) {
 		
 		try {
+			
+			if (!initialized) {
+				return;
+			}
 
 			if (action != null && !action.equals("")) {
 
@@ -334,27 +339,20 @@ abstract public class CMBControllerServlet extends HttpServlet {
 
 				AtomicLong[][] callResponseTimes = callResponseTimesByApi.get(action);
 
-				if (callResponseTimes == null) {
-					callResponseTimesByApi.putIfAbsent(action, new AtomicLong[NUM_MINUTES][NUM_BUCKETS]);
-					callResponseTimes = callResponseTimesByApi.get(action);
-					for (int i=0; i<NUM_MINUTES; i++) {
-						for (int k=0; k<NUM_BUCKETS; k++) {
-							callResponseTimes[i][k] = new AtomicLong();
-						}
-					}
-				}
-
-				// resolution for the api specific response time array is always 10 ms
-
-				responseTimeIdx = (int)(responseTimeMS)/10;
-
-				if (responseTimeIdx > NUM_BUCKETS-1) {
-					responseTimeIdx = NUM_BUCKETS-1;
-				} else if (responseTimeIdx < 0) {
-					responseTimeIdx = 0;
-				}
+				if (callResponseTimes != null) {
 				
-				callResponseTimes[newMinute][responseTimeIdx].incrementAndGet();
+					// resolution for the api specific response time array is always 10 ms
+	
+					responseTimeIdx = (int)(responseTimeMS)/10;
+	
+					if (responseTimeIdx > NUM_BUCKETS-1) {
+						responseTimeIdx = NUM_BUCKETS-1;
+					} else if (responseTimeIdx < 0) {
+						responseTimeIdx = 0;
+					}
+					
+					callResponseTimes[newMinute][responseTimeIdx].incrementAndGet();
+				}
 
 				// redis time
 

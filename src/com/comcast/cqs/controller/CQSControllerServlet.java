@@ -143,6 +143,16 @@ public class CQSControllerServlet extends CMBControllerServlet {
             put(clearCache.getName(), clearCache);
             put(getAPIStats.getName(), getAPIStats);
         }};
+        
+		for (String action : actionMap.keySet()) {
+			callResponseTimesByApi.putIfAbsent(action, new AtomicLong[NUM_MINUTES][NUM_BUCKETS]);
+			AtomicLong[][] callResponseTimes = callResponseTimesByApi.get(action);
+			for (int i=0; i<NUM_MINUTES; i++) {
+				for (int k=0; k<NUM_BUCKETS; k++) {
+					callResponseTimes[i][k] = new AtomicLong();
+				}
+			}
+		}
     }
     
 
