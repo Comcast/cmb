@@ -261,16 +261,20 @@ public class CNSSubscriptionCassandraPersistence extends CassandraPersistence im
 		}*/	
 		
 		// then set confirmation stuff and update cassandra
+		
 		CNSSubscription retrievedSubscription = getSubscription(subscription.getArn());
+		
 		if (!CMBProperties.getInstance().getCNSRequireSubscriptionConfirmation()) {
 
 			subscription.setConfirmed(true);
 			subscription.setConfirmDate(new Date());
 			
 			insertOrUpdateSubsAndIndexes(subscription, null);
-			if(retrievedSubscription==null){
+			
+			if (retrievedSubscription==null) {
 				incrementCounter(columnFamilyTopicStats, subscription.getTopicArn(), "subscriptionConfirmed", 1, new StringSerializer(), new StringSerializer(), CMBProperties.getInstance().getWriteConsistencyLevel());
 			}
+			
 		} else {
 		
 			// protocols that cannot confirm subscriptions (e.g. redisPubSub)

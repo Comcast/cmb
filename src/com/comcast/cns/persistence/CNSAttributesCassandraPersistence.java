@@ -27,6 +27,7 @@ import me.prettyprint.hector.api.beans.ColumnSlice;
 import com.comcast.cmb.common.persistence.CassandraPersistence;
 import com.comcast.cmb.common.persistence.PersistenceFactory;
 import com.comcast.cmb.common.util.CMBProperties;
+import com.comcast.cns.controller.CNSCache;
 import com.comcast.cns.model.CNSSubscription;
 import com.comcast.cns.model.CNSSubscriptionAttributes;
 import com.comcast.cns.model.CNSSubscriptionDeliveryPolicy;
@@ -147,6 +148,8 @@ public class CNSAttributesCassandraPersistence extends CassandraPersistence impl
 	@Override
 	public void setSubscriptionAttributes(CNSSubscriptionAttributes subscriptionAtributes, String subscriptionArn) throws Exception {
 		insertOrUpdateRow(subscriptionArn, columnFamilySubscriptionAttributes, getColumnValues(subscriptionAtributes), CMBProperties.getInstance().getWriteConsistencyLevel());
+		String topicArn = com.comcast.cns.util.Util.getCnsTopicArn(subscriptionArn);
+		CNSCache.removeTopicAttributes(topicArn);
 	}
 
 	private Map<String, String> getColumnValues(CNSSubscriptionAttributes subscriptionAtributes) {

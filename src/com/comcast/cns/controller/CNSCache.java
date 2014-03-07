@@ -106,6 +106,15 @@ public class CNSCache {
     	
     	return attributeCache.getAndSetIfNotPresent(topicArn, new TopicAttributesCallable(topicArn), CMBProperties.getInstance().getCNSCacheExpiring() * 1000);        
     }
+    
+    public static void removeTopicAttributes(String topicArn) {
+    	
+    	if (topicArn == null) {
+    		return;
+    	}
+    	
+    	attributeCache.remove(topicArn);
+    }
 
 	private static class SubscriptionCallable implements Callable<List<CNSSubscription>> {
         

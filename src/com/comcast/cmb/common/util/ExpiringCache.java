@@ -86,6 +86,17 @@ public final class ExpiringCache<K, V> {
     }
     
     /**
+     * Remove a key from the cache
+     * @param key
+     */
+    public void remove(K key) {
+    	if (key == null) {
+    		return;
+    	}
+    	cache.remove(key);
+    }
+    
+    /**
      * Thrown when cache reaches its configured limit
      */
     @SuppressWarnings("serial")
