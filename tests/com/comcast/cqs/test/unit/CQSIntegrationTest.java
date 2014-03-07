@@ -406,6 +406,8 @@ public class CQSIntegrationTest extends CMBAWSBaseTest {
         String queueUrl = getQueueUrl(1, USR.USER1);
         cqs1.setQueueAttributes(new SetQueueAttributesRequest(queueUrl, attributeParams));
         
+        Thread.sleep(1000);
+        
         try {
         	
             List<SendMessageBatchRequestEntry> messageList = Arrays.asList(

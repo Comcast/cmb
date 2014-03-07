@@ -44,7 +44,7 @@ public class CNSRedisPubSubTest extends CMBAWSBaseTest {
 		logger = Logger.getLogger(CNSRedisPubSubTest.class);
 	}
 	
-	@Test
+	//@Test
 	public void testRedisPubSub() {
 		JedisPubSub jedisPubSub = setupSubscriber();
 		try {

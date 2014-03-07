@@ -27,9 +27,12 @@ import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.sns.AmazonSNSClient;
 import com.amazonaws.services.sns.model.CreateTopicRequest;
 import com.amazonaws.services.sns.model.DeleteTopicRequest;
+import com.amazonaws.services.sns.model.ListTopicsResult;
+import com.amazonaws.services.sns.model.Topic;
 import com.amazonaws.services.sqs.AmazonSQSClient;
 import com.amazonaws.services.sqs.model.CreateQueueRequest;
 import com.amazonaws.services.sqs.model.DeleteQueueRequest;
+import com.amazonaws.services.sqs.model.ListQueuesResult;
 import com.comcast.cmb.common.controller.CMBControllerServlet;
 import com.comcast.cmb.common.model.User;
 import com.comcast.cmb.common.persistence.IUserPersistence;
@@ -148,6 +151,9 @@ public class CMBAWSBaseTest {
 			cns2.setEndpoint(cnsServiceUrl);
 			cns3 = new AmazonSNSClient(credentials3);
 			cns3.setEndpoint(cnsServiceUrl);
+			deleteAllTopics(cns1);
+			deleteAllTopics(cns2);
+			deleteAllTopics(cns3);
 		}
 
 		if (cqsServiceUrl != null) {
@@ -157,6 +163,9 @@ public class CMBAWSBaseTest {
 			cqs2.setEndpoint(cqsServiceUrl);
 			cqs3 = new AmazonSQSClient(credentials3);
 			cqs3.setEndpoint(cqsServiceUrl);
+			deleteAllQueues(cqs1);
+			deleteAllQueues(cqs2);
+			deleteAllQueues(cqs3);
 		}
 	}
 	
@@ -223,5 +232,19 @@ public class CMBAWSBaseTest {
 			logger.info("created topic " + topics.get(idx + "_" + usr));
 		}
 		return topics.get(idx + "_" + usr);
+	}
+	
+	private void deleteAllTopics(AmazonSNSClient sns) {
+		ListTopicsResult listTopicsResult = sns.listTopics();
+		for (Topic topic : listTopicsResult.getTopics()) {
+			sns.deleteTopic(new DeleteTopicRequest(topic.getTopicArn()));
+		}
+	}
+	
+	private void deleteAllQueues(AmazonSQSClient sqs) {
+		ListQueuesResult listQueueaResult = sqs.listQueues();
+		for (String queueUrl : listQueueaResult.getQueueUrls()) {
+			sqs.deleteQueue(new DeleteQueueRequest(queueUrl));
+		}
 	}
 }
