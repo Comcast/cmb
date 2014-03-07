@@ -289,12 +289,15 @@ public class CQSLongPollSender {
 				}
 
 				// don't go through tcp stack for loopback
-
-				CQSLongPollReceiver.processNotification(queueArn, "localhost");
 				
-				logger.debug("event=longpoll_notification_sent endpoint=localhost queue_arn=" + queueArn);
+				int messageCount = CQSLongPollReceiver.processNotification(queueArn, "localhost");
+				logger.debug("event=longpoll_notification_sent endpoint=localhost queue_arn=" + queueArn + " num_msg_found=" + messageCount);
+				
+				if (messageCount > 0) {
+					continue;
+				}
 
-				// send notification on all other established channels to remote cqs api servers
+				// if no messages found locally, send notification on all other established channels to remote cqs api servers
 				
 				for (String endpoint : activeCQSApiServers.keySet()) {
 					

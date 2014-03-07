@@ -134,7 +134,10 @@ public class CQSLongPollReceiver {
 		}
 	}
 	
-	public static void processNotification(String queueArn, String remoteAddress) {
+	public static int processNotification(String queueArn, String remoteAddress) {
+		
+		int messageCount = 0;
+		
 		long ts1 = System.currentTimeMillis();
 		CMBControllerServlet.valueAccumulator.initializeAllCounters();
 		
@@ -145,28 +148,26 @@ public class CQSLongPollReceiver {
 		
 		if (asyncContext == null) {
 			logger.debug("event=no_pending_receive queue_arn=" + queueArn + " remote_address=" + remoteAddress);
-			return;
+			return messageCount;
 		}
 		
 		if (asyncContext.getRequest() == null) {
 			logger.info("event=skipping_invalid_context queue_arn=" + queueArn + " remote_address=" + remoteAddress);
-			return;
+			return messageCount;
 		}
 		
 		if (!(asyncContext.getRequest() instanceof CQSHttpServletRequest)) {
 			logger.info("event=skipping_invalid_request queue_arn=" + queueArn + " remote_address=" + remoteAddress);
-			return;
+			return messageCount;
 		}
 		
         CQSHttpServletRequest request = (CQSHttpServletRequest)asyncContext.getRequest();
-        
-
 
 		// skip if request is already finished or outdated
 		
 		if (!request.isActive() || System.currentTimeMillis() - request.getRequestReceivedTimestamp() > request.getWaitTime()) {
 			logger.info("event=skipping_outdated_context queue_arn=" + queueArn + " remote_address=" + remoteAddress);
-			return;
+			return messageCount;
 		}
 		
 		logger.debug("event=notification_received queue_arn=" + queueArn + " remote_address=" + remoteAddress);
@@ -178,15 +179,16 @@ public class CQSLongPollReceiver {
 		
 			if (messageList.size() > 0) {
 				
+				messageCount = messageList.size();
+				
 				List<String> receiptHandles = new ArrayList<String>();
+				
 				for (CQSMessage message : messageList) {
 	            	receiptHandles.add(message.getReceiptHandle());
 	            }
+				
 				request.setReceiptHandles(receiptHandles);
-		        //Set for long poll. first y means long poll, second means found message, also pass lp_ms and other useful info
-
-				request.setAttribute("lp", "yy");
-
+				request.setAttribute("lp", "yy"); // found lp call with messages 
 				CQSMonitor.getInstance().addNumberOfMessagesReturned(queue.getRelativeUrl(), messageList.size());
 		        String out = CQSMessagePopulator.getReceiveMessageResponseAfterSerializing(messageList, request.getFilterAttributes());
 		        Action.writeResponse(out, (HttpServletResponse)asyncContext.getResponse());
@@ -198,6 +200,7 @@ public class CQSLongPollReceiver {
 		        request.setAttribute("cass_num_wr",CQSControllerServlet.valueAccumulator.getCounter(AccumulatorName.CassandraWrite));
 		        request.setAttribute("redis_ms",CQSControllerServlet.valueAccumulator.getCounter(AccumulatorName.RedisTime));
 		        request.setAttribute("io_ms",CQSControllerServlet.valueAccumulator.getCounter(AccumulatorName.IOTime));
+		        
 		        asyncContext.complete();
 			
 			} else {
@@ -212,10 +215,11 @@ public class CQSLongPollReceiver {
         
         } catch (Exception ex) {
 			logger.error("event=longpoll_queue_error queue_arn=" + queueArn, ex);
-		}
-        finally{
+		} finally{
         	CMBControllerServlet.valueAccumulator.deleteAllCounters();
         }
+        
+        return messageCount;
 	}
 	
 	public static void listen() {
