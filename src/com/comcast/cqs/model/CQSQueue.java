@@ -15,7 +15,10 @@
  */
 package com.comcast.cqs.model;
 
+import org.apache.log4j.Logger;
+
 import com.comcast.cmb.common.util.CMBProperties;
+import com.comcast.cqs.util.Util;
 
 /**
  * Model for a queue
@@ -23,6 +26,8 @@ import com.comcast.cmb.common.util.CMBProperties;
  *
  */
 public class CQSQueue {
+	
+	private static final Logger logger = Logger.getLogger(CQSQueue.class);
 
 	private String arn;
     private String name;
@@ -30,6 +35,7 @@ public class CQSQueue {
     private String relativeUrl;
     private String region;
     private String serviceEndpoint;
+    private String relativeUrlHash;
 
 	private int visibilityTO = 30; // sec
     private int maxMsgSize = 65536; //bytes
@@ -87,6 +93,7 @@ public class CQSQueue {
         
         setServiceEndpoint(serviceUrl);
         setRelativeUrl(this.ownerUserId + "/" + name);
+        setRelativeUrlHashByUrl(this.relativeUrl);
 	}
 	
 	public int getShardNumber() {
@@ -188,7 +195,19 @@ public class CQSQueue {
 	public void setRelativeUrl(String relativeUrl) {
 		this.relativeUrl = relativeUrl;
 	}
+	
+    public String getRelativeUrlHash() {
+		return relativeUrlHash;
+	}
 
+	public void setRelativeUrlHashByUrl(String relativeUrl) {
+		try {
+			this.relativeUrlHash = Util.hashQueueUrl(relativeUrl);
+		} catch (Exception ex){
+			logger.error("event=get_queueurlhash_failed", ex);
+		}
+	}
+	
 	public void setArn(String arn) {
 		this.arn = arn;
 	}

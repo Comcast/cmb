@@ -45,6 +45,7 @@ import redis.clients.jedis.Transaction;
 import redis.clients.jedis.exceptions.JedisConnectionException;
 import redis.clients.jedis.exceptions.JedisException;
 
+import com.comcast.cmb.common.persistence.CassandraPersistence;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.PersistenceException;
 import com.comcast.cmb.common.util.ValueAccumulator.AccumulatorName;
@@ -168,8 +169,8 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
             RedisCachedCassandraPersistence.this.setCacheState(queueUrl, 0, state, oldState, checkOldState);
         }
         
-        public String getMemQueueMessage(String messageId, long ts, int initialDelay) {
-            return RedisCachedCassandraPersistence.getMemQueueMessage(messageId, ts, initialDelay);
+        public String getMemQueueMessage(String messageId) {
+            return RedisCachedCassandraPersistence.getMemQueueMessage(messageId);
         }
         
         public long getMemQueueMessageCreatedTS(String memId) {
@@ -180,8 +181,8 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
             return RedisCachedCassandraPersistence.getMemQueueMessageInitialDelay(memId);
         }
         
-        public String getMemQueueMessageMessageId(String memId) {
-            return RedisCachedCassandraPersistence.getMemQueueMessageMessageId(memId);
+        public String getMemQueueMessageMessageId(String queueUrlHash, String memId) {
+            return RedisCachedCassandraPersistence.getMemQueueMessageMessageId(queueUrlHash,memId);
         }
         
         public void resetTestQueue() {
@@ -493,18 +494,15 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
      * @param messageId The Cassandra message-id
      * @return The in-memory message-id
      */
-    private static String getMemQueueMessage(String messageId, long ts, int initialDelay) {
-        if (ts <= 0L) {
-            throw new IllegalArgumentException("Timestamp cannot be 0 or negative");
-        }
-        if (initialDelay < 0) {
-            throw new IllegalArgumentException("Initial delay cannot be 0 or negative");
-        }
+    private static String getMemQueueMessage(String messageId) {
         if (messageId.length() == 0) {
             throw new IllegalArgumentException("Messge Id cannot be an empty string");
         }
+        //messageID is like 45c1596598f85ce59f060dc2b8ec4ebb_0_72:2923737900040323074:-8763141905575923938
+        //the first part 45c1596598f85ce59f060dc2b8ec4ebb is hash of queue url, so replace it with 0 to save space in Redis
+        //return example: 0:0:0_0_72:2923737900040323074:-8763141905575923938
         StringBuffer sb = new StringBuffer();
-        sb.append(ts).append(':').append(initialDelay).append(':').append(messageId);
+        sb.append("0").append(':').append("0").append(":0").append(messageId.substring(messageId.indexOf("_")));
         return sb.toString();
     }
     
@@ -513,12 +511,13 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
      * @param memId
      * @return The created timestamp encoded in the memId
      */
+    //Example 0:0:0_0_72:2923737900040323074:-8763141905575923938
     public static long getMemQueueMessageCreatedTS(String memId) {
         String []arr = memId.split(":");
-        if (arr.length < 3) {
+        if (arr.length < 5) {
             throw new IllegalArgumentException("Bad format for memId. Must be of the form addedTS:initialDelay:<messge-id>. Got: " + memId);
         }
-        return Long.parseLong(arr[0]);        
+        return CassandraPersistence.getTimestampFromHash(Long.parseLong(arr[3]));        
     }
     
     /**
@@ -538,12 +537,15 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
      * @param memId
      * @return The message-id encoded in memId
      */
-    static String getMemQueueMessageMessageId(String memId) {        
+    static String getMemQueueMessageMessageId(String queueUrlHash, String memId) {        
         String []arr = memId.split(":");
         if (arr.length < 3) {
             throw new IllegalArgumentException("Bad format for memId. Must be of the form addedTS:initialDelay:<messge-id>. Got: " + memId);
         }
-        StringBuffer sb = new StringBuffer(arr[2]);
+        //memId example: 0:0:0_0_72:2923737900040323074:-8763141905575923938
+        //replace arr[2] first 0 to queueUrlHash and return example: 45c1596598f85ce59f060dc2b8ec4ebb_0_72:2923737900040323074:-8763141905575923938
+        StringBuffer sb = new StringBuffer(queueUrlHash);
+        sb.append(arr[2].substring(arr[2].indexOf("_")));
         for (int i = 3; i < arr.length; i++) {
             sb.append(":").append(arr[i]);
         }
@@ -667,9 +669,7 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
                 }
                 //process memIds that should be re-visible
                 for (String memId : memIds) {
-                    String messageId = getMemQueueMessageMessageId(memId);
-                    long origCreatedTS = getMemQueueMessageCreatedTS(memId);
-                    jedis.rpush(queueUrl + "-" + shard + "-Q", getMemQueueMessage(messageId, origCreatedTS, 0)); //TODO: initialDelay is 0
+                	jedis.rpush(queueUrl + "-" + shard + "-Q", memId);
                     jedis.hdel(queueUrl + "-" + shard + "-H", memId);
                 }
                 long ts3 = System.currentTimeMillis();
@@ -747,7 +747,7 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
      */
     private void addMessageToCache(String queueUrl, int shard, CQSMessage message, ShardedJedis jedis) {
         long ts1 = System.currentTimeMillis();
-        Long newLen = jedis.rpush(queueUrl + "-" + shard + "-Q", getMemQueueMessage(message.getMessageId(), System.currentTimeMillis(), 0)); //TODO: currently initialDelay is always 0
+        Long newLen = jedis.rpush(queueUrl + "-" + shard + "-Q", getMemQueueMessage(message.getMessageId())); //TODO: currently initialDelay is always 0
         if (newLen.longValue() == 0) {
             throw new IllegalStateException("Could not add memId to queue");
         }
@@ -818,7 +818,7 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
             	if (message.getAttributes().containsKey(CQSConstants.DELAY_SECONDS)) {
             		delaySeconds = Integer.parseInt(message.getAttributes().get(CQSConstants.DELAY_SECONDS));
             	}
-            	memId = getMemQueueMessage(messageId, System.currentTimeMillis()+delaySeconds*1000, 0); 
+            	memId = getMemQueueMessage(messageId); 
             	jedis = getResource();
             	if (delaySeconds > 0) {
                     jedis.zadd(queue.getRelativeUrl() + "-" + shard + "-V", System.currentTimeMillis() + (delaySeconds * 1000), memId); //insert or update already existing            	    
@@ -872,7 +872,7 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
             	}
                 String clientId = message.getSuppliedMessageId();
                 String messageId = message.getMessageId();
-                String memId = getMemQueueMessage(messageId, System.currentTimeMillis()+delaySeconds*1000, 0);
+                String memId = getMemQueueMessage(messageId);
                 if (cacheAvailable) {      
                     try {
                     	if (delaySeconds > 0) {
@@ -903,9 +903,10 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
     @Override
     public void deleteMessage(String queueUrl, String receiptHandle) throws PersistenceException {
     	
-        //receiptHandle is memId
+        String queueUrlHash = Util.getQueueUrlHashFromCache(queueUrl);
+    	//receiptHandle is memId
     	
-    	String messageId = getMemQueueMessageMessageId(receiptHandle);
+    	String messageId = getMemQueueMessageMessageId(queueUrlHash, receiptHandle);
     	int shard = Util.getShardFromReceiptHandle(receiptHandle);
         boolean cacheAvailable = checkCacheConsistency(queueUrl, shard, false);
         
@@ -947,6 +948,7 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
      * @param message
      * @return true if message is expired, false otherwise
      */
+    //example of memId is: 0:0:0_0_72:2923737900040323074:-8763141905575923938
     private boolean isMessageExpired(CQSQueue queue, String memId) {
         if (getMemQueueMessageCreatedTS(memId) + (queue.getMsgRetentionPeriod() * 1000) < System.currentTimeMillis()) {
             return true;
@@ -1021,7 +1023,7 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
                         if (memId == null || memId.equals("nil")) { //done
                             emptyQueue = true;
                         } else {
-                            String messageId = getMemQueueMessageMessageId(memId); 
+                            String messageId = getMemQueueMessageMessageId(queue.getRelativeUrlHash(),memId); 
                             messageIds.add(messageId);
                             messageIdToMemId.put(messageId, memId);
                         }
@@ -1152,7 +1154,7 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
         	List<CQSMessage> messages = persistenceStorage.peekQueueRandom(queue.getRelativeUrl(), shard, maxNumberOfMessages);
             
         	for (CQSMessage msg : messages) {
-                String memId = getMemQueueMessage(msg.getMessageId(), System.currentTimeMillis(), 0); //TODO: initialDelay is 0
+                String memId = getMemQueueMessage(msg.getMessageId()); //TODO: initialDelay is 0
                 msg.setMessageId(memId);
                 msg.setReceiptHandle(memId);
                 Map<String, String> msgAttrs = (msg.getAttributes() != null) ?  msg.getAttributes() : new HashMap<String, String>();
@@ -1281,19 +1283,19 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
             return messages;
         
     	} else { //get from underlying storage
-            
+    		String relativeUrlHash = Util.getQueueUrlHashFromCache(queueUrl);
     		if (previousReceiptHandle != null) { //strip out this layer's id
-                previousReceiptHandle = getMemQueueMessageMessageId(previousReceiptHandle);
+                previousReceiptHandle = getMemQueueMessageMessageId(relativeUrlHash, previousReceiptHandle);
             }
             
     		if (nextReceiptHandle != null) {
-                nextReceiptHandle = getMemQueueMessageMessageId(nextReceiptHandle);
+                nextReceiptHandle = getMemQueueMessageMessageId(relativeUrlHash, nextReceiptHandle);
             }        
             
     		List<CQSMessage> messages = persistenceStorage.peekQueue(queueUrl, shard, previousReceiptHandle, nextReceiptHandle, length);
             
     		for (CQSMessage message : messages) {
-                String memId = getMemQueueMessage(message.getMessageId(), System.currentTimeMillis(), 0); //TODO: initialDelay is 0
+                String memId = getMemQueueMessage(message.getMessageId()); //TODO: initialDelay is 0
                 message.setMessageId(memId);
                 message.setReceiptHandle(memId);
             }
@@ -1357,9 +1359,9 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
         
     	List<String> messageIds = new LinkedList<String>();
         HashMap<String, String> messageIdToMemId = new HashMap<String, String>();
-        
+        String queueUrlHash = Util.getQueueUrlHashFromCache(queueUrl);
         for (String id : ids) {
-            String messageId = getMemQueueMessageMessageId(id);
+            String messageId = getMemQueueMessageMessageId(queueUrlHash,id);
             messageIds.add(messageId);
             messageIdToMemId.put(messageId, id);
         }

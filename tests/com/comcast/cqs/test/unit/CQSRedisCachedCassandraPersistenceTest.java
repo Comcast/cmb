@@ -142,22 +142,22 @@ public class CQSRedisCachedCassandraPersistenceTest {
     public void testMemId() throws Exception {
         RedisCachedCassandraPersistence redisP = RedisCachedCassandraPersistence.getInstance();
         long currTs = System.currentTimeMillis();
-        String memId = redisP.testInterface.getMemQueueMessage("test-message-id", currTs, 0);
+        String memId = redisP.testInterface.getMemQueueMessage("45c1596598f85ce59f060dc2b8ec4ebb_0_72:2923737900040323074:-8763141905575923938");
         System.out.println("memId=" + memId);
         long ts = redisP.testInterface.getMemQueueMessageCreatedTS(memId);
-        if (ts != currTs) {
-            fail("currTs != ts");
+        if (ts != 1394146871586L) {
+            fail("ts != 1394146871586L");
         }
         if (redisP.testInterface.getMemQueueMessageInitialDelay(memId) != 0) {
             fail("expected 0 for initialdelay");
         }
-        if (!redisP.testInterface.getMemQueueMessageMessageId(memId).equals("test-message-id")) {
+        if (!redisP.testInterface.getMemQueueMessageMessageId("45c1596598f85ce59f060dc2b8ec4ebb",memId).equals("45c1596598f85ce59f060dc2b8ec4ebb_0_72:2923737900040323074:-8763141905575923938")) {
             fail("expected test-message-id");
         }
         String origId = "3cd3c502a3006162d11227c932198893_7:2800871485265150206:-8449878679487512567";
-        memId = redisP.testInterface.getMemQueueMessage(origId, currTs, 0);
+        memId = redisP.testInterface.getMemQueueMessage(origId);
         log.info("memId=" + memId);
-        String messageId = redisP.testInterface.getMemQueueMessageMessageId(memId);
+        String messageId = redisP.testInterface.getMemQueueMessageMessageId("3cd3c502a3006162d11227c932198893",memId);
         if (!messageId.equals(origId)) {
             fail("orig!=recreated. recreated = " + messageId);
         }
@@ -173,7 +173,7 @@ public class CQSRedisCachedCassandraPersistenceTest {
             messages = new LinkedList<CQSMessage>();
             for (int i = 0; i < numMessages; i++) {
                 CQSMessage msg = new CQSMessage(""+i, new HashMap<String, String>());
-                msg.setMessageId(""+i);
+                msg.setMessageId("45c1596598f85ce59f060dc2b8ec4ebb_0_72:2923737900040323074:"+i);
                 msg.setReceiptHandle(""+i);
                 msg.setSuppliedMessageId(""+i);
                 messages.add(msg);
@@ -204,7 +204,7 @@ public class CQSRedisCachedCassandraPersistenceTest {
 
         @Override
         public void deleteMessage(String queueUrl, String receiptHandle) throws PersistenceException {
-            messages.remove(Integer.parseInt(receiptHandle));
+            messages.remove(getTestIndexByMessageId(receiptHandle));
         }
 
         @Override
@@ -226,12 +226,19 @@ public class CQSRedisCachedCassandraPersistenceTest {
         @Override
         public List<CQSMessage> peekQueue(String queueUrl, int shard, String previousReceiptHandle, String nextReceiptHandle, int length) throws PersistenceException, IOException, NoSuchAlgorithmException {
             List<CQSMessage> ret = new LinkedList<CQSMessage>();
-            int prevHandle = (previousReceiptHandle == null ? -1 : Integer.parseInt(previousReceiptHandle));
+            int prevHandle = (previousReceiptHandle == null ? -1 : getTestIndexByMessageId(previousReceiptHandle));
             log.info("prevhandle=" + previousReceiptHandle);
             for (int i = 0; i < length && i < (messages.size() - prevHandle -1); i++) {
                 ret.add(messages.get(prevHandle + 1 + i));
             }
             return ret;
+        }
+        
+        //MessageId example: "45c1596598f85ce59f060dc2b8ec4ebb_0_72:2923737900040323074:999"
+        private int getTestIndexByMessageId(String messageId){
+        	String [] IdParts = messageId.split(":");
+        	String IndexString = IdParts[IdParts.length-1];
+        	return Integer.parseInt(IndexString);
         }
 
         @Override
@@ -244,7 +251,11 @@ public class CQSRedisCachedCassandraPersistenceTest {
         public Map<String, CQSMessage> getMessages(String queueUrl, List<String> ids) throws PersistenceException, NoSuchAlgorithmException, UnsupportedEncodingException {
             Map<String, CQSMessage> ret = new HashMap<String, CQSMessage>();
             for (String id : ids) {
-                ret.put(id, messages.get(Integer.parseInt(id)));
+            	// This is only for unit test
+            	//example of id: 45c1596598f85ce59f060dc2b8ec4ebb_0_72:2923737900040323074:20
+            	String indexString = id.substring(id.lastIndexOf(":")+1);
+            	
+                ret.put(id, messages.get(Integer.parseInt(indexString)));
             }
             getMessgeIds.addAll(ids);
             return ret;
@@ -253,7 +264,7 @@ public class CQSRedisCachedCassandraPersistenceTest {
         public List<String> getIdsFromHead(String queueUrl, int shard, int num) {
             LinkedList<String> ids = new LinkedList<String>();
             for (int i = headMarker; i < messages.size(); i++) {
-                ids.add(RedisCachedCassandraPersistence.getInstance().testInterface.getMemQueueMessage(""+i, System.currentTimeMillis(), 0));
+                ids.add(RedisCachedCassandraPersistence.getInstance().testInterface.getMemQueueMessage(""+i));
             }
             return ids;
         }
@@ -348,7 +359,8 @@ public class CQSRedisCachedCassandraPersistenceTest {
         CQSQueue queue = new CQSQueue("testQueue", "testOwner");
         queue.setRelativeUrl("testQueue");        
         CQSMessage msg = new CQSMessage("test", new HashMap<String, String>());
-        msg.setMessageId("2000");
+//        msg.setMessageId("2000");
+        msg.setMessageId("45c1596598f85ce59f060dc2b8ec4ebb_0_72:2923737900040323074:2000");
         msg.setSuppliedMessageId("2000");
         String newMessageId;
         if (!batch) {
@@ -456,7 +468,7 @@ public class CQSRedisCachedCassandraPersistenceTest {
             fail("Expected the same message to be returned subsequently if VTO is 0. Instead got:" + messages.get(0).getMessageId());
         }
         if (Integer.parseInt(messages.get(0).getAttributes().get(CQSConstants.APPROXIMATE_RECEIVE_COUNT)) != 2) {
-            fail("Expected appx recv count 2. Got something else");
+            fail("Expected appx recv count 2. Got something else: "+ Integer.parseInt(messages.get(0).getAttributes().get(CQSConstants.APPROXIMATE_RECEIVE_COUNT)));
         }
         
     }
