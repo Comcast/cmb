@@ -205,12 +205,15 @@ abstract public class CMBControllerServlet extends HttpServlet {
 			String value = request.getParameter(key);
 			int length = 0;
 
+			if(value != null){
+				length = value.length();
+			}
+			
 			if (value != null && value.length() > CMBProperties.getInstance().getCMBRequestParameterValueMaxLength()) {
 				value = value.substring(0, CMBProperties.getInstance().getCMBRequestParameterValueMaxLength()) + "...";
 			}
 
 			if (value != null) {
-				length = value.length();
 				if (value.indexOf('\n') >= 0) {
 					value = value.replace("\n", "\\n");
 				}
@@ -428,9 +431,10 @@ abstract public class CMBControllerServlet extends HttpServlet {
 		
 		logLine.append(" async_pool_queue=").append(CMBControllerServlet.workerPool.getQueue().size()).
 		append(" async_pool_size=").append(CMBControllerServlet.workerPool.getActiveCount()).
-		append(" cqs_pool_size=").append(CMB.cqsServer.getThreadPool().getThreads()).
-		append(" cns_pool_size=").append(CMB.cnsServer.getThreadPool().getThreads());
-		
+		append(" cqs_pool_size=").append(CMB.cqsServer.getThreadPool().getThreads());
+		if(CMBProperties.getInstance().getCNSServiceEnabled()){
+			logLine.append(" cns_pool_size=").append(CMB.cnsServer.getThreadPool().getThreads());
+		}
 		// log external headers from proxy if present
 		
 		String rid = request.getHeader("CMB-RID");
