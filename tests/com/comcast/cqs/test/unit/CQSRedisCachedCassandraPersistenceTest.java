@@ -207,7 +207,8 @@ public class CQSRedisCachedCassandraPersistenceTest {
                 msg.setReceiptHandle(""+i);
                 msg.setSuppliedMessageId(""+i);
                 messages.add(msg);
-            }            
+            }  
+            
         }
         @Override
         public String sendMessage(CQSQueue queue, int shard, CQSMessage message)
