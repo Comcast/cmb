@@ -515,7 +515,7 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
     public static long getMemQueueMessageCreatedTS(String memId) {
         String []arr = memId.split(":");
         if (arr.length < 5) {
-            throw new IllegalArgumentException("Bad format for memId. Must be of the form addedTS:initialDelay:<messge-id>. Got: " + memId);
+            throw new IllegalArgumentException("Bad format for memId. Must be of the form 0:0:<messge-id>. Got: " + memId);
         }
         return CassandraPersistence.getTimestampFromHash(Long.parseLong(arr[3]));        
     }
@@ -528,7 +528,7 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
     private static int getMemQueueMessageInitialDelay(String memId) {
         String []arr = memId.split(":");
         if (arr.length < 3) {
-            throw new IllegalArgumentException("Bad format for memId. Must be of the form addedTS:initialDelay:<messge-id>. Got: " + memId);
+            throw new IllegalArgumentException("Bad format for memId. Must be of the form 0:0:<messge-id>. Got: " + memId);
         }
         return Integer.parseInt(arr[1]);                
     }
@@ -540,7 +540,7 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
     static String getMemQueueMessageMessageId(String queueUrlHash, String memId) {        
         String []arr = memId.split(":");
         if (arr.length < 3) {
-            throw new IllegalArgumentException("Bad format for memId. Must be of the form addedTS:initialDelay:<messge-id>. Got: " + memId);
+            throw new IllegalArgumentException("Bad format for memId. Must be of the form 0:0:<messge-id>. Got: " + memId);
         }
         //memId example: 0:0:0_0_72:2923737900040323074:-8763141905575923938
         //replace arr[2] first 0 to queueUrlHash and return example: 45c1596598f85ce59f060dc2b8ec4ebb_0_72:2923737900040323074:-8763141905575923938
