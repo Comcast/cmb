@@ -481,6 +481,23 @@ public class Util {
 	    return sb.toString();
 	}
 	
+	public static String getQueueUrlHashFromCache(String queueUrl){
+		String queueUrlHash = null;
+		try {
+			CQSQueue queue = CQSCache.getCachedQueue(queueUrl);
+			if(queue != null){
+				queueUrlHash = CQSCache.getCachedQueue(queueUrl)
+					.getRelativeUrlHash();
+			}
+			if (queueUrlHash == null) {
+				queueUrlHash = hashQueueUrl(queueUrl);
+			}
+		} catch (Exception ex) {
+			logger.error("event=failed_to_queueRelativeUrlHash", ex);
+		}
+		return queueUrlHash;
+	}
+	
 	public static CQSMessage buildMessageFromMap(Map<String, String> messageMap) throws NoSuchAlgorithmException, UnsupportedEncodingException {
 		
 		if (messageMap == null || messageMap.size() == 0) {

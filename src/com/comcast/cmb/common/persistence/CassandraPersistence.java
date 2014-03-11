@@ -1446,4 +1446,9 @@ public class CassandraPersistence {
         t += counter++;
         return t;
     }
+    
+    public static long getTimestampFromHash(long t){
+    	t = t >> 21;
+        return t;
+    }
 }
