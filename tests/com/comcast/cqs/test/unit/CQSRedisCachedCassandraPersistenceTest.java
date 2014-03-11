@@ -42,9 +42,11 @@ import org.junit.Before;
 import org.junit.Test;
 
 import redis.clients.jedis.ShardedJedis;
+import redis.clients.jedis.exceptions.JedisException;
 import redis.clients.util.SafeEncoder;
 
 import com.comcast.cmb.common.controller.CMBControllerServlet;
+import com.comcast.cmb.common.persistence.CassandraPersistence;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.PersistenceException;
 import com.comcast.cmb.common.util.Util;
@@ -198,9 +200,10 @@ public class CQSRedisCachedCassandraPersistenceTest {
         
         public TestDataPersistence(int numMessages) throws NoSuchAlgorithmException, UnsupportedEncodingException {
             messages = new LinkedList<CQSMessage>();
+            long timeHash = CassandraPersistence.newTime(System.currentTimeMillis(), false);
             for (int i = 0; i < numMessages; i++) {
                 CQSMessage msg = new CQSMessage(""+i, new HashMap<String, String>());
-                msg.setMessageId("45c1596598f85ce59f060dc2b8ec4ebb_0_72:2923737900040323074:"+i);
+                msg.setMessageId("45c1596598f85ce59f060dc2b8ec4ebb_0_72:"+timeHash+":"+i);
                 msg.setReceiptHandle(""+i);
                 msg.setSuppliedMessageId(""+i);
                 messages.add(msg);
@@ -281,7 +284,7 @@ public class CQSRedisCachedCassandraPersistenceTest {
             	// This is only for unit test
             	//example of id: 45c1596598f85ce59f060dc2b8ec4ebb_0_72:2923737900040323074:20
             	String indexString = id.substring(id.lastIndexOf(":")+1);
-            	
+
                 ret.put(id, messages.get(Integer.parseInt(indexString)));
             }
             getMessgeIds.addAll(ids);
@@ -387,7 +390,8 @@ public class CQSRedisCachedCassandraPersistenceTest {
         queue.setRelativeUrl("testQueue");        
         CQSMessage msg = new CQSMessage("test", new HashMap<String, String>());
 //        msg.setMessageId("2000");
-        msg.setMessageId("45c1596598f85ce59f060dc2b8ec4ebb_0_72:2923737900040323074:2000");
+        long timeHash = CassandraPersistence.newTime(System.currentTimeMillis(), false);
+        msg.setMessageId("45c1596598f85ce59f060dc2b8ec4ebb_0_72:"+timeHash+":2000");
         msg.setSuppliedMessageId("2000");
         String newMessageId;
         if (!batch) {
@@ -469,7 +473,63 @@ public class CQSRedisCachedCassandraPersistenceTest {
             }
         }
     }
-    
+
+    @Test
+    public void testReceiveMessageBackwardCompatibile() throws Exception {
+        RedisCachedCassandraPersistence redisP = testSendMessage(false); //creates a queue with 2001 messages in it
+        CQSQueue queue = new CQSQueue("testQueue", "testOwner");
+        queue.setRelativeUrl("testQueue");        
+        HashMap<String, String> receiveAttributes = new HashMap<String, String>();
+        receiveAttributes.put(CQSConstants.MAX_NUMBER_OF_MESSAGES, "10");
+        receiveAttributes.put(CQSConstants.VISIBILITY_TIMEOUT, "1"); //hide messages for 1 second
+        //before receive, change Redis key to old format.
+        String queueUrl = "testQueue";
+        boolean brokenJedis = false;
+        ShardedJedis jedis = RedisCachedCassandraPersistence.getResource();
+        try {
+            //jedis is lame and does not have a constant for "-inf" which Redis supports. So we have to
+            //pick an arbitrary old min value.
+        	String redisKey = queueUrl + "-0-Q";
+            Long redisListSize = jedis.llen(redisKey);
+            String redisMemId = null;
+            String redisOldMemId = null;
+            for (int i = 0; i < redisListSize; i++) {
+            	redisMemId = jedis.lpop(redisKey);
+            	redisOldMemId = "1394146871592:0:"+redisP.testInterface.getMemQueueMessageMessageId("45c1596598f85ce59f060dc2b8ec4ebb",redisMemId);
+            	jedis.rpush(redisKey, redisOldMemId);
+            }
+        } catch (JedisException e) {
+            brokenJedis = true;
+            throw e;
+        } finally {
+        	RedisCachedCassandraPersistence.returnResource(jedis, brokenJedis);
+        }  
+        //end of change Redis key
+        List<CQSMessage> messages = redisP.receiveMessage(queue, receiveAttributes);
+        if (messages.size() != 10) {
+            fail("Expected 10 messages. got=" + messages.size());            
+        }
+        
+        //ensure the cache hit ratio was 100%
+        if (CQSMonitor.getInstance().getReceiveMessageCacheHitPercent("testQueue") != 100) {
+            fail("Expected cache hit to be 100% instead got:" + CQSMonitor.getInstance().getReceiveMessageCacheHitPercent("testQueue"));
+        }
+        
+        
+        //capture the message-id of the first message and verify we don't get the same one again in the next batch
+        String firstMessageId = messages.get(0).getMessageId();
+        
+        messages = redisP.receiveMessage(queue, receiveAttributes);
+        if (messages.size() != 10) {
+            fail("Expected 10 messages. got=" + messages.size());            
+        }
+        
+        for (CQSMessage msg : messages) {
+            if (msg.getMessageId().equals(firstMessageId)) {
+                fail("firstMessageId returned twice. Duplciates!: " + firstMessageId);
+            }
+        }
+    }
     @Test
     public void testReceiveMessageNoDelay() throws Exception {
         //test that with 0 message visibility. The same message is returned everytime
