@@ -430,8 +430,10 @@ abstract public class CMBControllerServlet extends HttpServlet {
 		}
 		
 		logLine.append(" async_pool_queue=").append(CMBControllerServlet.workerPool.getQueue().size()).
-		append(" async_pool_size=").append(CMBControllerServlet.workerPool.getActiveCount()).
-		append(" cqs_pool_size=").append(CMB.cqsServer.getThreadPool().getThreads());
+		append(" async_pool_size=").append(CMBControllerServlet.workerPool.getActiveCount());
+		if(CMBProperties.getInstance().getCQSServiceEnabled()){
+			logLine.append(" cqs_pool_size=").append(CMB.cqsServer.getThreadPool().getThreads());
+		}
 		if(CMBProperties.getInstance().getCNSServiceEnabled()){
 			logLine.append(" cns_pool_size=").append(CMB.cnsServer.getThreadPool().getThreads());
 		}
