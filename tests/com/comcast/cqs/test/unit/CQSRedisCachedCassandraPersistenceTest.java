@@ -163,6 +163,33 @@ public class CQSRedisCachedCassandraPersistenceTest {
         }
     }
     
+    @Test
+    //test if the old format of Redis message key is still working in the new code
+    public void testMemIdBackwardCompatible() throws Exception {
+        RedisCachedCassandraPersistence redisP = RedisCachedCassandraPersistence.getInstance();
+//        String memId = redisP.testInterface.getMemQueueMessage("45c1596598f85ce59f060dc2b8ec4ebb_0_72:2923737900040323074:-8763141905575923938");
+        //this is the old format of Redis message key
+        String memId = "1394146871586:0:45c1596598f85ce59f060dc2b8ec4ebb_0_72:2923737900040323074:-8763141905575923938";
+        System.out.println("memId=" + memId);
+        long ts = redisP.testInterface.getMemQueueMessageCreatedTS(memId);
+        if (ts != 1394146871586L) {
+            fail("ts != 1394146871586L");
+        }
+        if (redisP.testInterface.getMemQueueMessageInitialDelay(memId) != 0) {
+            fail("expected 0 for initialdelay");
+        }
+        if (!redisP.testInterface.getMemQueueMessageMessageId("45c1596598f85ce59f060dc2b8ec4ebb",memId).equals("45c1596598f85ce59f060dc2b8ec4ebb_0_72:2923737900040323074:-8763141905575923938")) {
+            fail("expected test-message-id");
+        }
+        String origId = "3cd3c502a3006162d11227c932198893_7:2800871485265150206:-8449878679487512567";
+        memId = redisP.testInterface.getMemQueueMessage(origId);
+        log.info("memId=" + memId);
+        String messageId = redisP.testInterface.getMemQueueMessageMessageId("3cd3c502a3006162d11227c932198893",memId);
+        if (!messageId.equals(origId)) {
+            fail("orig!=recreated. recreated = " + messageId);
+        }
+    }
+    
     //used to feed test-data to cache-filler
     class TestDataPersistence implements ICQSMessagePersistence, ICQSMessagePersistenceIdSequence{
         List<CQSMessage> messages;
