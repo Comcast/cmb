@@ -55,7 +55,12 @@ public interface CQSMonitorMBean {
      * @return approximate number of messages in a queue in a rolling window
      */
     public int getNumberOfMessagesInQueue(String queueUrl);
-    
+
+    /**
+     * @param queueUrl
+     * @return approximate number of messages in a queue in Redis
+     */
+    public int getRedisNumberOfMessagesInQueue(String queueUrl);
     /**
      * 
      * @param queueUrl

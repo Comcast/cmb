@@ -473,4 +473,15 @@ public class CQSMonitor implements CQSMonitorMBean {
 	public boolean isJettyCNSRequestHandlerPoolLowOnThreads() {
 		return CMB.cnsServer.getThreadPool().isLowOnThreads();
 	}
+	
+	@Override
+	public int getRedisNumberOfMessagesInQueue(String queueUrl){
+		int numberOfMessages = 0;
+		try {
+			numberOfMessages = (int) RedisCachedCassandraPersistence.getInstance().getRedisQueueMessageCount(queueUrl);
+		} catch (Exception ex) {
+    		logger.error("event=failed_to_get_redis_number_of_messages queue_url=" + queueUrl);
+    	}
+		return numberOfMessages;
+	}
 }

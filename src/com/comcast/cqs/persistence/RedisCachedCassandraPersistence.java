@@ -1516,6 +1516,45 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
         return messageCount;
     }
     
+    /**
+     * 
+     * @param queueUrl
+     * @return number of mem-ids in Redis Queue. If Redis queue is empty, do not load from Cassandra.
+     * @throws Exception 
+     */
+    public long getRedisQueueMessageCount(String queueUrl) throws Exception  {
+    	
+    	long messageCount = 0;
+    	CQSQueue queue = CQSCache.getCachedQueue(queueUrl);
+    	int numberOfShards = 1;
+    	
+    	if (queue != null) {
+    		numberOfShards = queue.getNumberOfShards();
+    	}
+
+		ShardedJedis jedis = null;
+        boolean brokenJedis = false;
+        
+        try {
+
+        	jedis = getResource();
+            
+        	for (int shard=0; shard<numberOfShards; shard++) {         	
+                messageCount += jedis.llen(queueUrl + "-" + shard + "-Q");
+            }
+        	
+        } catch (JedisException e) {
+            brokenJedis = true;
+            throw e;
+        } finally {
+            if (jedis != null) {
+                returnResource(jedis, brokenJedis);
+            }
+        }  
+        
+        return messageCount;
+    }
+    
     @Override
     public long getQueueMessageCount(String queueUrl) {
         
