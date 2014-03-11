@@ -10,14 +10,11 @@ import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
 
-import com.comcast.cmb.common.controller.CMB;
-import com.comcast.cmb.common.controller.CMBControllerServlet;
 import com.comcast.cmb.common.persistence.PersistenceFactory;
 import com.comcast.cmb.common.util.CMBErrorCodes;
 import com.comcast.cmb.common.util.CMBException;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.Util;
-import com.comcast.cmb.common.util.ValueAccumulator.AccumulatorName;
 import com.comcast.cqs.controller.CQSCache;
 import com.comcast.cqs.controller.CQSLongPollSender;
 import com.comcast.cqs.model.CQSMessage;
@@ -312,5 +309,34 @@ public class CQSAPI {
 		emitLogLine(userId, "SendMessage", queue.getRelativeUrl(), null, ts2-ts1);
         
         return queue;
+	}
+	
+	public static void changeMessageVisibility(String userId, String relativeQueueUrl, String receiptHandle, Integer visibilityTimeout) throws Exception {
+
+		long ts1 = System.currentTimeMillis();
+		
+    	CQSQueue queue = CQSCache.getCachedQueue(relativeQueueUrl);
+    	
+	    if (queue == null) {
+	    	throw new CMBException(CMBErrorCodes.InternalError, "Unknown queue " + relativeQueueUrl);
+	    }
+	    
+        if (receiptHandle == null) {
+            throw new CMBException(CMBErrorCodes.MissingParameter, "ReceiptHandle not found");
+        }
+
+        if (visibilityTimeout == null) {
+            throw new CMBException(CMBErrorCodes.MissingParameter, "VisibilityTimeout not found");
+        }
+
+        if (visibilityTimeout < 0 || visibilityTimeout > CMBProperties.getInstance().getCQSMaxVisibilityTimeOut()) {
+            throw new CMBException(CMBErrorCodes.InvalidParameterValue, "VisibilityTimeout is limited from 0 to " + CMBProperties.getInstance().getCQSMaxVisibilityTimeOut() + " seconds");
+        }
+        
+        PersistenceFactory.getCQSMessagePersistence().changeMessageVisibility(queue, receiptHandle, visibilityTimeout);
+	    
+		long ts2 = System.currentTimeMillis();
+		
+		emitLogLine(userId, "ChangeMessageVisibility", queue.getRelativeUrl(), null, ts2-ts1);
 	}
 }

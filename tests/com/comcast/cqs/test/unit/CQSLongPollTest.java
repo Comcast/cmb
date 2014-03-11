@@ -460,6 +460,8 @@ public class CQSLongPollTest extends CMBAWSBaseTest {
     	messageMap = new HashMap<String, String>();
 
     	try {
+    		
+    		queueUrl = getQueueUrl(1, USR.USER1);
 
 	        // apparently there is a limit of 50 concurrent operations in aws sdk 
 	        

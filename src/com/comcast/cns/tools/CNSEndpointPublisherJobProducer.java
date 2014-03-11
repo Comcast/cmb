@@ -22,11 +22,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-import org.apache.http.conn.HttpHostConnectException;
 import org.apache.log4j.Logger;
 
-import com.amazonaws.AmazonClientException;
-import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.sqs.model.Message;
 import com.comcast.cmb.common.controller.CMBControllerServlet;
 import com.comcast.cmb.common.persistence.PersistenceFactory;
@@ -40,6 +37,7 @@ import com.comcast.cns.model.CNSEndpointPublishJob.CNSEndpointSubscriptionInfo;
 import com.comcast.cns.persistence.CNSCachedEndpointPublishJob;
 import com.comcast.cns.persistence.ICNSSubscriptionPersistence;
 import com.comcast.cns.persistence.TopicNotFoundException;
+import com.comcast.cqs.util.Util;
 
 /**
  * This class represents the Producer that reads the CNSMessage, partitions the subscribers and
@@ -66,20 +64,15 @@ public class CNSEndpointPublisherJobProducer implements CNSPublisherPartitionRun
     * @throws PersistenceException 
     */
    public static void initialize() throws PersistenceException {
-	   
 	   if (initialized) {
 		   return;
 	   }
-	   
-	   CQSHandler.initialize();
-	   
 	   logger.info("event=initialize");
 	   initialized = true;
    }
 
    public static void shutdown() {
        initialized = false;
-       CQSHandler.shutdown();
        logger.info("event=shutdown");
    }
    
@@ -124,7 +117,7 @@ public class CNSEndpointPublisherJobProducer implements CNSPublisherPartitionRun
             }
 	        
 	        String publishJobQName = CNS_PRODUCER_QUEUE_NAME_PREFIX + partition;
-	        String queueUrl = CQSHandler.getLocalQueueUrl(publishJobQName);
+	        String queueUrl = CQSHandler.getRelativeCnsInternalQueueUrl(publishJobQName);
 	        Message msg = null;
 	        
 	        if (CMBProperties.getInstance().isCQSLongPollEnabled()) {
@@ -149,7 +142,7 @@ public class CNSEndpointPublisherJobProducer implements CNSPublisherPartitionRun
 	            
 	            if (messageExpirationSeconds != 0 && System.currentTimeMillis() - publishMessage.getTimestamp().getTime() > messageExpirationSeconds*1000) {
 	                logger.error("event=deleting_publish_job reason=message_too_old topic_arn=" + publishMessage.getTopicArn());
-	                CQSHandler.deleteMessage(queueUrl, msg);
+	                CQSHandler.deleteMessage(queueUrl, msg.getReceiptHandle());
 	                CMBControllerServlet.valueAccumulator.deleteAllCounters();
 	                return true; // return true to avoid backoff
 	            }
@@ -163,7 +156,7 @@ public class CNSEndpointPublisherJobProducer implements CNSPublisherPartitionRun
 	            	//delete this message/job since the topic was deleted.
 	                
 	            	logger.error("event=deleting_publish_job reason=topic_not_found topic_arn=" + publishMessage.getTopicArn());
-	                CQSHandler.deleteMessage(queueUrl, msg);
+	                CQSHandler.deleteMessage(queueUrl, msg.getReceiptHandle());
 	                CMBControllerServlet.valueAccumulator.deleteAllCounters();
 	                return true; // return true to avoid backoff
 	            
@@ -181,12 +174,12 @@ public class CNSEndpointPublisherJobProducer implements CNSPublisherPartitionRun
 	                for (CNSEndpointPublishJob epPublishJob: epPublishJobs) {
 	                	
 	                	String epQueueName =  CMBProperties.getInstance().getCNSEndpointPublishQueueNamePrefix() + ((new Random()).nextInt(CMBProperties.getInstance().getCNSNumEndpointPublishJobQueues()));
-	                    String epQueueUrl = CQSHandler.getLocalQueueUrl(epQueueName);
+	                    String epQueueUrl = CQSHandler.getRelativeCnsInternalQueueUrl(epQueueName);
 	                    CQSHandler.sendMessage(epQueueUrl, epPublishJob.serialize());
 	                }
 	            }
 	            
-	            CQSHandler.deleteMessage(queueUrl, msg);
+	            CQSHandler.deleteMessage(queueUrl, msg.getReceiptHandle());
 	            
 	            long ts2 = System.currentTimeMillis();
 	            logger.info("event=processed_producer_job cns_cqs_ms=" + CMBControllerServlet.valueAccumulator.getCounter(AccumulatorName.CNSCQSTime) + " resp_ms=" + (ts2 - ts1));
@@ -208,24 +201,9 @@ public class CNSEndpointPublisherJobProducer implements CNSPublisherPartitionRun
 	        	
 	        }
 	    
-	    } catch (AmazonClientException ex) {
-	    	
-	    	if (ex.getCause() instanceof HttpHostConnectException) {
-	    		logger.error("event=cqs_service_unavailable", ex);
-	    		CNSWorkerMonitor.getInstance().registerCQSServiceAvailable(false);
-	    	} else if (ex instanceof AmazonServiceException && ((AmazonServiceException)ex).getErrorCode().equals("NonExistentQueue")) {
-	    		try {
-	    			CQSHandler.ensureQueuesExist(CNS_PRODUCER_QUEUE_NAME_PREFIX, CMBProperties.getInstance().getCNSNumPublishJobQueues());
-	        	} catch (Exception e) {
-	        		logger.error("event=failed_to_check_producer_queue_existence", e);
-	        	}
-	    	} else {
-	    		logger.error("event=cqs_service_failure", ex);
-	    		CNSWorkerMonitor.getInstance().registerCQSServiceAvailable(false);
-	    	}
-	    
 	    } catch (Exception ex) {
-	        logger.error("event=unexpected_exception", ex);
+	    	logger.error("event=job_producer_failure", ex);
+    		CQSHandler.ensureQueuesExist(CNS_PRODUCER_QUEUE_NAME_PREFIX, CMBProperties.getInstance().getCNSNumPublishJobQueues());
 	    }
 
 	    CMBControllerServlet.valueAccumulator.deleteAllCounters();

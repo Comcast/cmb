@@ -26,6 +26,8 @@ import com.comcast.cns.model.CNSMessage.CNSMessageStructure;
 import com.comcast.cns.model.CNSMessage.CNSMessageType;
 import com.comcast.cns.model.CNSSubscription.CnsSubscriptionProtocol;
 import com.comcast.cns.util.CNSErrorCodes;
+import com.comcast.cqs.api.CQSAPI;
+import com.comcast.cqs.util.Util;
 
 /**
  * Endpoint publisher for CQS endpoints
@@ -35,7 +37,6 @@ import com.comcast.cns.util.CNSErrorCodes;
 public class CQSEndpointPublisher extends AbstractEndpointPublisher {
 
 	private static Logger logger = Logger.getLogger(CQSEndpointPublisher.class);
-
 	
     private BasicAWSCredentials awsCredentials;
     private AmazonSQSClient sqs;
@@ -47,16 +48,12 @@ public class CQSEndpointPublisher extends AbstractEndpointPublisher {
 			throw new Exception("Message and Endpoint must both be set");
 		}
 		
-        awsCredentials = new BasicAWSCredentials(user.getAccessKey(), user.getAccessSecret());
-        sqs = new AmazonSQSClient(awsCredentials);
-		sqs.setEndpoint(CMBProperties.getInstance().getCQSServiceUrl());
-		
-		String url;
+		String absoluteQueueUrl;
 		
 		if (com.comcast.cqs.util.Util.isValidQueueUrl(endpoint)) {
-			url = endpoint;
+			absoluteQueueUrl = endpoint;
 		} else {
-			url = com.comcast.cqs.util.Util.getAbsoluteQueueUrlForArn(endpoint);
+			absoluteQueueUrl = com.comcast.cqs.util.Util.getAbsoluteQueueUrlForArn(endpoint);
 		}
 
 		try {
@@ -72,11 +69,27 @@ public class CQSEndpointPublisher extends AbstractEndpointPublisher {
 			if (!rawMessageDelivery && message.getMessageType() == CNSMessageType.Notification) {
 				msg = com.comcast.cns.util.Util.generateMessageJson(message, CnsSubscriptionProtocol.cqs);
 			}
-
-			logger.info("event=send_cqs_message endpoint=" + endpoint + "\" message=\"" + msg);
-
-			sqs.sendMessage(new SendMessageRequest(url, msg));			
+			
+			if (msg == null) {
+				logger.warn("event=message_is_null endpoint=" + endpoint);
+				return;
+			}
+			
+			if (CMBProperties.getInstance().useInlineApiCalls() && CMBProperties.getInstance().getCQSServiceEnabled()) {
+				CQSAPI.sendMessage(user.getUserId(), Util.getRelativeForAbsoluteQueueUrl(absoluteQueueUrl), msg, null);
+			} else {
+		        awsCredentials = new BasicAWSCredentials(user.getAccessKey(), user.getAccessSecret());
+		        sqs = new AmazonSQSClient(awsCredentials);
+				sqs.setEndpoint(CMBProperties.getInstance().getCQSServiceUrl());
+				sqs.sendMessage(new SendMessageRequest(absoluteQueueUrl, msg));			
+			}
 		
+			if (msg.length() > CMBProperties.getInstance().getCMBRequestParameterValueMaxLength()) {
+				logger.info("event=delivering_cqs_message endpoint=" + endpoint + "\" message=\"" + msg.substring(0, CMBProperties.getInstance().getCMBRequestParameterValueMaxLength()-1));
+			} else {
+				logger.info("event=delivering_cqs_message endpoint=" + endpoint + "\" message=\"" + msg);
+			}
+
 		} catch (Exception ex) {
 			logger.warn("event=send_cqs_message endpoint=" + endpoint + "\" message=\"" + message, ex);
 			throw new CMBException(CNSErrorCodes.InternalError, "internal service error");

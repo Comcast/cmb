@@ -77,8 +77,12 @@ public class CNSAsyncPublishJob implements Runnable, IPublisherCallback {
         // decrement the total number of sub-tasks and if counter is 0 delete publish job
         
     	if (endpointPublishJobCount.decrementAndGet() == 0) {
-            CQSHandler.deleteMessage(queueUrl, receiptHandle);
-            logger.info("event=deleting_publish_job_from_cqs message_id=" + message.getMessageId() + " queue_url=" + queueUrl + " receipt_handle=" + receiptHandle);
+            try {
+	    		CQSHandler.deleteMessage(queueUrl, receiptHandle);
+	            logger.info("event=deleting_publish_job_from_cqs message_id=" + message.getMessageId() + " queue_url=" + queueUrl + " receipt_handle=" + receiptHandle);
+            } catch (Exception ex) {
+            	logger.error("event=failed_to_kill_message", ex);
+            }
         }
     }
     

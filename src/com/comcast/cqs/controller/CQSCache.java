@@ -41,6 +41,14 @@ public class CQSCache {
     /**
      * 
      * @param relativeQueueUrl
+     */
+    public static void removeQueue(String relativeQueueUrl) {
+    	queueCache.remove(relativeQueueUrl);
+    }
+    
+    /**
+     * 
+     * @param relativeQueueUrl
      * @return Cached instance of CQSQueue given queueUrl. If none exists, we call QueueCallable and cache it
      * for config amount of time
      * @throws Exception

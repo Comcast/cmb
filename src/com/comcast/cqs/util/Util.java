@@ -89,6 +89,23 @@ public class Util {
 		return elements[4];
 	}
 	
+	public static String getAbsoluteQueueUrlForRelativeUrl(String relativeUrl) {
+		
+		if (relativeUrl == null) {
+			return null;
+		}
+
+		String url = CMBProperties.getInstance().getCQSServiceUrl();
+		
+		if (!url.endsWith("/")) {
+			url += "/";
+		}
+
+		url += relativeUrl;
+		
+		return url;
+	}
+		
 	public static String getAbsoluteQueueUrlForArn(String arn) {
 		
 		if (arn == null) {

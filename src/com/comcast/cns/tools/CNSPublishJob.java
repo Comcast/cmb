@@ -71,7 +71,7 @@ public class CNSPublishJob implements Runnable {
     	return subArn;
     }
     
-    private void letMessageDieForEndpoint() {
+    private void letMessageDieForEndpoint() throws Exception {
     	
         // decrement the total number of sub-tasks and if counter is 0 delete publish job
         
@@ -214,7 +214,7 @@ public class CNSPublishJob implements Runnable {
         CNSWorkerMonitor.getInstance().registerPublishMessage();
     }
     
-    private void runCommonAndRetry(IEndpointPublisher pub, CnsSubscriptionProtocol protocol, String endpoint, String subArn, boolean rawDelivery) {
+    private void runCommonAndRetry(IEndpointPublisher pub, CnsSubscriptionProtocol protocol, String endpoint, String subArn, boolean rawDelivery) throws Exception {
         
         try {
         
@@ -304,7 +304,11 @@ public class CNSPublishJob implements Runnable {
         }
         
         IEndpointPublisher pub = (testPublisher == null ? EndpointPublisherFactory.getPublisherInstance(protocol) : testPublisher);
-        runCommonAndRetry(pub, protocol, endpoint, subArn, rawDelivery);
+        try {
+			runCommonAndRetry(pub, protocol, endpoint, subArn, rawDelivery);
+		} catch (Exception ex) {
+			logger.error("event=publish_job_error", ex);
+		}
         
         long ts2 = System.currentTimeMillis();            
         logger.debug("event=metrics endpoint=" + endpoint + " protocol=" + protocol.name() + " raw_delivery=" + rawDelivery + 

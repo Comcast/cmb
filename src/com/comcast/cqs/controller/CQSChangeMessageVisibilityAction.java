@@ -64,8 +64,7 @@ public class CQSChangeMessageVisibilityAction extends CQSAction {
             throw new CMBException(CMBErrorCodes.InvalidParameterValue, "VisibilityTimeout is limited from 0 to " + CMBProperties.getInstance().getCQSMaxVisibilityTimeOut() + " seconds");
         }
         
-        @SuppressWarnings("unused")
-		boolean res = PersistenceFactory.getCQSMessagePersistence().changeMessageVisibility(queue, receiptHandle, visibilityTO);
+		PersistenceFactory.getCQSMessagePersistence().changeMessageVisibility(queue, receiptHandle, visibilityTO);
 
         String out = CQSMessagePopulator.getChangeMessageVisibilityResponse();
         writeResponse(out, response);

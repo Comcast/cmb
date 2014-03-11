@@ -53,6 +53,8 @@ public class CQSDeleteQueueAction extends CQSAction {
             PersistenceFactory.getCQSMessagePersistence().clearQueue(queue.getRelativeUrl(), shard);
         }
         
+        CQSCache.removeQueue(queue.getRelativeUrl());
+        
         String out = CQSQueuePopulator.getDeleteQueueResponse();
         writeResponse(out, response);
         

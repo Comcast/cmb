@@ -23,15 +23,10 @@ import java.util.Random;
 import javax.servlet.AsyncContext;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.http.conn.HttpHostConnectException;
 import org.apache.log4j.Logger;
 
-import com.amazonaws.AmazonClientException;
-import com.amazonaws.AmazonServiceException;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.sqs.AmazonSQSClient;
-import com.amazonaws.services.sqs.model.SendMessageRequest;
-import com.amazonaws.services.sqs.model.SendMessageResult;
 import com.comcast.cmb.common.controller.CMBControllerServlet;
 import com.comcast.cmb.common.model.User;
 import com.comcast.cmb.common.persistence.IUserPersistence;
@@ -47,11 +42,9 @@ import com.comcast.cns.model.CNSTopic;
 import com.comcast.cns.model.CNSTopicAttributes;
 import com.comcast.cns.model.CNSMessage.CNSMessageType;
 import com.comcast.cns.tools.CNSEndpointPublisherJobProducer;
-import com.comcast.cns.tools.CNSWorkerMonitor;
 import com.comcast.cns.tools.CQSHandler;
 import com.comcast.cns.util.CNSErrorCodes;
 import com.comcast.cns.util.Util;
-import com.comcast.cqs.api.CQSAPI;
 import com.comcast.cqs.controller.CQSHttpServletRequest;
 
 /**
@@ -231,44 +224,14 @@ public class CNSPublishAction extends CNSAction {
     	long ts1 = System.currentTimeMillis();
 
     	String queueName =  prefix + (new Random()).nextInt(numShards);
-    	String absoluteQueueUrl = com.comcast.cqs.util.Util.getAbsoluteQueueUrlForName(queueName, userId);
     	String relativeQueueUrl = com.comcast.cqs.util.Util.getRelativeQueueUrlForName(queueName, userId);
     	
-    	if (CMBProperties.getInstance().useInlineApiCalls() && CMBProperties.getInstance().getCQSServiceEnabled()) {
-    		
-    		try {
-    			receiptHandle = CQSAPI.sendMessage(userId, relativeQueueUrl, message, null);
-    		} catch (Exception ex) {
-	    		try {
-	        		CQSHandler.initialize();
-	    			CQSHandler.ensureQueuesExist(prefix, numShards);
-	        	} catch (Exception e) {
-	        		logger.error("event=failed_to_check_consumer_queue_existence", e);
-	        	}
-    		}
-    	
-    	} else {
-
-	    	try {
-	    		SendMessageResult sendMessageResult = sqs.sendMessage(new SendMessageRequest(absoluteQueueUrl, message));
-				receiptHandle = sendMessageResult.getMessageId();
-	    	} catch (AmazonClientException ex) {
-	    		if (ex.getCause() instanceof HttpHostConnectException) {
-		    		logger.error("event=cqs_service_unavailable", ex);
-		    		CNSWorkerMonitor.getInstance().registerCQSServiceAvailable(false);
-		    	} else if (ex instanceof AmazonServiceException && ((AmazonServiceException)ex).getErrorCode().equals("NonExistentQueue")) {
-		    		try {
-		        		CQSHandler.initialize();
-		    			CQSHandler.ensureQueuesExist(prefix, numShards);
-		        	} catch (Exception e) {
-		        		logger.error("event=failed_to_check_consumer_queue_existence", e);
-		        	}
-		    	} else {
-		    		logger.error("event=cqs_service_failure", ex);
-		    		CNSWorkerMonitor.getInstance().registerCQSServiceAvailable(false);
-		    	}
-	    	}
-    	}
+    	try {
+    		receiptHandle = CQSHandler.sendMessage(relativeQueueUrl, message);
+        } catch (Exception ex) {
+	    	logger.error("event=publish_failure", ex);
+    		CQSHandler.ensureQueuesExist(prefix, numShards);
+        }
     	
     	long ts2 = System.currentTimeMillis();
 

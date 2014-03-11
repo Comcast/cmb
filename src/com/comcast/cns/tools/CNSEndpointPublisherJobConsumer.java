@@ -23,11 +23,8 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.http.conn.HttpHostConnectException;
 import org.apache.log4j.Logger;
 
-import com.amazonaws.AmazonClientException;
-import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.sqs.model.Message;
 import com.comcast.cmb.common.controller.CMBControllerServlet;
 import com.comcast.cmb.common.model.User;
@@ -131,16 +128,11 @@ public class CNSEndpointPublisherJobConsumer implements CNSPublisherPartitionRun
      * @throws PersistenceException 
      */
     public static void initialize() throws PersistenceException {
-    	
     	if (initialized) {
     		return;
     	}
-
     	deliveryHandlers = new ScheduledThreadPoolExecutor(CMBProperties.getInstance().getCNSNumPublisherDeliveryHandlers());
     	reDeliveryHandlers = new ScheduledThreadPoolExecutor(CMBProperties.getInstance().getCNSNumPublisherReDeliveryHandlers());
-
-    	CQSHandler.initialize();
-
     	logger.info("event=initialize");
     	initialized = true;
     }
@@ -152,7 +144,6 @@ public class CNSEndpointPublisherJobConsumer implements CNSPublisherPartitionRun
         deliveryHandlers.shutdownNow();
         reDeliveryHandlers.shutdownNow();
         initialized = false;
-        CQSHandler.shutdown();
         logger.info("event=shutdown");
     }
     
@@ -241,7 +232,7 @@ public class CNSEndpointPublisherJobConsumer implements CNSPublisherPartitionRun
             }
 	        
 	        String queueName = CNS_CONSUMER_QUEUE_NAME_PREFIX + partition;
-	        String queueUrl = CQSHandler.getLocalQueueUrl(queueName);
+	        String queueUrl = CQSHandler.getRelativeCnsInternalQueueUrl(queueName);
 	        Message msg = null;
 	        
 	        if (CMBProperties.getInstance().isCQSLongPollEnabled()) {
@@ -313,25 +304,10 @@ public class CNSEndpointPublisherJobConsumer implements CNSPublisherPartitionRun
 	        		Thread.sleep(processingDelayMillis);
 	        	}
             }
-
-        } catch (AmazonClientException ex) {
-
-	    	if (ex.getCause() instanceof HttpHostConnectException) {
-	    		logger.error("event=cqs_service_unavailable", ex);
-	    		CNSWorkerMonitor.getInstance().registerCQSServiceAvailable(false);
-	    	} else if (ex instanceof AmazonServiceException && ((AmazonServiceException)ex).getErrorCode().equals("NonExistentQueue")) {
-	    		try {
-	        		CQSHandler.ensureQueuesExist(CNS_CONSUMER_QUEUE_NAME_PREFIX, CMBProperties.getInstance().getCNSNumEndpointPublishJobQueues());
-	        	} catch (Exception e) {
-	        		logger.error("event=failed_to_check_consumer_queue_existence", e);
-	        	}
-	    	} else {
-	    		logger.error("event=cqs_service_failure", ex);
-	    		CNSWorkerMonitor.getInstance().registerCQSServiceAvailable(false);
-	    	}
-
+            
         } catch (Exception ex) {
-            logger.error("event=run", ex);
+	    	logger.error("event=job_consumer_failure", ex);
+    		CQSHandler.ensureQueuesExist(CNS_CONSUMER_QUEUE_NAME_PREFIX, CMBProperties.getInstance().getCNSNumEndpointPublishJobQueues());
         }
         
         CMBControllerServlet.valueAccumulator.deleteAllCounters();

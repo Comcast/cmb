@@ -24,17 +24,20 @@ public interface IPublisherCallback {
 	
 	/**
 	 * On success callback
+	 * @throws Exception 
 	 */
 	public void onSuccess();
 	
 	/**
 	 * On failure callback
 	 * @param status
+	 * @throws Exception 
 	 */
 	public void onFailure(int status);
 	
 	/**
 	 * On expire callback
+	 * @throws Exception 
 	 */
 	public void onExpire();
 }

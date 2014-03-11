@@ -17,8 +17,8 @@
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
+import org.apache.http.conn.HttpHostConnectException;
 import org.apache.log4j.Logger;
 
 import com.amazonaws.AmazonServiceException;
@@ -29,7 +29,6 @@ import com.amazonaws.services.sqs.model.CreateQueueRequest;
 import com.amazonaws.services.sqs.model.CreateQueueResult;
 import com.amazonaws.services.sqs.model.DeleteMessageRequest;
 import com.amazonaws.services.sqs.model.GetQueueUrlRequest;
-import com.amazonaws.services.sqs.model.GetQueueUrlResult;
 import com.amazonaws.services.sqs.model.Message;
 import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
 import com.amazonaws.services.sqs.model.ReceiveMessageResult;
@@ -39,9 +38,13 @@ import com.comcast.cmb.common.controller.CMBControllerServlet;
 import com.comcast.cmb.common.model.User;
 import com.comcast.cmb.common.persistence.IUserPersistence;
 import com.comcast.cmb.common.persistence.PersistenceFactory;
+import com.comcast.cmb.common.util.CMBException;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.PersistenceException;
 import com.comcast.cmb.common.util.ValueAccumulator.AccumulatorName;
+import com.comcast.cqs.api.CQSAPI;
+import com.comcast.cqs.controller.CQSCache;
+import com.comcast.cqs.model.CQSQueue;
 import com.comcast.cqs.util.Util;
 
 public class CQSHandler {
@@ -51,80 +54,76 @@ public class CQSHandler {
     private static volatile boolean initialized = false;
     private static volatile BasicAWSCredentials awsCredentials = null;
     private static volatile AmazonSQSClient sqs = null;
-    private static String cnsInternalUserId = null;
-    private static ConcurrentHashMap<String, String> queueUrlCache = new ConcurrentHashMap<String, String>();
+    private static User cnsInternal = null;
+    private static boolean useInlineApiCalls = false;
     
-    public static synchronized void initialize() throws PersistenceException {
+    static {
+    	try {
+			initialize();
+		} catch (PersistenceException ex) {
+			logger.error("event=initialization_failure", ex);
+		}
+    }
+    
+    private static synchronized void initialize() throws PersistenceException {
     	
     	if (initialized) {
     		return;
     	}
     	
-		if (CMBProperties.getInstance().getCNSUserAccessKey() != null && CMBProperties.getInstance().getCNSUserAccessKey() != null) {
+		IUserPersistence userHandler = PersistenceFactory.getUserPersistence();
+
+		if (CMBProperties.getInstance().getCNSUserAccessKey() != null && CMBProperties.getInstance().getCNSUserAccessSecret() != null) {
+			
+			//TODO: should add user id to cmb properties file
 			
 		    awsCredentials = new BasicAWSCredentials(CMBProperties.getInstance().getCNSUserAccessKey(), CMBProperties.getInstance().getCNSUserAccessSecret());
+			cnsInternal = userHandler.getUserByAccessKey(awsCredentials.getAWSAccessKeyId());
 
 		} else {
-    	
-			IUserPersistence userHandler = PersistenceFactory.getUserPersistence();
-			User cnsInternalUser = userHandler.getUserByName(CMBProperties.getInstance().getCNSUserName());
 		
-		    if (cnsInternalUser == null) {	          
-		    	cnsInternalUser =  userHandler.createDefaultUser();
+			cnsInternal = userHandler.getUserByName(CMBProperties.getInstance().getCNSUserName());
+
+			if (cnsInternal == null) {	          
+		    	cnsInternal =  userHandler.createDefaultUser();
 		    }
 
-		    awsCredentials = new BasicAWSCredentials(cnsInternalUser.getAccessKey(), cnsInternalUser.getAccessSecret());
+		    awsCredentials = new BasicAWSCredentials(cnsInternal.getAccessKey(), cnsInternal.getAccessSecret());
 		}
-		
-		
-		IUserPersistence userHandler = PersistenceFactory.getUserPersistence();
-		User cnsInternalUser = userHandler.getUserByAccessKey(awsCredentials.getAWSAccessKeyId());
-		cnsInternalUserId = cnsInternalUser.getUserId();
 		
         sqs = new AmazonSQSClient(awsCredentials);
         sqs.setEndpoint(CMBProperties.getInstance().getCQSServiceUrl());
+        
+        useInlineApiCalls = CMBProperties.getInstance().useInlineApiCalls() && CMBProperties.getInstance().getCQSServiceEnabled();
 
         initialized = true;
     }
     
-    public static void shutdown() {
-    	queueUrlCache.clear();
-    	initialized = false;
-    }
-    
-    public static AmazonSQSClient getSQSHandler() {
-    	return sqs;
-    }
-    
-    public static void setSQSHandler(AmazonSQSClient sqs) {
-    	CQSHandler.sqs = sqs;
-    }
-    
-    public static void changeMessageVisibility(String queueUrl, String receiptHandle, int delaySec) {
+    public static void changeMessageVisibility(String relativeQueueUrl, String receiptHandle, int visibilityTimeout) throws Exception {
     	
         long ts1 = System.currentTimeMillis();
-        ChangeMessageVisibilityRequest changeMessageVisibilityRequest = new ChangeMessageVisibilityRequest(queueUrl, receiptHandle, delaySec);
-        sqs.changeMessageVisibility(changeMessageVisibilityRequest);
+        
+        if (useInlineApiCalls) {
+        	CQSAPI.changeMessageVisibility(cnsInternal.getUserId(), relativeQueueUrl, receiptHandle, visibilityTimeout);
+        } else {
+        	String absoluteQueueUrl = Util.getAbsoluteQueueUrlForRelativeUrl(relativeQueueUrl);
+	        sqs.changeMessageVisibility(new ChangeMessageVisibilityRequest(absoluteQueueUrl, receiptHandle, visibilityTimeout));
+        }
+        
         long ts2 = System.currentTimeMillis();
+        
         CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CNSCQSTime, ts2 - ts1);
-        logger.debug("event=change_message_visibility receipt_handle=" + receiptHandle + " delay=" + delaySec);
+        logger.debug("event=change_message_visibility receipt_handle=" + receiptHandle + " vto=" + visibilityTimeout);
     }
 
-    public static void deleteMessage(String queueUrl, Message message) {
+    public static Message receiveMessage(String relativeQueueUrl, int waitTimeSeconds) {
     	
-        long ts1 = System.currentTimeMillis();
-        DeleteMessageRequest deleteMessageRequest = new DeleteMessageRequest(queueUrl, message.getReceiptHandle());
-        sqs.deleteMessage(deleteMessageRequest);
-        long ts2 = System.currentTimeMillis();
-        CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CNSCQSTime, ts2 - ts1);
-        logger.debug("event=delete_message receipt_handle=" + message.getReceiptHandle());
-    }
-    
-    public static Message receiveMessage(String queueUrl, int waitTimeSeconds) {
+    	//TODO: inline calling for long polled receive not supported yet
     	
     	Message message = null;
         long ts1 = System.currentTimeMillis();
-        ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest(queueUrl);
+        
+        ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest(relativeQueueUrl);
         receiveMessageRequest.setMaxNumberOfMessages(1);
         //receiveMessageRequest.setVisibilityTimeout(CMBProperties.getInstance().getCNSPublishJobVisibilityTimeout());
         
@@ -145,48 +144,67 @@ public class CQSHandler {
         return message; 
     }
     
-    public static String getQueueUrl(String queueName) {
-
-    	if (queueUrlCache.containsKey(queueName)) {
-    		return queueUrlCache.get(queueName);
-    	}
+    public static String getQueueUrl(String queueName) throws Exception {
     	
         String queueUrl = null;
-    	long ts1 = System.currentTimeMillis();
-    	GetQueueUrlRequest getQueueUrlRequest = new GetQueueUrlRequest(queueName);
-        GetQueueUrlResult getQueueUrlResult = sqs.getQueueUrl(getQueueUrlRequest);
-        queueUrl = getQueueUrlResult.getQueueUrl();
+
+        long ts1 = System.currentTimeMillis();
+    	
+        CQSQueue queue = CQSCache.getCachedQueue(Util.getRelativeQueueUrlForName(queueName, cnsInternal.getUserId()));
+        
+        if (queue != null) {
+        	queueUrl = queue.getAbsoluteUrl();
+        }
+
         long ts2 = System.currentTimeMillis();
+        
         CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CNSCQSTime, ts2 - ts1);
 		logger.info("event=get_queue_url queue_name=" + queueName + " queue_url=" + queueUrl);
-        
-        queueUrlCache.put(queueName, queueUrl);
         
         return queueUrl;
     }
     
-    public static void sendMessage(String queueUrl, String message) {
+    public static String sendMessage(String relativeQueueUrl, String message) throws Exception {
 
     	long ts1 = System.currentTimeMillis();
-        SendMessageResult sendMessageResult = sqs.sendMessage(new SendMessageRequest(queueUrl, message));
+    	String receiptHandle = null;
+    	
+        if (useInlineApiCalls) {
+        	receiptHandle = CQSAPI.sendMessage(cnsInternal.getUserId(), relativeQueueUrl, message, null);
+        } else {
+        	String absoluteQueueUrl = Util.getAbsoluteQueueUrlForRelativeUrl(relativeQueueUrl);
+        	SendMessageResult sendMessageResult = sqs.sendMessage(new SendMessageRequest(absoluteQueueUrl, message));
+        	receiptHandle = sendMessageResult.getMessageId();
+        }
+        
         long ts2 = System.currentTimeMillis();
+        
         CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CNSCQSTime, ts2 - ts1);
-		logger.debug("event=send_message message_id=" + sendMessageResult.getMessageId());
+		logger.debug("event=send_message message_id=" + receiptHandle);
+		
+		return receiptHandle;
     }
     
-    public static void deleteMessage(String queueUrl, String receiptHandle) {
+    public static void deleteMessage(String relativeQueueUrl, String receiptHandle) throws Exception {
 
     	long ts1 = System.currentTimeMillis();
-        DeleteMessageRequest deleteMessageRequest = new DeleteMessageRequest(queueUrl, receiptHandle);
-        sqs.deleteMessage(deleteMessageRequest);
+    	
+        if (useInlineApiCalls) {
+        	CQSAPI.deleteMessage(cnsInternal.getUserId(), relativeQueueUrl, receiptHandle);
+        } else {
+        	String absoluteQueueUrl = Util.getAbsoluteQueueUrlForRelativeUrl(relativeQueueUrl);
+        	sqs.deleteMessage(new DeleteMessageRequest(absoluteQueueUrl, receiptHandle));
+        }
+
         long ts2 = System.currentTimeMillis();
+        
         CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CNSCQSTime, ts2 - ts1);
 		logger.debug("event=delete_message receipt_handle=" + receiptHandle);
     }
     
-    public static synchronized void ensureQueuesExist(String queueNamePrefix, int numQueues) {
+    public static synchronized void ensureQueuesExist(String queueNamePrefix, int numShards) {
 
-    	for (int i = 0; i < numQueues; i++) {
+    	for (int i = 0; i < numShards; i++) {
         	
             GetQueueUrlRequest getQueueUrlRequest = new GetQueueUrlRequest(queueNamePrefix + i);
             
@@ -221,8 +239,25 @@ public class CQSHandler {
         }
     }
     
-    public static String getLocalQueueUrl(String queueName) {
-    	String localQueueUrl = Util.getAbsoluteQueueUrlForName(queueName, cnsInternalUserId);
+    public static boolean doesQueueNotExist(Exception ex) {
+
+    	boolean doesNotExist = false;
+    	
+    	if (ex instanceof AmazonServiceException && ((AmazonServiceException)ex).getStatusCode() == 400) {
+    		doesNotExist = true;
+    	} else if (ex instanceof AmazonServiceException && ((AmazonServiceException)ex).getErrorCode().equals("NonExistentQueue")) {
+    		doesNotExist = true;
+    	} else if (ex.getCause() instanceof HttpHostConnectException) {
+    		doesNotExist = false;
+    	} else if (ex instanceof CMBException) {
+    		doesNotExist = false;
+    	}
+    	
+    	return doesNotExist;
+    }
+    
+    public static String getRelativeCnsInternalQueueUrl(String queueName) {
+    	String localQueueUrl = Util.getRelativeQueueUrlForName(queueName, cnsInternal.getUserId());
         return localQueueUrl;
     }
 }

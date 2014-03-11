@@ -4,13 +4,8 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Random;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
-import org.json.JSONObject;
 import org.junit.Test;
 
 import com.amazonaws.services.sns.model.PublishRequest;
@@ -20,14 +15,31 @@ import com.amazonaws.services.sqs.model.Message;
 import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
 import com.amazonaws.services.sqs.model.ReceiveMessageResult;
 import com.comcast.cmb.test.tools.CMBAWSBaseTest;
-import com.comcast.cmb.test.tools.CMBTestingConstants;
-import com.comcast.cmb.test.tools.CNSTestingUtils;
-import com.comcast.cmb.test.tools.CMBAWSBaseTest.USR;
 
 public class CNSScaleSubscriptionsTest extends CMBAWSBaseTest {
 	
     private static List<String> queueUrls = null;
     
+    @Test
+    public void Create1Subscriptions() {
+    	CreateNSubscriptions(1);
+    }
+
+    @Test
+    public void Create10Subscriptions() {
+    	CreateNSubscriptions(10);
+    }
+
+    @Test
+    public void Create100Subscriptions() {
+    	CreateNSubscriptions(100);
+    }
+
+    @Test
+    public void Create101Subscriptions() {
+    	CreateNSubscriptions(101);
+    }
+
     @Test
     public void Create250Subscriptions() {
     	CreateNSubscriptions(250);
