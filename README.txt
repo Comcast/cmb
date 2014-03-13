@@ -305,12 +305,17 @@ scenarios is currently discussed by the CMB community.
 - Known Limitations
 --------------------------------------------------------------------------------------
 
-1. Compatibility with AWS SDK has been tested with versions 1.5.7 and 1.6.12.
+- Compatibility with the Java AWS SDK has been tested with versions 1.5.7 and 1.6.12
+
+- CMB does not work with Cassandra versions prior to 1.0.10, however, 1.1.X and 2.0.X 
+  are ok
  
-2. CNS does not support SMS protocol.
+- CNS does not support SMS protocol
 
-3. CNS does not support Throttle Policy.
+- CNS does not support Throttle Policy
 
-4. CNS does not support Mobile Push notifications.
+- CNS does not support Mobile Push notifications
+
+- CQS does not support Dead Letter Queue
 
 
