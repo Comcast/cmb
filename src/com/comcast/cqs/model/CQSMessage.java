@@ -15,10 +15,7 @@
  */
 package com.comcast.cqs.model;
 
-import java.io.BufferedInputStream;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
@@ -30,6 +27,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
 
+import com.amazonaws.services.sqs.model.Message;
 import com.comcast.cmb.common.util.Util;
 import com.comcast.cqs.util.CQSConstants;
 
@@ -77,6 +75,14 @@ public final class CQSMessage implements Serializable {
 		if (body != null) {
 			setMD5OfBody(getMD5(body));
 		}
+	}
+	
+	public CQSMessage(Message message) {
+		
+		this.messageId = message.getMessageId();
+		this.receiptHandle = message.getReceiptHandle();
+		this.body = message.getBody();
+		this.mD5OfBody = message.getMD5OfBody();
 	}
 
 	public String getMessageId() {

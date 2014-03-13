@@ -25,6 +25,7 @@ import com.comcast.cmb.common.persistence.PersistenceFactory;
 import com.comcast.cmb.common.util.CMBException;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.PersistenceException;
+import com.comcast.cns.controller.CNSCache;
 import com.comcast.cns.model.CNSTopic;
 import com.comcast.cns.model.CNSTopicAttributes;
 import com.comcast.cns.util.CNSErrorCodes;
@@ -127,9 +128,9 @@ public class CNSTopicCassandraPersistence extends CassandraPersistence implement
 	}
 
 	@Override
-	public void deleteTopic(String arn) throws Exception {
+	public void deleteTopic(String topicArn) throws Exception {
 
-		CNSTopic topic = getTopic(arn);
+		CNSTopic topic = getTopic(topicArn);
 
 		if (topic == null) {
 			throw new CMBException(CNSErrorCodes.CNS_NotFound, "Topic not found.");
@@ -139,13 +140,15 @@ public class CNSTopicCassandraPersistence extends CassandraPersistence implement
 
 		PersistenceFactory.getSubscriptionPersistence().unsubscribeAll(topic.getArn());		
 
-		delete(topicsTemplate, arn, null);
-		delete(topicsByUserIdTemplate, topic.getUserId(), arn);
-		delete(topicAttributesTemplate, arn, null);
-		delete(topicStatsTemplate, arn, null);
-		deleteCounter(columnFamilyTopicStats, arn, "subscriptionConfirmed", new StringSerializer(), new StringSerializer(), CMBProperties.getInstance().getWriteConsistencyLevel());
-		deleteCounter(columnFamilyTopicStats, arn, "subscriptionPending", new StringSerializer(), new StringSerializer(), CMBProperties.getInstance().getWriteConsistencyLevel());
-		deleteCounter(columnFamilyTopicStats, arn, "subscriptionDeleted", new StringSerializer(), new StringSerializer(), CMBProperties.getInstance().getWriteConsistencyLevel());
+		delete(topicsTemplate, topicArn, null);
+		delete(topicsByUserIdTemplate, topic.getUserId(), topicArn);
+		delete(topicAttributesTemplate, topicArn, null);
+		delete(topicStatsTemplate, topicArn, null);
+		deleteCounter(columnFamilyTopicStats, topicArn, "subscriptionConfirmed", new StringSerializer(), new StringSerializer(), CMBProperties.getInstance().getWriteConsistencyLevel());
+		deleteCounter(columnFamilyTopicStats, topicArn, "subscriptionPending", new StringSerializer(), new StringSerializer(), CMBProperties.getInstance().getWriteConsistencyLevel());
+		deleteCounter(columnFamilyTopicStats, topicArn, "subscriptionDeleted", new StringSerializer(), new StringSerializer(), CMBProperties.getInstance().getWriteConsistencyLevel());
+		
+		CNSCache.removeTopic(topicArn);
 	}
 	
 	@Override
@@ -288,5 +291,7 @@ public class CNSTopicCassandraPersistence extends CassandraPersistence implement
 			topic.checkIsValid();
 			insertOrUpdateRow(topic.getArn(), columnFamilyTopics, getColumnValues(topic), CMBProperties.getInstance().getWriteConsistencyLevel());
 		}
+		
+		CNSCache.removeTopic(arn);
 	}
 }

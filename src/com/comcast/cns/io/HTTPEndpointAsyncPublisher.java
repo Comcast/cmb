@@ -146,7 +146,7 @@ public class HTTPEndpointAsyncPublisher extends AbstractEndpointPublisher{
 			msg = com.comcast.cns.util.Util.generateMessageJson(message, CnsSubscriptionProtocol.http);
 		}
 		
-		logger.info("event=send_async_http_request endpoint=" + endpoint + "\" message=\"" + msg + "\"");
+		logger.debug("event=send_async_http_request endpoint=" + endpoint + "\" message=\"" + msg + "\"");
 
 		request.setEntity(new NStringEntity(msg));
 

@@ -673,7 +673,7 @@ public class Util {
         gzip.close();
         out.close();
         String compressed = Base64.encodeBase64String(out.toByteArray());
-        logger.info("event=compressed from=" + decompressed.length() + " to=" + compressed.length());
+        logger.debug("event=compressed from=" + decompressed.length() + " to=" + compressed.length());
 		return compressed;
      }
     

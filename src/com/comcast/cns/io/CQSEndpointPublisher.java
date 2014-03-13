@@ -85,9 +85,9 @@ public class CQSEndpointPublisher extends AbstractEndpointPublisher {
 			}
 		
 			if (msg.length() > CMBProperties.getInstance().getCMBRequestParameterValueMaxLength()) {
-				logger.info("event=delivering_cqs_message endpoint=" + endpoint + "\" message=\"" + msg.substring(0, CMBProperties.getInstance().getCMBRequestParameterValueMaxLength()-1));
+				logger.debug("event=delivering_cqs_message endpoint=" + endpoint + "\" message=\"" + msg.substring(0, CMBProperties.getInstance().getCMBRequestParameterValueMaxLength()-1));
 			} else {
-				logger.info("event=delivering_cqs_message endpoint=" + endpoint + "\" message=\"" + msg);
+				logger.debug("event=delivering_cqs_message endpoint=" + endpoint + "\" message=\"" + msg);
 			}
 
 		} catch (Exception ex) {

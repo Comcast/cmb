@@ -58,6 +58,8 @@ public class CNSAttributesCassandraPersistence extends CassandraPersistence impl
 		if (topicAttributes.getDisplayName() != null) {
 			PersistenceFactory.getTopicPersistence().updateTopicDisplayName(topicArn, topicAttributes.getDisplayName());
 		}
+		
+		CNSCache.removeTopicAttributes(topicArn);
 	}
 
 	private Map<String, String> getColumnValues(CNSTopicAttributes topicAttributes) {

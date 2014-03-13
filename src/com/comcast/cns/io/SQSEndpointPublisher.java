@@ -73,7 +73,7 @@ public class SQSEndpointPublisher  extends AbstractEndpointPublisher {
 				msg = com.comcast.cns.util.Util.generateMessageJson(message, CnsSubscriptionProtocol.cqs);
 			}
 			
-			logger.info("event=send_sqs_message endpoint=" + endpoint + "\" message=\"" + msg);
+			logger.debug("event=send_sqs_message endpoint=" + endpoint + "\" message=\"" + msg);
 
 			sqs.sendMessage(new SendMessageRequest(url, msg));			
 			

@@ -91,6 +91,19 @@ public class CNSCache {
             return attributes;
         }
     }
+	
+	/**
+	 * 
+	 * @param topicArn
+	 */
+	public static void removeTopic(String topicArn) {
+		if (topicArn == null) {
+			return;
+		}
+		confirmedSubscriptionsCache.remove(topicArn);
+		attributeCache.remove(topicArn);
+		topicCache.remove(topicArn);
+	}
     
 	/**
 	 * 
@@ -99,20 +112,20 @@ public class CNSCache {
 	 * @throws Exception
 	 */
     public static CNSTopicAttributes getTopicAttributes(String topicArn) throws Exception {
-        
     	if (topicArn == null) {
         	return null;
         }
-    	
     	return attributeCache.getAndSetIfNotPresent(topicArn, new TopicAttributesCallable(topicArn), CMBProperties.getInstance().getCNSCacheExpiring() * 1000);        
     }
     
+    /**
+     * 
+     * @param topicArn
+     */
     public static void removeTopicAttributes(String topicArn) {
-    	
     	if (topicArn == null) {
     		return;
     	}
-    	
     	attributeCache.remove(topicArn);
     }
 

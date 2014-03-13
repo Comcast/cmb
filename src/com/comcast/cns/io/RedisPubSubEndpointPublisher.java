@@ -51,7 +51,7 @@ public class RedisPubSubEndpointPublisher extends AbstractEndpointPublisher {
 			long numClients = connection.publish(channel, message.getMessage());
 			long timeTaken = System.currentTimeMillis() - startTime;
 			pool.returnResource(connection);
-			logger.info("event=send_redis endpoint="+ endpoint + " num_clients=" + numClients + " conn=reuse resp_ms=" + timeTaken);
+			logger.debug("event=send_redis endpoint="+ endpoint + " num_clients=" + numClients + " conn=reuse resp_ms=" + timeTaken);
 			return;
 		} else {
 			long startTime = System.currentTimeMillis();
@@ -65,7 +65,7 @@ public class RedisPubSubEndpointPublisher extends AbstractEndpointPublisher {
 				Jedis connection = pool.getResource();
 				long numClients = connection.publish(channel, message.getMessage());
 				long timeTaken = System.currentTimeMillis() - startTime;
-				logger.info("event=send_redis endpoint=" + endpoint + " num_clients=" + numClients + " conn=new resp_ms=" + timeTaken);
+				logger.debug("event=send_redis endpoint=" + endpoint + " num_clients=" + numClients + " conn=new resp_ms=" + timeTaken);
 				pool.returnResource(connection);
 				jedisPoolMap.put(endpoint, pool);
 				return;

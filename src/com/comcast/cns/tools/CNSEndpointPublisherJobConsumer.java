@@ -25,7 +25,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.log4j.Logger;
 
-import com.amazonaws.services.sqs.model.Message;
 import com.comcast.cmb.common.controller.CMBControllerServlet;
 import com.comcast.cmb.common.model.User;
 import com.comcast.cmb.common.model.UserAuthModule;
@@ -39,6 +38,7 @@ import com.comcast.cns.model.CNSEndpointPublishJob.CNSEndpointSubscriptionInfo;
 import com.comcast.cns.model.CNSMessage;
 import com.comcast.cns.persistence.CNSCachedEndpointPublishJob;
 import com.comcast.cns.persistence.TopicNotFoundException;
+import com.comcast.cqs.model.CQSMessage;
 
 /**
  * 
@@ -133,7 +133,7 @@ public class CNSEndpointPublisherJobConsumer implements CNSPublisherPartitionRun
     	}
     	deliveryHandlers = new ScheduledThreadPoolExecutor(CMBProperties.getInstance().getCNSNumPublisherDeliveryHandlers());
     	reDeliveryHandlers = new ScheduledThreadPoolExecutor(CMBProperties.getInstance().getCNSNumPublisherReDeliveryHandlers());
-    	logger.info("event=initialize");
+    	logger.info("event=initializing_cns_consumer");
     	initialized = true;
     }
     
@@ -144,7 +144,7 @@ public class CNSEndpointPublisherJobConsumer implements CNSPublisherPartitionRun
         deliveryHandlers.shutdownNow();
         reDeliveryHandlers.shutdownNow();
         initialized = false;
-        logger.info("event=shutdown");
+        logger.info("event=shutdown_cns_consumer");
     }
     
     /**
@@ -219,7 +219,7 @@ public class CNSEndpointPublisherJobConsumer implements CNSPublisherPartitionRun
 
 	        if (isOverloaded()) {
             	
-                logger.info("event=run status=server_overloaded");
+                logger.info("event=cns_consumer_overload");
 
                 try {
                     Thread.sleep(100);                
@@ -233,13 +233,18 @@ public class CNSEndpointPublisherJobConsumer implements CNSPublisherPartitionRun
 	        
 	        String queueName = CNS_CONSUMER_QUEUE_NAME_PREFIX + partition;
 	        String queueUrl = CQSHandler.getRelativeCnsInternalQueueUrl(queueName);
-	        Message msg = null;
+	        CQSMessage msg = null;
+	        int waitTimeSecs = 0;
 	        
 	        if (CMBProperties.getInstance().isCQSLongPollEnabled()) {
-	        	msg = CQSHandler.receiveMessage(queueUrl, CMBProperties.getInstance().getCMBRequestTimeoutSec()); 
-	        } else {
-	        	msg = CQSHandler.receiveMessage(queueUrl, 0); 
+	        	waitTimeSecs = CMBProperties.getInstance().getCMBRequestTimeoutSec();
 	        }
+
+	        List<CQSMessage> l = CQSHandler.receiveMessage(queueUrl, waitTimeSecs, 1); 
+
+	        if (l.size() > 0) {
+        		msg = l.get(0);
+        	}
 	        
     		CNSWorkerMonitor.getInstance().registerCQSServiceAvailable(true);
 
@@ -287,7 +292,7 @@ public class CNSEndpointPublisherJobConsumer implements CNSPublisherPartitionRun
                 }
                 
                 long tsFinal = System.currentTimeMillis();
-                logger.info("event=processed_consumer_job cns_cqs_ms=" + CMBControllerServlet.valueAccumulator.getCounter(AccumulatorName.CNSCQSTime) + " resp_ms=" + (tsFinal - ts0));
+                logger.debug("event=processed_consumer_job cns_cqs_ms=" + CMBControllerServlet.valueAccumulator.getCounter(AccumulatorName.CNSCQSTime) + " resp_ms=" + (tsFinal - ts0));
                 
             } else {
 

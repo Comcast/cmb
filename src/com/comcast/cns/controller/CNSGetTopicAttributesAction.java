@@ -22,7 +22,6 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.log4j.Logger;
 
 import com.comcast.cmb.common.model.User;
-import com.comcast.cmb.common.persistence.PersistenceFactory;
 import com.comcast.cmb.common.util.CMBException;
 import com.comcast.cns.io.CNSAttributePopulator;
 import com.comcast.cns.model.CNSTopicAttributes;
@@ -35,7 +34,7 @@ import com.comcast.cns.util.CNSErrorCodes;
  */
 public class CNSGetTopicAttributesAction extends CNSAction {
 
-	private static Logger logger = Logger.getLogger(CNSGetTopicAttributesAction.class);
+	//private static Logger logger = Logger.getLogger(CNSGetTopicAttributesAction.class);
 	
 	public CNSGetTopicAttributesAction() {
 		super("GetTopicAttributes");
@@ -47,19 +46,23 @@ public class CNSGetTopicAttributesAction extends CNSAction {
         HttpServletRequest request = (HttpServletRequest)asyncContext.getRequest();
         HttpServletResponse response = (HttpServletResponse)asyncContext.getResponse();
 		
-		String userId = user.getUserId();   	
     	String topicArn = request.getParameter("TopicArn");
     	
-    	if ((userId == null) || (topicArn == null) ) {
-    		logger.error("event=cns_get_topic_attributes error_code=InvalidParameters topic_arn=" + topicArn + " user_id=" + userId);
-			throw new CMBException(CNSErrorCodes.CNS_InvalidParameter,"missing parameters");
+    	if (topicArn == null) {
+			throw new CMBException(CNSErrorCodes.CNS_InvalidParameter, "Missing parameters TopicArn");
     	}
     	
-    	CNSTopicAttributes attr = PersistenceFactory.getCNSAttributePersistence().getTopicAttributes(topicArn);
+    	//CNSTopicAttributes attr = PersistenceFactory.getCNSAttributePersistence().getTopicAttributes(topicArn);
+    	CNSTopicAttributes attr = CNSCache.getTopicAttributes(topicArn);
+    	
+    	if (attr == null) {
+    		throw new CMBException(CNSErrorCodes.InternalError, "Unknown topic with arn " + topicArn);
+    	}
+    	
     	String out = CNSAttributePopulator.getGetTopicAttributesResponse(attr);
     	
-    	logger.debug("event=cns_get_topic_attributes topic_arn=" + topicArn + " user_id=" + userId);
         writeResponse(out, response);
-    	return true;
+
+        return true;
     }
 }

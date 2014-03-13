@@ -14,6 +14,7 @@
  * limitations under the License.
  */package com.comcast.cns.tools;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -44,6 +45,7 @@ import com.comcast.cmb.common.util.PersistenceException;
 import com.comcast.cmb.common.util.ValueAccumulator.AccumulatorName;
 import com.comcast.cqs.api.CQSAPI;
 import com.comcast.cqs.controller.CQSCache;
+import com.comcast.cqs.model.CQSMessage;
 import com.comcast.cqs.model.CQSQueue;
 import com.comcast.cqs.util.Util;
 
@@ -116,32 +118,40 @@ public class CQSHandler {
         logger.debug("event=change_message_visibility receipt_handle=" + receiptHandle + " vto=" + visibilityTimeout);
     }
 
-    public static Message receiveMessage(String relativeQueueUrl, int waitTimeSeconds) {
+    public static List<CQSMessage> receiveMessage(String relativeQueueUrl, int waitTimeSeconds, int maxNumberOfMessages) throws Exception {
     	
     	//TODO: inline calling for long polled receive not supported yet
     	
-    	Message message = null;
+    	List<CQSMessage> messages = new ArrayList<CQSMessage>();
         long ts1 = System.currentTimeMillis();
         
-        ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest(relativeQueueUrl);
-        receiveMessageRequest.setMaxNumberOfMessages(1);
-        //receiveMessageRequest.setVisibilityTimeout(CMBProperties.getInstance().getCNSPublishJobVisibilityTimeout());
+        if (useInlineApiCalls && waitTimeSeconds == 0) {
         
-        if (waitTimeSeconds > 0) {
-        	receiveMessageRequest.setWaitTimeSeconds(waitTimeSeconds);
+        	messages = CQSAPI.receiveMessages(cnsInternal.getUserId(), relativeQueueUrl, maxNumberOfMessages, null);
+        	
+        } else {
+        
+        	String absoluteQueueUrl = Util.getAbsoluteQueueUrlForRelativeUrl(relativeQueueUrl);
+        	ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest(absoluteQueueUrl);
+	        receiveMessageRequest.setMaxNumberOfMessages(maxNumberOfMessages);
+	        //receiveMessageRequest.setVisibilityTimeout(CMBProperties.getInstance().getCNSPublishJobVisibilityTimeout());
+	        
+	        if (waitTimeSeconds > 0) {
+	        	receiveMessageRequest.setWaitTimeSeconds(waitTimeSeconds);
+	        }
+	        
+	        ReceiveMessageResult receiveMessageResult = sqs.receiveMessage(receiveMessageRequest);
+	        List<Message> msgs = receiveMessageResult.getMessages();
+	        
+	        for (Message m : msgs) {
+	        	messages.add(new CQSMessage(m));
+	        }
         }
-        
-        ReceiveMessageResult receiveMessageResult = sqs.receiveMessage(receiveMessageRequest);
-        List<Message> msgs = receiveMessageResult.getMessages();
+
         long ts2 = System.currentTimeMillis();
         CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CNSCQSTime, ts2 - ts1);
-        
-        if (msgs.size() > 0) {
-    		message = msgs.get(0);
-            logger.debug("event=received_message receipt_handle=" + message.getReceiptHandle());
-        } 
 
-        return message; 
+        return messages;
     }
     
     public static String getQueueUrl(String queueName) throws Exception {
@@ -159,7 +169,6 @@ public class CQSHandler {
         long ts2 = System.currentTimeMillis();
         
         CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CNSCQSTime, ts2 - ts1);
-		logger.info("event=get_queue_url queue_name=" + queueName + " queue_url=" + queueUrl);
         
         return queueUrl;
     }

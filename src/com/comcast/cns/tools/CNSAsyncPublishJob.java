@@ -79,7 +79,7 @@ public class CNSAsyncPublishJob implements Runnable, IPublisherCallback {
     	if (endpointPublishJobCount.decrementAndGet() == 0) {
             try {
 	    		CQSHandler.deleteMessage(queueUrl, receiptHandle);
-	            logger.info("event=deleting_publish_job_from_cqs message_id=" + message.getMessageId() + " queue_url=" + queueUrl + " receipt_handle=" + receiptHandle);
+	            logger.debug("event=deleting_publish_job_from_cqs message_id=" + message.getMessageId() + " queue_url=" + queueUrl + " receipt_handle=" + receiptHandle);
             } catch (Exception ex) {
             	logger.error("event=failed_to_kill_message", ex);
             }
@@ -107,7 +107,7 @@ public class CNSAsyncPublishJob implements Runnable, IPublisherCallback {
             
             while (numRetries < retryPolicy.getNumNoDelayRetries()) {
                 
-                logger.info("event=immediate_retry num_retries=" + numRetries);
+                logger.debug("event=immediate_retry num_retries=" + numRetries);
                 
                 // handle immediate retry phase
                 
@@ -116,7 +116,7 @@ public class CNSAsyncPublishJob implements Runnable, IPublisherCallback {
                     runCommon();
                     return; //suceeded.
                 } catch (Exception e) {
-                    logger.info("event=retry_failed phase=" + RetryPhase.ImmediateRetry.name() + " attempt=" + numRetries);
+                    logger.debug("event=retry_failed phase=" + RetryPhase.ImmediateRetry.name() + " attempt=" + numRetries);
                 }
             }                    
             
@@ -124,7 +124,7 @@ public class CNSAsyncPublishJob implements Runnable, IPublisherCallback {
             
             if (numRetries < retryPolicy.getNumMinDelayRetries() + retryPolicy.getNumNoDelayRetries()) {
                 
-                logger.info("event=pre_backoff num_retries=" + numRetries + " mind_delay_target_secs=" + retryPolicy.getMinDelayTarget());
+                logger.debug("event=pre_backoff num_retries=" + numRetries + " mind_delay_target_secs=" + retryPolicy.getMinDelayTarget());
                 numRetries++;
                 
                 CNSEndpointPublisherJobConsumer.submitForReDelivery(this, retryPolicy.getMinDelayTarget(), TimeUnit.SECONDS);
@@ -146,7 +146,7 @@ public class CNSAsyncPublishJob implements Runnable, IPublisherCallback {
                         retryPolicy.getNumRetries() - retryPolicy.getNumMinDelayRetries() - retryPolicy.getNumNoDelayRetries(),
                         retryPolicy.getMinDelayTarget(), retryPolicy.getMaxDelayTarget(), retryPolicy.getBackOffFunction());
                 
-                logger.info("event=retry_notification phase=" + RetryPhase.Backoff.name() + " delay=" + delay + " attempt=" + numRetries + " backoff_function=" + retryPolicy.getBackOffFunction().name());
+                logger.debug("event=retry_notification phase=" + RetryPhase.Backoff.name() + " delay=" + delay + " attempt=" + numRetries + " backoff_function=" + retryPolicy.getBackOffFunction().name());
                 
                 CNSEndpointPublisherJobConsumer.submitForReDelivery(this, delay, TimeUnit.SECONDS);
                 
@@ -159,7 +159,7 @@ public class CNSAsyncPublishJob implements Runnable, IPublisherCallback {
             
             if (numRetries < retryPolicy.getNumRetries()) { //remainder must be post-backoff
                 
-                logger.info("event=post_backoff max_delay_retries=" + maxDelayRetries + " max_delay_target=" + retryPolicy.getMaxDelayTarget());
+                logger.debug("event=post_backoff max_delay_retries=" + maxDelayRetries + " max_delay_target=" + retryPolicy.getMaxDelayTarget());
                 maxDelayRetries++;
                 
                 CNSEndpointPublisherJobConsumer.submitForReDelivery(this, retryPolicy.getMaxDelayTarget(), TimeUnit.SECONDS);
@@ -171,7 +171,7 @@ public class CNSAsyncPublishJob implements Runnable, IPublisherCallback {
                 return;
             } 
             
-            logger.info("event=retries_exhausted action=skip_message endpoint=" + endpoint + " message=" + message);
+            logger.debug("event=retries_exhausted action=skip_message endpoint=" + endpoint + " message=" + message);
             
             letMessageDieForEndpoint();
             
@@ -261,7 +261,7 @@ public class CNSAsyncPublishJob implements Runnable, IPublisherCallback {
 	@Override
 	public void onSuccess() {
 
-		logger.info("event=successful_delivery protocol=" + protocol + " endpoint=" + endpoint + " sub_arn=" + subArn + " attempt=" + numRetries);
+		logger.debug("event=successful_delivery protocol=" + protocol + " endpoint=" + endpoint + " sub_arn=" + subArn + " attempt=" + numRetries);
 
         letMessageDieForEndpoint();
 

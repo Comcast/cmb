@@ -50,7 +50,7 @@ public class EmailJsonEndpointPublisher extends EmailEndpointPublisher {
 			msg = com.comcast.cns.util.Util.generateMessageJson(message, CnsSubscriptionProtocol.email_json);
 		}
 
-		logger.info("event=send_email endpoint=" + endpoint + " subject=\"" + subject + " message=\"" + msg + "\"");
+		logger.debug("event=send_email endpoint=" + endpoint + " subject=\"" + subject + " message=\"" + msg + "\"");
 
 		mailAgent.postMail(new String [] { endpoint }, subject, msg, CMBProperties.getInstance().getSmtpReplyAddress());
 	}

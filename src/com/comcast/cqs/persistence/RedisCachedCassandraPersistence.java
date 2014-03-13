@@ -98,7 +98,6 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
     
     private static void initializeInstance() {
         CQSMessagePartitionedCassandraPersistence cassandraPersistence = new CQSMessagePartitionedCassandraPersistence();
-        logger.info("event=initialize_redis");
         Inst = new RedisCachedCassandraPersistence(cassandraPersistence);            
     }
     
@@ -1066,7 +1065,7 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
                     		if (isMessageExpired(queue, memId)) {
                             
                     			try {
-                                    logger.info("event=message_expired message_id=" + memId);
+                                    logger.debug("event=message_expired message_id=" + memId);
                                 	persistenceStorage.deleteMessage(queue.getRelativeUrl(), message.getMessageId());
                                 } catch (Exception e) {
                                     //its fine to ignore this exception since message must have been auto-deleted from Cassandra

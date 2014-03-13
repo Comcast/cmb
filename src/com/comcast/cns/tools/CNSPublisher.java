@@ -107,11 +107,9 @@ public class CNSPublisher {
     public static void start(String mode) throws Exception {
     	
         Util.initLog4j();
-
-    	logger.info("event=startup version=" + CMBControllerServlet.VERSION + " ip=" + InetAddress.getLocalHost().getHostAddress() + " io_mode=" + CMBProperties.getInstance().getCNSIOMode());
-        
     	modes = parseMode(mode);
-        logger.info("modes=" + modes);        
+
+    	logger.info("event=startup version=" + CMBControllerServlet.VERSION + " ip=" + InetAddress.getLocalHost().getHostAddress() + " io_mode=" + CMBProperties.getInstance().getCNSIOMode() + " mode=" + modes);
         
         if (modes.contains(Mode.Producer)) {
         	

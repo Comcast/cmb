@@ -24,7 +24,6 @@ import java.util.Random;
 
 import org.apache.log4j.Logger;
 
-import com.amazonaws.services.sqs.model.Message;
 import com.comcast.cmb.common.controller.CMBControllerServlet;
 import com.comcast.cmb.common.persistence.PersistenceFactory;
 import com.comcast.cmb.common.util.CMBProperties;
@@ -37,7 +36,7 @@ import com.comcast.cns.model.CNSEndpointPublishJob.CNSEndpointSubscriptionInfo;
 import com.comcast.cns.persistence.CNSCachedEndpointPublishJob;
 import com.comcast.cns.persistence.ICNSSubscriptionPersistence;
 import com.comcast.cns.persistence.TopicNotFoundException;
-import com.comcast.cqs.util.Util;
+import com.comcast.cqs.model.CQSMessage;
 
 /**
  * This class represents the Producer that reads the CNSMessage, partitions the subscribers and
@@ -67,13 +66,13 @@ public class CNSEndpointPublisherJobProducer implements CNSPublisherPartitionRun
 	   if (initialized) {
 		   return;
 	   }
-	   logger.info("event=initialize");
+	   logger.info("event=initializing_cns_producer");
 	   initialized = true;
    }
 
    public static void shutdown() {
        initialized = false;
-       logger.info("event=shutdown");
+       logger.info("event=shutdown_cns_producer");
    }
    
     @Override
@@ -118,13 +117,19 @@ public class CNSEndpointPublisherJobProducer implements CNSPublisherPartitionRun
 	        
 	        String publishJobQName = CNS_PRODUCER_QUEUE_NAME_PREFIX + partition;
 	        String queueUrl = CQSHandler.getRelativeCnsInternalQueueUrl(publishJobQName);
-	        Message msg = null;
+	        
+	        CQSMessage msg = null;
+	        int waitTimeSecs = 0;
 	        
 	        if (CMBProperties.getInstance().isCQSLongPollEnabled()) {
-	        	msg = CQSHandler.receiveMessage(queueUrl, CMBProperties.getInstance().getCMBRequestTimeoutSec()); 
-	        } else {
-	        	msg = CQSHandler.receiveMessage(queueUrl, 0); 
+	        	waitTimeSecs = CMBProperties.getInstance().getCMBRequestTimeoutSec();
 	        }
+
+	        List<CQSMessage> l = CQSHandler.receiveMessage(queueUrl, waitTimeSecs, 1); 
+
+	        if (l.size() > 0) {
+        		msg = l.get(0);
+        	}
 
 	        CNSWorkerMonitor.getInstance().registerCQSServiceAvailable(true);
 
@@ -182,7 +187,7 @@ public class CNSEndpointPublisherJobProducer implements CNSPublisherPartitionRun
 	            CQSHandler.deleteMessage(queueUrl, msg.getReceiptHandle());
 	            
 	            long ts2 = System.currentTimeMillis();
-	            logger.info("event=processed_producer_job cns_cqs_ms=" + CMBControllerServlet.valueAccumulator.getCounter(AccumulatorName.CNSCQSTime) + " resp_ms=" + (ts2 - ts1));
+	            logger.debug("event=processed_producer_job cns_cqs_ms=" + CMBControllerServlet.valueAccumulator.getCounter(AccumulatorName.CNSCQSTime) + " resp_ms=" + (ts2 - ts1));
 
 	        } else {
 	        	
@@ -193,8 +198,6 @@ public class CNSEndpointPublisherJobProducer implements CNSPublisherPartitionRun
 		        	if (processingDelayMillis < CMBProperties.getInstance().getCNSProducerProcessingMaxDelay()) {
 		        		processingDelayMillis *= 2;
 		        	}
-		        	
-		        	logger.debug("sleeping_ms=" + processingDelayMillis);
 		        	
 	        		Thread.sleep(processingDelayMillis);
 	        	}

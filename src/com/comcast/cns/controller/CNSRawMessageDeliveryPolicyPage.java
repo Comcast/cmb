@@ -42,7 +42,6 @@ public class CNSRawMessageDeliveryPolicyPage extends AdminServletBase {
     private static Logger logger = Logger.getLogger(CNSRawMessageDeliveryPolicyPage.class);
 	
 	public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		logger.info("here we are");
 
 		if (redirectUnauthenticatedUser(request, response)) {
 			return;

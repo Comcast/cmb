@@ -169,7 +169,7 @@ public class CNSPublishAction extends CNSAction {
     		
     		// optimization: if there's only one chunk due to few subscribers, write directly into endpoint publish queue bypassing the publish job queue
     		
-    		logger.info("event=using_job_queue_overpass");
+    		logger.debug("event=using_job_queue_overpass");
     		
     		List<CNSEndpointPublishJob.CNSEndpointSubscriptionInfo> subscriptions = CNSEndpointPublisherJobProducer.getSubscriptionsForTopic(topicArn);
     		

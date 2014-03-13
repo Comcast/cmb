@@ -51,7 +51,7 @@ public class EmailEndpointPublisher extends AbstractEndpointPublisher {
 			msg = com.comcast.cns.util.Util.generateMessageJson(message, CnsSubscriptionProtocol.email);
 		}
 
-		logger.info("event=send_email endpoint=" + endpoint + " subject=\"" + subject + " message=\"" + msg + "\"");
+		logger.debug("event=send_email endpoint=" + endpoint + " subject=\"" + subject + " message=\"" + msg + "\"");
 		
 		MailWrapper mailAgent = new MailWrapper(); 
 		mailAgent.postMail(new String [] { endpoint }, subject, msg, CMBProperties.getInstance().getSmtpReplyAddress());

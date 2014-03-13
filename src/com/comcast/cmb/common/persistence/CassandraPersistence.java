@@ -915,7 +915,7 @@ public class CassandraPersistence {
 
 	    long ts1 = System.currentTimeMillis();
 	    
-        logger.info("event=read_column_from_super_column_family cf=" + columnFamily + " key_count=" + keys.size() + "column_count=" + columnNames.size());
+        logger.debug("event=read_column_from_super_column_family cf=" + columnFamily + " key_count=" + keys.size() + "column_count=" + columnNames.size());
 
         try {
 	       

@@ -77,7 +77,7 @@ public class CNSPublishJob implements Runnable {
         
     	if (endpointPublishJobCount.decrementAndGet() == 0) {
             CQSHandler.deleteMessage(queueUrl, receiptHandle);
-            logger.info("event=deleting_publish_job_from_cqs message_id=" + message.getMessageId() + " queue_url=" + queueUrl + " receipt_handle=" + receiptHandle);
+            logger.debug("event=deleting_publish_job_from_cqs message_id=" + message.getMessageId() + " queue_url=" + queueUrl + " receipt_handle=" + receiptHandle);
         }
     }
     
@@ -102,7 +102,7 @@ public class CNSPublishJob implements Runnable {
             
             while (numRetries < retryPolicy.getNumNoDelayRetries()) {
                 
-                logger.info("event=immediate_retry num_retries=" + numRetries);
+                logger.debug("event=immediate_retry num_retries=" + numRetries);
                 
                 // handle immediate retry phase
                 
@@ -111,7 +111,7 @@ public class CNSPublishJob implements Runnable {
                     runCommon(pub, protocol, endpoint, subArn, rawDelivery);
                     return; //suceeded.
                 } catch (Exception e) {
-                    logger.info("event=retry_failed phase=" + RetryPhase.ImmediateRetry.name() + " attempt=" + numRetries);
+                    logger.debug("event=retry_failed phase=" + RetryPhase.ImmediateRetry.name() + " attempt=" + numRetries);
                 }
             }                    
             
@@ -119,7 +119,7 @@ public class CNSPublishJob implements Runnable {
             
             if (numRetries < retryPolicy.getNumMinDelayRetries() + retryPolicy.getNumNoDelayRetries()) {
                 
-                logger.info("event=pre_backoff num_retries=" + numRetries + " mind_delay_target_secs=" + retryPolicy.getMinDelayTarget());
+                logger.debug("event=pre_backoff num_retries=" + numRetries + " mind_delay_target_secs=" + retryPolicy.getMinDelayTarget());
                 numRetries++;
                 
                 CNSEndpointPublisherJobConsumer.submitForReDelivery(this, retryPolicy.getMinDelayTarget(), TimeUnit.SECONDS);
@@ -141,7 +141,7 @@ public class CNSPublishJob implements Runnable {
                         retryPolicy.getNumRetries() - retryPolicy.getNumMinDelayRetries() - retryPolicy.getNumNoDelayRetries(),
                         retryPolicy.getMinDelayTarget(), retryPolicy.getMaxDelayTarget(), retryPolicy.getBackOffFunction());
                 
-                logger.info("event=retry_notification phase=" + RetryPhase.Backoff.name() + " delay=" + delay + " attempt=" + numRetries + " backoff_function=" + retryPolicy.getBackOffFunction().name());
+                logger.debug("event=retry_notification phase=" + RetryPhase.Backoff.name() + " delay=" + delay + " attempt=" + numRetries + " backoff_function=" + retryPolicy.getBackOffFunction().name());
                 
                 CNSEndpointPublisherJobConsumer.submitForReDelivery(this, delay, TimeUnit.SECONDS);
                 
@@ -154,7 +154,7 @@ public class CNSPublishJob implements Runnable {
             
             if (numRetries < retryPolicy.getNumRetries()) { //remainder must be post-backoff
                 
-                logger.info("event=post_backoff max_delay_retries=" + maxDelayRetries + " max_delay_target=" + retryPolicy.getMaxDelayTarget());
+                logger.debug("event=post_backoff max_delay_retries=" + maxDelayRetries + " max_delay_target=" + retryPolicy.getMaxDelayTarget());
                 maxDelayRetries++;
                 
                 CNSEndpointPublisherJobConsumer.submitForReDelivery(this, retryPolicy.getMaxDelayTarget(), TimeUnit.SECONDS);
@@ -166,7 +166,7 @@ public class CNSPublishJob implements Runnable {
                 return;
             } 
             
-            logger.info("event=retries_exhausted action=skip_message endpoint=" + endpoint + " message=" + message);
+            logger.debug("event=retries_exhausted action=skip_message endpoint=" + endpoint + " message=" + message);
             
             letMessageDieForEndpoint();
             

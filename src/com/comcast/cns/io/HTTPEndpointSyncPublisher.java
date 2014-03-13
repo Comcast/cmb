@@ -116,7 +116,7 @@ public class HTTPEndpointSyncPublisher extends AbstractEndpointPublisher {
 			msg = com.comcast.cns.util.Util.generateMessageJson(message, CnsSubscriptionProtocol.http);
 		}
 		
-		logger.info("event=send_sync_http_request endpoint=" + endpoint + "\" message=\"" + msg + "\"");
+		logger.debug("event=send_sync_http_request endpoint=" + endpoint + "\" message=\"" + msg + "\"");
 
 		StringEntity stringEntity = new StringEntity(msg);
 		httpPost.setEntity(stringEntity);
