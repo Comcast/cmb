@@ -37,7 +37,8 @@ import org.junit.Test;
 
 import com.comcast.cmb.common.controller.CMBControllerServlet;
 import com.comcast.cmb.common.model.User;
-import com.comcast.cmb.common.persistence.CassandraPersistence;
+import com.comcast.cmb.common.persistence.AbstractCassandraPersistence;
+import com.comcast.cmb.common.persistence.CassandraPersistenceFactory;
 import com.comcast.cmb.common.persistence.IUserPersistence;
 import com.comcast.cmb.common.persistence.PersistenceFactory;
 import com.comcast.cmb.common.persistence.UserCassandraPersistence;
@@ -215,7 +216,7 @@ public class CQSMessagePartitionedCassandraPersistenceTest {
  		assertEquals(messageList.size(), peekMessageList.size());
  		previousHandle = null;
  		nextHandle = com.comcast.cqs.util.Util.hashQueueUrl(queue.getRelativeUrl()) + "_0_" + (CMBProperties.getInstance().getCQSNumberOfQueuePartitions()-1) +
- 				":" + CassandraPersistence.newTime(System.currentTimeMillis()+1209600000, false) + ":" + UUIDGen.getClockSeqAndNode();
+ 				":" + AbstractCassandraPersistence.newTime(System.currentTimeMillis()+1209600000, false) + ":" + UUIDGen.getClockSeqAndNode();
  		peekMessageList.clear();
  		newMessageList.clear();
  		
@@ -275,7 +276,7 @@ public class CQSMessagePartitionedCassandraPersistenceTest {
 		CQSQueue queue = CQSCache.getCachedQueue(queueUrl);
 		int numberOfPartitions = queue.getNumberOfPartitions();
 		int numberOfShards = queue.getNumberOfShards();
-		CassandraPersistence persistence = new CassandraPersistence(CMBProperties.getInstance().getCQSKeyspace());
+		AbstractCassandraPersistence persistence = CassandraPersistenceFactory.getInstance(CMBProperties.getInstance().getCQSKeyspace());
 		String queueHash = com.comcast.cqs.util.Util.hashQueueUrl(queueUrl);
 		long messageCount = 0;
 		

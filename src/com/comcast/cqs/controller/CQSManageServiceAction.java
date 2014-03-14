@@ -28,7 +28,8 @@ import org.apache.log4j.Logger;
 import com.comcast.cmb.common.controller.CMBControllerServlet;
 import com.comcast.cmb.common.model.CMBPolicy;
 import com.comcast.cmb.common.model.User;
-import com.comcast.cmb.common.persistence.CassandraPersistence;
+import com.comcast.cmb.common.persistence.AbstractCassandraPersistence;
+import com.comcast.cmb.common.persistence.CassandraPersistenceFactory;
 import com.comcast.cmb.common.util.CMBException;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cns.io.CNSPopulator;
@@ -84,9 +85,8 @@ public class CQSManageServiceAction extends CQSAction {
 			
 		} else if (task.equals("RemoveRecord")) {
 			
-			CassandraPersistence cassandraHandler = new CassandraPersistence(CMBProperties.getInstance().getCQSKeyspace());
-			ColumnFamilyTemplate<String, String> usersTemplate = new ThriftColumnFamilyTemplate<String, String>(cassandraHandler.getKeySpace(CMBProperties.getInstance().getWriteConsistencyLevel()), "CQSAPIServers", StringSerializer.get(), StringSerializer.get());
-			cassandraHandler.delete(usersTemplate, host, null);
+			AbstractCassandraPersistence cassandraHandler = CassandraPersistenceFactory.getInstance(CMBProperties.getInstance().getCQSKeyspace());
+			cassandraHandler.delete("CQSAPIServers", host, null, StringSerializer.get(), StringSerializer.get(), CMBProperties.getInstance().getWriteConsistencyLevel());
 			String out = CNSPopulator.getResponseMetadata();
             writeResponse(out, response);
 			return true;

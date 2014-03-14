@@ -15,7 +15,6 @@
  */
 package com.comcast.cqs.controller;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -31,14 +30,12 @@ import javax.servlet.AsyncContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import me.prettyprint.cassandra.serializers.StringSerializer;
-import me.prettyprint.hector.api.beans.Row;
-
 import org.apache.log4j.Logger;
 
 import com.comcast.cmb.common.model.CMBPolicy;
 import com.comcast.cmb.common.model.User;
-import com.comcast.cmb.common.persistence.CassandraPersistence;
+import com.comcast.cmb.common.persistence.AbstractCassandraPersistence;
+import com.comcast.cmb.common.persistence.CassandraPersistenceFactory;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cqs.io.CQSAPIStatsPopulator;
 import com.comcast.cqs.model.CQSAPIStats;
@@ -196,7 +193,7 @@ public class CQSGetAPIStatsAction extends CQSAction {
 				
 	        	try {
 				
-					CassandraPersistence cassandra = new CassandraPersistence(CMBProperties.getInstance().getCMBKeyspace());
+					AbstractCassandraPersistence cassandra = CassandraPersistenceFactory.getInstance(CMBProperties.getInstance().getCMBKeyspace());
 		        	
 		        	if (!cassandra.isAlive()) {
 						stats.addStatus("CASSANDRA UNAVAILABLE");

@@ -8,14 +8,16 @@ import java.util.Set;
 import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.hector.api.beans.Row;
 
-import com.comcast.cmb.common.persistence.CassandraPersistence;
+import com.comcast.cmb.common.persistence.AbstractCassandraPersistence;
+import com.comcast.cmb.common.persistence.CassandraPersistenceFactory;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cqs.model.CQSAPIStats;
 
 public class CQSAPIStatWrapper {
 	
 	public static List<CQSAPIStats> getCNSAPIStats(){
-		CassandraPersistence cassandraHandler = new CassandraPersistence(CMBProperties.getInstance().getCNSKeyspace());
+
+		AbstractCassandraPersistence cassandraHandler = CassandraPersistenceFactory.getInstance(CMBProperties.getInstance().getCNSKeyspace());
 		
 		List<Row<String, String, String>> rows = cassandraHandler.readNextNNonEmptyRows("CNSAPIServers", null, 1000, 10, new StringSerializer(), new StringSerializer(), new StringSerializer(), CMBProperties.getInstance().getReadConsistencyLevel());
 		List<CQSAPIStats> statsList = new ArrayList<CQSAPIStats>();
@@ -85,8 +87,6 @@ public class CQSAPIStatWrapper {
 		return dataCenterList;
 	}
 	
-	
-	
 	public static List<CQSAPIStats> getCNSAPIStatsByDataCenter(String dataCenter){
 		List<CQSAPIStats> cqsAPIStatsList = getCNSAPIStats();
 		List<CQSAPIStats> cqsAPIStatsByDataCenterList = new ArrayList<CQSAPIStats>();
@@ -98,7 +98,6 @@ public class CQSAPIStatWrapper {
 		return cqsAPIStatsByDataCenterList;
 	}
 	
-	
 	public static List<CQSAPIStats> getCQSAPIStatsByDataCenter(String dataCenter){
 		List<CQSAPIStats> cqsAPIStatsList = getCQSAPIStats();
 		List<CQSAPIStats> cqsAPIStatsByDataCenterList = new ArrayList<CQSAPIStats>();
@@ -109,8 +108,10 @@ public class CQSAPIStatWrapper {
 		}
 		return cqsAPIStatsByDataCenterList;
 	}
-	public static List<CQSAPIStats> getCQSAPIStats(){
-		CassandraPersistence cassandraHandler = new CassandraPersistence(CMBProperties.getInstance().getCQSKeyspace());
+	
+	public static List<CQSAPIStats> getCQSAPIStats() {
+		
+		AbstractCassandraPersistence cassandraHandler = CassandraPersistenceFactory.getInstance(CMBProperties.getInstance().getCQSKeyspace());
 		
 		List<Row<String, String, String>> rows = cassandraHandler.readNextNNonEmptyRows("CQSAPIServers", null, 1000, 10, new StringSerializer(), new StringSerializer(), new StringSerializer(), CMBProperties.getInstance().getReadConsistencyLevel());
 		List<CQSAPIStats> statsList = new ArrayList<CQSAPIStats>();

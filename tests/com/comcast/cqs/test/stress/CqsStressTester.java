@@ -68,7 +68,8 @@ import org.xml.sax.SAXException;
 import com.amazonaws.AmazonServiceException;
 import com.comcast.cmb.common.controller.CMBControllerServlet;
 import com.comcast.cmb.common.model.User;
-import com.comcast.cmb.common.persistence.CassandraPersistence;
+import com.comcast.cmb.common.persistence.AbstractCassandraPersistence;
+import com.comcast.cmb.common.persistence.CassandraPersistenceFactory;
 import com.comcast.cmb.common.persistence.IUserPersistence;
 import com.comcast.cmb.common.persistence.UserCassandraPersistence;
 import com.comcast.cmb.common.util.CMBException;
@@ -248,7 +249,7 @@ public class CqsStressTester {
 
 	private void createReceivers(String queueUrl) {
 
-    	CassandraPersistence persistence = new CassandraPersistence(CMBProperties.getInstance().getCQSKeyspace());
+    	AbstractCassandraPersistence persistence = CassandraPersistenceFactory.getInstance(CMBProperties.getInstance().getCQSKeyspace());
     	long receiverCount = CQSStressTestProperties.getInstance().getNumberOfReceiversPerQueue();
     	List<Receiver> receiverListForQueue = new ArrayList<Receiver>();
 
@@ -557,14 +558,14 @@ public class CqsStressTester {
 		private long totalOutOfOrderMessages = 0;
 		private long lastMessageReceivedTime = 0;
 		private boolean continueThread = true;
-		private CassandraPersistence persistence;
+		private AbstractCassandraPersistence persistence;
 		private static final int visibilityTimeout = 600;
 		private Set<String> messageIds = new HashSet<String>();
 		//private List<Integer> deleteLatencyMSList = new ArrayList<Integer>();
 		//private Set<Long> flightTimeList = new HashSet<Long>();
 		private long emptyResponseCount = 0;
 
-		public Receiver(String queueUrl, int index, CassandraPersistence persistence) {
+		public Receiver(String queueUrl, int index, AbstractCassandraPersistence persistence) {
 			setQueueUrl(queueUrl);
 			setThreadId(queueUrl, index);
 			setPersistence(persistence);
@@ -763,11 +764,11 @@ public class CqsStressTester {
 			this.continueThread = continueThread;
 		}
 
-		public CassandraPersistence getPersistence() {
+		public AbstractCassandraPersistence getPersistence() {
 			return persistence;
 		}
 
-		public void setPersistence(CassandraPersistence persistence) {
+		public void setPersistence(AbstractCassandraPersistence persistence) {
 			this.persistence = persistence;
 		}
 

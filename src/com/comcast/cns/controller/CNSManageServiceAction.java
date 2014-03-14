@@ -38,7 +38,8 @@ import org.apache.log4j.Logger;
 import com.comcast.cmb.common.controller.CMBControllerServlet;
 import com.comcast.cmb.common.model.CMBPolicy;
 import com.comcast.cmb.common.model.User;
-import com.comcast.cmb.common.persistence.CassandraPersistence;
+import com.comcast.cmb.common.persistence.AbstractCassandraPersistence;
+import com.comcast.cmb.common.persistence.CassandraPersistenceFactory;
 import com.comcast.cmb.common.util.CMBErrorCodes;
 import com.comcast.cmb.common.util.CMBException;
 import com.comcast.cmb.common.util.CMBProperties;
@@ -91,7 +92,7 @@ public class CNSManageServiceAction extends CNSAction {
 			throw new CMBException(CNSErrorCodes.MissingParameter,"Request parameter Host missing.");
 		}
 
-		CassandraPersistence cassandraHandler = new CassandraPersistence(CMBProperties.getInstance().getCNSKeyspace());
+		AbstractCassandraPersistence cassandraHandler = CassandraPersistenceFactory.getInstance(CMBProperties.getInstance().getCNSKeyspace());
 
 		if (task.equals("ClearWorkerQueues")) {
 
@@ -164,8 +165,7 @@ public class CNSManageServiceAction extends CNSAction {
 
 		} else if (task.equals("RemoveWorkerRecord")) {
 			
-			ColumnFamilyTemplate<String, String> usersTemplate = new ThriftColumnFamilyTemplate<String, String>(cassandraHandler.getKeySpace(CMBProperties.getInstance().getWriteConsistencyLevel()), "CNSWorkers", StringSerializer.get(), StringSerializer.get());
-			cassandraHandler.delete(usersTemplate, host, null);
+			cassandraHandler.delete("CNSWorkers", host, null, StringSerializer.get(), StringSerializer.get(), CMBProperties.getInstance().getWriteConsistencyLevel());
 			String out = CNSPopulator.getResponseMetadata();
 	        writeResponse(out, response);
 			return true;
@@ -179,8 +179,7 @@ public class CNSManageServiceAction extends CNSAction {
 
 		} else if (task.equals("RemoveRecord")) {
 			
-			ColumnFamilyTemplate<String, String> usersTemplate = new ThriftColumnFamilyTemplate<String, String>(cassandraHandler.getKeySpace(CMBProperties.getInstance().getWriteConsistencyLevel()), "CNSAPIServers", StringSerializer.get(), StringSerializer.get());
-			cassandraHandler.delete(usersTemplate, host, null);
+			cassandraHandler.delete("CNSAPIServers", host, null, StringSerializer.get(), StringSerializer.get(), CMBProperties.getInstance().getWriteConsistencyLevel());
 			String out = CNSPopulator.getResponseMetadata();
 	        writeResponse(out, response);
 			return true;

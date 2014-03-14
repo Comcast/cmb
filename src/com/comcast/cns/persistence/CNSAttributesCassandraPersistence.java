@@ -24,7 +24,8 @@ import org.json.JSONObject;
 import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.hector.api.beans.ColumnSlice;
 
-import com.comcast.cmb.common.persistence.CassandraPersistence;
+import com.comcast.cmb.common.persistence.AbstractCassandraPersistence;
+import com.comcast.cmb.common.persistence.CassandraPersistenceFactory;
 import com.comcast.cmb.common.persistence.PersistenceFactory;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cns.controller.CNSCache;
@@ -39,21 +40,22 @@ import com.comcast.cns.model.CNSTopicDeliveryPolicy;
  * @author bwolf, vvenkatraman, jorge, tina
  *
  */
-public class CNSAttributesCassandraPersistence extends CassandraPersistence implements ICNSAttributesPersistence {
+public class CNSAttributesCassandraPersistence implements ICNSAttributesPersistence {
 	
 	private static final String columnFamilyTopicAttributes = "CNSTopicAttributes";
 	private static final String columnFamilySubscriptionAttributes = "CNSSubscriptionAttributes";
 	private static final String columnFamilyTopicStats = "CNSTopicStats";
 	private static Logger logger = Logger.getLogger(CNSAttributesCassandraPersistence.class);
+	private static final String KEYSPACE = CMBProperties.getInstance().getCNSKeyspace();
+	private static final AbstractCassandraPersistence cassandraHandler = CassandraPersistenceFactory.getInstance(KEYSPACE);
 	
 	public CNSAttributesCassandraPersistence() {
-		super(CMBProperties.getInstance().getCNSKeyspace());	
 	}
 
 	@Override
 	public void setTopicAttributes(CNSTopicAttributes topicAttributes, String topicArn) throws Exception {
 		
-		insertOrUpdateRow(topicArn, columnFamilyTopicAttributes, getColumnValues(topicAttributes), CMBProperties.getInstance().getWriteConsistencyLevel());
+		cassandraHandler.insertOrUpdateRow(topicArn, columnFamilyTopicAttributes, getColumnValues(topicAttributes), CMBProperties.getInstance().getWriteConsistencyLevel());
 		
 		if (topicAttributes.getDisplayName() != null) {
 			PersistenceFactory.getTopicPersistence().updateTopicDisplayName(topicArn, topicAttributes.getDisplayName());
@@ -109,7 +111,7 @@ public class CNSAttributesCassandraPersistence extends CassandraPersistence impl
 		CNSTopicAttributes topicAttributes = new CNSTopicAttributes();
 		topicAttributes.setTopicArn(topicArn);
 		
-		ColumnSlice<String, String> slice = readColumnSlice(columnFamilyTopicAttributes, topicArn, 10, new StringSerializer(), new StringSerializer(), new StringSerializer(), CMBProperties.getInstance().getReadConsistencyLevel());
+		ColumnSlice<String, String> slice = cassandraHandler.readColumnSlice(columnFamilyTopicAttributes, topicArn, 10, new StringSerializer(), new StringSerializer(), new StringSerializer(), CMBProperties.getInstance().getReadConsistencyLevel());
 		
 		if (slice != null) {
 			
@@ -135,13 +137,13 @@ public class CNSAttributesCassandraPersistence extends CassandraPersistence impl
 			topicAttributes.setDisplayName(PersistenceFactory.getTopicPersistence().getTopic(topicArn).getDisplayName());
 		}
 		
-		long subscriptionConfirmedCount = getCounter(columnFamilyTopicStats, topicArn, "subscriptionConfirmed", StringSerializer.get(), new StringSerializer(), CMBProperties.getInstance().getReadConsistencyLevel());
+		long subscriptionConfirmedCount = cassandraHandler.getCounter(columnFamilyTopicStats, topicArn, "subscriptionConfirmed", StringSerializer.get(), new StringSerializer(), CMBProperties.getInstance().getReadConsistencyLevel());
 		topicAttributes.setSubscriptionsConfirmed(subscriptionConfirmedCount);
 		
-		long subscriptionPendingCount = getCounter(columnFamilyTopicStats, topicArn, "subscriptionPending", StringSerializer.get(), new StringSerializer(), CMBProperties.getInstance().getReadConsistencyLevel());
+		long subscriptionPendingCount = cassandraHandler.getCounter(columnFamilyTopicStats, topicArn, "subscriptionPending", StringSerializer.get(), new StringSerializer(), CMBProperties.getInstance().getReadConsistencyLevel());
 		topicAttributes.setSubscriptionsPending(subscriptionPendingCount);
 		
-		long subscriptionDeletedCount = getCounter(columnFamilyTopicStats, topicArn, "subscriptionDeleted", StringSerializer.get(), new StringSerializer(), CMBProperties.getInstance().getReadConsistencyLevel());
+		long subscriptionDeletedCount = cassandraHandler.getCounter(columnFamilyTopicStats, topicArn, "subscriptionDeleted", StringSerializer.get(), new StringSerializer(), CMBProperties.getInstance().getReadConsistencyLevel());
 		topicAttributes.setSubscriptionsDeleted(subscriptionDeletedCount);
 
 		return topicAttributes;
@@ -149,7 +151,7 @@ public class CNSAttributesCassandraPersistence extends CassandraPersistence impl
 
 	@Override
 	public void setSubscriptionAttributes(CNSSubscriptionAttributes subscriptionAtributes, String subscriptionArn) throws Exception {
-		insertOrUpdateRow(subscriptionArn, columnFamilySubscriptionAttributes, getColumnValues(subscriptionAtributes), CMBProperties.getInstance().getWriteConsistencyLevel());
+		cassandraHandler.insertOrUpdateRow(subscriptionArn, columnFamilySubscriptionAttributes, getColumnValues(subscriptionAtributes), CMBProperties.getInstance().getWriteConsistencyLevel());
 		String topicArn = com.comcast.cns.util.Util.getCnsTopicArn(subscriptionArn);
 		CNSCache.removeTopicAttributes(topicArn);
 	}
@@ -188,7 +190,7 @@ public class CNSAttributesCassandraPersistence extends CassandraPersistence impl
 	public CNSSubscriptionAttributes getSubscriptionAttributes(String subscriptionArn) throws Exception {
 		
 		CNSSubscriptionAttributes subscriptionAttributes = null;
-		ColumnSlice<String, String> slice = readColumnSlice(columnFamilySubscriptionAttributes, subscriptionArn, 10, new StringSerializer(), new StringSerializer(), new StringSerializer(), CMBProperties.getInstance().getReadConsistencyLevel());
+		ColumnSlice<String, String> slice = cassandraHandler.readColumnSlice(columnFamilySubscriptionAttributes, subscriptionArn, 10, new StringSerializer(), new StringSerializer(), new StringSerializer(), CMBProperties.getInstance().getReadConsistencyLevel());
 		
 		if (slice != null) {
 			

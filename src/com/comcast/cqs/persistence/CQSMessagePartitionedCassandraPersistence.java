@@ -37,7 +37,8 @@ import me.prettyprint.hector.api.beans.Composite;
 import me.prettyprint.hector.api.beans.HSuperColumn;
 import me.prettyprint.hector.api.beans.SuperSlice;
 
-import com.comcast.cmb.common.persistence.CassandraPersistence;
+import com.comcast.cmb.common.persistence.AbstractCassandraPersistence;
+import com.comcast.cmb.common.persistence.CassandraPersistenceFactory;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.PersistenceException;
 import com.comcast.cqs.controller.CQSCache;
@@ -48,28 +49,23 @@ import com.comcast.cqs.util.CQSErrorCodes;
 import com.comcast.cqs.util.RandomNumberCollection;
 import com.comcast.cqs.util.Util;
 import com.eaio.uuid.UUIDGen;
+
 /**
  * Cassandra persistence for CQS Message
  * @author aseem, vvenkatraman, bwolf
  *
  */
-public class CQSMessagePartitionedCassandraPersistence extends CassandraPersistence implements ICQSMessagePersistence {
+public class CQSMessagePartitionedCassandraPersistence implements ICQSMessagePersistence {
 	
 	private static final String COLUMN_FAMILY_PARTITIONED_QUEUE_MESSAGES = "CQSPartitionedQueueMessages";
 	private static final Random rand = new Random();
 
 	private static Logger logger = Logger.getLogger(CQSMessagePartitionedCassandraPersistence.class);
-
-	private SuperCfTemplate<String, Composite, String> initQueueMessagesTemplate() {
-		
-		return new ThriftSuperCfTemplate<String, Composite, String>(
-				keyspaces.get(CMBProperties.getInstance().getWriteConsistencyLevel()),
-				COLUMN_FAMILY_PARTITIONED_QUEUE_MESSAGES, StringSerializer.get(),
-				new CompositeSerializer(), StringSerializer.get());
-	}
+	
+	private static final String KEYSPACE = CMBProperties.getInstance().getCQSKeyspace();
+	private static final AbstractCassandraPersistence cassandraHandler = CassandraPersistenceFactory.getInstance(KEYSPACE);
 
 	public CQSMessagePartitionedCassandraPersistence() {
-		super(CMBProperties.getInstance().getCQSKeyspace());
 	}
 
 	@Override
@@ -90,7 +86,7 @@ public class CQSMessagePartitionedCassandraPersistence extends CassandraPersiste
 		}
 		
 		long ts = System.currentTimeMillis() + delaySeconds*1000;
-		final Composite superColumnName = new Composite(newTime(ts, false), UUIDGen.getClockSeqAndNode());
+		final Composite superColumnName = new Composite(AbstractCassandraPersistence.newTime(ts, false), UUIDGen.getClockSeqAndNode());
 		//final Composite superColumnName = new Composite(ts,	rand.nextLong());
 		int ttl = queue.getMsgRetentionPeriod();
 		int partition = rand.nextInt(queue.getNumberOfPartitions());
@@ -104,7 +100,7 @@ public class CQSMessagePartitionedCassandraPersistence extends CassandraPersiste
 
 		logger.debug("event=send_message ttl=" + ttl + " delay_sec=" + delaySeconds + " msg_id=" + message.getMessageId() + " key=" + key + " col=" + superColumnName);
 		
-		insertSuperColumn(COLUMN_FAMILY_PARTITIONED_QUEUE_MESSAGES, key,
+		cassandraHandler.insertSuperColumn(COLUMN_FAMILY_PARTITIONED_QUEUE_MESSAGES, key,
 				StringSerializer.get(), superColumnName, ttl,
 				new CompositeSerializer(), Util.buildMessageMap(message),
 				StringSerializer.get(), StringSerializer.get(),
@@ -146,7 +142,7 @@ public class CQSMessagePartitionedCassandraPersistence extends CassandraPersiste
 			}
 			
 			long ts = System.currentTimeMillis() + delaySeconds*1000;
-			final Composite superColumnName = new Composite(Arrays.asList(newTime(ts, false), UUIDGen.getClockSeqAndNode()));
+			final Composite superColumnName = new Composite(Arrays.asList(AbstractCassandraPersistence.newTime(ts, false), UUIDGen.getClockSeqAndNode()));
 			message.setMessageId(key + ":" + superColumnName.get(0) + ":" + superColumnName.get(1));
 			
 			logger.debug("event=send_message_batch msg_id=" + message.getMessageId() + " ttl=" + ttl + " delay_sec=" + delaySeconds + " key=" + key + " col=" + superColumnName);
@@ -158,7 +154,7 @@ public class CQSMessagePartitionedCassandraPersistence extends CassandraPersiste
 
 		// String compressedMessage = Util.compress(message);
 
-		insertSuperColumns(COLUMN_FAMILY_PARTITIONED_QUEUE_MESSAGES, key,
+		cassandraHandler.insertSuperColumns(COLUMN_FAMILY_PARTITIONED_QUEUE_MESSAGES, key,
 				StringSerializer.get(), messageDataMap, ttl,
 				new CompositeSerializer(), StringSerializer.get(),
 				StringSerializer.get(), CMBProperties.getInstance().getWriteConsistencyLevel());
@@ -181,12 +177,11 @@ public class CQSMessagePartitionedCassandraPersistence extends CassandraPersiste
 			return;
 		}
 		
-		SuperCfTemplate<String, Composite, String> queueMessagesTemplate = initQueueMessagesTemplate();
 		Composite superColumnName = new Composite(Arrays.asList(Long.parseLong(receiptHandleParts[1]), Long.parseLong(receiptHandleParts[2])));
 		
 		if (superColumnName != null) {
 			logger.debug("event=delete_message receipt_handle=" + receiptHandle + " col=" + superColumnName + " key=" + receiptHandleParts[0]);
-			deleteSuperColumn(queueMessagesTemplate, receiptHandleParts[0], superColumnName);
+			cassandraHandler.deleteSuperColumn(COLUMN_FAMILY_PARTITIONED_QUEUE_MESSAGES, receiptHandleParts[0], superColumnName, new StringSerializer(), new CompositeSerializer(), CMBProperties.getInstance().getWriteConsistencyLevel());
 		}
 	}
 
@@ -266,7 +261,7 @@ public class CQSMessagePartitionedCassandraPersistence extends CassandraPersiste
 			
 			key = queueHash + "_" + shardNumber + "_" + partitionNumber;
 			
-			SuperSlice<Composite, String, String> superSlice = readRowFromSuperColumnFamily(
+			SuperSlice<Composite, String, String> superSlice = cassandraHandler.readRowFromSuperColumnFamily(
 					COLUMN_FAMILY_PARTITIONED_QUEUE_MESSAGES, key, previousHandle,
 					nextHandle, length-messageList.size()+1, StringSerializer.get(),
 					new CompositeSerializer(), StringSerializer.get(),
@@ -281,7 +276,7 @@ public class CQSMessagePartitionedCassandraPersistence extends CassandraPersiste
 					partitionNumber++;
 					
 					if (partitionNumber > -1) {
-						previousHandle = new Composite(Arrays.asList(newTime(System.currentTimeMillis()-1209600000, false), UUIDGen.getClockSeqAndNode()));
+						previousHandle = new Composite(Arrays.asList(AbstractCassandraPersistence.newTime(System.currentTimeMillis()-1209600000, false), UUIDGen.getClockSeqAndNode()));
 					}
 				
 				} else if (nextHandle != null) {
@@ -289,7 +284,7 @@ public class CQSMessagePartitionedCassandraPersistence extends CassandraPersiste
 					partitionNumber--;
 					
 					if (partitionNumber < numberPartitions) {
-						nextHandle = new Composite(Arrays.asList(newTime(System.currentTimeMillis()+1209600000, false), UUIDGen.getClockSeqAndNode()));
+						nextHandle = new Composite(Arrays.asList(AbstractCassandraPersistence.newTime(System.currentTimeMillis()+1209600000, false), UUIDGen.getClockSeqAndNode()));
 					}
 					
 				} else {
@@ -304,15 +299,14 @@ public class CQSMessagePartitionedCassandraPersistence extends CassandraPersiste
 	@Override
 	public void clearQueue(String queueUrl, int shard) throws PersistenceException, NoSuchAlgorithmException, UnsupportedEncodingException {
 		
-		SuperCfTemplate<String, Composite, String> queueMessagesTemplate = initQueueMessagesTemplate();
-
 		int numberPartitions = getNumberOfPartitions(queueUrl);
 		
 		logger.debug("event=clear_queue queue_url=" + queueUrl + " num_partitions=" + numberPartitions);
 		
 		for (int i=0; i<numberPartitions; i++) {
 			String key = Util.hashQueueUrl(queueUrl) + "_" + shard + "_" + i;
-			deleteSuperColumn(queueMessagesTemplate, key, null);
+			//cassandraHandler.deleteSuperColumn(COLUMN_FAMILY_PARTITIONED_QUEUE_MESSAGES, key, null, StringSerializer.get(), CompositeSerializer.get(), CMBProperties.getInstance().getWriteConsistencyLevel());
+			cassandraHandler.delete(COLUMN_FAMILY_PARTITIONED_QUEUE_MESSAGES, key, null, StringSerializer.get(), StringSerializer.get(), CMBProperties.getInstance().getWriteConsistencyLevel());
 		}
 	}
 
@@ -340,7 +334,7 @@ public class CQSMessagePartitionedCassandraPersistence extends CassandraPersiste
 			
 			Composite superColumnName = new Composite(Arrays.asList(Long.parseLong(idParts[1]), Long.parseLong(idParts[2])));
 			
-			HSuperColumn<Composite, String, String> superColumn = readColumnFromSuperColumnFamily(COLUMN_FAMILY_PARTITIONED_QUEUE_MESSAGES, 
+			HSuperColumn<Composite, String, String> superColumn = cassandraHandler.readColumnFromSuperColumnFamily(COLUMN_FAMILY_PARTITIONED_QUEUE_MESSAGES, 
 					idParts[0], superColumnName, StringSerializer.get(), 
 					new CompositeSerializer(), StringSerializer.get(),
 					StringSerializer.get(), CMBProperties.getInstance().getReadConsistencyLevel());
@@ -414,7 +408,7 @@ public class CQSMessagePartitionedCassandraPersistence extends CassandraPersiste
 			String firstParts[] = firstLastForPartition.get("First").split(":");
 			String lastParts[] = firstLastForPartition.get("Last").split(":");
 			
-			SuperSlice<Composite, String, String> superSlice = readRowFromSuperColumnFamily(
+			SuperSlice<Composite, String, String> superSlice = cassandraHandler.readRowFromSuperColumnFamily(
 					COLUMN_FAMILY_PARTITIONED_QUEUE_MESSAGES, queuePartition, new Composite(Arrays.asList(Long.parseLong(firstParts[0]), Long.parseLong(firstParts[1]))),
 					new Composite(Arrays.asList(Long.parseLong(lastParts[0]), Long.parseLong(lastParts[1]))), messageCount, StringSerializer.get(),
 					new CompositeSerializer(), StringSerializer.get(),
@@ -543,7 +537,7 @@ public class CQSMessagePartitionedCassandraPersistence extends CassandraPersiste
             	int partition = rc.getNext();
                 String key = queueHash + "_" + shard + "_" + partition;
                 
-                SuperSlice<Composite, String, String> superSlice = readRowFromSuperColumnFamily(
+                SuperSlice<Composite, String, String> superSlice = cassandraHandler.readRowFromSuperColumnFamily(
                         COLUMN_FAMILY_PARTITIONED_QUEUE_MESSAGES, key, null, null, 1, 
                         StringSerializer.get(),
                         new CompositeSerializer(), StringSerializer.get(),

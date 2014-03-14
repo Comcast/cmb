@@ -16,15 +16,14 @@
 package com.comcast.cmb.common.persistence;
 
 import com.comcast.cmb.common.model.IPermission;
-
 import java.util.List;
-
 
 /**
  * Represents the persistence of a Permission
  * @author michael, baosen
  */
 public interface IPermissionPersistence {
+	
     /**
      * Return a list of permissions for that user
      * @param userId

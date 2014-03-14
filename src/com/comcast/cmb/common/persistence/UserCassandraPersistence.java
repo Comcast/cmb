@@ -26,6 +26,7 @@ import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.PersistenceException;
 import com.comcast.cqs.util.CQSErrorCodes;
 
+import me.prettyprint.cassandra.serializers.CompositeSerializer;
 import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.cassandra.service.template.ColumnFamilyTemplate;
 import me.prettyprint.cassandra.service.template.ThriftColumnFamilyTemplate;
@@ -38,7 +39,7 @@ import org.apache.log4j.Logger;
  * Represents Cassandra persistence functionality of User Objects
  * @author bwolf, vvenkatraman, baosen, michael, aseem
  */
-public class UserCassandraPersistence extends CassandraPersistence implements IUserPersistence {
+public class UserCassandraPersistence implements IUserPersistence {
 
 	private static final String ACCESS_KEY = "accessKey";
 	private static final String ACCESS_SECRET = "accessSecret";
@@ -47,13 +48,13 @@ public class UserCassandraPersistence extends CassandraPersistence implements IU
 	private static final String IS_ADMIN = "isAdmin";
 	private static final String USER_DESC = "description";
 	//private static final String USER_NAME = "userName";
-	private final ColumnFamilyTemplate<String, String> usersTemplate;
 	private static final String COLUMN_FAMILY_USERS = "Users";
 	private static final Logger logger = Logger.getLogger(UserCassandraPersistence.class);
 	
+	private static final String KEYSPACE = CMBProperties.getInstance().getCMBKeyspace();
+	private static final AbstractCassandraPersistence cassandraHandler = CassandraPersistenceFactory.getInstance(KEYSPACE);
+
 	public UserCassandraPersistence() {
-		super(CMBProperties.getInstance().getCMBKeyspace());		
-		usersTemplate = new ThriftColumnFamilyTemplate<String, String>(keyspaces.get(CMBProperties.getInstance().getWriteConsistencyLevel()), COLUMN_FAMILY_USERS, StringSerializer.get(), StringSerializer.get());
 	}
 
 	@Override
@@ -105,7 +106,7 @@ public class UserCassandraPersistence extends CassandraPersistence implements IU
 			userDataMap.put(IS_ADMIN, user.getIsAdmin().toString());
 			userDataMap.put(USER_DESC, user.getDescription());
 			
-			insertOrUpdateRow(user.getUserName(), COLUMN_FAMILY_USERS, userDataMap, CMBProperties.getInstance().getWriteConsistencyLevel());
+			cassandraHandler.insertOrUpdateRow(user.getUserName(), COLUMN_FAMILY_USERS, userDataMap, CMBProperties.getInstance().getWriteConsistencyLevel());
 			
 		} catch (Exception e) {
 			logger.error("event=create_user", e);
@@ -118,7 +119,7 @@ public class UserCassandraPersistence extends CassandraPersistence implements IU
 	
 	@Override
 	public void deleteUser(String userName) throws PersistenceException {
-		delete(usersTemplate, userName, null);
+		cassandraHandler.delete(COLUMN_FAMILY_USERS, userName, null, new StringSerializer(), new StringSerializer(), CMBProperties.getInstance().getWriteConsistencyLevel());
 	}
 	
 	@Override
@@ -134,7 +135,7 @@ public class UserCassandraPersistence extends CassandraPersistence implements IU
 	@Override
 	public User getUserById(String userId) throws PersistenceException {
 
-		List<Row<String, String, String>> rows = readNextNRows(COLUMN_FAMILY_USERS, null, USER_ID, userId, 10, 10, new StringSerializer(), new StringSerializer(), new StringSerializer(), CMBProperties.getInstance().getReadConsistencyLevel());
+		List<Row<String, String, String>> rows = cassandraHandler.readNextNRows(COLUMN_FAMILY_USERS, null, USER_ID, userId, 10, 10, new StringSerializer(), new StringSerializer(), new StringSerializer(), CMBProperties.getInstance().getReadConsistencyLevel());
 				
 		if (rows == null || rows.size() == 0) {
 			return null;
@@ -147,7 +148,7 @@ public class UserCassandraPersistence extends CassandraPersistence implements IU
 	@Override
 	public User getUserByName(String userName) throws PersistenceException {
 
-		ColumnSlice<String, String> slice = readColumnSlice(COLUMN_FAMILY_USERS, userName, 10, StringSerializer.get(), StringSerializer.get(), StringSerializer.get(), CMBProperties.getInstance().getReadConsistencyLevel());
+		ColumnSlice<String, String> slice = cassandraHandler.readColumnSlice(COLUMN_FAMILY_USERS, userName, 10, StringSerializer.get(), StringSerializer.get(), StringSerializer.get(), CMBProperties.getInstance().getReadConsistencyLevel());
 		
 		if (slice == null) {
 			return null;
@@ -160,7 +161,7 @@ public class UserCassandraPersistence extends CassandraPersistence implements IU
 	@Override
 	public User getUserByAccessKey(String accessKey) throws PersistenceException {
 
-		List<Row<String, String, String>> rows = readNextNRows(COLUMN_FAMILY_USERS, null, ACCESS_KEY, accessKey, 10, 10, new StringSerializer(), new StringSerializer(), new StringSerializer(), CMBProperties.getInstance().getReadConsistencyLevel());
+		List<Row<String, String, String>> rows = cassandraHandler.readNextNRows(COLUMN_FAMILY_USERS, null, ACCESS_KEY, accessKey, 10, 10, new StringSerializer(), new StringSerializer(), new StringSerializer(), CMBProperties.getInstance().getReadConsistencyLevel());
 		
 		if (rows == null || rows.size() == 0) {
 			return null;
@@ -173,7 +174,7 @@ public class UserCassandraPersistence extends CassandraPersistence implements IU
 
 	public List<User> getAllUsers() throws PersistenceException {
 		
-		List<Row<String, String, String>> rows = readNextNNonEmptyRows(COLUMN_FAMILY_USERS, null, 1000, 10, new StringSerializer(), new StringSerializer(), new StringSerializer(), CMBProperties.getInstance().getReadConsistencyLevel());
+		List<Row<String, String, String>> rows = cassandraHandler.readNextNNonEmptyRows(COLUMN_FAMILY_USERS, null, 1000, 10, new StringSerializer(), new StringSerializer(), new StringSerializer(), CMBProperties.getInstance().getReadConsistencyLevel());
 		List<User> userList = new ArrayList<User>();
 
 		if (rows == null || rows.size() == 0) {
