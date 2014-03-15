@@ -148,7 +148,7 @@ public class CQSSendMessageBatchAction extends CQSAction {
 		Map<String, String> result = PersistenceFactory.getCQSMessagePersistence().sendMessageBatch(queue, shard, msgList);
 
 		try {
-			CQSLongPollSender.send(queue.getArn());
+			CQSLongPollSender.send(queue.getArn(), msgList.size());
         } catch (Exception ex) {
         	logger.warn("event=failed_to_send_longpoll_notification", ex);
         }
