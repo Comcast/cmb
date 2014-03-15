@@ -11,7 +11,7 @@ public class CassandraPersistenceFactory {
 
 	public static AbstractCassandraPersistence getInstance(String keyspace) {
 		if (!cassandraPersistenceMap.containsKey(keyspace)) {
-			cassandraPersistenceMap.put(keyspace, new CassandraHectorPersistence(keyspace));
+			cassandraPersistenceMap.put(keyspace, new CassandraHectorPersistence());
 		}
 		return cassandraPersistenceMap.get(keyspace);
 	}

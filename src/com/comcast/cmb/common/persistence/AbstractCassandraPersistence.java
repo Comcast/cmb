@@ -3,23 +3,57 @@ package com.comcast.cmb.common.persistence;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 import com.comcast.cmb.common.util.CMBProperties;
 
-import me.prettyprint.cassandra.service.template.ColumnFamilyTemplate;
-import me.prettyprint.cassandra.service.template.SuperCfTemplate;
-import me.prettyprint.hector.api.HConsistencyLevel;
-import me.prettyprint.hector.api.Keyspace;
-import me.prettyprint.hector.api.Serializer;
-import me.prettyprint.hector.api.beans.ColumnSlice;
-import me.prettyprint.hector.api.beans.HSuperColumn;
-import me.prettyprint.hector.api.beans.Row;
-import me.prettyprint.hector.api.beans.SuperSlice;
-import me.prettyprint.hector.api.exceptions.HectorException;
-import me.prettyprint.hector.api.mutation.MutationResult;
-
 public abstract class AbstractCassandraPersistence {
 	
+	protected static Random rand = new Random();
+	
+	public static enum CMB_SERIALIZER { STRING_SERIALIZER, COMPOSITE_SERIALIZER };
+	
+	public static class CmbColumn<N, V> {
+		public CmbColumn(N name, V value) {
+			this.name = name;
+			this.value = value;
+		}
+		public N name;
+		public V value;
+	}
+	
+	public static class CmbRow<K, N, V> {
+		public CmbRow(K key, List<CmbColumn<N, V>> row) {
+			this.key = key;
+			this.row = row;
+		}
+		public K key;
+		public List<CmbColumn<N, V>> row;
+	}
+	
+	public static class CmbColumnSlice<N, V> {
+		public CmbColumnSlice(List<CmbColumn<N, V>> slice) {
+			this.slice = slice;
+		}
+		public List<CmbColumn<N, V>> slice;
+	}
+	
+	public static class CmbSuperColumnSlice<SN, N, V> {
+		public CmbSuperColumnSlice(List<CmbSuperColumn<SN, N, V>> slice) {
+			this.slice = slice;
+		}
+		public List<CmbSuperColumn<SN, N, V>> slice;
+	}
+	
+	public static class CmbSuperColumn<SN, N, V> {
+		public CmbSuperColumn(SN superName, List<CmbColumn<N, V>> columns) {
+			this.superName = superName;
+			this.columns = columns;
+		}
+		public SN superName;
+		public List<CmbColumn<N, V>> columns;
+	}
+
 	public static final String CLUSTER_NAME = CMBProperties.getInstance().getClusterName();
 	public static final String CLUSTER_URL = CMBProperties.getInstance().getClusterUrl();
 	
@@ -44,606 +78,120 @@ public abstract class AbstractCassandraPersistence {
     	t = t >> 21;
         return t;
     }
+    
+	public java.util.UUID getTimeUUID(long timeMillis) throws InterruptedException {
+		return new java.util.UUID(newTime(timeMillis, false), com.eaio.uuid.UUIDGen.getClockSeqAndNode());
+	}
+
+	public java.util.UUID getUniqueTimeUUID(long millis) {
+		return new java.util.UUID(com.eaio.uuid.UUIDGen.createTime(millis),	com.eaio.uuid.UUIDGen.getClockSeqAndNode());
+	}
+
+	public long getTimeLong(long timeMillis) throws InterruptedException {
+		long newTime = timeMillis * 1000000000 + (System.nanoTime() % 1000000) * 1000 + rand.nextInt(999999); 
+		return newTime;
+	}
 	
 	public abstract boolean isAlive();
 
-	public abstract Keyspace getKeySpace(HConsistencyLevel consistencyLevel);
+	public abstract <K, N, V> void update(String keyspace, String columnFamily, K key, N column, V value, 
+			CMB_SERIALIZER keySerializer, CMB_SERIALIZER nameSerializer, CMB_SERIALIZER valueSerializer) throws Exception;
 
-	/**
-	 * Update single key value pair in column family.
-	 * 
-	 * @param template
-	 *            column family
-	 * @param key
-	 *            row key
-	 * @param column
-	 *            column name
-	 * @param value
-	 *            value K - type of row-key N - type of column name V - type of
-	 *            column value
-	 * @throws HectorException
-	 */
-	public abstract <K, N, V> void update(String columnFamily, K key, N column, V value, Serializer<K> keySerializer, Serializer<N> nameSerializer, Serializer<V> valueSerializer, HConsistencyLevel level)
-			throws HectorException;
+	public abstract <K, SN, N, V> void insertSuperColumn(String keyspace, String columnFamily, K key, CMB_SERIALIZER keySerializer, SN superName, Integer ttl, 
+			CMB_SERIALIZER superNameSerializer, Map<N, V> subColumnNameValues, CMB_SERIALIZER columnSerializer,
+			CMB_SERIALIZER valueSerializer)	throws Exception;
 
-	/**
-	 * Insert single key value pair for a super column.
-	 * 
-	 * @param columnFamily
-	 *            column family
-	 * @param key
-	 *            row key
-	 * @param keySerializer
-	 *            The serializer for the key
-	 * @param superName
-	 *            super column name
-	 * @param ttl
-	 *            The time to live
-	 * @param superNameSerializer
-	 *            serializer for the super column name
-	 * @param subColumnNameValues
-	 *            name, value pair for the sub columns
-	 * @param columnSerializer
-	 *            the serializer for sub column name
-	 * @param valueSerializer
-	 *            the serializer for sub column value K - type of row-key SN -
-	 *            type of super column name N - type of sub column name V - type
-	 *            of column value
-	 * @throws HectorException
-	 */
-	public abstract <K, SN, N, V> MutationResult insertSuperColumn(
-			String columnFamily, K key, Serializer<K> keySerializer,
-			SN superName, Integer ttl, Serializer<SN> superNameSerializer,
-			Map<N, V> subColumnNameValues, Serializer<N> columnSerializer,
-			Serializer<V> valueSerializer, HConsistencyLevel level)
-			throws HectorException;
-
-	/**
-	 * Insert a map of key value pairs for a super column.
-	 * 
-	 * @param columnFamily
-	 *            column family
-	 * @param key
-	 *            row key
-	 * @param keySerializer
-	 *            The serializer for the key
-	 * @param superNameSubColumnsMap
-	 *            A map of super column names as the key and a map of sub-column
-	 *            name values as the value
-	 * @param ttl
-	 *            The time to live
-	 * @param superNameSerializer
-	 *            serializer for the super column name
-	 * @param subColumnNameValues
-	 *            name, value pair for the sub columns
-	 * @param columnSerializer
-	 *            the serializer for sub column name
-	 * @param valueSerializer
-	 *            the serializer for sub column value K - type of row-key SN -
-	 *            type of super column name N - type of sub column name V - type
-	 *            of column value
-	 * @throws HectorException
-	 */
-	public abstract <K, SN, N, V> MutationResult insertSuperColumns(
-			String columnFamily, K key, Serializer<K> keySerializer,
+	public abstract <K, SN, N, V> void insertSuperColumns(
+			String keyspace, String columnFamily, K key, CMB_SERIALIZER keySerializer,
 			Map<SN, Map<N, V>> superNameSubColumnsMap, int ttl,
-			Serializer<SN> superNameSerializer, Serializer<N> columnSerializer,
-			Serializer<V> valueSerializer, HConsistencyLevel level)
-			throws HectorException;
+			CMB_SERIALIZER superNameSerializer, CMB_SERIALIZER columnSerializer,
+			CMB_SERIALIZER valueSerializer)	throws Exception;
 
-	/**
-	 * Read single value from column family.
-	 * 
-	 * @param template
-	 *            column family
-	 * @param key
-	 *            row key
-	 * @param column
-	 *            column name
-	 * @return value of type T N - type of column name V - type of column value
-	 *         Note: Assumed the row key is a string
-	 * @throws HectorException
-	 * 
-	 */
-	public abstract <N, V> V read(ColumnFamilyTemplate<String, N> template,
-			String key, N column, V returnType) throws HectorException;
+	public abstract <K, N, V> List<CmbRow<K, N, V>> readNextNNonEmptyRows(
+			String keyspace, String columnFamily, K lastKey, int numRows, int numCols,
+			CMB_SERIALIZER keySerializer, CMB_SERIALIZER columnNameSerializer,
+			CMB_SERIALIZER valueSerializer) throws Exception;
 
-	/**
-	 * Read next numRows rows with a maximum of 100 columns per row.
-	 * 
-	 * @param columnFamily
-	 *            column family
-	 * @param lastKey
-	 *            last key read before or null
-	 * @param numRows
-	 *            maximum number of rows to read
-	 * @param keySerializer
-	 * @param columnNameSerializer
-	 * @param valueSerializer
-	 * @param level
-	 *            consistency level
-	 * @return list of rows K - type of row-key N - type of column name V - type
-	 *         of column value
-	 */
-	public abstract <K, N, V> List<Row<K, N, V>> readNextNRows(
-			String columnFamily, K lastKey, int numRows,
-			Serializer<K> keySerializer, Serializer<N> columnNameSerializer,
-			Serializer<V> valueSerializer, HConsistencyLevel level);
+	public abstract <K, N, V> List<CmbRow<K, N, V>> readNextNRows(
+			String keyspace, String columnFamily, K lastKey, int numRows, int numCols,
+			CMB_SERIALIZER keySerializer, CMB_SERIALIZER columnNameSerializer,
+			CMB_SERIALIZER valueSerializer) throws Exception;
 
-	/**
-	 * Read next numRows rows with a maximum of numCols columns per row.
-	 * 
-	 * @param columnFamily
-	 *            column family
-	 * @param lastKey
-	 *            last key read before or null
-	 * @param numRows
-	 *            maximum number of rows to read
-	 * @param numCols
-	 *            maximum number of columns to read
-	 * @param keySerializer
-	 * @param columnNameSerializer
-	 * @param valueSerializer
-	 * @param level
-	 *            consistency level
-	 * @return list of rows K - type of row-key N - type of column name V - type
-	 *         of column value
-	 */
-	public abstract <K, N, V> List<Row<K, N, V>> readNextNRows(
-			String columnFamily, K lastKey, int numRows, int numCols,
-			Serializer<K> keySerializer, Serializer<N> columnNameSerializer,
-			Serializer<V> valueSerializer, HConsistencyLevel level);
+	public abstract <K, N, V> List<CmbRow<K, N, V>> readNextNRows(
+			String keyspace, String columnFamily, K lastKey, N whereColumn, V whereValue,
+			int numRows, int numCols, CMB_SERIALIZER keySerializer,
+			CMB_SERIALIZER columnNameSerializer, CMB_SERIALIZER valueSerializer) throws Exception;
 
-	/**
-	 * Read next numRows rows with a maximum of numCols columns per row. Ensure
-	 * all returned rows are non-empty rows.
-	 * 
-	 * @param columnFamily
-	 *            column family
-	 * @param lastKey
-	 *            last key read before or null
-	 * @param numRows
-	 *            maximum number of rows to read
-	 * @param numCols
-	 *            maximum number of columns to read
-	 * @param keySerializer
-	 * @param columnNameSerializer
-	 * @param valueSerializer
-	 * @param level
-	 *            consistency level
-	 * @return list of rows K - type of row-key N - type of column name V - type
-	 *         of column value
-	 */
-	public abstract <K, N, V> List<Row<K, N, V>> readNextNNonEmptyRows(
-			String columnFamily, K lastKey, int numRows, int numCols,
-			Serializer<K> keySerializer, Serializer<N> columnNameSerializer,
-			Serializer<V> valueSerializer, HConsistencyLevel level);
+	public abstract <K, N, V> List<CmbRow<K, N, V>> readNextNRows(
+			String keyspace, String columnFamily, K lastKey, Map<N, V> columnValues,
+			int numRows, int numCols, CMB_SERIALIZER keySerializer,
+			CMB_SERIALIZER columnNameSerializer, CMB_SERIALIZER valueSerializer) throws Exception;
 
-	/**
-	 * Read next numRows rows obeying single where clause.
-	 * 
-	 * @param columnFamily
-	 *            column family
-	 * @param lastKey
-	 *            last key read before or null
-	 * @param whereColumn
-	 *            where clause column
-	 * @param whereValue
-	 *            where clause value
-	 * @param numRows
-	 *            maximum number of rows
-	 * @param numCols
-	 *            maximum number of columns
-	 * @param keySerializer
-	 * @param columnNameSerializer
-	 * @param valueSerializer
-	 * @param level
-	 *            consistency level
-	 * @return list of rows K - type of row-key N - type of column name V - type
-	 *         of column value
-	 */
-	public abstract <K, N, V> List<Row<K, N, V>> readNextNRows(
-			String columnFamily, K lastKey, N whereColumn, V whereValue,
-			int numRows, int numCols, Serializer<K> keySerializer,
-			Serializer<N> columnNameSerializer, Serializer<V> valueSerializer,
-			HConsistencyLevel level);
+	public abstract <K, N, V> CmbColumnSlice<N, V> readColumnSlice(
+			String keyspace, String columnFamily, K key, N firstColumnName, N lastColumnName,
+			int numCols, CMB_SERIALIZER keySerializer,
+			CMB_SERIALIZER columnNameSerializer, CMB_SERIALIZER valueSerializer) throws Exception;
 
-	/**
-	 * Read next numRows rows obeying complex where clause.
-	 * 
-	 * @param columnFamily
-	 *            column family
-	 * @param lastKey
-	 *            last key read before or null
-	 * @param columnValues
-	 *            hash map with key value pairs for where clause
-	 * @param numRows
-	 *            maximum number of rows to read
-	 * @param numCols
-	 *            maximum number of columns to read
-	 * @param keySerializer
-	 * @param columnNameSerializer
-	 * @param valueSerializer
-	 * @param level
-	 *            consistency level
-	 * @return list of rows K - type of row-key N - type of column name V - type
-	 *         of column value
-	 */
-	public abstract <K, N, V> List<Row<K, N, V>> readNextNRows(
-			String columnFamily, K lastKey, Map<N, V> columnValues,
-			int numRows, int numCols, Serializer<K> keySerializer,
-			Serializer<N> columnNameSerializer, Serializer<V> valueSerializer,
-			HConsistencyLevel level);
+	public abstract <K, SN, N, V> CmbSuperColumnSlice<SN, N, V> readRowFromSuperColumnFamily(
+			String keyspace, String columnFamily, K key, SN firstColumnName, SN lastColumnName,
+			int numCols, CMB_SERIALIZER keySerializer,
+			CMB_SERIALIZER superNameSerializer,
+			CMB_SERIALIZER columnNameSerializer, CMB_SERIALIZER valueSerializer) throws Exception;
 
-	/**
-	 * Read single row by row key.
-	 * 
-	 * @param columnFamily
-	 *            column family
-	 * @param key
-	 *            row key
-	 * @param numCols
-	 *            maximum number of columns
-	 * @param keySerializer
-	 * @param columnNameSerializer
-	 * @param valueSerializer
-	 * @param level
-	 *            consistency level
-	 * @return list of rows K - type of row-key N - type of column name V - type
-	 *         of column value
-	 * @return row Will get row starting from the beginning
-	 */
-	public abstract <K, N, V> ColumnSlice<N, V> readColumnSlice(
-			String columnFamily, K key, int numCols,
-			Serializer<K> keySerializer, Serializer<N> columnNameSerializer,
-			Serializer<V> valueSerializer, HConsistencyLevel level);
+	public abstract <K, SN, N, V> CmbSuperColumn<SN, N, V> readColumnFromSuperColumnFamily(
+			String keyspace, String columnFamily, K key, SN columnName,
+			CMB_SERIALIZER keySerializer, CMB_SERIALIZER superNameSerializer,
+			CMB_SERIALIZER columnNameSerializer, CMB_SERIALIZER valueSerializer) throws Exception;
 
-	/**
-	 * Read single row by row key.
-	 * 
-	 * @param columnFamily
-	 *            column family
-	 * @param key
-	 *            row key
-	 * @param firstColumnName
-	 *            the beginning of the slice column
-	 * @param lastColumnName
-	 *            the end of the slice column
-	 * @param numCols
-	 *            maximum number of columns
-	 * @param keySerializer
-	 * @param columnNameSerializer
-	 * @param valueSerializer
-	 * @param level
-	 *            consistency level
-	 * @return list of rows K - type of row-key N - type of column name V - type
-	 *         of column value
-	 * @return row
-	 */
-	public abstract <K, N, V> ColumnSlice<N, V> readColumnSlice(
-			String columnFamily, K key, N firstColumnName, N lastColumnName,
-			int numCols, Serializer<K> keySerializer,
-			Serializer<N> columnNameSerializer, Serializer<V> valueSerializer,
-			HConsistencyLevel level);
+	public abstract <K, SN, N, V> List<CmbSuperColumn<SN, N, V>> readMultipleColumnsFromSuperColumnFamily(
+			String keyspace, String columnFamily, Collection<K> keys,
+			Collection<SN> columnNames, CMB_SERIALIZER keySerializer,
+			CMB_SERIALIZER superNameSerializer,
+			CMB_SERIALIZER columnNameSerializer, CMB_SERIALIZER valueSerializer) throws Exception;
 
-	/**
-	 * Read a row slice by row key and super column slice.
-	 * 
-	 * @param columnFamily
-	 *            column family
-	 * @param key
-	 *            row key
-	 * @param firstColumnName
-	 *            the beginning of the slice column
-	 * @param lastColumnName
-	 *            the end of the slice column
-	 * @param numCols
-	 *            maximum number of columns
-	 * @param keySerializer
-	 * @param columnNameSerializer
-	 * @param valueSerializer
-	 * @param level
-	 *            consistency level
-	 * @return list of rows K - type of row-key N - type of column name V - type
-	 *         of column value
-	 * @return row
-	 */
-	public abstract <K, SN, N, V> SuperSlice<SN, N, V> readRowFromSuperColumnFamily(
-			String columnFamily, K key, SN firstColumnName, SN lastColumnName,
-			int numCols, Serializer<K> keySerializer,
-			Serializer<SN> superNameSerializer,
-			Serializer<N> columnNameSerializer, Serializer<V> valueSerializer,
-			HConsistencyLevel level);
+	public abstract <K, SN, N, V> List<CmbSuperColumn<SN, N, V>> readColumnsFromSuperColumnFamily(
+			String keyspace, String columnFamily, K key, CMB_SERIALIZER keySerializer,
+			CMB_SERIALIZER superNameSerializer,
+			CMB_SERIALIZER columnNameSerializer, CMB_SERIALIZER valueSerializer,
+			 SN firstCol, SN lastCol, int numCol) throws Exception;
 
-	/**
-	 * Read a single column by row key using SuperColumnQuery.
-	 * 
-	 * @param columnFamily
-	 *            column family
-	 * @param key
-	 *            row key
-	 * @param columnName
-	 *            the column key of the super column
-	 * @param keySerializer
-	 * @param columnNameSerializer
-	 * @param valueSerializer
-	 * @param level
-	 *            consistency level
-	 * @return list of rows K - type of row-key N - type of column name V - type
-	 *         of column value
-	 * @return row
-	 */
-	public abstract <K, SN, N, V> HSuperColumn<SN, N, V> readColumnFromSuperColumnFamily(
-			String columnFamily, K key, SN columnName,
-			Serializer<K> keySerializer, Serializer<SN> superNameSerializer,
-			Serializer<N> columnNameSerializer, Serializer<V> valueSerializer,
-			HConsistencyLevel level);
+	public abstract <K, N, V> void insertRow(K rowKey,
+			String keyspace, String columnFamily, Map<N, V> columnValues,
+			CMB_SERIALIZER keySerializer, CMB_SERIALIZER nameSerializer,
+			CMB_SERIALIZER valueSerializer, Integer ttl) throws Exception;
 
-	public abstract <K, SN, N, V> List<HSuperColumn<SN, N, V>> readMultipleColumnsFromSuperColumnFamily(
-			String columnFamily, Collection<K> keys,
-			Collection<SN> columnNames, Serializer<K> keySerializer,
-			Serializer<SN> superNameSerializer,
-			Serializer<N> columnNameSerializer, Serializer<V> valueSerializer,
-			HConsistencyLevel level);
+	public abstract <K, N, V> void insertRows(
+			String keyspace, Map<K, Map<N, V>> rowColumnValues, String columnFamily,
+			CMB_SERIALIZER keySerializer, CMB_SERIALIZER nameSerializer,
+			CMB_SERIALIZER valueSerializer, Integer ttl) throws Exception;
 
-	/**
-	 * Read multiple supercolumns from a column family given roe-key, and optional first-col, last-col and numCol
-	 * @param <K>
-	 * @param <SN>
-	 * @param <N>
-	 * @param <V>
-	 * @param columnFamily
-	 * @param key
-	 * @param keySerializer
-	 * @param superNameSerializer
-	 * @param columnNameSerializer
-	 * @param valueSerializer
-	 * @param level 
-	 * @param firstCol The starting of the range 
-	 * @param lastCol The end of the range
-	 * @param numCol the number of columns to read
-	 * @return
-	 */
-	public abstract <K, SN, N, V> List<HSuperColumn<SN, N, V>> readColumnsFromSuperColumnFamily(
-			String columnFamily, K key, Serializer<K> keySerializer,
-			Serializer<SN> superNameSerializer,
-			Serializer<N> columnNameSerializer, Serializer<V> valueSerializer,
-			HConsistencyLevel level, SN firstCol, SN lastCol, int numCol);
+	public abstract <K, N> void delete(String keyspace, String columnFamily, K key, N column, 
+			CMB_SERIALIZER keySerializer, CMB_SERIALIZER columnSerializer) throws Exception;
 
-	/**
-	 * Insert or update single row.
-	 * 
-	 * @param rowKey
-	 *            row key
-	 * @param columnFamily
-	 *            column family
-	 * @param columnValues
-	 *            hash map containing key value pairs for columns to insert or
-	 *            update
-	 * @param level
-	 *            consistency level
-	 * @return Note: This method assumes a String for key, column-name & value
-	 */
-	public abstract MutationResult insertOrUpdateRow(String rowKey,
-			String columnFamily, Map<String, String> columnValues,
-			HConsistencyLevel level);
+	public abstract <K, N> void deleteBatch(String keyspace, String columnFamily,
+			List<K> keyList, List<N> columnList, CMB_SERIALIZER keySerializer,
+			 CMB_SERIALIZER columnSerializer) throws Exception;
 
-	/**
-	 * Insert or update single row with ttl.
-	 * 
-	 * @param rowKey
-	 *            row key
-	 * @param columnFamily
-	 *            column family
-	 * @param columnValues
-	 *            hash map containing key value pairs for columns to insert or
-	 *            update
-	 * @param level
-	 *            consistency level
-	 * @param ttl
-	 *            time to live
-	 * @return Note: This method assumes a String for key, column-name & value
-	 */
-	public abstract MutationResult insertRow(String rowKey,
-			String columnFamily, Map<String, String> columnValues,
-			HConsistencyLevel level, Integer ttl);
-
-	/**
-	 * Insert or update single row with ttl. K is the key type, N is column name
-	 * type and V is the column value type
-	 * 
-	 * @param rowKey
-	 *            row key
-	 * @param columnFamily
-	 *            column family
-	 * @param columnValues
-	 *            hash map containing key value pairs for columns to insert or
-	 *            update
-	 * @param level
-	 *            consistency level
-	 * @param ttl
-	 *            time to live
-	 * @return Note: This method assumes a String for key, column-name & value
-	 */
-	public abstract <K, N, V> MutationResult insertRow(K rowKey,
-			String columnFamily, Map<N, V> columnValues,
-			Serializer<K> keySerializer, Serializer<N> nameSerializer,
-			Serializer<V> valueSerializer, HConsistencyLevel level, Integer ttl);
-
-	/**
-	 * Insert or update single row with ttl. K is the key type, N is column name
-	 * type and V is the column value type
-	 * 
-	 * @param rowColumnValues
-	 *            A map containing row keys and a map of column names, column
-	 *            values
-	 * @param columnFamily
-	 *            column family
-	 * @param level
-	 *            consistency level
-	 * @param ttl
-	 *            time to live
-	 * @return Note: This method assumes a String for key, column-name & value
-	 */
-	public abstract <K, N, V> MutationResult insertRows(
-			Map<K, Map<N, V>> rowColumnValues, String columnFamily,
-			Serializer<K> keySerializer, Serializer<N> nameSerializer,
-			Serializer<V> valueSerializer, HConsistencyLevel level, Integer ttl);
-
-	/**
-	 * 
-	 * @param columnFamily
-	 * @param key
-	 * @param column
-	 * @param keySerializer
-	 * @param columnSerializer
-	 * @param level
-	 * @throws HectorException
-	 */
-	public abstract <K, N> void delete(String columnFamily, K key, N column, 
-			Serializer<K> keySerializer, Serializer<N> columnSerializer, 
-			HConsistencyLevel level) throws HectorException;
-
-
-	/**
-	 * Delete single column value or the entire row
-	 * 
-	 * @param template
-	 *            column family
-	 * @param key
-	 *            row key
-	 * @param column
-	 *            column name. If column is null, the entire row is deleted
-	 * @throws HectorException
-	 */
-	public abstract <K, N> void deleteBatch(String columnFamily,
-			List<K> keyList, List<N> columnList, Serializer<K> keySerializer,
-			HConsistencyLevel level, Serializer<N> columnSerializer)
-			throws HectorException;
-
-	/**
-	 * Delete single column value or the entire row
-	 * 
-	 * @param template
-	 *            column family
-	 * @param key
-	 *            row key
-	 * @param superColumn
-	 *            column name. If column is null, the entire row is deleted
-	 * @throws HectorException
-	 */
 	public abstract <K, SN, N> void deleteSuperColumn(
-			String superColumnFamily, K key, SN superColumn, Serializer<K> keySerializer, Serializer<SN> superColumnSerializer,
-			HConsistencyLevel level)
-			throws HectorException;
+			String keyspace, String superColumnFamily, K key, SN superColumn, CMB_SERIALIZER keySerializer, CMB_SERIALIZER superColumnSerializer) throws Exception;
 
-	/**
-	 * Create a unique time based UUID
-	 * 
-	 * @param timeMillis
-	 *            Time in milli seconds since Jan 1, 1970
-	 * @throws InterruptedException
-	 */
-	public abstract java.util.UUID getTimeUUID(long timeMillis)
-			throws InterruptedException;
+	public abstract <K, N> int getCount(String keyspace, String columnFamily, K key,
+			CMB_SERIALIZER keySerializer, CMB_SERIALIZER columnNameSerializer) throws Exception;
 
-	/**
-	 * Create a unique time based UUID
-	 * 
-	 * @param millis
-	 *            time
-	 */
-	public abstract java.util.UUID getUniqueTimeUUID(long millis);
+	public abstract <K, N> void incrementCounter(String keyspace, String columnFamily, K rowKey,
+			String columnName, int incrementBy, CMB_SERIALIZER keySerializer,
+			CMB_SERIALIZER columnNameSerializer) throws Exception;
 
-	/**
-	 * Create a unique time based long value
-	 * 
-	 * @param timeMillis
-	 *            Time in milli seconds since Jan 1, 1970
-	 * @throws InterruptedException
-	 */
-	public abstract long getTimeLong(long timeMillis)
-			throws InterruptedException;
+	public abstract <K, N> void decrementCounter(String keyspace, String columnFamily, K rowKey,
+			String columnName, int decrementBy, CMB_SERIALIZER keySerializer,
+			CMB_SERIALIZER columnNameSerializer) throws Exception;
 
-	/**
-	 * Return the column count.
-	 * 
-	 * @param columnFamily
-	 *            The name of the column family.
-	 * @param key
-	 *            The row key (as a string)
-	 * @param level
-	 *            The consistency level of the keyspace.
-	 */
-	public abstract <K, N> int getCount(String columnFamily, K key,
-			Serializer<K> keySerializer, Serializer<N> columnNameSerializer,
-			HConsistencyLevel level) throws HectorException;
+	public abstract <K, N> void deleteCounter(String keyspace, String columnFamily, K rowKey,
+			N columnName, CMB_SERIALIZER keySerializer,
+			CMB_SERIALIZER columnNameSerializer) throws Exception;
 
-	/**
-	 * Increment Cassandra counter by incrementBy
-	 * @param <K>
-	 * @param <N>
-	 * @param columnFamily
-	 * @param rowKey
-	 * @param columnName
-	 * @param incrementBy
-	 * @param keySerializer
-	 * @param columnNameSerializer
-	 * @param level
-	 */
-	public abstract <K, N> void incrementCounter(String columnFamily, K rowKey,
-			String columnName, int incrementBy, Serializer<K> keySerializer,
-			Serializer<N> columnNameSerializer, HConsistencyLevel level);
-
-	/**
-	 * Decrement Cassandra counter by decrementBy
-	 * 
-	 * @param <K>
-	 * @param <N>
-	 * @param columnFamily
-	 * @param rowKey
-	 * @param columnName
-	 * @param decrementBy
-	 * @param keySerializer
-	 * @param columnNameSerializer
-	 * @param level
-	 */
-	public abstract <K, N> void decrementCounter(String columnFamily, K rowKey,
-			String columnName, int decrementBy, Serializer<K> keySerializer,
-			Serializer<N> columnNameSerializer, HConsistencyLevel level);
-
-	/**
-	 * Decrement Cassandra counter by decrementBy
-	 * 
-	 * @param <K>
-	 * @param <N>
-	 * @param columnFamily
-	 * @param rowKey
-	 * @param columnName
-	 * @param decrementBy
-	 * @param keySerializer
-	 * @param columnNameSerializer
-	 * @param level
-	 */
-	public abstract <K, N> void deleteCounter(String columnFamily, K rowKey,
-			N columnName, Serializer<K> keySerializer,
-			Serializer<N> columnNameSerializer, HConsistencyLevel level);
-
-	/**
-	 * Return current value of Cassandra counter
-	 * 
-	 * @param <K>
-	 * @param <N>
-	 * @param columnFamily
-	 * @param rowKey
-	 * @param columnName
-	 * @param keySerializer
-	 * @param columnNameSerializer
-	 * @param level
-	 * @return
-	 */
-	public abstract <K, N> long getCounter(String columnFamily, K rowKey,
-			N columnName, Serializer<K> keySerializer,
-			Serializer<N> columnNameSerializer, HConsistencyLevel level);
+	public abstract <K, N> long getCounter(String keyspace, String columnFamily, K rowKey,
+			N columnName, CMB_SERIALIZER keySerializer,
+			CMB_SERIALIZER columnNameSerializer) throws Exception;
 
 }
