@@ -1,5 +1,7 @@
 package com.comcast.cmb.common.persistence;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -24,6 +26,17 @@ public abstract class AbstractCassandraPersistence {
 	}
 
 	public static class CmbCompositeSerializer extends CmbSerializer {
+	}
+	
+	public static class CmbComposite {
+		public List l = null; 
+		public CmbComposite(List<?> l) {
+			this.l = l;
+		}
+		public CmbComposite(Object... os) {
+			l = new ArrayList<Object>();
+			l.addAll(Arrays.asList(os));
+		}
 	}
 
 	public static abstract class CmbColumn<N, V> {

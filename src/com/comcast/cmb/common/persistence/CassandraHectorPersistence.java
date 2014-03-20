@@ -37,6 +37,7 @@ import me.prettyprint.hector.api.HConsistencyLevel;
 import me.prettyprint.hector.api.Keyspace;
 import me.prettyprint.hector.api.Serializer;
 import me.prettyprint.hector.api.beans.ColumnSlice;
+import me.prettyprint.hector.api.beans.Composite;
 import me.prettyprint.hector.api.beans.HColumn;
 import me.prettyprint.hector.api.beans.HCounterColumn;
 import me.prettyprint.hector.api.beans.HSuperColumn;
@@ -73,6 +74,15 @@ public class CassandraHectorPersistence extends AbstractCassandraPersistence {
 	
 	//TODO: surround everything with try-finally
 	//TODO: generalize composite class
+	
+	private static Serializer getSerializer(CmbSerializer s) throws PersistenceException {
+		if (s instanceof CmbStringSerializer) {
+			return StringSerializer.get();
+		} else if (s instanceof CmbCompositeSerializer) {
+			return CompositeSerializer.get();
+		}
+		throw new PersistenceException(CMBErrorCodes.InternalError, "Unknown serializer " + s);
+	}
 	
 	public static class CmbHectorColumn<N, V> extends CmbColumn<N, V> {
 		private HColumn<N, V> hectorColumn;
@@ -291,15 +301,6 @@ public class CassandraHectorPersistence extends AbstractCassandraPersistence {
 	
 	private Keyspace getKeyspace(String keyspace) {
 		return keyspaces.get(keyspace);
-	}
-	
-	private static Serializer getSerializer(CmbSerializer s) throws PersistenceException {
-		if (s instanceof CmbStringSerializer) {
-			return StringSerializer.get();
-		} else if (s instanceof CmbCompositeSerializer) {
-			return CompositeSerializer.get();
-		}
-		throw new PersistenceException(CMBErrorCodes.InternalError, "Unknown serializer " + s);
 	}
 	
 	private <K, N, V> List<CmbRow<K, N, V>> getRows(List<Row<K, N, V>> rows) throws PersistenceException {
