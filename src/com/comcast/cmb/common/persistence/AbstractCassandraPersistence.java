@@ -1,12 +1,11 @@
 package com.comcast.cmb.common.persistence;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
+import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CmbComposite;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.PersistenceException;
 
@@ -28,15 +27,15 @@ public abstract class AbstractCassandraPersistence {
 	public static class CmbCompositeSerializer extends CmbSerializer {
 	}
 	
-	public static class CmbComposite {
-		public List l = null; 
+	public static abstract class CmbComposite {
+		public CmbComposite() {
+		}
 		public CmbComposite(List<?> l) {
-			this.l = l;
 		}
 		public CmbComposite(Object... os) {
-			l = new ArrayList<Object>();
-			l.addAll(Arrays.asList(os));
 		}
+		public abstract Object get(int i);
+		public abstract int compareTo(CmbComposite c);
 	}
 
 	public static abstract class CmbColumn<N, V> {
@@ -115,6 +114,10 @@ public abstract class AbstractCassandraPersistence {
 	}
 	
 	public abstract boolean isAlive();
+	
+	public abstract CmbComposite getCmbComposite(List<?> l);
+	
+	public abstract CmbComposite getCmbComposite(Object... os);
 
 	public abstract <K, N, V> void update(String keyspace, String columnFamily, K key, N column, V value, 
 			CmbSerializer keySerializer, CmbSerializer nameSerializer, CmbSerializer valueSerializer) throws PersistenceException;

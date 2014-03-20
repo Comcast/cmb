@@ -36,14 +36,13 @@ import java.util.zip.GZIPOutputStream;
 
 import javax.servlet.http.HttpServletRequest;
 
-import me.prettyprint.hector.api.beans.Composite;
-
 import org.apache.commons.codec.binary.Base64;
 import org.apache.log4j.Logger;
 
 import com.comcast.cmb.common.persistence.AbstractCassandraPersistence;
 import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CMB_SERIALIZER;
 import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CmbColumn;
+import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CmbComposite;
 import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CmbSuperColumn;
 import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CmbSuperColumnSlice;
 import com.comcast.cmb.common.persistence.CassandraPersistenceFactory;
@@ -526,7 +525,7 @@ public class Util {
 		return message;
 	}
 	
-	public static List<CQSMessage> readMessagesFromSuperColumns(String queueUrl, int length, Composite previousHandle, Composite nextHandle, CmbSuperColumnSlice<Composite, String, String> superSlice, boolean ignoreFirstLastColumn) throws PersistenceException, NoSuchAlgorithmException, IOException  {
+	public static List<CQSMessage> readMessagesFromSuperColumns(String queueUrl, int length, CmbComposite previousHandle, CmbComposite nextHandle, CmbSuperColumnSlice<CmbComposite, String, String> superSlice, boolean ignoreFirstLastColumn) throws PersistenceException, NoSuchAlgorithmException, IOException  {
 		
 		List<CQSMessage> messageList = new ArrayList<CQSMessage>();
 
@@ -534,9 +533,9 @@ public class Util {
 			
 			boolean noMatch = true;
 			
-			for (CmbSuperColumn<Composite, String, String> superColumn : superSlice.getSuperColumns()) {
+			for (CmbSuperColumn<CmbComposite, String, String> superColumn : superSlice.getSuperColumns()) {
 				
-				Composite columnName = superColumn.getName();
+				CmbComposite columnName = superColumn.getName();
 				
 				if (ignoreFirstLastColumn && (previousHandle != null && columnName.compareTo(previousHandle) == 0) || (nextHandle != null && columnName.compareTo(nextHandle) == 0)) {
 					noMatch = false;
@@ -582,7 +581,7 @@ public class Util {
         return attributeNames;
     }
     
-	public static CQSMessage extractMessageFromSuperColumn(String queueUrl, CmbSuperColumn<Composite, String, String> superColumn) throws NoSuchAlgorithmException, PersistenceException, IOException {
+	public static CQSMessage extractMessageFromSuperColumn(String queueUrl, CmbSuperColumn<CmbComposite, String, String> superColumn) throws NoSuchAlgorithmException, PersistenceException, IOException {
 		
 		Map<String, String> messageMap = new HashMap<String, String>();
 		
@@ -602,7 +601,7 @@ public class Util {
 			messageMap.put(column.getName(), column.getValue());
 		}
 		
-		Composite columnName = superColumn.getName();
+		CmbComposite columnName = superColumn.getName();
 		CQSMessage message = buildMessageFromMap(messageMap);
 		
 		if (queue.isCompressed()) {

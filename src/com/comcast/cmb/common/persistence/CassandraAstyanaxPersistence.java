@@ -266,4 +266,16 @@ public class CassandraAstyanaxPersistence extends AbstractCassandraPersistence {
 		// TODO Auto-generated method stub
 		return 0;
 	}
+
+	@Override
+	public CmbComposite getCmbComposite(List<?> l) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public CmbComposite getCmbComposite(Object... os) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }

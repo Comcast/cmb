@@ -84,6 +84,82 @@ public class CassandraHectorPersistence extends AbstractCassandraPersistence {
 		throw new PersistenceException(CMBErrorCodes.InternalError, "Unknown serializer " + s);
 	}
 	
+	private static Object getComposite(Object o) {
+		if (o == null) {
+			return null;
+		}
+		if (o instanceof CmbHectorComposite) {
+			return ((CmbHectorComposite)o).getComposite();
+		}
+		return o;
+	}
+	
+	private static Collection<Object> getComposites(Collection l) {
+		Collection<Object> r = new ArrayList<Object>();
+		if (l == null) {
+			return null;
+		}
+		for (Object o : l) {
+			r.add(getComposite(o));
+		}
+		return r;
+	}
+
+	private static Object getCmbComposite(Object o) {
+		if (o == null) {
+			return null;
+		}
+		if (o instanceof Composite) {
+			return new CmbHectorComposite((Composite)o);
+		}
+		return o;
+	}
+
+	@Override
+	public CmbComposite getCmbComposite(List<?> l) {
+		return new CmbHectorComposite(l);
+	}
+
+	@Override
+	public CmbComposite getCmbComposite(Object... os) {
+		return new CmbHectorComposite(os);
+	}
+
+	public static class CmbHectorComposite extends CmbComposite {
+		private final Composite composite;
+		public CmbHectorComposite(List<?> l) {
+			composite = new Composite(l);
+		}
+		public CmbHectorComposite(Object... os) {
+			composite = new Composite(os);
+		}
+		public CmbHectorComposite(Composite composite) {
+			this.composite = composite;
+		}
+		public Composite getComposite() {
+			return composite;
+		}
+		@Override
+		public Object get(int i) {
+			return composite.get(i);
+		}
+		@Override
+		public String toString() {
+			return composite.toString();
+		}
+		@Override
+		public int compareTo(CmbComposite c) {
+			return this.composite.compareTo(((CmbHectorComposite)c).getComposite());
+		}
+		@Override
+		public boolean equals(Object o) {
+			if (!(o instanceof CmbHectorComposite)) {
+				return false;
+			}
+			return this.composite.equals(((CmbHectorComposite)o).getComposite());
+		}
+	}
+	
 	public static class CmbHectorColumn<N, V> extends CmbColumn<N, V> {
 		private HColumn<N, V> hectorColumn;
 		public CmbHectorColumn(HColumn<N, V> hectorColumn) {
@@ -175,7 +251,7 @@ public class CassandraHectorPersistence extends AbstractCassandraPersistence {
 		}
 		@Override
 		public SN getName() {
-			return hectorSuperColumn.getName();
+			return (SN)getCmbComposite(hectorSuperColumn.getName());
 		}
 		@Override
 		public List<CmbColumn<N, V>> getColumns() {
@@ -356,7 +432,7 @@ public class CassandraHectorPersistence extends AbstractCassandraPersistence {
 			subColumns.add(subColumn);
 		}
 		
-		HSuperColumn<SN, N, V> superColumn = HFactory.createSuperColumn(superName, subColumns, System.currentTimeMillis(), getSerializer(superNameSerializer), getSerializer(columnSerializer), getSerializer(valueSerializer));
+		HSuperColumn<SN, N, V> superColumn = HFactory.createSuperColumn(getComposite(superName), subColumns, System.currentTimeMillis(), getSerializer(superNameSerializer), getSerializer(columnSerializer), getSerializer(valueSerializer));
 		mutator.insert(key, columnFamily, superColumn);
 		
 		long ts2 = System.currentTimeMillis();
@@ -393,7 +469,7 @@ public class CassandraHectorPersistence extends AbstractCassandraPersistence {
 					subColumns.add(subColumn);
 				}
 				
-				HSuperColumn<SN, N, V> superColumn = HFactory.createSuperColumn(superName, subColumns, System.currentTimeMillis(), getSerializer(superNameSerializer), getSerializer(columnSerializer),	getSerializer(valueSerializer));
+				HSuperColumn<SN, N, V> superColumn = HFactory.createSuperColumn(getComposite(superName), subColumns, System.currentTimeMillis(), getSerializer(superNameSerializer), getSerializer(columnSerializer),	getSerializer(valueSerializer));
 				mutator.addInsertion(key, columnFamily, superColumn);
 				superColumn = null;
 			}
@@ -646,7 +722,7 @@ public class CassandraHectorPersistence extends AbstractCassandraPersistence {
 	        
 	        SuperSliceQuery<K, SN, N, V> rangeSlicesQuery = HFactory.createSuperSliceQuery(getKeyspace(keyspace), getSerializer(keySerializer), getSerializer(superNameSerializer), getSerializer(columnNameSerializer), getSerializer(valueSerializer))
 	        		.setColumnFamily(columnFamily)
-	                .setRange(firstColumnName, lastColumnName, false, numCols)
+	                .setRange(getComposite(firstColumnName), getComposite(lastColumnName), false, numCols)
 	                .setKey(key);
 
 	        QueryResult<SuperSlice<SN, N, V>> result = rangeSlicesQuery.execute();
@@ -680,7 +756,7 @@ public class CassandraHectorPersistence extends AbstractCassandraPersistence {
 	       
 	        SuperColumnQuery<K, SN, N, V> superColumnQuery = HFactory.createSuperColumnQuery(getKeyspace(keyspace), getSerializer(keySerializer), getSerializer(superNameSerializer), getSerializer(columnNameSerializer), getSerializer(valueSerializer))
 	        		.setColumnFamily(columnFamily)
-	                .setSuperName(columnName)
+	                .setSuperName(getComposite(columnName))
 	                .setKey(key);
 
 	        QueryResult<HSuperColumn<SN, N, V>> result = superColumnQuery.execute();
@@ -717,7 +793,7 @@ public class CassandraHectorPersistence extends AbstractCassandraPersistence {
 	       
 	    	MultigetSuperSliceQuery<K, SN, N, V> query = HFactory.createMultigetSuperSliceQuery(getKeyspace(keyspace), getSerializer(keySerializer), getSerializer(superNameSerializer), getSerializer(columnNameSerializer), getSerializer(valueSerializer))
 	    		.setColumnFamily(columnFamily)
-	    		.setColumnNames(columnNames)
+	    		.setColumnNames(getComposites(columnNames))
 	    		.setKeys(keys);
 
 	        QueryResult<SuperRows<K, SN, N, V>> result = query.execute();
@@ -756,7 +832,7 @@ public class CassandraHectorPersistence extends AbstractCassandraPersistence {
 	        SuperSliceQuery<K, SN, N, V> superSliceQuery = HFactory.createSuperSliceQuery(getKeyspace(keyspace), getSerializer(keySerializer), getSerializer(superNameSerializer), getSerializer(columnNameSerializer), getSerializer(valueSerializer))
 	        .setColumnFamily(columnFamily)
 	        .setKey(key)
-	        .setRange(firstCol, lastCol, false, numCol);
+	        .setRange(getComposite(firstCol), getComposite(lastCol), false, numCol);
 
 	        QueryResult<SuperSlice<SN, N, V>> result = superSliceQuery.execute();
 
@@ -910,9 +986,9 @@ public class CassandraHectorPersistence extends AbstractCassandraPersistence {
 	    long ts1 = System.currentTimeMillis();
         logger.debug("event=delete key=" + key + " super_column=" + superColumn + " cf=" + superColumnFamily);
 		Mutator<K> mutator = HFactory.createMutator(getKeyspace(keyspace), getSerializer(keySerializer));
-
+		
 		if (superColumn != null) {
-			mutator.addSuperDelete(key, superColumnFamily, superColumn, getSerializer(superColumnSerializer));
+			mutator.addSuperDelete(key, superColumnFamily, getComposite(superColumn), getSerializer(superColumnSerializer));
 		} else {
 			mutator.addSuperDelete(key, superColumnFamily, null, null);
 		}

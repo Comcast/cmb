@@ -24,12 +24,11 @@ import java.util.Map;
 
 import org.apache.log4j.Logger;
 
-import me.prettyprint.hector.api.beans.Composite;
-
 import com.comcast.cmb.common.persistence.AbstractCassandraPersistence;
 import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CMB_SERIALIZER;
 import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CmbColumn;
 import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CmbColumnSlice;
+import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CmbComposite;
 import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CmbSuperColumn;
 import com.comcast.cmb.common.persistence.CassandraPersistenceFactory;
 import com.comcast.cmb.common.persistence.PersistenceFactory;
@@ -197,10 +196,9 @@ public class CNSSubscriptionCassandraPersistence implements ICNSSubscriptionPers
     @SuppressWarnings("serial")
     private void insertOrUpdateSubsAndIndexes(final CNSSubscription subscription, Integer ttl) throws CMBException {
 		
-        Composite superColumnName = new Composite(subscription.getEndpoint(), subscription.getProtocol().name());
-        
         subscription.checkIsValid();
         
+        CmbComposite superColumnName = cassandraHandler.getCmbComposite(subscription.getEndpoint(), subscription.getProtocol().name());
         cassandraHandler.insertSuperColumn(KEYSPACE, columnFamilySubscriptions, subscription.getTopicArn(), CMB_SERIALIZER.STRING_SERIALIZER, superColumnName, ttl, CMB_SERIALIZER.COMPOSITE_SERIALIZER, getColumnValues(subscription), CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
         
         cassandraHandler.insertRow(KEYSPACE, subscription.getArn(), columnFamilySubscriptionsIndex, getIndexColumnValues(subscription.getEndpoint(), subscription.getProtocol()), CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, ttl);
@@ -322,9 +320,9 @@ public class CNSSubscriptionCassandraPersistence implements ICNSSubscriptionPers
 		    CnsSubscriptionProtocol protocol = getEndpointAndProtoIndexValProtocol(colName);
 		    String endpoint = getEndpointAndProtoIndexValEndpoint(colName);
 		    
-		    Composite superColumnName = new Composite(endpoint, protocol.name());
+		    CmbComposite superColumnName = cassandraHandler.getCmbComposite(endpoint, protocol.name());
 		    
-		    CmbSuperColumn<Composite, String, String> superCol = cassandraHandler.readColumnFromSuperColumnFamily(KEYSPACE, columnFamilySubscriptions, Util.getCnsTopicArn(arn), superColumnName, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.COMPOSITE_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+		    CmbSuperColumn<CmbComposite, String, String> superCol = cassandraHandler.readColumnFromSuperColumnFamily(KEYSPACE, columnFamilySubscriptions, Util.getCnsTopicArn(arn), superColumnName, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.COMPOSITE_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 		    
 		    if (superCol != null) {
 		        CNSSubscription s = extractSubscriptionFromSuperColumn(superCol, Util.getCnsTopicArn(arn));
@@ -336,7 +334,7 @@ public class CNSSubscriptionCassandraPersistence implements ICNSSubscriptionPers
 		return null;
 	}
 
-	private static CNSSubscription extractSubscriptionFromSuperColumn(CmbSuperColumn<Composite, String, String> superCol, String topicArn) {
+	private static CNSSubscription extractSubscriptionFromSuperColumn(CmbSuperColumn<CmbComposite, String, String> superCol, String topicArn) {
 	    
 	    Map<String, String> messageMap = new HashMap<String, String>(superCol.getColumns().size());
 	    
@@ -470,7 +468,7 @@ public class CNSSubscriptionCassandraPersistence implements ICNSSubscriptionPers
         }
 	    
 		//read from index to get composite-col-name corresponding to nextToken
-		Composite nextTokenComposite = null;
+		CmbComposite nextTokenComposite = null;
 		
 		if (nextToken != null) {
 		    CmbColumnSlice<String, String> slice = cassandraHandler.readColumnSlice(KEYSPACE, columnFamilySubscriptionsIndex, nextToken, null, null, 1, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
@@ -481,7 +479,7 @@ public class CNSSubscriptionCassandraPersistence implements ICNSSubscriptionPers
 		    String colName = slice.getColumns().get(0).getName();
 		    CnsSubscriptionProtocol tokProtocol = getEndpointAndProtoIndexValProtocol(colName);
 		    String endpoint = getEndpointAndProtoIndexValEndpoint(colName);
-		    nextTokenComposite = new Composite(endpoint, tokProtocol.name());
+		    nextTokenComposite = cassandraHandler.getCmbComposite(endpoint, tokProtocol.name());
 		}
 
 		List<CNSSubscription> l = new ArrayList<CNSSubscription>();
@@ -493,7 +491,7 @@ public class CNSSubscriptionCassandraPersistence implements ICNSSubscriptionPers
 		}
 		
 		//Read pageSize at a time
-		List<CmbSuperColumn<Composite, String, String>> cols = cassandraHandler.readColumnsFromSuperColumnFamily(KEYSPACE, columnFamilySubscriptions, topicArn, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.COMPOSITE_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, nextTokenComposite, null, pageSize);
+		List<CmbSuperColumn<CmbComposite, String, String>> cols = cassandraHandler.readColumnsFromSuperColumnFamily(KEYSPACE, columnFamilySubscriptions, topicArn, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.COMPOSITE_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, nextTokenComposite, null, pageSize);
 		
 		if (nextToken != null && cols.size() > 0) {
 		    cols.remove(0);
@@ -505,7 +503,7 @@ public class CNSSubscriptionCassandraPersistence implements ICNSSubscriptionPers
 		        return l;
 		    }
 		    
-		    for (CmbSuperColumn<Composite, String, String> col : cols) {
+		    for (CmbSuperColumn<CmbComposite, String, String> col : cols) {
 		    	
 		        CNSSubscription sub = extractSubscriptionFromSuperColumn(col, topicArn);
 		        
@@ -615,7 +613,7 @@ public class CNSSubscriptionCassandraPersistence implements ICNSSubscriptionPers
 		if (s != null) {
 
 			deleteIndexes(arn, s.getUserId(), s.getToken());
-			Composite superColumnName = new Composite(s.getEndpoint(), s.getProtocol().name());
+			CmbComposite superColumnName = cassandraHandler.getCmbComposite(s.getEndpoint(), s.getProtocol().name());
 			cassandraHandler.deleteSuperColumn(KEYSPACE, columnFamilySubscriptions, Util.getCnsTopicArn(arn), superColumnName, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.COMPOSITE_SERIALIZER);
 			
 			if (s.isConfirmed()) {
