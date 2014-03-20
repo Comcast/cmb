@@ -36,6 +36,7 @@ import com.comcast.cmb.common.model.User;
 import com.comcast.cmb.common.persistence.AbstractCassandraPersistence;
 import com.comcast.cmb.common.persistence.CassandraPersistenceFactory;
 import com.comcast.cmb.common.persistence.PersistenceFactory;
+import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CMB_SERIALIZER;
 import com.comcast.cmb.common.util.CMBErrorCodes;
 import com.comcast.cmb.common.util.CMBException;
 import com.comcast.cmb.common.util.CMBProperties;
@@ -63,6 +64,9 @@ public class CQSControllerServlet extends CMBControllerServlet {
     public void initPersistence() {
         messagePersistence = PersistenceFactory.getCQSMessagePersistence();
     }
+    
+    public static final String CQS_API_SERVERS = "CQSAPIServers";
+    public static final String KEYSPACE = CMBProperties.getInstance().getCQSKeyspace();
 
     @Override
     public void init() throws ServletException {
@@ -183,7 +187,7 @@ public class CQSControllerServlet extends CMBControllerServlet {
 	        	values.put("serviceUrl", CMBProperties.getInstance().getCQSServiceUrl());
 	        	values.put("redisServerList", CMBProperties.getInstance().getRedisServerList());
 	        	
-                cassandraHandler.insertOrUpdateRow(serverIp + ":" + serverPort, "CQSAPIServers", values, CMBProperties.getInstance().getWriteConsistencyLevel());
+                cassandraHandler.insertRow(KEYSPACE, serverIp + ":" + serverPort, CQS_API_SERVERS, values, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, null);
                 
         	} catch (Exception ex) {
         		logger.warn("event=ping_failed", ex);

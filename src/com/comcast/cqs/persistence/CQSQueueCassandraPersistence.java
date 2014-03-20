@@ -23,13 +23,10 @@ import java.util.Map;
 
 import org.apache.log4j.Logger;
 
-import me.prettyprint.cassandra.serializers.StringSerializer;
-import me.prettyprint.cassandra.service.template.ColumnFamilyTemplate;
-import me.prettyprint.cassandra.service.template.ThriftColumnFamilyTemplate;
-import me.prettyprint.hector.api.beans.ColumnSlice;
-import me.prettyprint.hector.api.beans.HColumn;
-
 import com.comcast.cmb.common.persistence.AbstractCassandraPersistence;
+import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CMB_SERIALIZER;
+import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CmbColumn;
+import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CmbColumnSlice;
 import com.comcast.cmb.common.persistence.CassandraPersistenceFactory;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.PersistenceException;
@@ -78,13 +75,13 @@ public class CQSQueueCassandraPersistence implements ICQSQueuePersistence {
 		queueData.put(CQSConstants.COL_NUMBER_SHARDS, (new Long(queue.getNumberOfShards())).toString());
 		queueData.put(CQSConstants.COL_COMPRESSED, (new Boolean(queue.isCompressed())).toString());
 
-		cassandraHandler.insertOrUpdateRow(queue.getRelativeUrl(), COLUMN_FAMILY_QUEUES, queueData, CMBProperties.getInstance().getWriteConsistencyLevel());
-		cassandraHandler.update(COLUMN_FAMILY_QUEUES_BY_USER, queue.getOwnerUserId(), queue.getArn(), "", StringSerializer.get(), StringSerializer.get(), StringSerializer.get(), CMBProperties.getInstance().getWriteConsistencyLevel());
+		cassandraHandler.insertRow(KEYSPACE, queue.getRelativeUrl(), COLUMN_FAMILY_QUEUES, queueData, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, null);
+		cassandraHandler.update(KEYSPACE, COLUMN_FAMILY_QUEUES_BY_USER, queue.getOwnerUserId(), queue.getArn(), "", CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 	}
 	
 	@Override
 	public void updateQueueAttribute(String queueURL, Map<String, String> queueData) throws PersistenceException {
-		cassandraHandler.insertOrUpdateRow(queueURL, COLUMN_FAMILY_QUEUES, queueData, CMBProperties.getInstance().getWriteConsistencyLevel());
+		cassandraHandler.insertRow(KEYSPACE, queueURL, COLUMN_FAMILY_QUEUES, queueData, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, null);
 	}
 
 	@Override
@@ -95,8 +92,8 @@ public class CQSQueueCassandraPersistence implements ICQSQueuePersistence {
 			throw new PersistenceException (CQSErrorCodes.InvalidRequest, "No queue with the url " + queueUrl + " exists");
 		}
 		
-		cassandraHandler.delete(COLUMN_FAMILY_QUEUES, queueUrl, null, StringSerializer.get(), StringSerializer.get(), CMBProperties.getInstance().getWriteConsistencyLevel());
-		cassandraHandler.delete(COLUMN_FAMILY_QUEUES_BY_USER, Util.getUserIdForRelativeQueueUrl(queueUrl), Util.getArnForRelativeQueueUrl(queueUrl), StringSerializer.get(), StringSerializer.get(), CMBProperties.getInstance().getWriteConsistencyLevel());
+		cassandraHandler.delete(KEYSPACE, COLUMN_FAMILY_QUEUES, queueUrl, null, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+		cassandraHandler.delete(KEYSPACE, COLUMN_FAMILY_QUEUES_BY_USER, Util.getUserIdForRelativeQueueUrl(queueUrl), Util.getArnForRelativeQueueUrl(queueUrl), CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 	}
 
 	@Override
@@ -115,13 +112,13 @@ public class CQSQueueCassandraPersistence implements ICQSQueuePersistence {
 			
 			counter = 0;
 			
-			ColumnSlice<String, String> slice = cassandraHandler.readColumnSlice(COLUMN_FAMILY_QUEUES_BY_USER, userId, lastArn, null, 1000, new StringSerializer(), new StringSerializer(), new StringSerializer(), CMBProperties.getInstance().getWriteConsistencyLevel());
+			CmbColumnSlice<String, String> slice = cassandraHandler.readColumnSlice(KEYSPACE, COLUMN_FAMILY_QUEUES_BY_USER, userId, lastArn, null, 1000, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 			
 			if (slice != null) {
 				
 				boolean first = true;
 
-				for (HColumn<String, String> c : slice.getColumns()) {
+				for (CmbColumn<String, String> c : slice.getColumns()) {
 					
 					counter++;
 					
@@ -178,7 +175,7 @@ public class CQSQueueCassandraPersistence implements ICQSQueuePersistence {
 		do {
 			
 			sliceSize = 0;
-			ColumnSlice<String, String> slice = cassandraHandler.readColumnSlice(COLUMN_FAMILY_QUEUES_BY_USER, userId, lastArn, null, 10000, new StringSerializer(), new StringSerializer(), new StringSerializer(), CMBProperties.getInstance().getWriteConsistencyLevel());
+			CmbColumnSlice<String, String> slice = cassandraHandler.readColumnSlice(KEYSPACE, COLUMN_FAMILY_QUEUES_BY_USER, userId, lastArn, null, 10000, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 			
 			if (slice != null && slice.getColumns().size() > 0) {
 				sliceSize = slice.getColumns().size();
@@ -191,7 +188,7 @@ public class CQSQueueCassandraPersistence implements ICQSQueuePersistence {
 		return numQueues;
 	}
 
-	private CQSQueue fillQueueFromCqlSlice(String url, ColumnSlice<String, String> slice) {
+	private CQSQueue fillQueueFromCqlSlice(String url, CmbColumnSlice<String, String> slice) {
 		
 		if (slice == null || slice.getColumns() == null || slice.getColumns().size() <= 1) {
 			return null;
@@ -234,8 +231,8 @@ public class CQSQueueCassandraPersistence implements ICQSQueuePersistence {
 		}
 	}
 
-	private CQSQueue getQueueByUrl(String queueUrl) {
-		ColumnSlice<String, String> slice = cassandraHandler.readColumnSlice(COLUMN_FAMILY_QUEUES, queueUrl, 15, StringSerializer.get(), StringSerializer.get(), StringSerializer.get(), CMBProperties.getInstance().getReadConsistencyLevel());
+	private CQSQueue getQueueByUrl(String queueUrl) throws PersistenceException {
+		CmbColumnSlice<String, String> slice = cassandraHandler.readColumnSlice(KEYSPACE, COLUMN_FAMILY_QUEUES, queueUrl, null, null, 15, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 		if (slice == null) {		    
 			return null;
 		}
@@ -244,22 +241,22 @@ public class CQSQueueCassandraPersistence implements ICQSQueuePersistence {
 	}
 
 	@Override
-	public CQSQueue getQueue(String userId, String queueName) {
+	public CQSQueue getQueue(String userId, String queueName) throws PersistenceException {
 		CQSQueue queue = new CQSQueue(queueName, userId);
 		return getQueueByUrl(queue.getRelativeUrl());
 	}
 
 	@Override
-	public CQSQueue getQueue(String queueUrl) {
+	public CQSQueue getQueue(String queueUrl) throws PersistenceException {
 		return getQueueByUrl(queueUrl);
 	}
 
 	@Override
-	public boolean updatePolicy(String queueUrl, String policy) {
+	public boolean updatePolicy(String queueUrl, String policy) throws PersistenceException {
 		if (queueUrl == null || queueUrl.trim().isEmpty() || policy == null || policy.trim().isEmpty()) {
 			return false;
 		}
-		cassandraHandler.update(COLUMN_FAMILY_QUEUES, queueUrl, CQSConstants.COL_POLICY, policy, StringSerializer.get(), StringSerializer.get(), StringSerializer.get(), CMBProperties.getInstance().getWriteConsistencyLevel());
+		cassandraHandler.update(KEYSPACE, COLUMN_FAMILY_QUEUES, queueUrl, CQSConstants.COL_POLICY, policy, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 		return true;
 	}
 }

@@ -19,11 +19,11 @@ import static org.junit.Assert.assertTrue;
 
 import com.comcast.cmb.common.controller.CMBControllerServlet;
 import com.comcast.cmb.common.persistence.AbstractCassandraPersistence;
+import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CMB_SERIALIZER;
 import com.comcast.cmb.common.persistence.CassandraPersistenceFactory;
 import com.comcast.cmb.common.util.CMBProperties;
+import com.comcast.cmb.common.util.PersistenceException;
 import com.comcast.cmb.common.util.Util;
-
-import me.prettyprint.cassandra.serializers.StringSerializer;
 
 import org.apache.log4j.Logger;
 import org.junit.After;
@@ -41,24 +41,24 @@ public class CassandraTest {
     }
 
 	@Test	
-	public void testCassandraCounters() {
+	public void testCassandraCounters() throws PersistenceException {
 		
 		log.info("Testing Cassandra counters");
 		
 		AbstractCassandraPersistence cassandraHandler = CassandraPersistenceFactory.getInstance(CMBProperties.getInstance().getCNSKeyspace());
 		
-		long i = cassandraHandler.getCounter("CNSTopicStats", "bla", "foo", StringSerializer.get(), StringSerializer.get(), CMBProperties.getInstance().getReadConsistencyLevel());
+		long i = cassandraHandler.getCounter(CMBProperties.getInstance().getCNSKeyspace(), "CNSTopicStats", "bla", "foo", CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 		
 		while (i > 0) {
-			cassandraHandler.decrementCounter("CNSTopicStats", "bla", "foo", 1, StringSerializer.get(), StringSerializer.get(), CMBProperties.getInstance().getWriteConsistencyLevel());
-			i = cassandraHandler.getCounter("CNSTopicStats", "bla", "foo", StringSerializer.get(), StringSerializer.get(), CMBProperties.getInstance().getReadConsistencyLevel());
+			cassandraHandler.decrementCounter(CMBProperties.getInstance().getCNSKeyspace(), "CNSTopicStats", "bla", "foo", 1, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+			i = cassandraHandler.getCounter(CMBProperties.getInstance().getCNSKeyspace(), "CNSTopicStats", "bla", "foo", CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 		}
 		
-		cassandraHandler.incrementCounter("CNSTopicStats", "bla", "foo", 1, StringSerializer.get(), StringSerializer.get(), CMBProperties.getInstance().getWriteConsistencyLevel());
-		cassandraHandler.incrementCounter("CNSTopicStats", "bla", "foo", 1, StringSerializer.get(), StringSerializer.get(), CMBProperties.getInstance().getWriteConsistencyLevel());
-		cassandraHandler.incrementCounter("CNSTopicStats", "bla", "foo", 1, StringSerializer.get(), StringSerializer.get(), CMBProperties.getInstance().getWriteConsistencyLevel());
+		cassandraHandler.incrementCounter(CMBProperties.getInstance().getCNSKeyspace(), "CNSTopicStats", "bla", "foo", 1, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+		cassandraHandler.incrementCounter(CMBProperties.getInstance().getCNSKeyspace(), "CNSTopicStats", "bla", "foo", 1, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+		cassandraHandler.incrementCounter(CMBProperties.getInstance().getCNSKeyspace(), "CNSTopicStats", "bla", "foo", 1, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 		
-		i = cassandraHandler.getCounter("CNSTopicStats", "bla", "foo", StringSerializer.get(), StringSerializer.get(), CMBProperties.getInstance().getReadConsistencyLevel());
+		i = cassandraHandler.getCounter(CMBProperties.getInstance().getCNSKeyspace(), "CNSTopicStats", "bla", "foo", CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 		
 		assertTrue("Expected counter to be 3, instead found " + i, i == 3);
 	}

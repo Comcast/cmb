@@ -30,13 +30,11 @@ import javax.servlet.AsyncContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import me.prettyprint.cassandra.serializers.StringSerializer;
-import me.prettyprint.hector.api.beans.Row;
-
 import org.apache.log4j.Logger;
 
 import com.comcast.cmb.common.model.CMBPolicy;
 import com.comcast.cmb.common.model.User;
+import com.comcast.cmb.common.util.PersistenceException;
 import com.comcast.cns.io.CNSWorkerStatsPopulator;
 import com.comcast.cns.model.CNSWorkerStats;
 import com.comcast.cns.tools.CNSWorkerMonitor;
@@ -73,9 +71,8 @@ public class CNSGetWorkerStatsAction extends CNSAction {
     	return true;
     }
     
-    public static List<CNSWorkerStats> getWorkerStats(String dataCenter) throws IOException {
+    public static List<CNSWorkerStats> getWorkerStats(String dataCenter) throws IOException, PersistenceException {
     	
-	
     	List<CNSWorkerStats> statsList = null;
     	
     	if(dataCenter == null || dataCenter.length() == 0){

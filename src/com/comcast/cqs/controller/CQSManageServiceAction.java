@@ -19,10 +19,6 @@ import javax.servlet.AsyncContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import me.prettyprint.cassandra.serializers.StringSerializer;
-import me.prettyprint.cassandra.service.template.ColumnFamilyTemplate;
-import me.prettyprint.cassandra.service.template.ThriftColumnFamilyTemplate;
-
 import org.apache.log4j.Logger;
 
 import com.comcast.cmb.common.controller.CMBControllerServlet;
@@ -30,6 +26,7 @@ import com.comcast.cmb.common.model.CMBPolicy;
 import com.comcast.cmb.common.model.User;
 import com.comcast.cmb.common.persistence.AbstractCassandraPersistence;
 import com.comcast.cmb.common.persistence.CassandraPersistenceFactory;
+import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CMB_SERIALIZER;
 import com.comcast.cmb.common.util.CMBException;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cns.io.CNSPopulator;
@@ -44,6 +41,9 @@ import com.comcast.cqs.util.CQSErrorCodes;
 public class CQSManageServiceAction extends CQSAction {
 
 	private static Logger logger = Logger.getLogger(CQSClearQueueAction.class);
+	
+    public static final String CQS_API_SERVERS = "CQSAPIServers";
+    public static final String KEYSPACE = CMBProperties.getInstance().getCQSKeyspace();
 
 	public CQSManageServiceAction() {
         super("ManageService");
@@ -86,7 +86,7 @@ public class CQSManageServiceAction extends CQSAction {
 		} else if (task.equals("RemoveRecord")) {
 			
 			AbstractCassandraPersistence cassandraHandler = CassandraPersistenceFactory.getInstance(CMBProperties.getInstance().getCQSKeyspace());
-			cassandraHandler.delete("CQSAPIServers", host, null, StringSerializer.get(), StringSerializer.get(), CMBProperties.getInstance().getWriteConsistencyLevel());
+			cassandraHandler.delete(KEYSPACE, CQS_API_SERVERS, host, null, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 			String out = CNSPopulator.getResponseMetadata();
             writeResponse(out, response);
 			return true;

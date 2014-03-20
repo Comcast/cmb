@@ -26,6 +26,7 @@ import org.apache.log4j.Logger;
 
 import com.comcast.cmb.common.controller.CMBControllerServlet;
 import com.comcast.cmb.common.persistence.PersistenceFactory;
+import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CMB_SERIALIZER;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.PersistenceException;
 import com.comcast.cmb.common.util.ValueAccumulator.AccumulatorName;
@@ -109,8 +110,8 @@ public class CNSEndpointPublisherJobProducer implements CNSPublisherPartitionRun
 		        	values.put("jmxport", System.getProperty("com.sun.management.jmxremote.port", "0"));
 		        	values.put("mode", CNSPublisher.getModeString());
 		        	values.put("dataCenter", CMBProperties.getInstance().getCMBDataCenter());
-	                CNSPublisher.cassandraHandler.insertOrUpdateRow(hostAddress, "CNSWorkers", values, CMBProperties.getInstance().getWriteConsistencyLevel());
-	        	} catch (Exception ex) {
+	                CNSPublisher.cassandraHandler.insertRow(CMBProperties.getInstance().getCNSKeyspace(), hostAddress, "CNSWorkers", values, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, null);
+	            } catch (Exception ex) {
 	        		logger.warn("event=ping_glitch", ex);
 	        	}
             }

@@ -16,36 +16,27 @@
 package com.comcast.cmb.common.persistence;
 
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Collection;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
-import java.util.UUID;
 
 import me.prettyprint.cassandra.connection.DynamicLoadBalancingPolicy;
 import me.prettyprint.cassandra.connection.LeastActiveBalancingPolicy;
 import me.prettyprint.cassandra.connection.RoundRobinBalancingPolicy;
 import me.prettyprint.cassandra.model.IndexedSlicesQuery;
 import me.prettyprint.cassandra.model.MultigetCountQuery;
+import me.prettyprint.cassandra.serializers.CompositeSerializer;
 import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.cassandra.service.CassandraHostConfigurator;
 import me.prettyprint.cassandra.service.OperationType;
-import me.prettyprint.cassandra.service.template.ColumnFamilyResult;
-import me.prettyprint.cassandra.service.template.ColumnFamilyTemplate;
-import me.prettyprint.cassandra.service.template.ColumnFamilyUpdater;
-import me.prettyprint.cassandra.service.template.SuperCfTemplate;
 import me.prettyprint.hector.api.Cluster;
 import me.prettyprint.hector.api.ConsistencyLevelPolicy;
 import me.prettyprint.hector.api.HConsistencyLevel;
 import me.prettyprint.hector.api.Keyspace;
 import me.prettyprint.hector.api.Serializer;
 import me.prettyprint.hector.api.beans.ColumnSlice;
-import me.prettyprint.hector.api.beans.Composite;
-import me.prettyprint.hector.api.beans.DynamicComposite;
 import me.prettyprint.hector.api.beans.HColumn;
 import me.prettyprint.hector.api.beans.HCounterColumn;
 import me.prettyprint.hector.api.beans.HSuperColumn;
@@ -55,7 +46,6 @@ import me.prettyprint.hector.api.beans.SuperRow;
 import me.prettyprint.hector.api.beans.SuperRows;
 import me.prettyprint.hector.api.beans.SuperSlice;
 import me.prettyprint.hector.api.ddl.KeyspaceDefinition;
-import me.prettyprint.hector.api.exceptions.HectorException;
 import me.prettyprint.hector.api.factory.HFactory;
 import me.prettyprint.hector.api.mutation.MutationResult;
 import me.prettyprint.hector.api.mutation.Mutator;
@@ -70,11 +60,9 @@ import me.prettyprint.hector.api.query.SuperSliceQuery;
 import org.apache.log4j.Logger;
 
 import com.comcast.cmb.common.controller.CMBControllerServlet;
-import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CMB_SERIALIZER;
-import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CmbColumn;
 import com.comcast.cmb.common.util.CMBErrorCodes;
-import com.comcast.cmb.common.util.CMBException;
 import com.comcast.cmb.common.util.CMBProperties;
+import com.comcast.cmb.common.util.PersistenceException;
 import com.comcast.cmb.common.util.ValueAccumulator.AccumulatorName;
 
 /**
@@ -84,6 +72,110 @@ import com.comcast.cmb.common.util.ValueAccumulator.AccumulatorName;
 public class CassandraHectorPersistence extends AbstractCassandraPersistence {
 	
 	//TODO: surround everything with try-finally
+	//TODO: generalize composite class
+	
+	public static class CmbHectorColumn<N, V> extends CmbColumn<N, V> {
+		private HColumn<N, V> hectorColumn;
+		public CmbHectorColumn(HColumn<N, V> hectorColumn) {
+			this.hectorColumn = hectorColumn;
+		}
+		@Override
+		public N getName() {
+			return hectorColumn.getName();
+		}
+		@Override
+		public V getValue() {
+			return hectorColumn.getValue();
+		}
+		@Override
+		public long getClock() {
+			return hectorColumn.getClock();
+		}
+	}
+	
+	public static class CmbHectorRow<K, N, V> extends CmbRow<K, N, V> {
+		private Row<K, N, V> row;
+		public CmbHectorRow(Row<K, N, V> row) {
+			this.row = row;
+		}
+		@Override
+		public K getKey() {
+			return row.getKey();
+		}
+		@Override
+		public CmbColumnSlice<N, V> getColumnSlice() {
+			return new CmbHectorColumnSlice<N, V>(row.getColumnSlice());
+		}
+	}
+	
+	public static class CmbHectorColumnSlice<N, V> extends CmbColumnSlice<N, V> {
+		private ColumnSlice<N, V> hectorSlice;
+		public CmbHectorColumnSlice(ColumnSlice<N, V> hectorSlice) {
+			this.hectorSlice = hectorSlice;
+		}
+		@Override
+		public CmbHectorColumn<N, V> getColumnByName(N name) {
+			if (hectorSlice.getColumnByName(name) != null) {
+				return new CmbHectorColumn<N, V>(hectorSlice.getColumnByName(name));
+			} else {
+				return null;
+			}
+		}
+		@Override
+		public List<CmbColumn<N, V>> getColumns() {
+			List<CmbColumn<N, V>> columns = new ArrayList<CmbColumn<N, V>>();
+			for (HColumn<N, V> c : hectorSlice.getColumns()) {
+				columns.add(new CmbHectorColumn<N, V>(c));
+			}
+			return columns;
+		}
+		@Override
+		public int size() {
+			return hectorSlice.getColumns().size();
+		}
+	}
+
+	public static class CmbHectorSuperColumnSlice<SN, N, V> extends CmbSuperColumnSlice<SN, N, V> {
+		private SuperSlice<SN, N, V> hectorSuperSlice;
+		public CmbHectorSuperColumnSlice(SuperSlice<SN, N, V> hectorSuperSlice) {
+			this.hectorSuperSlice = hectorSuperSlice;
+		}
+		@Override
+		public CmbHectorSuperColumn<SN, N, V> getColumnByName(SN name) {
+			if (hectorSuperSlice.getColumnByName(name) != null) {
+				return new CmbHectorSuperColumn<SN, N, V>(hectorSuperSlice.getColumnByName(name));
+			} else {
+				return null;
+			}
+		}
+		@Override
+		public List<CmbSuperColumn<SN, N, V>> getSuperColumns() {
+			List<CmbSuperColumn<SN, N, V>> superColumns = new ArrayList<CmbSuperColumn<SN, N, V>>();
+			for (HSuperColumn<SN, N, V> sc : hectorSuperSlice.getSuperColumns()) {
+				superColumns.add(new CmbHectorSuperColumn<SN, N, V>(sc));
+			}
+			return superColumns;
+		}
+	}
+	
+	public static class CmbHectorSuperColumn<SN, N, V> extends CmbSuperColumn<SN, N, V> {
+		private HSuperColumn<SN, N, V> hectorSuperColumn;
+		public CmbHectorSuperColumn(HSuperColumn<SN, N, V> hectorSuperColumn) {
+			this.hectorSuperColumn = hectorSuperColumn;
+		}
+		@Override
+		public SN getName() {
+			return hectorSuperColumn.getName();
+		}
+		@Override
+		public List<CmbColumn<N, V>> getColumns() {
+			List<CmbColumn<N, V>> columns = new ArrayList<CmbColumn<N, V>>();
+			for (HColumn<N, V> c : this.hectorSuperColumn.getColumns()) {
+				columns.add(new CmbHectorColumn<N, V>(c));
+			}
+			return columns;
+		}
+	}
 	
 	private static final int hectorPoolSize = CMBProperties.getInstance().getHectorPoolSize();
 	private static final String hectorBalancingPolicy = CMBProperties.getInstance().getHectorBalancingPolicy();
@@ -113,6 +205,10 @@ public class CassandraHectorPersistence extends AbstractCassandraPersistence {
 		public HConsistencyLevel get(OperationType arg0) {
 			return level;
 		}
+	}
+	
+	public CassandraHectorPersistence() {
+		initPersistence();
 	}
 	
 	/**
@@ -197,69 +293,34 @@ public class CassandraHectorPersistence extends AbstractCassandraPersistence {
 		return keyspaces.get(keyspace);
 	}
 	
-	private static Serializer getSerializer(CMB_SERIALIZER s) throws Exception {
-		if (s == CMB_SERIALIZER.STRING_SERIALIZER) {
+	private static Serializer getSerializer(CmbSerializer s) throws PersistenceException {
+		if (s instanceof CmbStringSerializer) {
 			return StringSerializer.get();
+		} else if (s instanceof CmbCompositeSerializer) {
+			return CompositeSerializer.get();
 		}
-		throw new CMBException(CMBErrorCodes.InternalError, "Unknown serializer " + s);
+		throw new PersistenceException(CMBErrorCodes.InternalError, "Unknown serializer " + s);
 	}
 	
-	private <K, N, V> List<CmbRow<K, N, V>> getRows(List<Row<K, N, V>> rows) throws Exception {
-		
+	private <K, N, V> List<CmbRow<K, N, V>> getRows(List<Row<K, N, V>> rows) throws PersistenceException {
 		List<CmbRow<K, N, V>> l = new ArrayList<CmbRow<K, N, V>>();
-		
 		for (Row<K, N, V> r : rows) {
-			List<CmbColumn<N, V>> cmbColumns = new ArrayList<CmbColumn<N, V>>();
-			ColumnSlice<N, V> cs = r.getColumnSlice();
-			List<HColumn<N, V>> cl = cs.getColumns();
-			for (HColumn<N, V> hc : cl) {
-				cmbColumns.add(new CmbColumn<N, V>(hc.getName(), hc.getValue()));
-			}
-			l.add(new CmbRow<K, N, V>(r.getKey(), cmbColumns));
+			l.add(new CmbHectorRow<K, N, V>(r));
 		}
-		
 		return l;
 	}
 	
-	private <N, V> CmbColumnSlice<N, V> getSlice(ColumnSlice<N, V> slice) throws Exception  {
-		List<CmbColumn<N, V>> cl = new ArrayList<CmbColumn<N, V>>();
-		for (HColumn<N, V> s : slice.getColumns()) {
-			cl.add(new CmbColumn<N, V>(s.getName(), s.getValue()));
-		}
-		return new CmbColumnSlice<N,V>(cl);
-	}
-	
-	private <SN, N, V> CmbSuperColumn<SN, N, V> getSuperColumn(HSuperColumn<SN, N, V> superColumn) throws Exception {
-		List<CmbColumn<N, V>> columns = new ArrayList<CmbColumn<N, V>>();
-		for (HColumn<N, V> c : superColumn.getColumns()) {
-			columns.add(new CmbColumn<N, V>(c.getName(), c.getValue()));
-		}
-		return new CmbSuperColumn<SN, N, V>(superColumn.getName(), columns);
-	}
-	
-	private <SN, N, V> List<CmbSuperColumn<SN, N, V>> getSuperColumns(List<HSuperColumn<SN, N, V>> superColumns) throws Exception {
+	private <SN, N, V> List<CmbSuperColumn<SN, N, V>> getSuperColumns(List<HSuperColumn<SN, N, V>> superColumns) throws PersistenceException {
 		List<CmbSuperColumn<SN, N, V>> l = new ArrayList<CmbSuperColumn<SN, N, V>>();
 		for (HSuperColumn<SN, N, V> superColumn : superColumns) {
-			List<CmbColumn<N, V>> columns = new ArrayList<CmbColumn<N, V>>();
-			for (HColumn<N, V> c : superColumn.getColumns()) {
-				columns.add(new CmbColumn<N, V>(c.getName(), c.getValue()));
-			}
-			l.add(new CmbSuperColumn<SN, N, V>(superColumn.getName(), columns));
+			l.add(new CmbHectorSuperColumn<SN, N, V>(superColumn));
 		}
 		return l;
-	}
-
-	private <SN, N, V> CmbSuperColumnSlice<SN, N, V> getSuperColumnSlice(SuperSlice<SN, N, V> superSlice) throws Exception {
-		List<CmbSuperColumn<SN, N, V>> l = new ArrayList<CmbSuperColumn<SN, N, V>>();
-		for (HSuperColumn<SN, N, V> sc : superSlice.getSuperColumns()) {
-			l.add(getSuperColumn(sc));
-		}
-		return new CmbSuperColumnSlice<SN, N, V>(l);
 	}
 
 	@Override
 	public <K, N, V> void update(String keyspace, String columnFamily, K key, N column, V value, 
-			CMB_SERIALIZER keySerializer, CMB_SERIALIZER nameSerializer, CMB_SERIALIZER valueSerializer) throws Exception {
+			CmbSerializer keySerializer, CmbSerializer nameSerializer, CmbSerializer valueSerializer) throws PersistenceException {
 		long ts1 = System.currentTimeMillis();	    
         logger.debug("event=update column_family=" + columnFamily + " key=" + key + " column=" + column + " value=" + value);
 		Mutator<K> mutator = HFactory.createMutator(getKeyspace(keyspace), getSerializer(keySerializer));
@@ -271,9 +332,9 @@ public class CassandraHectorPersistence extends AbstractCassandraPersistence {
 	}
 
 	@Override
-	public <K, SN, N, V> void insertSuperColumn(String keyspace, String columnFamily, K key, CMB_SERIALIZER keySerializer, SN superName, Integer ttl, 
-			CMB_SERIALIZER superNameSerializer, Map<N, V> subColumnNameValues, CMB_SERIALIZER columnSerializer,
-			CMB_SERIALIZER valueSerializer) throws Exception {
+	public <K, SN, N, V> void insertSuperColumn(String keyspace, String columnFamily, K key, CmbSerializer keySerializer, SN superName, Integer ttl, 
+			CmbSerializer superNameSerializer, Map<N, V> subColumnNameValues, CmbSerializer columnSerializer,
+			CmbSerializer valueSerializer) throws PersistenceException {
 	    
 		long ts1 = System.currentTimeMillis();
 	    
@@ -303,11 +364,11 @@ public class CassandraHectorPersistence extends AbstractCassandraPersistence {
 	}
 
 	@Override
-	public <K, SN, N, V> void insertSuperColumns(String keyspace, String columnFamily, K key, CMB_SERIALIZER keySerializer,
+	public <K, SN, N, V> void insertSuperColumns(String keyspace, String columnFamily, K key, CmbSerializer keySerializer,
 			Map<SN, Map<N, V>> superNameSubColumnsMap, int ttl,
-			CMB_SERIALIZER superNameSerializer, CMB_SERIALIZER columnSerializer,
-			CMB_SERIALIZER valueSerializer)
-			throws Exception {
+			CmbSerializer superNameSerializer, CmbSerializer columnSerializer,
+			CmbSerializer valueSerializer)
+			throws PersistenceException {
 		
 	    long ts1 = System.currentTimeMillis();
 	    
@@ -346,8 +407,8 @@ public class CassandraHectorPersistence extends AbstractCassandraPersistence {
 
 	@Override
 	public <K, N, V> List<CmbRow<K, N, V>> readNextNNonEmptyRows(String keyspace, String columnFamily, K lastKey, int numRows, int numCols,
-			CMB_SERIALIZER keySerializer, CMB_SERIALIZER columnNameSerializer,
-			CMB_SERIALIZER valueSerializer) throws Exception {
+			CmbSerializer keySerializer, CmbSerializer columnNameSerializer,
+			CmbSerializer valueSerializer) throws PersistenceException {
 	    
 	    long ts1 = System.currentTimeMillis();
 	    
@@ -418,8 +479,8 @@ public class CassandraHectorPersistence extends AbstractCassandraPersistence {
 
 	@Override
 	public <K, N, V> List<CmbRow<K, N, V>> readNextNRows(String keyspace, String columnFamily, K lastKey, int numRows, int numCols,
-			CMB_SERIALIZER keySerializer, CMB_SERIALIZER columnNameSerializer,
-			CMB_SERIALIZER valueSerializer) throws Exception {
+			CmbSerializer keySerializer, CmbSerializer columnNameSerializer,
+			CmbSerializer valueSerializer) throws PersistenceException {
 
 	    long ts1 = System.currentTimeMillis();
 	    
@@ -462,8 +523,8 @@ public class CassandraHectorPersistence extends AbstractCassandraPersistence {
 
 	@Override
 	public <K, N, V> List<CmbRow<K, N, V>> readNextNRows(String keyspace, String columnFamily, K lastKey, N whereColumn, V whereValue,
-			int numRows, int numCols, CMB_SERIALIZER keySerializer,
-			CMB_SERIALIZER columnNameSerializer, CMB_SERIALIZER valueSerializer) throws Exception {
+			int numRows, int numCols, CmbSerializer keySerializer,
+			CmbSerializer columnNameSerializer, CmbSerializer valueSerializer) throws PersistenceException {
 
 		Map<N, V> columnValues = new HashMap<N, V>();
 		columnValues.put(whereColumn, whereValue);
@@ -473,8 +534,8 @@ public class CassandraHectorPersistence extends AbstractCassandraPersistence {
 
 	@Override
 	public <K, N, V> List<CmbRow<K, N, V>> readNextNRows(String keyspace, String columnFamily, K lastKey, Map<N, V> columnValues,
-			int numRows, int numCols, CMB_SERIALIZER keySerializer,
-			CMB_SERIALIZER columnNameSerializer, CMB_SERIALIZER valueSerializer) throws Exception {
+			int numRows, int numCols, CmbSerializer keySerializer,
+			CmbSerializer columnNameSerializer, CmbSerializer valueSerializer) throws PersistenceException {
 
         long ts1 = System.currentTimeMillis();
         
@@ -521,8 +582,8 @@ public class CassandraHectorPersistence extends AbstractCassandraPersistence {
 
 	@Override
 	public <K, N, V> CmbColumnSlice<N, V> readColumnSlice(String keyspace, String columnFamily, K key, N firstColumnName, N lastColumnName,
-			int numCols, CMB_SERIALIZER keySerializer,
-			CMB_SERIALIZER columnNameSerializer, CMB_SERIALIZER valueSerializer) throws Exception {
+			int numCols, CmbSerializer keySerializer,
+			CmbSerializer columnNameSerializer, CmbSerializer valueSerializer) throws PersistenceException {
         
 		long ts1 = System.currentTimeMillis();
 		
@@ -544,7 +605,7 @@ public class CassandraHectorPersistence extends AbstractCassandraPersistence {
 			return null;
 		}
 		
-		return getSlice(slice);
+		return new CmbHectorColumnSlice<N, V>(slice);
 
 		/*RangeSlicesQuery<K, N, V> rangeSliceQuery = HFactory.createRangeSlicesQuery(keyspace, keySerializer, columnNameSerializer, valueSerializer)
 		.setColumnFamily(columnFamily)
@@ -572,9 +633,9 @@ public class CassandraHectorPersistence extends AbstractCassandraPersistence {
 
 	@Override
 	public <K, SN, N, V> CmbSuperColumnSlice<SN, N, V> readRowFromSuperColumnFamily(String keyspace, String columnFamily, K key, SN firstColumnName, SN lastColumnName,
-			int numCols, CMB_SERIALIZER keySerializer,
-			CMB_SERIALIZER superNameSerializer,
-			CMB_SERIALIZER columnNameSerializer, CMB_SERIALIZER valueSerializer) throws Exception {
+			int numCols, CmbSerializer keySerializer,
+			CmbSerializer superNameSerializer,
+			CmbSerializer columnNameSerializer, CmbSerializer valueSerializer) throws PersistenceException {
 
 	    long ts1 = System.currentTimeMillis();
 	    
@@ -597,7 +658,7 @@ public class CassandraHectorPersistence extends AbstractCassandraPersistence {
 	            return null;
 	        }
 	        
-	        return getSuperColumnSlice(superSlice);
+	        return new CmbHectorSuperColumnSlice<SN, N, V>(superSlice);
 	        
 	    } finally {
 	        long ts2 = System.currentTimeMillis();
@@ -607,8 +668,8 @@ public class CassandraHectorPersistence extends AbstractCassandraPersistence {
 	
 	@Override
 	public <K, SN, N, V> CmbSuperColumn<SN, N, V> readColumnFromSuperColumnFamily(String keyspace, String columnFamily, K key, SN columnName,
-			CMB_SERIALIZER keySerializer, CMB_SERIALIZER superNameSerializer,
-			CMB_SERIALIZER columnNameSerializer, CMB_SERIALIZER valueSerializer) throws Exception {
+			CmbSerializer keySerializer, CmbSerializer superNameSerializer,
+			CmbSerializer columnNameSerializer, CmbSerializer valueSerializer) throws PersistenceException {
 
 	    long ts1 = System.currentTimeMillis();
 	    
@@ -631,7 +692,7 @@ public class CassandraHectorPersistence extends AbstractCassandraPersistence {
 	            return null;
 	        }
 	        
-	        return getSuperColumn(superColumn);
+	        return new CmbHectorSuperColumn<SN, N, V>(superColumn);
 	        
 	    } finally {
 	        long ts2 = System.currentTimeMillis();
@@ -641,9 +702,9 @@ public class CassandraHectorPersistence extends AbstractCassandraPersistence {
 
 	@Override
 	public <K, SN, N, V> List<CmbSuperColumn<SN, N, V>> readMultipleColumnsFromSuperColumnFamily(String keyspace, String columnFamily, Collection<K> keys,
-			Collection<SN> columnNames, CMB_SERIALIZER keySerializer,
-			CMB_SERIALIZER superNameSerializer,
-			CMB_SERIALIZER columnNameSerializer, CMB_SERIALIZER valueSerializer) throws Exception {
+			Collection<SN> columnNames, CmbSerializer keySerializer,
+			CmbSerializer superNameSerializer,
+			CmbSerializer columnNameSerializer, CmbSerializer valueSerializer) throws PersistenceException {
 		
 		List<HSuperColumn<SN, N, V>> list = new ArrayList<HSuperColumn<SN, N, V>>();
 
@@ -680,10 +741,10 @@ public class CassandraHectorPersistence extends AbstractCassandraPersistence {
 	}
 
 	@Override
-	public 	<K, SN, N, V> List<CmbSuperColumn<SN, N, V>> readColumnsFromSuperColumnFamily(String keyspace, String columnFamily, K key, CMB_SERIALIZER keySerializer,
-			CMB_SERIALIZER superNameSerializer,
-			CMB_SERIALIZER columnNameSerializer, CMB_SERIALIZER valueSerializer,
-			 SN firstCol, SN lastCol, int numCol) throws Exception {
+	public 	<K, SN, N, V> List<CmbSuperColumn<SN, N, V>> readColumnsFromSuperColumnFamily(String keyspace, String columnFamily, K key, CmbSerializer keySerializer,
+			CmbSerializer superNameSerializer,
+			CmbSerializer columnNameSerializer, CmbSerializer valueSerializer,
+			 SN firstCol, SN lastCol, int numCol) throws PersistenceException {
 		
 	    long ts1 = System.currentTimeMillis();
 	    
@@ -709,10 +770,10 @@ public class CassandraHectorPersistence extends AbstractCassandraPersistence {
 	}
 
 	@Override
-	public <K, N, V> void insertRow(K rowKey,
-			String keyspace, String columnFamily, Map<N, V> columnValues,
-			CMB_SERIALIZER keySerializer, CMB_SERIALIZER nameSerializer,
-			CMB_SERIALIZER valueSerializer, Integer ttl) throws Exception {
+	public <K, N, V> void insertRow(String keyspace, K rowKey,
+			String columnFamily, Map<N, V> columnValues,
+			CmbSerializer keySerializer, CmbSerializer nameSerializer,
+			CmbSerializer valueSerializer, Integer ttl) throws PersistenceException {
 
 	    long ts1 = System.currentTimeMillis();
 	    
@@ -741,8 +802,8 @@ public class CassandraHectorPersistence extends AbstractCassandraPersistence {
 
 	@Override
 	public <K, N, V> void insertRows(String keyspace, Map<K, Map<N, V>> rowColumnValues, String columnFamily,
-			CMB_SERIALIZER keySerializer, CMB_SERIALIZER nameSerializer,
-			CMB_SERIALIZER valueSerializer, Integer ttl) throws Exception {
+			CmbSerializer keySerializer, CmbSerializer nameSerializer,
+			CmbSerializer valueSerializer, Integer ttl) throws PersistenceException {
 
 	    long ts1 = System.currentTimeMillis();
 	    
@@ -798,7 +859,7 @@ public class CassandraHectorPersistence extends AbstractCassandraPersistence {
 
 	@Override
 	public <K, N> void delete(String keyspace, String columnFamily, K key, N column, 
-			CMB_SERIALIZER keySerializer, CMB_SERIALIZER columnSerializer) throws Exception {
+			CmbSerializer keySerializer, CmbSerializer columnSerializer) throws PersistenceException {
 		
 	    long ts1 = System.currentTimeMillis();
         logger.debug("event=delete key=" + key + " column=" + column + " cf=" + columnFamily);
@@ -818,8 +879,8 @@ public class CassandraHectorPersistence extends AbstractCassandraPersistence {
 
 	@Override
 	public <K, N> void deleteBatch(String keyspace, String columnFamily,
-			List<K> keyList, List<N> columnList, CMB_SERIALIZER keySerializer,
-			 CMB_SERIALIZER columnSerializer) throws Exception {
+			List<K> keyList, List<N> columnList, CmbSerializer keySerializer,
+			 CmbSerializer columnSerializer) throws PersistenceException {
 		
         long ts1 = System.currentTimeMillis();
         
@@ -843,7 +904,7 @@ public class CassandraHectorPersistence extends AbstractCassandraPersistence {
 	}
 
 	@Override
-	public <K, SN, N> void deleteSuperColumn(String keyspace, String superColumnFamily, K key, SN superColumn, CMB_SERIALIZER keySerializer, CMB_SERIALIZER superColumnSerializer) throws Exception {
+	public <K, SN, N> void deleteSuperColumn(String keyspace, String superColumnFamily, K key, SN superColumn, CmbSerializer keySerializer, CmbSerializer superColumnSerializer) throws PersistenceException {
 		
 	    long ts1 = System.currentTimeMillis();
         logger.debug("event=delete key=" + key + " super_column=" + superColumn + " cf=" + superColumnFamily);
@@ -863,7 +924,7 @@ public class CassandraHectorPersistence extends AbstractCassandraPersistence {
 	
 	@Override
 	public <K, N> int getCount(String keyspace, String columnFamily, K key,
-			CMB_SERIALIZER keySerializer, CMB_SERIALIZER columnNameSerializer) throws Exception {
+			CmbSerializer keySerializer, CmbSerializer columnNameSerializer) throws PersistenceException {
 
 		long ts1 = System.currentTimeMillis();
 
@@ -893,8 +954,8 @@ public class CassandraHectorPersistence extends AbstractCassandraPersistence {
 	
 	@Override
 	public <K, N> void incrementCounter(String keyspace, String columnFamily, K rowKey,
-			String columnName, int incrementBy, CMB_SERIALIZER keySerializer,
-			CMB_SERIALIZER columnNameSerializer) throws Exception {
+			String columnName, int incrementBy, CmbSerializer keySerializer,
+			CmbSerializer columnNameSerializer) throws PersistenceException {
 
 		logger.debug("event=increment_counter cf=" + columnFamily + " key=" + rowKey + " column=" + columnName + " inc=" + incrementBy);
 		
@@ -907,8 +968,8 @@ public class CassandraHectorPersistence extends AbstractCassandraPersistence {
 
 	@Override
 	public <K, N> void decrementCounter(String keyspace, String columnFamily, K rowKey,
-			String columnName, int decrementBy, CMB_SERIALIZER keySerializer,
-			CMB_SERIALIZER columnNameSerializer) throws Exception {
+			String columnName, int decrementBy, CmbSerializer keySerializer,
+			CmbSerializer columnNameSerializer) throws PersistenceException {
         
 		long ts1 = System.currentTimeMillis();
 
@@ -925,8 +986,8 @@ public class CassandraHectorPersistence extends AbstractCassandraPersistence {
 	
 	@Override
 	public <K, N> void deleteCounter(String keyspace, String columnFamily, K rowKey,
-			N columnName, CMB_SERIALIZER keySerializer,
-			CMB_SERIALIZER columnNameSerializer) throws Exception {
+			N columnName, CmbSerializer keySerializer,
+			CmbSerializer columnNameSerializer) throws PersistenceException {
         
 		long ts1 = System.currentTimeMillis();
 
@@ -943,8 +1004,8 @@ public class CassandraHectorPersistence extends AbstractCassandraPersistence {
 
 	@Override
 	public <K, N> long getCounter(String keyspace, String columnFamily, K rowKey,
-			N columnName, CMB_SERIALIZER keySerializer,
-			CMB_SERIALIZER columnNameSerializer) throws Exception {
+			N columnName, CmbSerializer keySerializer,
+			CmbSerializer columnNameSerializer) throws PersistenceException {
 		
         long ts1 = System.currentTimeMillis();
 	    logger.debug("event=get_counter cf=" + columnFamily + " key=" + rowKey + " column=" + columnName);

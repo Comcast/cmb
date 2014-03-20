@@ -28,18 +28,15 @@ import javax.servlet.AsyncContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import me.prettyprint.cassandra.serializers.StringSerializer;
-import me.prettyprint.cassandra.service.template.ColumnFamilyTemplate;
-import me.prettyprint.cassandra.service.template.ThriftColumnFamilyTemplate;
-import me.prettyprint.hector.api.beans.Row;
-
 import org.apache.log4j.Logger;
 
 import com.comcast.cmb.common.controller.CMBControllerServlet;
 import com.comcast.cmb.common.model.CMBPolicy;
 import com.comcast.cmb.common.model.User;
 import com.comcast.cmb.common.persistence.AbstractCassandraPersistence;
+import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CmbRow;
 import com.comcast.cmb.common.persistence.CassandraPersistenceFactory;
+import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CMB_SERIALIZER;
 import com.comcast.cmb.common.util.CMBErrorCodes;
 import com.comcast.cmb.common.util.CMBException;
 import com.comcast.cmb.common.util.CMBProperties;
@@ -57,6 +54,9 @@ import com.comcast.cns.util.CNSWorkerStatWrapper;
 public class CNSManageServiceAction extends CNSAction {
 
 	private static Logger logger = Logger.getLogger(CNSManageServiceAction.class);
+	
+	public static final String CNS_API_SERVERS = "CNSAPIServers";
+	public static final String CNS_WORKERS = "CNSWorkers";
 
 	public CNSManageServiceAction() {
 		super("ManageService");
@@ -96,12 +96,12 @@ public class CNSManageServiceAction extends CNSAction {
 
 		if (task.equals("ClearWorkerQueues")) {
 
-			List<Row<String, String, String>> rows = cassandraHandler.readNextNNonEmptyRows("CNSWorkers", null, 1000, 10, new StringSerializer(), new StringSerializer(), new StringSerializer(), CMBProperties.getInstance().getReadConsistencyLevel());
+			List<CmbRow<String, String, String>> rows = cassandraHandler.readNextNNonEmptyRows(CMBProperties.getInstance().getCNSKeyspace(), "CNSWorkers", null, 1000, 10, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 			List<CNSWorkerStats> statsList = new ArrayList<CNSWorkerStats>();
 
 			if (rows != null) {
 
-				for (Row<String, String, String> row : rows) {
+				for (CmbRow<String, String, String> row : rows) {
 
 					CNSWorkerStats stats = new CNSWorkerStats();
 					stats.setIpAddress(row.getKey());
@@ -165,7 +165,7 @@ public class CNSManageServiceAction extends CNSAction {
 
 		} else if (task.equals("RemoveWorkerRecord")) {
 			
-			cassandraHandler.delete("CNSWorkers", host, null, StringSerializer.get(), StringSerializer.get(), CMBProperties.getInstance().getWriteConsistencyLevel());
+			cassandraHandler.delete(CMBProperties.getInstance().getCNSKeyspace(), CNS_WORKERS, host, null, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 			String out = CNSPopulator.getResponseMetadata();
 	        writeResponse(out, response);
 			return true;
@@ -179,7 +179,7 @@ public class CNSManageServiceAction extends CNSAction {
 
 		} else if (task.equals("RemoveRecord")) {
 			
-			cassandraHandler.delete("CNSAPIServers", host, null, StringSerializer.get(), StringSerializer.get(), CMBProperties.getInstance().getWriteConsistencyLevel());
+			cassandraHandler.delete(CMBProperties.getInstance().getCNSKeyspace(), CNS_API_SERVERS, host, null, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 			String out = CNSPopulator.getResponseMetadata();
 	        writeResponse(out, response);
 			return true;

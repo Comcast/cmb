@@ -36,6 +36,7 @@ import com.comcast.cmb.common.controller.HealthCheckShallow;
 import com.comcast.cmb.common.model.CMBPolicy;
 import com.comcast.cmb.common.model.User;
 import com.comcast.cmb.common.persistence.AbstractCassandraPersistence;
+import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CMB_SERIALIZER;
 import com.comcast.cmb.common.persistence.CassandraPersistenceFactory;
 import com.comcast.cmb.common.persistence.PersistenceFactory;
 import com.comcast.cmb.common.util.CMBErrorCodes;
@@ -59,6 +60,8 @@ public class CNSControllerServlet extends CMBControllerServlet {
     public static volatile AtomicLong lastCNSPingMinute = new AtomicLong(0);
     
     private static Logger logger = Logger.getLogger(CNSControllerServlet.class);
+    
+    private static final String CNS_API_SERVERS = "CNSAPIServers";
 
     /**
      * NodeName global constant is used to identify this process uniquely across all API servers
@@ -208,7 +211,7 @@ public class CNSControllerServlet extends CMBControllerServlet {
 	        	values.put("dataCenter", CMBProperties.getInstance().getCMBDataCenter());
 	        	values.put("serviceUrl", CMBProperties.getInstance().getCNSServiceUrl());
 	        	
-                cassandraHandler.insertOrUpdateRow(serverIp + ":" + serverPort, "CNSAPIServers", values, CMBProperties.getInstance().getWriteConsistencyLevel());
+                cassandraHandler.insertRow(CMBProperties.getInstance().getCNSKeyspace(), serverIp + ":" + serverPort, CNS_API_SERVERS, values, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, null);
                 
         	} catch (Exception ex) {
         		logger.warn("event=ping_failed", ex);

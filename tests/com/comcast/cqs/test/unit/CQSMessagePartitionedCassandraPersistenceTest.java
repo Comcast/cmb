@@ -27,9 +27,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-import me.prettyprint.cassandra.serializers.CompositeSerializer;
-import me.prettyprint.cassandra.serializers.StringSerializer;
-
 import org.apache.log4j.Logger;
 import org.junit.After;
 import org.junit.Before;
@@ -42,6 +39,7 @@ import com.comcast.cmb.common.persistence.CassandraPersistenceFactory;
 import com.comcast.cmb.common.persistence.IUserPersistence;
 import com.comcast.cmb.common.persistence.PersistenceFactory;
 import com.comcast.cmb.common.persistence.UserCassandraPersistence;
+import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CMB_SERIALIZER;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.PersistenceException;
 import com.comcast.cmb.common.util.Util;
@@ -283,7 +281,7 @@ public class CQSMessagePartitionedCassandraPersistenceTest {
 		for (int k=0; k<numberOfShards; k++) {
 			for (int i=0; i<numberOfPartitions; i++) {
 				String queueKey = queueHash + "_" + k + "_" + i;
-				long partitionCount = persistence.getCount("CQSPartitionedQueueMessages", queueKey, StringSerializer.get(), new CompositeSerializer(), CMBProperties.getInstance().getReadConsistencyLevel());
+				long partitionCount = persistence.getCount(CMBProperties.getInstance().getCQSKeyspace(), "CQSPartitionedQueueMessages", queueKey, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.COMPOSITE_SERIALIZER);
 				messageCount += partitionCount;
 				logger.debug("# of messages in " + queueKey + " =" + partitionCount);
 			}
