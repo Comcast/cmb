@@ -1,3 +1,29 @@
+CMB VERSION 2.2.39
+--------------------------------------------------------------------
+
+New features:
+
+- AWS signature V4 support
+- list number of subscriptions in web ui
+- various web ui usability improvements (short cut links, alternating color in tables etc.)
+- web ui for testing receive and delete message
+- support publish to Redis channels
+- support for aws sdk 1.6.12
+- logging of thread pool sizes as well as async and io wait time
+- logging of external http headers injected by nginx 
+- performance improvements for publish() (less logging, in-line api calls)
+- ability to turn cns workers on/off dynamically (via api or web ui)
+- reduced Redis key size to improve Redis memory consumption and performance
+
+Bug fixes:
+
+- various fixes for large number of subscribers (1 mio and more)
+- cqs fix to support boto aws lib
+- cns fix for multi DC support (workers to always look for messages in queues locally)
+- minor fix for aws compliant policies
+- bug fix for occasional NPE on startup (from initializing stats logging)
+- fix for message size logging
+
 CMB VERSION 2.2.37
 --------------------------------------------------------------------
 
