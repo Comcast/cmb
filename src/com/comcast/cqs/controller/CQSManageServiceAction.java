@@ -19,18 +19,15 @@ import javax.servlet.AsyncContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import me.prettyprint.cassandra.serializers.StringSerializer;
-import me.prettyprint.cassandra.service.template.ColumnFamilyTemplate;
-import me.prettyprint.cassandra.service.template.ThriftColumnFamilyTemplate;
-
 import org.apache.log4j.Logger;
 
 import com.comcast.cmb.common.controller.CMBControllerServlet;
 import com.comcast.cmb.common.model.CMBPolicy;
 import com.comcast.cmb.common.model.User;
-import com.comcast.cmb.common.persistence.CassandraPersistence;
+import com.comcast.cmb.common.persistence.AbstractCassandraPersistence;
+import com.comcast.cmb.common.persistence.CassandraPersistenceFactory;
+import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CMB_SERIALIZER;
 import com.comcast.cmb.common.util.CMBException;
-import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cns.io.CNSPopulator;
 import com.comcast.cns.util.CNSErrorCodes;
 import com.comcast.cqs.io.CQSPopulator;
@@ -43,8 +40,9 @@ import com.comcast.cqs.util.CQSErrorCodes;
 public class CQSManageServiceAction extends CQSAction {
 
 	private static Logger logger = Logger.getLogger(CQSClearQueueAction.class);
-
-	public CQSManageServiceAction() {
+	
+    public static final String CQS_API_SERVERS = "CQSAPIServers";
+    public CQSManageServiceAction() {
         super("ManageService");
     }
     
@@ -84,9 +82,7 @@ public class CQSManageServiceAction extends CQSAction {
 			
 		} else if (task.equals("RemoveRecord")) {
 			
-			CassandraPersistence cassandraHandler = new CassandraPersistence(CMBProperties.getInstance().getCQSKeyspace());
-			ColumnFamilyTemplate<String, String> usersTemplate = new ThriftColumnFamilyTemplate<String, String>(cassandraHandler.getKeySpace(CMBProperties.getInstance().getWriteConsistencyLevel()), "CQSAPIServers", StringSerializer.get(), StringSerializer.get());
-			cassandraHandler.delete(usersTemplate, host, null);
+			CassandraPersistenceFactory.getInstance().delete(AbstractCassandraPersistence.CQS_KEYSPACE, CQS_API_SERVERS, host, null, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 			String out = CNSPopulator.getResponseMetadata();
             writeResponse(out, response);
 			return true;

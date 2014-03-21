@@ -7,7 +7,6 @@ import java.util.Random;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import org.json.JSONObject;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -16,7 +15,6 @@ import com.amazonaws.services.sns.model.PublishRequest;
 import com.amazonaws.services.sns.model.SubscribeRequest;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.test.tools.CMBAWSBaseTest;
-import com.comcast.cmb.test.tools.CNSTestingUtils;
 
 public class CNSJustCreateSubscriptionsTest extends CMBAWSBaseTest {
 

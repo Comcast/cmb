@@ -68,8 +68,9 @@ public interface ICQSQueuePersistence {
 	 * @param userId
 	 * @param queueName
 	 * @return
+	 * @throws PersistenceException 
 	 */
-	public CQSQueue getQueue(String userId, String queueName);
+	public CQSQueue getQueue(String userId, String queueName) throws PersistenceException;
 
 	/**
 	 * Get a queue given queue url
@@ -78,7 +79,7 @@ public interface ICQSQueuePersistence {
 	 *            The URL of the queue to get.
 	 * @return
 	 */
-	public CQSQueue getQueue(String queueUrl);
+	public CQSQueue getQueue(String queueUrl) throws PersistenceException;
 
 	/**
 	 * Update the policy for a given queue
@@ -89,7 +90,7 @@ public interface ICQSQueuePersistence {
 	 *            The updated policy for the queue
 	 * @return
 	 */
-	public boolean updatePolicy(String queueUrl, String policy);
+	public boolean updatePolicy(String queueUrl, String policy) throws PersistenceException;
 	
 	/**
 	 * Get number of queues for this user

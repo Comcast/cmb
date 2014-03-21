@@ -26,7 +26,8 @@ import javax.management.ObjectName;
 import org.apache.log4j.Logger;
 
 import com.comcast.cmb.common.controller.CMBControllerServlet;
-import com.comcast.cmb.common.persistence.CassandraPersistence;
+import com.comcast.cmb.common.persistence.AbstractCassandraPersistence;
+import com.comcast.cmb.common.persistence.CassandraPersistenceFactory;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.PersistenceException;
 import com.comcast.cmb.common.util.Util;
@@ -55,7 +56,7 @@ public class CNSPublisher {
     public static volatile AtomicLong lastProducerMinute = new AtomicLong(0); 
     public static volatile AtomicLong lastConsumerMinute = new AtomicLong(0); 
     
-	public static volatile CassandraPersistence cassandraHandler = new CassandraPersistence(CMBProperties.getInstance().getCNSKeyspace());
+    public static volatile AbstractCassandraPersistence cassandraHandler = CassandraPersistenceFactory.getInstance();
     
     private static void printUsage() {
         System.out.println("java <opts> com.comcast.cns.tools.CNSPublisher -role=<comma separated list of roles>");

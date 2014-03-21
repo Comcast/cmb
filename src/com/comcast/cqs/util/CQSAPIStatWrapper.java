@@ -5,24 +5,28 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import me.prettyprint.cassandra.serializers.StringSerializer;
-import me.prettyprint.hector.api.beans.Row;
-
-import com.comcast.cmb.common.persistence.CassandraPersistence;
+import com.comcast.cmb.common.persistence.AbstractCassandraPersistence;
+import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CmbRow;
+import com.comcast.cmb.common.persistence.CassandraPersistenceFactory;
+import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CMB_SERIALIZER;
 import com.comcast.cmb.common.util.CMBProperties;
+import com.comcast.cmb.common.util.PersistenceException;
 import com.comcast.cqs.model.CQSAPIStats;
 
 public class CQSAPIStatWrapper {
 	
-	public static List<CQSAPIStats> getCNSAPIStats(){
-		CassandraPersistence cassandraHandler = new CassandraPersistence(CMBProperties.getInstance().getCNSKeyspace());
+	public static final String CNS_API_SERVERS = "CNSAPIServers";
+	public static final String CQS_API_SERVERS = "CQSAPIServers";
+	public static final AbstractCassandraPersistence cassandraHandler = CassandraPersistenceFactory.getInstance();
+	
+	public static List<CQSAPIStats> getCNSAPIStats() throws PersistenceException{
 		
-		List<Row<String, String, String>> rows = cassandraHandler.readNextNNonEmptyRows("CNSAPIServers", null, 1000, 10, new StringSerializer(), new StringSerializer(), new StringSerializer(), CMBProperties.getInstance().getReadConsistencyLevel());
+		List<CmbRow<String, String, String>> rows = cassandraHandler.readNextNNonEmptyRows(AbstractCassandraPersistence.CNS_KEYSPACE, CNS_API_SERVERS, null, 1000, 10, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 		List<CQSAPIStats> statsList = new ArrayList<CQSAPIStats>();
 		
 		if (rows != null) {
 			
-			for (Row<String, String, String> row : rows) {
+			for (CmbRow<String, String, String> row : rows) {
 				
 				CQSAPIStats stats = new CQSAPIStats();
 				stats.setIpAddress(row.getKey());
@@ -52,14 +56,17 @@ public class CQSAPIStatWrapper {
 	}
 	
 	//the first data center is the the local data center
-	public static List<String> getCNSDataCenterNames(){
+	
+	public static List<String> getCNSDataCenterNames() throws PersistenceException {
+		
 		List<CQSAPIStats> statsList = getCNSAPIStats();
 		String localDataCenter = CMBProperties.getInstance().getCMBDataCenter();
 		List <String> dataCenterList = new ArrayList<String>();
 		dataCenterList.add(localDataCenter);
 		Set <String> dataCenterNameSet = new HashSet<String>();
-		for(CQSAPIStats currentCQSAPIStat : statsList){
-			if((currentCQSAPIStat.getDataCenter()!=null)&&(!currentCQSAPIStat.getDataCenter().equals(localDataCenter))){
+		
+		for (CQSAPIStats currentCQSAPIStat : statsList) {
+			if ((currentCQSAPIStat.getDataCenter()!=null)&&(!currentCQSAPIStat.getDataCenter().equals(localDataCenter))) {
 				dataCenterNameSet.add(currentCQSAPIStat.getDataCenter());
 			}
 		}
@@ -69,14 +76,16 @@ public class CQSAPIStatWrapper {
 	}
 	
 	//the first data center is the the local data center
-	public static List<String> getCQSDataCenterNames(){
+	public static List<String> getCQSDataCenterNames() throws PersistenceException {
+		
 		List<CQSAPIStats> statsList = getCQSAPIStats();
 		String localDataCenter = CMBProperties.getInstance().getCMBDataCenter();
 		List <String> dataCenterList = new ArrayList<String>();
 		dataCenterList.add(localDataCenter);
 		Set <String> dataCenterNameSet = new HashSet<String>();
-		for(CQSAPIStats currentCQSAPIStat : statsList){
-			if((currentCQSAPIStat.getDataCenter()!=null)&&(!currentCQSAPIStat.getDataCenter().equals(localDataCenter))){
+		
+		for (CQSAPIStats currentCQSAPIStat : statsList) {
+			if ((currentCQSAPIStat.getDataCenter()!=null) && (!currentCQSAPIStat.getDataCenter().equals(localDataCenter))) {
 				dataCenterNameSet.add(currentCQSAPIStat.getDataCenter());
 			}
 		}
@@ -85,39 +94,38 @@ public class CQSAPIStatWrapper {
 		return dataCenterList;
 	}
 	
-	
-	
-	public static List<CQSAPIStats> getCNSAPIStatsByDataCenter(String dataCenter){
+	public static List<CQSAPIStats> getCNSAPIStatsByDataCenter(String dataCenter) throws PersistenceException {
 		List<CQSAPIStats> cqsAPIStatsList = getCNSAPIStats();
 		List<CQSAPIStats> cqsAPIStatsByDataCenterList = new ArrayList<CQSAPIStats>();
-		for (CQSAPIStats currentCQSAPIStats: cqsAPIStatsList){
-			if(currentCQSAPIStats.getDataCenter().equals(dataCenter)){
+		
+		for (CQSAPIStats currentCQSAPIStats: cqsAPIStatsList) {
+			if (currentCQSAPIStats.getDataCenter().equals(dataCenter)) {
 				cqsAPIStatsByDataCenterList.add(currentCQSAPIStats);
 			}
 		}
+		
 		return cqsAPIStatsByDataCenterList;
 	}
 	
-	
-	public static List<CQSAPIStats> getCQSAPIStatsByDataCenter(String dataCenter){
+	public static List<CQSAPIStats> getCQSAPIStatsByDataCenter(String dataCenter) throws PersistenceException {
 		List<CQSAPIStats> cqsAPIStatsList = getCQSAPIStats();
 		List<CQSAPIStats> cqsAPIStatsByDataCenterList = new ArrayList<CQSAPIStats>();
-		for (CQSAPIStats currentCQSAPIStats: cqsAPIStatsList){
-			if(currentCQSAPIStats.getDataCenter().equals(dataCenter)){
+		for (CQSAPIStats currentCQSAPIStats: cqsAPIStatsList) {
+			if (currentCQSAPIStats.getDataCenter().equals(dataCenter)) {
 				cqsAPIStatsByDataCenterList.add(currentCQSAPIStats);
 			}
 		}
 		return cqsAPIStatsByDataCenterList;
 	}
-	public static List<CQSAPIStats> getCQSAPIStats(){
-		CassandraPersistence cassandraHandler = new CassandraPersistence(CMBProperties.getInstance().getCQSKeyspace());
+	
+	public static List<CQSAPIStats> getCQSAPIStats() throws PersistenceException {
 		
-		List<Row<String, String, String>> rows = cassandraHandler.readNextNNonEmptyRows("CQSAPIServers", null, 1000, 10, new StringSerializer(), new StringSerializer(), new StringSerializer(), CMBProperties.getInstance().getReadConsistencyLevel());
+		List<CmbRow<String, String, String>> rows = cassandraHandler.readNextNNonEmptyRows(AbstractCassandraPersistence.CQS_KEYSPACE, CQS_API_SERVERS, null, 1000, 10, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 		List<CQSAPIStats> statsList = new ArrayList<CQSAPIStats>();
 		
 		if (rows != null) {
 			
-			for (Row<String, String, String> row : rows) {
+			for (CmbRow<String, String, String> row : rows) {
 				
 				CQSAPIStats stats = new CQSAPIStats();
 				stats.setIpAddress(row.getKey());

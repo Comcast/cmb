@@ -34,18 +34,18 @@ import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
-import me.prettyprint.cassandra.serializers.CompositeSerializer;
-import me.prettyprint.cassandra.serializers.StringSerializer;
-import me.prettyprint.hector.api.beans.Composite;
-import me.prettyprint.hector.api.beans.HColumn;
-import me.prettyprint.hector.api.beans.HSuperColumn;
-import me.prettyprint.hector.api.beans.SuperSlice;
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.log4j.Logger;
 
-import com.comcast.cmb.common.persistence.CassandraPersistence;
+import com.comcast.cmb.common.persistence.AbstractCassandraPersistence;
+import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CMB_SERIALIZER;
+import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CmbColumn;
+import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CmbComposite;
+import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CmbSuperColumn;
+import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CmbSuperColumnSlice;
+import com.comcast.cmb.common.persistence.CassandraPersistenceFactory;
 import com.comcast.cmb.common.util.CMBErrorCodes;
 import com.comcast.cmb.common.util.CMBException;
 import com.comcast.cmb.common.util.CMBProperties;
@@ -525,7 +525,7 @@ public class Util {
 		return message;
 	}
 	
-	public static List<CQSMessage> readMessagesFromSuperColumns(String queueUrl, int length, Composite previousHandle, Composite nextHandle, SuperSlice<Composite, String, String> superSlice, boolean ignoreFirstLastColumn) throws PersistenceException, NoSuchAlgorithmException, IOException  {
+	public static List<CQSMessage> readMessagesFromSuperColumns(String queueUrl, int length, CmbComposite previousHandle, CmbComposite nextHandle, CmbSuperColumnSlice<CmbComposite, String, String> superSlice, boolean ignoreFirstLastColumn) throws PersistenceException, NoSuchAlgorithmException, IOException  {
 		
 		List<CQSMessage> messageList = new ArrayList<CQSMessage>();
 
@@ -533,9 +533,9 @@ public class Util {
 			
 			boolean noMatch = true;
 			
-			for (HSuperColumn<Composite, String, String> superColumn : superSlice.getSuperColumns()) {
+			for (CmbSuperColumn<CmbComposite, String, String> superColumn : superSlice.getSuperColumns()) {
 				
-				Composite columnName = superColumn.getName();
+				CmbComposite columnName = superColumn.getName();
 				
 				if (ignoreFirstLastColumn && (previousHandle != null && columnName.compareTo(previousHandle) == 0) || (nextHandle != null && columnName.compareTo(nextHandle) == 0)) {
 					noMatch = false;
@@ -581,7 +581,7 @@ public class Util {
         return attributeNames;
     }
     
-	public static CQSMessage extractMessageFromSuperColumn(String queueUrl, HSuperColumn<Composite, String, String> superColumn) throws NoSuchAlgorithmException, PersistenceException, IOException {
+	public static CQSMessage extractMessageFromSuperColumn(String queueUrl, CmbSuperColumn<CmbComposite, String, String> superColumn) throws NoSuchAlgorithmException, PersistenceException, IOException {
 		
 		Map<String, String> messageMap = new HashMap<String, String>();
 		
@@ -597,11 +597,11 @@ public class Util {
 			throw new PersistenceException(CMBErrorCodes.InternalError, "Unknown queue " + queueUrl);
 		}
 		
-		for (HColumn<String, String> column : superColumn.getColumns()) {
+		for (CmbColumn<String, String> column : superColumn.getColumns()) {
 			messageMap.put(column.getName(), column.getValue());
 		}
 		
-		Composite columnName = superColumn.getName();
+		CmbComposite columnName = superColumn.getName();
 		CQSMessage message = buildMessageFromMap(messageMap);
 		
 		if (queue.isCompressed()) {
@@ -612,32 +612,32 @@ public class Util {
 		return message;
 	}
 	
-	public static long getQueueMessageCount(CQSQueue queue) throws NoSuchAlgorithmException, UnsupportedEncodingException {
+	public static long getQueueMessageCount(CQSQueue queue) throws NoSuchAlgorithmException, UnsupportedEncodingException, PersistenceException {
 		
 		int numberOfPartitions = queue.getNumberOfPartitions();
-		CassandraPersistence persistence = new CassandraPersistence(CMBProperties.getInstance().getCQSKeyspace());
+		AbstractCassandraPersistence cassandraHandler = CassandraPersistenceFactory.getInstance();
 		String queueHash = Util.hashQueueUrl(queue.getRelativeUrl());
 		long messageCount = 0;
 		
 		for (int i=0; i<numberOfPartitions; i++) {
 			String queueKey = queueHash + "_" + i;
-			long partitionCount = persistence.getCount("CQSPartitionedQueueMessages", queueKey, StringSerializer.get(), new CompositeSerializer(), CMBProperties.getInstance().getReadConsistencyLevel());
+			long partitionCount = cassandraHandler.getCount(CMBProperties.getInstance().getCQSKeyspace(), "CQSPartitionedQueueMessages", queueKey, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.COMPOSITE_SERIALIZER);
 			messageCount += partitionCount;
 		}
 		
 		return messageCount;
 	}
 
-	public static List<Long> getPartitionMessageCounts(CQSQueue queue) throws NoSuchAlgorithmException, UnsupportedEncodingException {
+	public static List<Long> getPartitionMessageCounts(CQSQueue queue) throws NoSuchAlgorithmException, UnsupportedEncodingException, PersistenceException {
 		
 		int numberOfPartitions = queue.getNumberOfPartitions();
-		CassandraPersistence persistence = new CassandraPersistence(CMBProperties.getInstance().getCQSKeyspace());
+		AbstractCassandraPersistence cassandraHandler = CassandraPersistenceFactory.getInstance();
 		String queueHash = Util.hashQueueUrl(queue.getRelativeUrl());
 		List<Long> messageCounts = new ArrayList<Long>();
 		
 		for (int i=0; i<numberOfPartitions; i++) {
 			String queueKey = queueHash + "_" + i;
-			long partitionCount = persistence.getCount("CQSPartitionedQueueMessages", queueKey, StringSerializer.get(), new CompositeSerializer(), CMBProperties.getInstance().getReadConsistencyLevel());
+			long partitionCount = cassandraHandler.getCount(CMBProperties.getInstance().getCQSKeyspace(), "CQSPartitionedQueueMessages", queueKey, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.COMPOSITE_SERIALIZER);
 			messageCounts.add(partitionCount);
 		}
 		

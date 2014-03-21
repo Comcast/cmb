@@ -17,7 +17,6 @@ package com.comcast.cns.io;
 
 import java.util.List;
 
-import com.comcast.cns.model.CNSMessage;
 import com.comcast.cns.model.CNSSubscription;
 
 /**

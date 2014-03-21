@@ -46,7 +46,7 @@ import redis.clients.jedis.exceptions.JedisException;
 import redis.clients.util.SafeEncoder;
 
 import com.comcast.cmb.common.controller.CMBControllerServlet;
-import com.comcast.cmb.common.persistence.CassandraPersistence;
+import com.comcast.cmb.common.persistence.AbstractCassandraPersistence;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.PersistenceException;
 import com.comcast.cmb.common.util.Util;
@@ -200,7 +200,7 @@ public class CQSRedisCachedCassandraPersistenceTest {
         
         public TestDataPersistence(int numMessages) throws NoSuchAlgorithmException, UnsupportedEncodingException {
             messages = new LinkedList<CQSMessage>();
-            long timeHash = CassandraPersistence.newTime(System.currentTimeMillis(), false);
+            long timeHash = AbstractCassandraPersistence.newTime(System.currentTimeMillis(), false);
             for (int i = 0; i < numMessages; i++) {
                 CQSMessage msg = new CQSMessage(""+i, new HashMap<String, String>());
                 msg.setMessageId("45c1596598f85ce59f060dc2b8ec4ebb_0_72:"+timeHash+":"+i);
@@ -391,7 +391,7 @@ public class CQSRedisCachedCassandraPersistenceTest {
         queue.setRelativeUrl("testQueue");        
         CQSMessage msg = new CQSMessage("test", new HashMap<String, String>());
 //        msg.setMessageId("2000");
-        long timeHash = CassandraPersistence.newTime(System.currentTimeMillis(), false);
+        long timeHash = AbstractCassandraPersistence.newTime(System.currentTimeMillis(), false);
         msg.setMessageId("45c1596598f85ce59f060dc2b8ec4ebb_0_72:"+timeHash+":2000");
         msg.setSuppliedMessageId("2000");
         String newMessageId;

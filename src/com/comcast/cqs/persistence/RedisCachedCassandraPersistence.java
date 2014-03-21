@@ -45,7 +45,7 @@ import redis.clients.jedis.Transaction;
 import redis.clients.jedis.exceptions.JedisConnectionException;
 import redis.clients.jedis.exceptions.JedisException;
 
-import com.comcast.cmb.common.persistence.CassandraPersistence;
+import com.comcast.cmb.common.persistence.AbstractCassandraPersistence;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.PersistenceException;
 import com.comcast.cmb.common.util.ValueAccumulator.AccumulatorName;
@@ -516,7 +516,7 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
         if (arr.length < 5) {
             throw new IllegalArgumentException("Bad format for memId. Must be of the form 0:0:<messge-id>. Got: " + memId);
         }
-        return CassandraPersistence.getTimestampFromHash(Long.parseLong(arr[3]));        
+        return AbstractCassandraPersistence.getTimestampFromHash(Long.parseLong(arr[3]));        
     }
     
     /**

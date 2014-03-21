@@ -32,9 +32,6 @@ import com.comcast.cqs.model.CQSAPIStats;
 import com.comcast.cqs.persistence.RedisCachedCassandraPersistence;
 import com.comcast.cqs.util.Util;
 
-import me.prettyprint.cassandra.serializers.StringSerializer;
-import me.prettyprint.hector.api.beans.Row;
-
 import org.apache.log4j.Logger;
 import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.buffer.ChannelBuffer;
@@ -52,7 +49,10 @@ import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.channel.SimpleChannelHandler;
 import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
 
-import com.comcast.cmb.common.persistence.CassandraPersistence;
+import com.comcast.cmb.common.persistence.AbstractCassandraPersistence;
+import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CMB_SERIALIZER;
+import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CmbRow;
+import com.comcast.cmb.common.persistence.CassandraPersistenceFactory;
 import com.comcast.cmb.common.util.CMBProperties;
 
 public class CQSLongPollSender {
@@ -63,6 +63,9 @@ public class CQSLongPollSender {
     private static volatile LinkedBlockingQueue<String> pendingNotifications;
     private static volatile boolean initialized = false;
     private static volatile String localhost;
+    
+    public static final String CQS_API_SERVERS = "CQSAPIServers";
+    
     
     // last minute long poll sender checked for api server heart beats
     
@@ -153,15 +156,13 @@ public class CQSLongPollSender {
 
 	                // read all other pings but ensure we are data-center local and looking at a cqs service
 	        		
-	        		CassandraPersistence cassandraHandler = new CassandraPersistence(CMBProperties.getInstance().getCQSKeyspace());
-	                
-	        		List<Row<String, String, String>> rows = cassandraHandler.readNextNNonEmptyRows("CQSAPIServers", null, 1000, 10, new StringSerializer(), new StringSerializer(), new StringSerializer(), CMBProperties.getInstance().getReadConsistencyLevel());
+	        		List<CmbRow<String, String, String>> rows = CassandraPersistenceFactory.getInstance().readNextNNonEmptyRows(AbstractCassandraPersistence.CQS_KEYSPACE, CQS_API_SERVERS, null, 1000, 10, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 	        		
 	        		Map<String, CQSAPIStats> cqsAPIServers = new HashMap<String, CQSAPIStats>();
 	        		
 	        		if (rows != null) {
 	        			
-	        			for (Row<String, String, String> row : rows) {
+	        			for (CmbRow<String, String, String> row : rows) {
 	        				
 	        				CQSAPIStats stats = new CQSAPIStats();
 	        				

@@ -18,11 +18,10 @@ package com.comcast.cmb.test.tools;
 import java.io.UnsupportedEncodingException;
 import java.security.NoSuchAlgorithmException;
 
-import me.prettyprint.cassandra.serializers.CompositeSerializer;
-import me.prettyprint.cassandra.serializers.StringSerializer;
-
-import com.comcast.cmb.common.persistence.CassandraPersistence;
+import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CMB_SERIALIZER;
+import com.comcast.cmb.common.persistence.CassandraPersistenceFactory;
 import com.comcast.cmb.common.util.CMBProperties;
+import com.comcast.cmb.common.util.PersistenceException;
 import com.comcast.cqs.util.Util;
 
 public class CQSTestUtils {
@@ -31,8 +30,9 @@ public class CQSTestUtils {
 	 * @param args
 	 * @throws UnsupportedEncodingException 
 	 * @throws NoSuchAlgorithmException 
+	 * @throws PersistenceException 
 	 */
-	public static void main(String[] args) throws NoSuchAlgorithmException, UnsupportedEncodingException {
+	public static void main(String[] args) throws NoSuchAlgorithmException, UnsupportedEncodingException, PersistenceException {
 		if (args == null) {
 			System.out.println("Usage: <action> <args>.  Valid actions are GetQueueCount with the queue url");
 		}
@@ -46,14 +46,13 @@ public class CQSTestUtils {
 
 	}
 
-	private static void getQueueCount(String queueUrl) throws NoSuchAlgorithmException, UnsupportedEncodingException {
+	private static void getQueueCount(String queueUrl) throws NoSuchAlgorithmException, UnsupportedEncodingException, PersistenceException {
 		int numberOfPartitions = CMBProperties.getInstance().getCQSNumberOfQueuePartitions();
-		CassandraPersistence persistence = new CassandraPersistence(CMBProperties.getInstance().getCQSKeyspace());
 		String queueHash = Util.hashQueueUrl(queueUrl);
 		long messageCount = 0;
 		for (int i=0; i<numberOfPartitions; i++) {
 			String queueKey = queueHash + "_" + i;
-			long partitionCount = persistence.getCount("CQSPartitionedQueueMessages", queueKey, StringSerializer.get(), new CompositeSerializer(), CMBProperties.getInstance().getReadConsistencyLevel());
+			long partitionCount = CassandraPersistenceFactory.getInstance().getCount(CMBProperties.getInstance().getCQSKeyspace(), "CQSPartitionedQueueMessages", queueKey, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.COMPOSITE_SERIALIZER);
 			messageCount += partitionCount;
 			System.out.println("# of messages in " + queueKey + " =" + partitionCount);
 		}

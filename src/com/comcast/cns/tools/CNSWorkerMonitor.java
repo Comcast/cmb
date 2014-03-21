@@ -24,7 +24,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.log4j.Logger;
 import org.jfree.util.Log;
 
-import com.comcast.cmb.common.controller.CMB;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.PersistenceException;
 import com.comcast.cmb.common.util.RollingWindowCapture;

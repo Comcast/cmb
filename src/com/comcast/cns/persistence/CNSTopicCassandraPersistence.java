@@ -20,7 +20,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.comcast.cmb.common.persistence.CassandraPersistence;
+import com.comcast.cmb.common.persistence.AbstractCassandraPersistence;
+import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CMB_SERIALIZER;
+import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CmbColumn;
+import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CmbColumnSlice;
+import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CmbRow;
+import com.comcast.cmb.common.persistence.CassandraPersistenceFactory;
 import com.comcast.cmb.common.persistence.PersistenceFactory;
 import com.comcast.cmb.common.util.CMBException;
 import com.comcast.cmb.common.util.CMBProperties;
@@ -34,41 +39,24 @@ import com.comcast.cqs.util.CQSErrorCodes;
 
 import org.apache.log4j.Logger;
 
-import me.prettyprint.cassandra.serializers.StringSerializer;
-import me.prettyprint.cassandra.service.template.ColumnFamilyTemplate;
-import me.prettyprint.cassandra.service.template.ThriftColumnFamilyTemplate;
-import me.prettyprint.hector.api.beans.ColumnSlice;
-import me.prettyprint.hector.api.beans.HColumn;
-import me.prettyprint.hector.api.beans.Row;
-
 /**
  * Provide Cassandra persistence for topics
  * @author aseem, bwolf, jorge, vvenkatraman, tina, michael
  *
  * Class is immutable
  */
-public class CNSTopicCassandraPersistence extends CassandraPersistence implements ICNSTopicPersistence {
+public class CNSTopicCassandraPersistence implements ICNSTopicPersistence {
 
 	private static Logger logger = Logger.getLogger(CNSTopicCassandraPersistence.class);
-
-	private final ColumnFamilyTemplate<String, String> topicsTemplate;
-	private final ColumnFamilyTemplate<String, String> topicsByUserIdTemplate;
-	private final ColumnFamilyTemplate<String, String> topicAttributesTemplate;
-	private final ColumnFamilyTemplate<String, String> topicStatsTemplate;
 
 	private static final String columnFamilyTopics = "CNSTopics";
 	private static final String columnFamilyTopicsByUserId = "CNSTopicsByUserId";
 	private static final String columnFamilyTopicAttributes = "CNSTopicAttributes";
 	private static final String columnFamilyTopicStats = "CNSTopicStats";
+	
+	private static final AbstractCassandraPersistence cassandraHandler = CassandraPersistenceFactory.getInstance();
 
 	public CNSTopicCassandraPersistence() {
-
-		super(CMBProperties.getInstance().getCNSKeyspace());
-
-		topicsTemplate = new ThriftColumnFamilyTemplate<String, String>(keyspaces.get(CMBProperties.getInstance().getWriteConsistencyLevel()), columnFamilyTopics, StringSerializer.get(), StringSerializer.get());
-		topicsByUserIdTemplate = new ThriftColumnFamilyTemplate<String, String>(keyspaces.get(CMBProperties.getInstance().getWriteConsistencyLevel()), columnFamilyTopicsByUserId, StringSerializer.get(), StringSerializer.get());
-		topicAttributesTemplate = new ThriftColumnFamilyTemplate<String, String>(keyspaces.get(CMBProperties.getInstance().getWriteConsistencyLevel()), columnFamilyTopicAttributes, StringSerializer.get(), StringSerializer.get());
-		topicStatsTemplate = new ThriftColumnFamilyTemplate<String, String>(keyspaces.get(CMBProperties.getInstance().getWriteConsistencyLevel()), columnFamilyTopicStats, StringSerializer.get(), StringSerializer.get());
 	}
 
 	private Map<String, String> getColumnValues(CNSTopic t) {
@@ -111,15 +99,19 @@ public class CNSTopicCassandraPersistence extends CassandraPersistence implement
 
 			topic = new CNSTopic(arn, name, displayName, userId);
 			topic.checkIsValid();
-			insertOrUpdateRow(topic.getArn(), columnFamilyTopics, getColumnValues(topic), CMBProperties.getInstance().getWriteConsistencyLevel());
-			update(topicsByUserIdTemplate, userId, topic.getArn(), "", StringSerializer.get(), StringSerializer.get(), StringSerializer.get());
-			delete(topicStatsTemplate, arn, null);
-    		deleteCounter(columnFamilyTopicStats, arn, "subscriptionConfirmed", new StringSerializer(), new StringSerializer(), CMBProperties.getInstance().getWriteConsistencyLevel());
-    		deleteCounter(columnFamilyTopicStats, arn, "subscriptionPending", new StringSerializer(), new StringSerializer(), CMBProperties.getInstance().getWriteConsistencyLevel());
-    		deleteCounter(columnFamilyTopicStats, arn, "subscriptionDeleted", new StringSerializer(), new StringSerializer(), CMBProperties.getInstance().getWriteConsistencyLevel());
-    		incrementCounter(columnFamilyTopicStats, arn, "subscriptionConfirmed", 0, new StringSerializer(), new StringSerializer(), CMBProperties.getInstance().getWriteConsistencyLevel());
-    		incrementCounter(columnFamilyTopicStats, arn, "subscriptionPending", 0, new StringSerializer(), new StringSerializer(), CMBProperties.getInstance().getWriteConsistencyLevel());
-    		incrementCounter(columnFamilyTopicStats, arn, "subscriptionDeleted", 0, new StringSerializer(), new StringSerializer(), CMBProperties.getInstance().getWriteConsistencyLevel());
+			
+			cassandraHandler.insertRow(AbstractCassandraPersistence.CNS_KEYSPACE, topic.getArn(), columnFamilyTopics, getColumnValues(topic), CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, null);
+			cassandraHandler.update(AbstractCassandraPersistence.CNS_KEYSPACE, columnFamilyTopicsByUserId, userId, topic.getArn(), "", CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+			cassandraHandler.delete(AbstractCassandraPersistence.CNS_KEYSPACE, columnFamilyTopicStats, arn, null, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+			
+			cassandraHandler.deleteCounter(AbstractCassandraPersistence.CNS_KEYSPACE, columnFamilyTopicStats, arn, "subscriptionConfirmed", CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+			cassandraHandler.deleteCounter(AbstractCassandraPersistence.CNS_KEYSPACE, columnFamilyTopicStats, arn, "subscriptionPending", CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+			cassandraHandler.deleteCounter(AbstractCassandraPersistence.CNS_KEYSPACE, columnFamilyTopicStats, arn, "subscriptionDeleted", CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+			
+			cassandraHandler.incrementCounter(AbstractCassandraPersistence.CNS_KEYSPACE, columnFamilyTopicStats, arn, "subscriptionConfirmed", 0, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+			cassandraHandler.incrementCounter(AbstractCassandraPersistence.CNS_KEYSPACE, columnFamilyTopicStats, arn, "subscriptionPending", 0, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+			cassandraHandler.incrementCounter(AbstractCassandraPersistence.CNS_KEYSPACE, columnFamilyTopicStats, arn, "subscriptionDeleted", 0, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+			
 			CNSTopicAttributes attributes = new CNSTopicAttributes(arn, userId);
 			PersistenceFactory.getCNSAttributePersistence().setTopicAttributes(attributes, arn);
 
@@ -140,13 +132,13 @@ public class CNSTopicCassandraPersistence extends CassandraPersistence implement
 
 		PersistenceFactory.getSubscriptionPersistence().unsubscribeAll(topic.getArn());		
 
-		delete(topicsTemplate, topicArn, null);
-		delete(topicsByUserIdTemplate, topic.getUserId(), topicArn);
-		delete(topicAttributesTemplate, topicArn, null);
-		delete(topicStatsTemplate, topicArn, null);
-		deleteCounter(columnFamilyTopicStats, topicArn, "subscriptionConfirmed", new StringSerializer(), new StringSerializer(), CMBProperties.getInstance().getWriteConsistencyLevel());
-		deleteCounter(columnFamilyTopicStats, topicArn, "subscriptionPending", new StringSerializer(), new StringSerializer(), CMBProperties.getInstance().getWriteConsistencyLevel());
-		deleteCounter(columnFamilyTopicStats, topicArn, "subscriptionDeleted", new StringSerializer(), new StringSerializer(), CMBProperties.getInstance().getWriteConsistencyLevel());
+		cassandraHandler.delete(AbstractCassandraPersistence.CNS_KEYSPACE, columnFamilyTopics, topicArn, null, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+		cassandraHandler.delete(AbstractCassandraPersistence.CNS_KEYSPACE, columnFamilyTopicsByUserId, topic.getUserId(), topicArn, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+		cassandraHandler.delete(AbstractCassandraPersistence.CNS_KEYSPACE, columnFamilyTopicAttributes, topicArn, null, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+		cassandraHandler.delete(AbstractCassandraPersistence.CNS_KEYSPACE, columnFamilyTopicStats, topicArn, null, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+		cassandraHandler.deleteCounter(AbstractCassandraPersistence.CNS_KEYSPACE, columnFamilyTopicStats, topicArn, "subscriptionConfirmed", CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+		cassandraHandler.deleteCounter(AbstractCassandraPersistence.CNS_KEYSPACE, columnFamilyTopicStats, topicArn, "subscriptionPending", CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+		cassandraHandler.deleteCounter(AbstractCassandraPersistence.CNS_KEYSPACE, columnFamilyTopicStats, topicArn, "subscriptionDeleted", CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 		
 		CNSCache.removeTopic(topicArn);
 	}
@@ -167,7 +159,7 @@ public class CNSTopicCassandraPersistence extends CassandraPersistence implement
 			
 			sliceSize = 0;
 			
-			ColumnSlice<String, String> slice = readColumnSlice(columnFamilyTopicsByUserId, userId, lastArn, null, 10000, new StringSerializer(), new StringSerializer(), new StringSerializer(), CMBProperties.getInstance().getReadConsistencyLevel());
+			CmbColumnSlice<String, String> slice = cassandraHandler.readColumnSlice(AbstractCassandraPersistence.CNS_KEYSPACE, columnFamilyTopicsByUserId, userId, lastArn, null, 10000, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 			
 			if (slice != null && slice.getColumns().size() > 0) {
 				sliceSize = slice.getColumns().size();
@@ -191,15 +183,15 @@ public class CNSTopicCassandraPersistence extends CassandraPersistence implement
 		}
 
 		List<CNSTopic> topics = new ArrayList<CNSTopic>();
-		ColumnSlice<String, String> slice = readColumnSlice(columnFamilyTopicsByUserId, userId, nextToken, null, 100, new StringSerializer(), new StringSerializer(), new StringSerializer(), CMBProperties.getInstance().getReadConsistencyLevel());
+		CmbColumnSlice<String, String> slice = cassandraHandler.readColumnSlice(AbstractCassandraPersistence.CNS_KEYSPACE, columnFamilyTopicsByUserId, userId, nextToken, null, 100, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 
 		if (slice != null) {
 			
-			for (HColumn<String, String> c : slice.getColumns()) {
+			for (CmbColumn<String, String> c : slice.getColumns()) {
 				
 				String arn = c.getName();
 
-				slice = readColumnSlice(columnFamilyTopics, arn, 100, new StringSerializer(), new StringSerializer(), new StringSerializer(), CMBProperties.getInstance().getReadConsistencyLevel());
+				slice = cassandraHandler.readColumnSlice(AbstractCassandraPersistence.CNS_KEYSPACE, columnFamilyTopics, arn, null, null, 100, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 
 				if (slice != null) {
 
@@ -216,7 +208,7 @@ public class CNSTopicCassandraPersistence extends CassandraPersistence implement
 					topics.add(t);
 
 				} else {
-					delete(topicsByUserIdTemplate, userId, arn);
+					cassandraHandler.delete(AbstractCassandraPersistence.CNS_KEYSPACE, columnFamilyTopicsByUserId, userId, arn, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 				}
 			}
 		}
@@ -236,9 +228,9 @@ public class CNSTopicCassandraPersistence extends CassandraPersistence implement
 
 		List<CNSTopic> topics = new ArrayList<CNSTopic>();
 
-		List<Row<String, String, String>> rows = readNextNRows(columnFamilyTopics, nextToken, 100, new StringSerializer(), new StringSerializer(), new StringSerializer(), CMBProperties.getInstance().getReadConsistencyLevel());
+		List<CmbRow<String, String, String>> rows = cassandraHandler.readNextNRows(AbstractCassandraPersistence.CNS_KEYSPACE, columnFamilyTopics, nextToken, 1000, 100, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 
-		for (Row<String, String, String> row : rows) {
+		for (CmbRow<String, String, String> row : rows) {
 
 			String arn = row.getKey();
 			String name = row.getColumnSlice().getColumnByName("name").getValue();
@@ -263,7 +255,7 @@ public class CNSTopicCassandraPersistence extends CassandraPersistence implement
 	public CNSTopic getTopic(String arn) throws Exception {
 
 		CNSTopic topic = null;
-		ColumnSlice<String, String> slice = readColumnSlice(columnFamilyTopics, arn, 10, new StringSerializer(), new StringSerializer(), new StringSerializer(), CMBProperties.getInstance().getReadConsistencyLevel());
+		CmbColumnSlice<String, String> slice = cassandraHandler.readColumnSlice(AbstractCassandraPersistence.CNS_KEYSPACE, columnFamilyTopics, arn, null, null, 10, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 
 		if (slice != null) {
 
@@ -289,7 +281,7 @@ public class CNSTopicCassandraPersistence extends CassandraPersistence implement
 		if (topic != null) {
 			topic.setDisplayName(displayName);
 			topic.checkIsValid();
-			insertOrUpdateRow(topic.getArn(), columnFamilyTopics, getColumnValues(topic), CMBProperties.getInstance().getWriteConsistencyLevel());
+			cassandraHandler.insertRow(AbstractCassandraPersistence.CNS_KEYSPACE, topic.getArn(), columnFamilyTopics, getColumnValues(topic), CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, null);
 		}
 		
 		CNSCache.removeTopic(arn);
