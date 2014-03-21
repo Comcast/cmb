@@ -34,7 +34,6 @@ import com.comcast.cns.model.CNSEndpointPublishJob;
 import com.comcast.cns.model.CNSMessage;
 import com.comcast.cns.model.CNSSubscription;
 import com.comcast.cns.model.CNSSubscription.CnsSubscriptionProtocol;
-import com.comcast.cns.model.CNSSubscriptionAttributes;
 import com.comcast.cns.util.Util;
 
 /**

@@ -62,7 +62,6 @@ public class CNSControllerServlet extends CMBControllerServlet {
     private static Logger logger = Logger.getLogger(CNSControllerServlet.class);
     
     private static final String CNS_API_SERVERS = "CNSAPIServers";
-
     /**
      * NodeName global constant is used to identify this process uniquely across all API servers
      * and is used to identify creators of recovery logs
@@ -195,7 +194,7 @@ public class CNSControllerServlet extends CMBControllerServlet {
 
         	try {
 
-        		AbstractCassandraPersistence cassandraHandler = CassandraPersistenceFactory.getInstance(CMBProperties.getInstance().getCNSKeyspace());
+        		AbstractCassandraPersistence cassandraHandler = CassandraPersistenceFactory.getInstance();
 
         		// write ping
         		
@@ -211,7 +210,7 @@ public class CNSControllerServlet extends CMBControllerServlet {
 	        	values.put("dataCenter", CMBProperties.getInstance().getCMBDataCenter());
 	        	values.put("serviceUrl", CMBProperties.getInstance().getCNSServiceUrl());
 	        	
-                cassandraHandler.insertRow(CMBProperties.getInstance().getCNSKeyspace(), serverIp + ":" + serverPort, CNS_API_SERVERS, values, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, null);
+                cassandraHandler.insertRow(AbstractCassandraPersistence.CNS_KEYSPACE, serverIp + ":" + serverPort, CNS_API_SERVERS, values, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, null);
                 
         	} catch (Exception ex) {
         		logger.warn("event=ping_failed", ex);

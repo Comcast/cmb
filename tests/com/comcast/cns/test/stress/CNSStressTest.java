@@ -88,7 +88,7 @@ public class CNSStressTest {
 	private List<String> topics = new ArrayList<String>();
 	private static final Random rand = new Random();
 	
-	private static AbstractCassandraPersistence cassandraHandler = CassandraPersistenceFactory.getInstance(CMBProperties.getInstance().getCNSKeyspace());
+	private static AbstractCassandraPersistence cassandraHandler = CassandraPersistenceFactory.getInstance();
 	
     @Before
     public void setup() throws Exception {

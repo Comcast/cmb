@@ -77,7 +77,7 @@ public class HealthCheckShallow extends CQSAction {
         
         try {
         	
-        	AbstractCassandraPersistence cassandra = CassandraPersistenceFactory.getInstance(CMBProperties.getInstance().getCMBKeyspace());
+        	AbstractCassandraPersistence cassandra = CassandraPersistenceFactory.getInstance();
         	
         	if (cassandra.isAlive()) {
         		sb.append("\t<Cassandra>OK</Cassandra>\n");

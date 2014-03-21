@@ -20,20 +20,19 @@ import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CmbRow;
 import com.comcast.cmb.common.persistence.CassandraPersistenceFactory;
 import com.comcast.cmb.common.util.CMBErrorCodes;
 import com.comcast.cmb.common.util.CMBException;
-import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.PersistenceException;
 import com.comcast.cns.model.CNSWorkerStats;
 import com.comcast.cns.tools.CNSWorkerMonitor;
 import com.comcast.cns.tools.CNSWorkerMonitorMBean;
 
 public class CNSWorkerStatWrapper {
+	
 	private static Logger logger = Logger.getLogger(CNSWorkerStatWrapper.class);
-
+	private static AbstractCassandraPersistence cassandraHandler = CassandraPersistenceFactory.getInstance();
+	private static final String CNS_WORKERS = "CNSWorkers";
 	public static List<CNSWorkerStats> getCassandraWorkerStats() throws PersistenceException {
 
-		AbstractCassandraPersistence cassandraHandler = CassandraPersistenceFactory.getInstance(CMBProperties.getInstance().getCNSKeyspace());
-
-		List<CmbRow<String, String, String>> rows = cassandraHandler.readNextNNonEmptyRows(CMBProperties.getInstance().getCNSKeyspace(), "CNSWorkers", null, 1000, 10, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+		List<CmbRow<String, String, String>> rows = cassandraHandler.readNextNNonEmptyRows(AbstractCassandraPersistence.CNS_KEYSPACE, CNS_WORKERS, null, 1000, 10, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 		List<CNSWorkerStats> statsList = new ArrayList<CNSWorkerStats>();
 
 		if (rows != null) {
@@ -82,7 +81,9 @@ public class CNSWorkerStatWrapper {
 	}
 
 	private static void callOperation(String operation, List<CNSWorkerStats> cnsWorkerStats) throws Exception{
+
 		//register JMX Bean
+		
 		MBeanServer mbs = ManagementFactory.getPlatformMBeanServer(); 
 		ObjectName name = new ObjectName("com.comcast.cns.tools:type=CNSWorkerMonitorMBean");
 

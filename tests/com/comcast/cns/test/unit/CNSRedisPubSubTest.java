@@ -1,23 +1,13 @@
 package com.comcast.cns.test.unit;
 
 
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import org.apache.log4j.Logger;
-import org.junit.Test;
-
-import com.amazonaws.services.sns.model.DeleteTopicRequest;
 import com.amazonaws.services.sns.model.PublishRequest;
 import com.amazonaws.services.sns.model.SubscribeRequest;
 import com.amazonaws.services.sns.model.SubscribeResult;
-import com.amazonaws.services.sns.model.UnsubscribeRequest;
-import com.comcast.cmb.common.controller.CMBControllerServlet;
-import com.comcast.cmb.common.persistence.PersistenceFactory;
-import com.comcast.cmb.common.util.CMBProperties;
-import com.comcast.cmb.common.util.Util;
 import com.comcast.cmb.test.tools.CMBAWSBaseTest;
-import com.comcast.cmb.test.tools.CMBAWSBaseTest.USR;
 
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPubSub;

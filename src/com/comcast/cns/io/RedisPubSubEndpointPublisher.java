@@ -15,7 +15,6 @@
  */
 package com.comcast.cns.io;
 
-import org.apache.commons.pool.impl.GenericObjectPool.Config;
 import org.apache.log4j.Logger;
 
 

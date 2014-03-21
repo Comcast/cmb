@@ -19,8 +19,6 @@ import javax.servlet.AsyncContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.log4j.Logger;
-
 import com.comcast.cmb.common.model.User;
 import com.comcast.cmb.common.util.CMBException;
 import com.comcast.cns.io.CNSAttributePopulator;

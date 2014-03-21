@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CmbComposite;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.PersistenceException;
 
@@ -13,6 +12,10 @@ public abstract class AbstractCassandraPersistence {
 	
 	protected static Random rand = new Random();
 	
+	public static final String CMB_KEYSPACE = CMBProperties.getInstance().getCMBKeyspace();
+	public static final String CQS_KEYSPACE = CMBProperties.getInstance().getCQSKeyspace();
+	public static final String CNS_KEYSPACE = CMBProperties.getInstance().getCNSKeyspace();
+    
 	public static class CMB_SERIALIZER { 
 		public static final CmbStringSerializer STRING_SERIALIZER = new CmbStringSerializer();
 		public static final CmbCompositeSerializer COMPOSITE_SERIALIZER = new CmbCompositeSerializer();
@@ -99,7 +102,7 @@ public abstract class AbstractCassandraPersistence {
     	t = t >> 21;
         return t;
     }
-    
+
 	public java.util.UUID getTimeUUID(long timeMillis) throws InterruptedException {
 		return new java.util.UUID(newTime(timeMillis, false), com.eaio.uuid.UUIDGen.getClockSeqAndNode());
 	}

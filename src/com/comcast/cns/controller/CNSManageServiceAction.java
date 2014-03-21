@@ -39,7 +39,6 @@ import com.comcast.cmb.common.persistence.CassandraPersistenceFactory;
 import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CMB_SERIALIZER;
 import com.comcast.cmb.common.util.CMBErrorCodes;
 import com.comcast.cmb.common.util.CMBException;
-import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cns.io.CNSPopulator;
 import com.comcast.cns.io.CNSWorkerStatsPopulator;
 import com.comcast.cns.model.CNSWorkerStats;
@@ -57,7 +56,6 @@ public class CNSManageServiceAction extends CNSAction {
 	
 	public static final String CNS_API_SERVERS = "CNSAPIServers";
 	public static final String CNS_WORKERS = "CNSWorkers";
-
 	public CNSManageServiceAction() {
 		super("ManageService");
 	}
@@ -92,11 +90,11 @@ public class CNSManageServiceAction extends CNSAction {
 			throw new CMBException(CNSErrorCodes.MissingParameter,"Request parameter Host missing.");
 		}
 
-		AbstractCassandraPersistence cassandraHandler = CassandraPersistenceFactory.getInstance(CMBProperties.getInstance().getCNSKeyspace());
+		AbstractCassandraPersistence cassandraHandler = CassandraPersistenceFactory.getInstance();
 
 		if (task.equals("ClearWorkerQueues")) {
 
-			List<CmbRow<String, String, String>> rows = cassandraHandler.readNextNNonEmptyRows(CMBProperties.getInstance().getCNSKeyspace(), "CNSWorkers", null, 1000, 10, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+			List<CmbRow<String, String, String>> rows = cassandraHandler.readNextNNonEmptyRows(AbstractCassandraPersistence.CNS_KEYSPACE, CNS_WORKERS, null, 1000, 10, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 			List<CNSWorkerStats> statsList = new ArrayList<CNSWorkerStats>();
 
 			if (rows != null) {
@@ -165,7 +163,7 @@ public class CNSManageServiceAction extends CNSAction {
 
 		} else if (task.equals("RemoveWorkerRecord")) {
 			
-			cassandraHandler.delete(CMBProperties.getInstance().getCNSKeyspace(), CNS_WORKERS, host, null, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+			cassandraHandler.delete(AbstractCassandraPersistence.CNS_KEYSPACE, CNS_WORKERS, host, null, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 			String out = CNSPopulator.getResponseMetadata();
 	        writeResponse(out, response);
 			return true;
@@ -179,7 +177,7 @@ public class CNSManageServiceAction extends CNSAction {
 
 		} else if (task.equals("RemoveRecord")) {
 			
-			cassandraHandler.delete(CMBProperties.getInstance().getCNSKeyspace(), CNS_API_SERVERS, host, null, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+			cassandraHandler.delete(AbstractCassandraPersistence.CNS_KEYSPACE, CNS_API_SERVERS, host, null, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 			String out = CNSPopulator.getResponseMetadata();
 	        writeResponse(out, response);
 			return true;

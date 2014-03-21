@@ -249,7 +249,7 @@ public class CqsStressTester {
 
 	private void createReceivers(String queueUrl) {
 
-    	AbstractCassandraPersistence persistence = CassandraPersistenceFactory.getInstance(CMBProperties.getInstance().getCQSKeyspace());
+    	AbstractCassandraPersistence persistence = CassandraPersistenceFactory.getInstance();
     	long receiverCount = CQSStressTestProperties.getInstance().getNumberOfReceiversPerQueue();
     	List<Receiver> receiverListForQueue = new ArrayList<Receiver>();
 

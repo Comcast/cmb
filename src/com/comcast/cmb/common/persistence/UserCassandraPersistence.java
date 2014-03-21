@@ -47,8 +47,7 @@ public class UserCassandraPersistence implements IUserPersistence {
 	private static final String COLUMN_FAMILY_USERS = "Users";
 	private static final Logger logger = Logger.getLogger(UserCassandraPersistence.class);
 	
-	private static final String KEYSPACE = CMBProperties.getInstance().getCMBKeyspace();
-	private static final AbstractCassandraPersistence cassandraHandler = CassandraPersistenceFactory.getInstance(KEYSPACE);
+	private static final AbstractCassandraPersistence cassandraHandler = CassandraPersistenceFactory.getInstance();
 
 	public UserCassandraPersistence() {
 	}
@@ -102,7 +101,7 @@ public class UserCassandraPersistence implements IUserPersistence {
 			userDataMap.put(IS_ADMIN, user.getIsAdmin().toString());
 			userDataMap.put(USER_DESC, user.getDescription());
 			
-			cassandraHandler.insertRow(KEYSPACE, user.getUserName(), COLUMN_FAMILY_USERS, userDataMap, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, null);
+			cassandraHandler.insertRow(AbstractCassandraPersistence.CMB_KEYSPACE, user.getUserName(), COLUMN_FAMILY_USERS, userDataMap, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, null);
 			
 		} catch (Exception e) {
 			logger.error("event=create_user", e);
@@ -115,7 +114,7 @@ public class UserCassandraPersistence implements IUserPersistence {
 	
 	@Override
 	public void deleteUser(String userName) throws PersistenceException {
-		cassandraHandler.delete(KEYSPACE, COLUMN_FAMILY_USERS, userName, null, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+		cassandraHandler.delete(AbstractCassandraPersistence.CMB_KEYSPACE, COLUMN_FAMILY_USERS, userName, null, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 	}
 	
 	@Override
@@ -131,7 +130,7 @@ public class UserCassandraPersistence implements IUserPersistence {
 	@Override
 	public User getUserById(String userId) throws PersistenceException {
 
-		List<CmbRow<String, String, String>> rows = cassandraHandler.readNextNRows(KEYSPACE, COLUMN_FAMILY_USERS, null, USER_ID, userId, 10, 10, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);	
+		List<CmbRow<String, String, String>> rows = cassandraHandler.readNextNRows(AbstractCassandraPersistence.CMB_KEYSPACE, COLUMN_FAMILY_USERS, null, USER_ID, userId, 10, 10, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);	
 		
 		if (rows == null || rows.size() == 0) {
 			return null;
@@ -144,7 +143,7 @@ public class UserCassandraPersistence implements IUserPersistence {
 	@Override
 	public User getUserByName(String userName) throws PersistenceException {
 
-		CmbColumnSlice<String, String> slice = cassandraHandler.readColumnSlice(KEYSPACE, COLUMN_FAMILY_USERS, userName, null, null, 10, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+		CmbColumnSlice<String, String> slice = cassandraHandler.readColumnSlice(AbstractCassandraPersistence.CMB_KEYSPACE, COLUMN_FAMILY_USERS, userName, null, null, 10, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 
 		if (slice == null) {
 			return null;
@@ -157,7 +156,7 @@ public class UserCassandraPersistence implements IUserPersistence {
 	@Override
 	public User getUserByAccessKey(String accessKey) throws PersistenceException {
 
-		List<CmbRow<String, String, String>> rows = cassandraHandler.readNextNRows(KEYSPACE, COLUMN_FAMILY_USERS, null, ACCESS_KEY, accessKey, 10, 10, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);	
+		List<CmbRow<String, String, String>> rows = cassandraHandler.readNextNRows(AbstractCassandraPersistence.CMB_KEYSPACE, COLUMN_FAMILY_USERS, null, ACCESS_KEY, accessKey, 10, 10, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);	
 		
 		if (rows == null || rows.size() == 0) {
 			return null;
@@ -170,7 +169,7 @@ public class UserCassandraPersistence implements IUserPersistence {
 
 	public List<User> getAllUsers() throws PersistenceException {
 		
-		List<CmbRow<String, String, String>> rows = cassandraHandler.readNextNRows(KEYSPACE, COLUMN_FAMILY_USERS, null, 1000, 10, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);	
+		List<CmbRow<String, String, String>> rows = cassandraHandler.readNextNRows(AbstractCassandraPersistence.CMB_KEYSPACE, COLUMN_FAMILY_USERS, null, 1000, 10, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);	
 		List<User> userList = new ArrayList<User>();
 
 		if (rows == null || rows.size() == 0) {

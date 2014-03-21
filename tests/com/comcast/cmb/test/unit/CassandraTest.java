@@ -45,7 +45,7 @@ public class CassandraTest {
 		
 		log.info("Testing Cassandra counters");
 		
-		AbstractCassandraPersistence cassandraHandler = CassandraPersistenceFactory.getInstance(CMBProperties.getInstance().getCNSKeyspace());
+		AbstractCassandraPersistence cassandraHandler = CassandraPersistenceFactory.getInstance();
 		
 		long i = cassandraHandler.getCounter(CMBProperties.getInstance().getCNSKeyspace(), "CNSTopicStats", "bla", "foo", CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 		

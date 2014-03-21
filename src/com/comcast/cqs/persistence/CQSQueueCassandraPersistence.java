@@ -44,8 +44,7 @@ public class CQSQueueCassandraPersistence implements ICQSQueuePersistence {
 	private static final String COLUMN_FAMILY_QUEUES = "CQSQueues";
 	private static final String COLUMN_FAMILY_QUEUES_BY_USER = "CQSQueuesByUserId";
 	
-	private static final String KEYSPACE = CMBProperties.getInstance().getCQSKeyspace();
-	private static final AbstractCassandraPersistence cassandraHandler = CassandraPersistenceFactory.getInstance(KEYSPACE);
+	private static final AbstractCassandraPersistence cassandraHandler = CassandraPersistenceFactory.getInstance();
 
 	public static final Logger logger = Logger.getLogger(CQSQueueCassandraPersistence.class);
 
@@ -75,13 +74,13 @@ public class CQSQueueCassandraPersistence implements ICQSQueuePersistence {
 		queueData.put(CQSConstants.COL_NUMBER_SHARDS, (new Long(queue.getNumberOfShards())).toString());
 		queueData.put(CQSConstants.COL_COMPRESSED, (new Boolean(queue.isCompressed())).toString());
 
-		cassandraHandler.insertRow(KEYSPACE, queue.getRelativeUrl(), COLUMN_FAMILY_QUEUES, queueData, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, null);
-		cassandraHandler.update(KEYSPACE, COLUMN_FAMILY_QUEUES_BY_USER, queue.getOwnerUserId(), queue.getArn(), "", CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+		cassandraHandler.insertRow(AbstractCassandraPersistence.CQS_KEYSPACE, queue.getRelativeUrl(), COLUMN_FAMILY_QUEUES, queueData, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, null);
+		cassandraHandler.update(AbstractCassandraPersistence.CQS_KEYSPACE, COLUMN_FAMILY_QUEUES_BY_USER, queue.getOwnerUserId(), queue.getArn(), "", CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 	}
 	
 	@Override
 	public void updateQueueAttribute(String queueURL, Map<String, String> queueData) throws PersistenceException {
-		cassandraHandler.insertRow(KEYSPACE, queueURL, COLUMN_FAMILY_QUEUES, queueData, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, null);
+		cassandraHandler.insertRow(AbstractCassandraPersistence.CQS_KEYSPACE, queueURL, COLUMN_FAMILY_QUEUES, queueData, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, null);
 	}
 
 	@Override
@@ -92,8 +91,8 @@ public class CQSQueueCassandraPersistence implements ICQSQueuePersistence {
 			throw new PersistenceException (CQSErrorCodes.InvalidRequest, "No queue with the url " + queueUrl + " exists");
 		}
 		
-		cassandraHandler.delete(KEYSPACE, COLUMN_FAMILY_QUEUES, queueUrl, null, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
-		cassandraHandler.delete(KEYSPACE, COLUMN_FAMILY_QUEUES_BY_USER, Util.getUserIdForRelativeQueueUrl(queueUrl), Util.getArnForRelativeQueueUrl(queueUrl), CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+		cassandraHandler.delete(AbstractCassandraPersistence.CQS_KEYSPACE, COLUMN_FAMILY_QUEUES, queueUrl, null, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+		cassandraHandler.delete(AbstractCassandraPersistence.CQS_KEYSPACE, COLUMN_FAMILY_QUEUES_BY_USER, Util.getUserIdForRelativeQueueUrl(queueUrl), Util.getArnForRelativeQueueUrl(queueUrl), CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 	}
 
 	@Override
@@ -112,7 +111,7 @@ public class CQSQueueCassandraPersistence implements ICQSQueuePersistence {
 			
 			counter = 0;
 			
-			CmbColumnSlice<String, String> slice = cassandraHandler.readColumnSlice(KEYSPACE, COLUMN_FAMILY_QUEUES_BY_USER, userId, lastArn, null, 1000, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+			CmbColumnSlice<String, String> slice = cassandraHandler.readColumnSlice(AbstractCassandraPersistence.CQS_KEYSPACE, COLUMN_FAMILY_QUEUES_BY_USER, userId, lastArn, null, 1000, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 			
 			if (slice != null) {
 				
@@ -175,7 +174,7 @@ public class CQSQueueCassandraPersistence implements ICQSQueuePersistence {
 		do {
 			
 			sliceSize = 0;
-			CmbColumnSlice<String, String> slice = cassandraHandler.readColumnSlice(KEYSPACE, COLUMN_FAMILY_QUEUES_BY_USER, userId, lastArn, null, 10000, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+			CmbColumnSlice<String, String> slice = cassandraHandler.readColumnSlice(AbstractCassandraPersistence.CQS_KEYSPACE, COLUMN_FAMILY_QUEUES_BY_USER, userId, lastArn, null, 10000, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 			
 			if (slice != null && slice.getColumns().size() > 0) {
 				sliceSize = slice.getColumns().size();
@@ -232,7 +231,7 @@ public class CQSQueueCassandraPersistence implements ICQSQueuePersistence {
 	}
 
 	private CQSQueue getQueueByUrl(String queueUrl) throws PersistenceException {
-		CmbColumnSlice<String, String> slice = cassandraHandler.readColumnSlice(KEYSPACE, COLUMN_FAMILY_QUEUES, queueUrl, null, null, 15, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+		CmbColumnSlice<String, String> slice = cassandraHandler.readColumnSlice(AbstractCassandraPersistence.CQS_KEYSPACE, COLUMN_FAMILY_QUEUES, queueUrl, null, null, 15, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 		if (slice == null) {		    
 			return null;
 		}
@@ -256,7 +255,7 @@ public class CQSQueueCassandraPersistence implements ICQSQueuePersistence {
 		if (queueUrl == null || queueUrl.trim().isEmpty() || policy == null || policy.trim().isEmpty()) {
 			return false;
 		}
-		cassandraHandler.update(KEYSPACE, COLUMN_FAMILY_QUEUES, queueUrl, CQSConstants.COL_POLICY, policy, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+		cassandraHandler.update(AbstractCassandraPersistence.CQS_KEYSPACE, COLUMN_FAMILY_QUEUES, queueUrl, CQSConstants.COL_POLICY, policy, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 		return true;
 	}
 }

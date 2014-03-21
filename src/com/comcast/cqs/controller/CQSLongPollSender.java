@@ -63,7 +63,7 @@ public class CQSLongPollSender {
     private static volatile String localhost;
     
     public static final String CQS_API_SERVERS = "CQSAPIServers";
-    public static final String KEYSPACE = CMBProperties.getInstance().getCQSKeyspace();
+    
     
     // last minute long poll sender checked for api server heart beats
     
@@ -154,9 +154,7 @@ public class CQSLongPollSender {
 
 	                // read all other pings but ensure we are data-center local and looking at a cqs service
 	        		
-	        		AbstractCassandraPersistence cassandraHandler = CassandraPersistenceFactory.getInstance(CMBProperties.getInstance().getCQSKeyspace());
-	                
-	        		List<CmbRow<String, String, String>> rows = cassandraHandler.readNextNNonEmptyRows(KEYSPACE, CQS_API_SERVERS, null, 1000, 10, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+	        		List<CmbRow<String, String, String>> rows = CassandraPersistenceFactory.getInstance().readNextNNonEmptyRows(AbstractCassandraPersistence.CQS_KEYSPACE, CQS_API_SERVERS, null, 1000, 10, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 	        		
 	        		Map<String, CQSAPIStats> cqsAPIServers = new HashMap<String, CQSAPIStats>();
 	        		

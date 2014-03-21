@@ -274,14 +274,13 @@ public class CQSMessagePartitionedCassandraPersistenceTest {
 		CQSQueue queue = CQSCache.getCachedQueue(queueUrl);
 		int numberOfPartitions = queue.getNumberOfPartitions();
 		int numberOfShards = queue.getNumberOfShards();
-		AbstractCassandraPersistence persistence = CassandraPersistenceFactory.getInstance(CMBProperties.getInstance().getCQSKeyspace());
 		String queueHash = com.comcast.cqs.util.Util.hashQueueUrl(queueUrl);
 		long messageCount = 0;
 		
 		for (int k=0; k<numberOfShards; k++) {
 			for (int i=0; i<numberOfPartitions; i++) {
 				String queueKey = queueHash + "_" + k + "_" + i;
-				long partitionCount = persistence.getCount(CMBProperties.getInstance().getCQSKeyspace(), "CQSPartitionedQueueMessages", queueKey, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.COMPOSITE_SERIALIZER);
+				long partitionCount = CassandraPersistenceFactory.getInstance().getCount(CMBProperties.getInstance().getCQSKeyspace(), "CQSPartitionedQueueMessages", queueKey, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.COMPOSITE_SERIALIZER);
 				messageCount += partitionCount;
 				logger.debug("# of messages in " + queueKey + " =" + partitionCount);
 			}

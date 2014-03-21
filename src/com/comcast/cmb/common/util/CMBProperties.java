@@ -23,8 +23,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import me.prettyprint.hector.api.HConsistencyLevel;
-
 import org.apache.log4j.Logger;
 
 /**
@@ -43,9 +41,9 @@ public class CMBProperties {
 	private final boolean useCmbIOBuffers;
 	private final String cmbUnsubscribeUrl;
 	
-	private final HConsistencyLevel consistencyLevel;
-	private final HConsistencyLevel readConsistencyLevel;
-	private final HConsistencyLevel writeConsistencyLevel;
+	private final String consistencyLevel;
+	private final String readConsistencyLevel;
+	private final String writeConsistencyLevel;
 	
 	private final int cmbWorkerPoolSize;
 	
@@ -223,9 +221,9 @@ public class CMBProperties {
 			cmbUseInlineApiCalls = Boolean.parseBoolean(props.getProperty("cmb.useInlineApiCalls", "true"));
 			useCmbIOBuffers = Boolean.parseBoolean(props.getProperty("cmb.useCmbIOBuffers", "true"));
 			
-			consistencyLevel = HConsistencyLevel.valueOf(props.getProperty("cmb.cassandra.consistencyLevel","QUORUM"));
-			readConsistencyLevel = HConsistencyLevel.valueOf(props.getProperty("cmb.cassandra.readConsistencyLevel",consistencyLevel.name()));
-			writeConsistencyLevel = HConsistencyLevel.valueOf(props.getProperty("cmb.cassandra.writeConsistencyLevel",consistencyLevel.name()));
+			consistencyLevel = props.getProperty("cmb.cassandra.consistencyLevel","QUORUM");
+			readConsistencyLevel = props.getProperty("cmb.cassandra.readConsistencyLevel",consistencyLevel);
+			writeConsistencyLevel = props.getProperty("cmb.cassandra.writeConsistencyLevel",consistencyLevel);
 			
 			cmbWorkerPoolSize = Integer.parseInt(props.getProperty("cmb.workerpool.size","256"));
 			
@@ -284,7 +282,6 @@ public class CMBProperties {
             } else {
                 hectorCredentials = null;
             }
-
             
 			smtpHostName = props.getProperty("cmb.cns.smtp.hostname");
 			smtpUserName = props.getProperty("cmb.cns.smtp.username");
@@ -818,15 +815,15 @@ public class CMBProperties {
 		return cmbWorkerPoolSize;
 	}
 	
-	/*public HConsistencyLevel getConsistencyLevel() {
+	public String getConsistencyLevel() {
 		return consistencyLevel;
-	}*/
+	}
 	
-	public HConsistencyLevel getReadConsistencyLevel() {
+	public String getReadConsistencyLevel() {
 		return readConsistencyLevel;
 	}
 	
-	public HConsistencyLevel getWriteConsistencyLevel() {
+	public String getWriteConsistencyLevel() {
 		return writeConsistencyLevel;
 	}
 

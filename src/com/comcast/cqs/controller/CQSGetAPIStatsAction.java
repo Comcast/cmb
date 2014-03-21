@@ -36,7 +36,6 @@ import com.comcast.cmb.common.model.CMBPolicy;
 import com.comcast.cmb.common.model.User;
 import com.comcast.cmb.common.persistence.AbstractCassandraPersistence;
 import com.comcast.cmb.common.persistence.CassandraPersistenceFactory;
-import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cqs.io.CQSAPIStatsPopulator;
 import com.comcast.cqs.model.CQSAPIStats;
 import com.comcast.cqs.persistence.RedisCachedCassandraPersistence;
@@ -193,7 +192,7 @@ public class CQSGetAPIStatsAction extends CQSAction {
 				
 	        	try {
 				
-					AbstractCassandraPersistence cassandra = CassandraPersistenceFactory.getInstance(CMBProperties.getInstance().getCMBKeyspace());
+					AbstractCassandraPersistence cassandra = CassandraPersistenceFactory.getInstance();
 		        	
 		        	if (!cassandra.isAlive()) {
 						stats.addStatus("CASSANDRA UNAVAILABLE");

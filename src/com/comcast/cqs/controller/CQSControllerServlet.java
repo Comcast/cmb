@@ -66,8 +66,6 @@ public class CQSControllerServlet extends CMBControllerServlet {
     }
     
     public static final String CQS_API_SERVERS = "CQSAPIServers";
-    public static final String KEYSPACE = CMBProperties.getInstance().getCQSKeyspace();
-
     @Override
     public void init() throws ServletException {
         
@@ -169,7 +167,7 @@ public class CQSControllerServlet extends CMBControllerServlet {
 
         	try {
 
-        		AbstractCassandraPersistence cassandraHandler = CassandraPersistenceFactory.getInstance(CMBProperties.getInstance().getCQSKeyspace());
+        		AbstractCassandraPersistence cassandraHandler = CassandraPersistenceFactory.getInstance();
 
         		// write ping
         		
@@ -187,7 +185,7 @@ public class CQSControllerServlet extends CMBControllerServlet {
 	        	values.put("serviceUrl", CMBProperties.getInstance().getCQSServiceUrl());
 	        	values.put("redisServerList", CMBProperties.getInstance().getRedisServerList());
 	        	
-                cassandraHandler.insertRow(KEYSPACE, serverIp + ":" + serverPort, CQS_API_SERVERS, values, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, null);
+                cassandraHandler.insertRow(AbstractCassandraPersistence.CQS_KEYSPACE, serverIp + ":" + serverPort, CQS_API_SERVERS, values, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, null);
                 
         	} catch (Exception ex) {
         		logger.warn("event=ping_failed", ex);

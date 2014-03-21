@@ -56,7 +56,7 @@ public class CNSPublisher {
     public static volatile AtomicLong lastProducerMinute = new AtomicLong(0); 
     public static volatile AtomicLong lastConsumerMinute = new AtomicLong(0); 
     
-	public static volatile AbstractCassandraPersistence cassandraHandler = CassandraPersistenceFactory.getInstance(CMBProperties.getInstance().getCNSKeyspace());
+    public static volatile AbstractCassandraPersistence cassandraHandler = CassandraPersistenceFactory.getInstance();
     
     private static void printUsage() {
         System.out.println("java <opts> com.comcast.cns.tools.CNSPublisher -role=<comma separated list of roles>");

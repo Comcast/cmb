@@ -615,7 +615,7 @@ public class Util {
 	public static long getQueueMessageCount(CQSQueue queue) throws NoSuchAlgorithmException, UnsupportedEncodingException, PersistenceException {
 		
 		int numberOfPartitions = queue.getNumberOfPartitions();
-		AbstractCassandraPersistence cassandraHandler = CassandraPersistenceFactory.getInstance(CMBProperties.getInstance().getCQSKeyspace());
+		AbstractCassandraPersistence cassandraHandler = CassandraPersistenceFactory.getInstance();
 		String queueHash = Util.hashQueueUrl(queue.getRelativeUrl());
 		long messageCount = 0;
 		
@@ -631,7 +631,7 @@ public class Util {
 	public static List<Long> getPartitionMessageCounts(CQSQueue queue) throws NoSuchAlgorithmException, UnsupportedEncodingException, PersistenceException {
 		
 		int numberOfPartitions = queue.getNumberOfPartitions();
-		AbstractCassandraPersistence cassandraHandler = CassandraPersistenceFactory.getInstance(CMBProperties.getInstance().getCQSKeyspace());
+		AbstractCassandraPersistence cassandraHandler = CassandraPersistenceFactory.getInstance();
 		String queueHash = Util.hashQueueUrl(queue.getRelativeUrl());
 		List<Long> messageCounts = new ArrayList<Long>();
 		

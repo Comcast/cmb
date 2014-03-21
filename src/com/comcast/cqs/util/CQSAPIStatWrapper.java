@@ -17,12 +17,11 @@ public class CQSAPIStatWrapper {
 	
 	public static final String CNS_API_SERVERS = "CNSAPIServers";
 	public static final String CQS_API_SERVERS = "CQSAPIServers";
+	public static final AbstractCassandraPersistence cassandraHandler = CassandraPersistenceFactory.getInstance();
 	
 	public static List<CQSAPIStats> getCNSAPIStats() throws PersistenceException{
-
-		AbstractCassandraPersistence cassandraHandler = CassandraPersistenceFactory.getInstance(CMBProperties.getInstance().getCNSKeyspace());
 		
-		List<CmbRow<String, String, String>> rows = cassandraHandler.readNextNNonEmptyRows(CMBProperties.getInstance().getCNSKeyspace(), CNS_API_SERVERS, null, 1000, 10, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+		List<CmbRow<String, String, String>> rows = cassandraHandler.readNextNNonEmptyRows(AbstractCassandraPersistence.CNS_KEYSPACE, CNS_API_SERVERS, null, 1000, 10, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 		List<CQSAPIStats> statsList = new ArrayList<CQSAPIStats>();
 		
 		if (rows != null) {
@@ -121,9 +120,7 @@ public class CQSAPIStatWrapper {
 	
 	public static List<CQSAPIStats> getCQSAPIStats() throws PersistenceException {
 		
-		AbstractCassandraPersistence cassandraHandler = CassandraPersistenceFactory.getInstance(CMBProperties.getInstance().getCQSKeyspace());
-		
-		List<CmbRow<String, String, String>> rows = cassandraHandler.readNextNNonEmptyRows(CMBProperties.getInstance().getCQSKeyspace(), CQS_API_SERVERS, null, 1000, 10, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+		List<CmbRow<String, String, String>> rows = cassandraHandler.readNextNNonEmptyRows(AbstractCassandraPersistence.CQS_KEYSPACE, CQS_API_SERVERS, null, 1000, 10, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 		List<CQSAPIStats> statsList = new ArrayList<CQSAPIStats>();
 		
 		if (rows != null) {
