@@ -65,6 +65,9 @@ public final class CQSMessage implements Serializable {
 			setMD5OfBody(getMD5(body));
 		}
 	}
+	
+	public CQSMessage() {
+	}
 
 	public CQSMessage(String messageId, String body) throws NoSuchAlgorithmException, UnsupportedEncodingException {
 

@@ -16,10 +16,14 @@
 package com.comcast.cqs.persistence;
 
 import java.io.IOException;
+import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
+import java.io.Writer;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -28,15 +32,22 @@ import java.util.Random;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.json.JSONWriter;
 
 import com.comcast.cmb.common.persistence.AbstractCassandraPersistence;
 import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CMB_SERIALIZER;
+import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CmbColumn;
+import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CmbColumnSlice;
 import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CmbComposite;
 import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CmbSuperColumn;
 import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CmbSuperColumnSlice;
 import com.comcast.cmb.common.persistence.CassandraPersistenceFactory;
+import com.comcast.cmb.common.util.CMBErrorCodes;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.PersistenceException;
+import com.comcast.cns.model.CNSSubscription;
 import com.comcast.cqs.controller.CQSCache;
 import com.comcast.cqs.model.CQSMessage;
 import com.comcast.cqs.model.CQSQueue;
@@ -64,7 +75,7 @@ public class CQSMessagePartitionedCassandraPersistence implements ICQSMessagePer
 	}
 
 	@Override
-	public String sendMessage(CQSQueue queue, int shard, CQSMessage message) throws PersistenceException, IOException, InterruptedException, NoSuchAlgorithmException {
+	public String sendMessage(CQSQueue queue, int shard, CQSMessage message) throws PersistenceException, IOException, InterruptedException, NoSuchAlgorithmException, JSONException {
 		
 		if (queue == null) {
 			throw new PersistenceException(CQSErrorCodes.NonExistentQueue, "The supplied queue does not exist");
@@ -81,8 +92,7 @@ public class CQSMessagePartitionedCassandraPersistence implements ICQSMessagePer
 		}
 		
 		long ts = System.currentTimeMillis() + delaySeconds*1000;
-		//Composite superColumnName = new Composite(AbstractCassandraPersistence.newTime(ts, false), UUIDGen.getClockSeqAndNode());
-		CmbComposite superColumnName = cassandraHandler.getCmbComposite(AbstractCassandraPersistence.newTime(ts, false), UUIDGen.getClockSeqAndNode());
+		CmbComposite columnName = cassandraHandler.getCmbComposite(AbstractCassandraPersistence.newTime(ts, false), UUIDGen.getClockSeqAndNode());
 		int ttl = queue.getMsgRetentionPeriod();
 		int partition = rand.nextInt(queue.getNumberOfPartitions());
 		String key = Util.hashQueueUrl(queue.getRelativeUrl()) + "_" + shard + "_" + partition;
@@ -91,20 +101,136 @@ public class CQSMessagePartitionedCassandraPersistence implements ICQSMessagePer
 			message.setBody(Util.compress(message.getBody()));
 		}
 
-		message.setMessageId(key + ":" + superColumnName.get(0) + ":" + superColumnName.get(1));
+		message.setMessageId(key + ":" + columnName.get(0) + ":" + columnName.get(1));
 
-		logger.debug("event=send_message ttl=" + ttl + " delay_sec=" + delaySeconds + " msg_id=" + message.getMessageId() + " key=" + key + " col=" + superColumnName);
+		logger.debug("event=send_message ttl=" + ttl + " delay_sec=" + delaySeconds + " msg_id=" + message.getMessageId() + " key=" + key + " col=" + columnName);
 		
-		cassandraHandler.insertSuperColumn(AbstractCassandraPersistence.CQS_KEYSPACE, COLUMN_FAMILY_PARTITIONED_QUEUE_MESSAGES, key,
-				CMB_SERIALIZER.STRING_SERIALIZER, superColumnName, ttl,
-				CMB_SERIALIZER.COMPOSITE_SERIALIZER, Util.buildMessageMap(message),
-				CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+		cassandraHandler.update(AbstractCassandraPersistence.CQS_KEYSPACE, COLUMN_FAMILY_PARTITIONED_QUEUE_MESSAGES, key, columnName, getMessageJSON(message),
+				CMB_SERIALIZER.STRING_SERIALIZER,
+				CMB_SERIALIZER.COMPOSITE_SERIALIZER,
+				CMB_SERIALIZER.STRING_SERIALIZER, ttl);
 
 		return message.getMessageId();
 	}
+	
+	public List<CQSMessage> extractMessagesFromColumnSlice(String queueUrl, int length, CmbComposite previousHandle, CmbComposite nextHandle, CmbColumnSlice<CmbComposite, String> columnSlice, boolean ignoreFirstLastColumn) throws PersistenceException, NoSuchAlgorithmException, IOException, JSONException  {
+		
+		List<CQSMessage> messageList = new ArrayList<CQSMessage>();
+
+		if (columnSlice != null && columnSlice.getColumns() != null) {
+			
+			boolean noMatch = true;
+			
+			for (CmbColumn<CmbComposite, String> column : columnSlice.getColumns()) {
+				
+				CmbComposite columnName = column.getName();
+				
+				if (ignoreFirstLastColumn && (previousHandle != null && columnName.compareTo(previousHandle) == 0) || (nextHandle != null && columnName.compareTo(nextHandle) == 0)) {
+					noMatch = false;
+					continue;
+				} else if (column.getValue() == null || column.getValue().length() == 0) {
+					continue;
+				}
+				
+				CQSMessage message = extractMessageFromJSON(queueUrl, column);
+				messageList.add(message);
+			}
+			
+			if (noMatch && messageList.size() > length) {
+				messageList.remove(messageList.size() - 1);
+			}
+		}
+		
+		return messageList;
+	}
+	
+	private CQSMessage extractMessageFromJSON(String queueUrl, CmbColumn column) throws JSONException, PersistenceException, IOException {
+		
+		CQSQueue queue = null;
+		CQSMessage m = new CQSMessage();
+		
+		try {
+			queue = CQSCache.getCachedQueue(queueUrl);
+		} catch (Exception ex) {
+			throw new PersistenceException(ex);
+		}
+		
+		if (queue == null) {
+			throw new PersistenceException(CMBErrorCodes.InternalError, "Unknown queue " + queueUrl);
+		}
+		
+		JSONObject json = new JSONObject((String)column.getValue());
+
+		m.setMessageId(json.getString("MessageId"));
+		m.setReceiptHandle(json.getString("MessageId"));
+		m.setMD5OfBody(json.getString("MD5OfBody"));
+		m.setBody(json.getString("Body"));
+		
+		if (m.getAttributes() == null) {
+			m.setAttributes(new HashMap<String, String>());
+		}
+		
+		if (json.has(CQSConstants.SENT_TIMESTAMP)) {
+			m.getAttributes().put(CQSConstants.SENT_TIMESTAMP, json.getString(CQSConstants.SENT_TIMESTAMP));
+		}
+		
+		if (json.has(CQSConstants.APPROXIMATE_RECEIVE_COUNT)) {
+			m.getAttributes().put(CQSConstants.APPROXIMATE_RECEIVE_COUNT, json.getString(CQSConstants.APPROXIMATE_RECEIVE_COUNT));
+		}
+
+		//TODO: what about other attributes?
+		
+		m.setTimebasedId(column.getName());
+		
+		if (queue.isCompressed()) {
+			m.setBody(Util.decompress(m.getBody()));
+		}
+		
+	    return m;
+	}
+	
+	private String getMessageJSON(CQSMessage message) throws JSONException {
+		
+		Writer writer = new StringWriter(); 
+    	JSONWriter jw = new JSONWriter(writer);
+    	jw = jw.object();
+		
+    	jw.key("MessageId").value(message.getMessageId());
+    	
+    	jw.key("MD5OfBody").value(message.getMD5OfBody());
+    	jw.key("Body").value(message.getBody());
+		
+		if (message.getAttributes() == null) {
+			message.setAttributes(new HashMap<String, String>());
+		}
+		
+		if (!message.getAttributes().containsKey(CQSConstants.SENT_TIMESTAMP)) {
+			message.getAttributes().put(CQSConstants.SENT_TIMESTAMP, "" + System.currentTimeMillis());
+		}
+		
+		if (!message.getAttributes().containsKey(CQSConstants.APPROXIMATE_RECEIVE_COUNT)) {
+			message.getAttributes().put(CQSConstants.APPROXIMATE_RECEIVE_COUNT, "0");
+		}
+		
+		if (message.getAttributes() != null) {
+			
+			for (String key : message.getAttributes().keySet()) {
+				
+				String value = message.getAttributes().get(key);
+				
+				if (value == null || value.isEmpty()) {
+					value = "";
+				}
+				
+				jw.key(key).value(value);
+			}
+		}
+		
+		return writer.toString();
+	}
 
 	@Override
-	public Map<String, String> sendMessageBatch(CQSQueue queue,	int shard, List<CQSMessage> messages) throws PersistenceException,	IOException, InterruptedException, NoSuchAlgorithmException {
+	public Map<String, String> sendMessageBatch(CQSQueue queue,	int shard, List<CQSMessage> messages) throws PersistenceException,	IOException, InterruptedException, NoSuchAlgorithmException, JSONException {
 
 		if (queue == null) {
 			throw new PersistenceException(CQSErrorCodes.NonExistentQueue, "The supplied queue doesn't exist");
@@ -114,7 +240,7 @@ public class CQSMessagePartitionedCassandraPersistence implements ICQSMessagePer
 			throw new PersistenceException(CQSErrorCodes.InvalidQueryParameter,	"No messages are supplied.");
 		}
 		
-		Map<CmbComposite, Map<String, String>> messageDataMap = new HashMap<CmbComposite, Map<String, String>>();
+		Map<CmbComposite, String> messageDataMap = new HashMap<CmbComposite, String>();
 		Map<String, String> ret = new HashMap<String, String>();
 		int ttl = queue.getMsgRetentionPeriod();
 		String key = Util.hashQueueUrl(queue.getRelativeUrl()) + "_" + shard + "_" + rand.nextInt(queue.getNumberOfPartitions());
@@ -136,24 +262,21 @@ public class CQSMessagePartitionedCassandraPersistence implements ICQSMessagePer
 			}
 			
 			long ts = System.currentTimeMillis() + delaySeconds*1000;
-			//Composite superColumnName = new Composite(Arrays.asList(AbstractCassandraPersistence.newTime(ts, false), UUIDGen.getClockSeqAndNode()));
-			CmbComposite superColumnName = cassandraHandler.getCmbComposite(AbstractCassandraPersistence.newTime(ts, false), UUIDGen.getClockSeqAndNode());
+			CmbComposite columnName = cassandraHandler.getCmbComposite(AbstractCassandraPersistence.newTime(ts, false), UUIDGen.getClockSeqAndNode());
 
-			message.setMessageId(key + ":" + superColumnName.get(0) + ":" + superColumnName.get(1));
+			message.setMessageId(key + ":" + columnName.get(0) + ":" + columnName.get(1));
 			
-			logger.debug("event=send_message_batch msg_id=" + message.getMessageId() + " ttl=" + ttl + " delay_sec=" + delaySeconds + " key=" + key + " col=" + superColumnName);
+			logger.debug("event=send_message_batch msg_id=" + message.getMessageId() + " ttl=" + ttl + " delay_sec=" + delaySeconds + " key=" + key + " col=" + columnName);
 			
-			Map<String, String> currentMessageDataMap = Util.buildMessageMap(message);
-			messageDataMap.put(superColumnName, currentMessageDataMap);
+			String messageJson = getMessageJSON(message);
+			messageDataMap.put(columnName, messageJson);
 			ret.put(message.getSuppliedMessageId(), message.getMessageId());
 		}
 
-		// String compressedMessage = Util.compress(message);
-
-		cassandraHandler.insertSuperColumns(AbstractCassandraPersistence.CQS_KEYSPACE, COLUMN_FAMILY_PARTITIONED_QUEUE_MESSAGES, key,
-				CMB_SERIALIZER.STRING_SERIALIZER, messageDataMap, ttl,
-				CMB_SERIALIZER.COMPOSITE_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER,
-				CMB_SERIALIZER.STRING_SERIALIZER);
+		cassandraHandler.insertRow(AbstractCassandraPersistence.CQS_KEYSPACE, COLUMN_FAMILY_PARTITIONED_QUEUE_MESSAGES, key, messageDataMap,
+				CMB_SERIALIZER.STRING_SERIALIZER,
+				CMB_SERIALIZER.COMPOSITE_SERIALIZER,
+				CMB_SERIALIZER.STRING_SERIALIZER, ttl);
 		
 		return ret;
 	}
@@ -173,12 +296,11 @@ public class CQSMessagePartitionedCassandraPersistence implements ICQSMessagePer
 			return;
 		}
 		
-		//Composite superColumnName = new Composite(Arrays.asList(Long.parseLong(receiptHandleParts[1]), Long.parseLong(receiptHandleParts[2])));
-		CmbComposite superColumnName = cassandraHandler.getCmbComposite(Arrays.asList(Long.parseLong(receiptHandleParts[1]), Long.parseLong(receiptHandleParts[2])));
+		CmbComposite columnName = cassandraHandler.getCmbComposite(Arrays.asList(Long.parseLong(receiptHandleParts[1]), Long.parseLong(receiptHandleParts[2])));
 		
-		if (superColumnName != null) {
-			logger.debug("event=delete_message receipt_handle=" + receiptHandle + " col=" + superColumnName + " key=" + receiptHandleParts[0]);
-			cassandraHandler.deleteSuperColumn(AbstractCassandraPersistence.CQS_KEYSPACE, COLUMN_FAMILY_PARTITIONED_QUEUE_MESSAGES, receiptHandleParts[0], superColumnName, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.COMPOSITE_SERIALIZER);
+		if (columnName != null) {
+			logger.debug("event=delete_message receipt_handle=" + receiptHandle + " col=" + columnName + " key=" + receiptHandleParts[0]);
+			cassandraHandler.delete(AbstractCassandraPersistence.CQS_KEYSPACE, COLUMN_FAMILY_PARTITIONED_QUEUE_MESSAGES, receiptHandleParts[0], columnName, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.COMPOSITE_SERIALIZER);
 		}
 	}
 
@@ -193,7 +315,7 @@ public class CQSMessagePartitionedCassandraPersistence implements ICQSMessagePer
 	}
 
 	@Override
-	public List<CQSMessage> peekQueue(String queueUrl, int shard, String previousReceiptHandle, String nextReceiptHandle, int length) throws PersistenceException, IOException, NoSuchAlgorithmException {
+	public List<CQSMessage> peekQueue(String queueUrl, int shard, String previousReceiptHandle, String nextReceiptHandle, int length) throws PersistenceException, IOException, NoSuchAlgorithmException, JSONException {
 		
 		String queueHash = Util.hashQueueUrl(queueUrl);
 		String key =  queueHash + "_" + shard + "_0";
@@ -258,13 +380,13 @@ public class CQSMessagePartitionedCassandraPersistence implements ICQSMessagePer
 			
 			key = queueHash + "_" + shardNumber + "_" + partitionNumber;
 			
-			CmbSuperColumnSlice<CmbComposite, String, String> superSlice = cassandraHandler.readRowFromSuperColumnFamily(
+			CmbColumnSlice<CmbComposite, String> columnSlice = cassandraHandler.readColumnSlice(
 					AbstractCassandraPersistence.CQS_KEYSPACE, COLUMN_FAMILY_PARTITIONED_QUEUE_MESSAGES, key, previousHandle,
 					nextHandle, length-messageList.size()+1, CMB_SERIALIZER.STRING_SERIALIZER,
-					CMB_SERIALIZER.COMPOSITE_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER,
+					CMB_SERIALIZER.COMPOSITE_SERIALIZER,
 					CMB_SERIALIZER.STRING_SERIALIZER);
 			
-			messageList.addAll(Util.readMessagesFromSuperColumns(queueUrl, length-messageList.size(), previousHandle, nextHandle, superSlice, true));
+			messageList.addAll(extractMessagesFromColumnSlice(queueUrl, length-messageList.size(), previousHandle, nextHandle, columnSlice, true));
 			
 			if (messageList.size() < length && -1 < partitionNumber && partitionNumber < numberPartitions) {
 				
@@ -308,7 +430,7 @@ public class CQSMessagePartitionedCassandraPersistence implements ICQSMessagePer
 	}
 
 	@Override
-	public Map<String, CQSMessage> getMessages(String queueUrl, List<String> ids) throws PersistenceException, NoSuchAlgorithmException, IOException {
+	public Map<String, CQSMessage> getMessages(String queueUrl, List<String> ids) throws PersistenceException, NoSuchAlgorithmException, IOException, JSONException {
 		
 		Map<String, CQSMessage> messageMap = new HashMap<String, CQSMessage>();
 		
@@ -329,64 +451,26 @@ public class CQSMessagePartitionedCassandraPersistence implements ICQSMessagePer
 				throw new IllegalArgumentException("Invalid message id " + id);
 			}
 			
-			CmbComposite superColumnName = cassandraHandler.getCmbComposite(Arrays.asList(Long.parseLong(idParts[1]), Long.parseLong(idParts[2])));
+			CmbComposite columnName = cassandraHandler.getCmbComposite(Arrays.asList(Long.parseLong(idParts[1]), Long.parseLong(idParts[2])));
 			
-			CmbSuperColumn<CmbComposite, String, String> superColumn = cassandraHandler.readColumnFromSuperColumnFamily(AbstractCassandraPersistence.CQS_KEYSPACE, COLUMN_FAMILY_PARTITIONED_QUEUE_MESSAGES, 
-					idParts[0], superColumnName, CMB_SERIALIZER.STRING_SERIALIZER, 
-					CMB_SERIALIZER.COMPOSITE_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER,
+			CmbColumn<CmbComposite, String> column = cassandraHandler.readColumn(AbstractCassandraPersistence.CQS_KEYSPACE, COLUMN_FAMILY_PARTITIONED_QUEUE_MESSAGES, 
+					idParts[0], columnName, CMB_SERIALIZER.STRING_SERIALIZER, 
+					CMB_SERIALIZER.COMPOSITE_SERIALIZER,
 					CMB_SERIALIZER.STRING_SERIALIZER);
 			
 			CQSMessage message = null;
 			
-			if (superColumn != null) {
-				message = Util.extractMessageFromSuperColumn(queueUrl, superColumn);
+			if (column != null) {
+				message = extractMessageFromJSON(queueUrl, column);
 			}
 			
 			messageMap.put(id, message);
 		}
 		
-		/*List<String> keys = new ArrayList<String>();
-		List<Composite> columnNames = new ArrayList<Composite>();
-		Map<String, String> idMap = new HashMap<String, String>();
-		
-		for (String id: ids) {
-			
-			String idParts[] = id.split(":");
-			
-			if (idParts.length != 3) {
-				logger.error("event=get_messages error_code=invalid_message_id id=" + id);
-				throw new IllegalArgumentException("Invalid message id " + id);
-			}
-			
-			Composite superColumnName = new Composite(Arrays.asList(Long.parseLong(idParts[1]), Long.parseLong(idParts[2])));
-			String hash = "" + idParts[0] + idParts[1];
-			idMap.put(hash, id);
-
-			keys.add(idParts[0]);
-			columnNames.add(superColumnName);
-		}
-			
-		List<HSuperColumn<Composite, String, String>> superColumns = readMultipleColumnsFromSuperColumnFamily(COLUMN_FAMILY_PARTITIONED_QUEUE_MESSAGES, 
-					keys, columnNames, CMB_SERIALIZER.STRING_SERIALIZER, 
-					CMB_SERIALIZER.COMPOSITE_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER,
-					CMB_SERIALIZER.STRING_SERIALIZER);
-		
-		for (HSuperColumn<Composite, String, String> superColumn : superColumns) {
-			
-			CQSMessage message = null;
-			
-			if (superColumn != null) {
-				message = Util.extractMessageFromSuperColumn(superColumn);
-			}
-			String idParts[] = message.getMessageId().split(":");
-			String hash = "" + idParts[0] + idParts[1];
-			messageMap.put(idMap.get(hash), message);
-		}*/
-
 		return messageMap;
 	}
 	
-	private Map<String, CQSMessage> getMessagesBulk(String queueUrl, List<String> ids) throws NoSuchAlgorithmException, PersistenceException, IOException {
+	private Map<String, CQSMessage> getMessagesBulk(String queueUrl, List<String> ids) throws NoSuchAlgorithmException, PersistenceException, IOException, JSONException {
 		
 		logger.debug("event=get_message_bulk ids=" + ids);
 		
@@ -405,13 +489,13 @@ public class CQSMessagePartitionedCassandraPersistence implements ICQSMessagePer
 			String firstParts[] = firstLastForPartition.get("First").split(":");
 			String lastParts[] = firstLastForPartition.get("Last").split(":");
 			
-			CmbSuperColumnSlice<CmbComposite, String, String> superSlice = cassandraHandler.readRowFromSuperColumnFamily(
+			CmbColumnSlice<CmbComposite, String> columnSlice = cassandraHandler.readColumnSlice(
 					AbstractCassandraPersistence.CQS_KEYSPACE, COLUMN_FAMILY_PARTITIONED_QUEUE_MESSAGES, queuePartition, cassandraHandler.getCmbComposite(Arrays.asList(Long.parseLong(firstParts[0]), Long.parseLong(firstParts[1]))),
 					cassandraHandler.getCmbComposite(Arrays.asList(Long.parseLong(lastParts[0]), Long.parseLong(lastParts[1]))), messageCount, CMB_SERIALIZER.STRING_SERIALIZER,
-					CMB_SERIALIZER.COMPOSITE_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER,
+					CMB_SERIALIZER.COMPOSITE_SERIALIZER,
 					CMB_SERIALIZER.STRING_SERIALIZER);
 			
-			List<CQSMessage> messageList = Util.readMessagesFromSuperColumns(queueUrl, messageCount, null, null, superSlice, false);
+			List<CQSMessage> messageList = extractMessagesFromColumnSlice(queueUrl, messageCount, null, null, columnSlice, false);
 			
 			for (CQSMessage message: messageList) {
 				
@@ -505,7 +589,7 @@ public class CQSMessagePartitionedCassandraPersistence implements ICQSMessagePer
 	}
 
 	@Override
-    public List<CQSMessage> peekQueueRandom(String queueUrl, int shard, int length) throws PersistenceException, IOException, NoSuchAlgorithmException {
+    public List<CQSMessage> peekQueueRandom(String queueUrl, int shard, int length) throws PersistenceException, IOException, NoSuchAlgorithmException, JSONException {
         
     	String queueHash = Util.hashQueueUrl(queueUrl);
 
@@ -534,13 +618,13 @@ public class CQSMessagePartitionedCassandraPersistence implements ICQSMessagePer
             	int partition = rc.getNext();
                 String key = queueHash + "_" + shard + "_" + partition;
                 
-                CmbSuperColumnSlice<CmbComposite, String, String> superSlice = cassandraHandler.readRowFromSuperColumnFamily(
+                CmbColumnSlice<CmbComposite, String> columnSlice = cassandraHandler.readColumnSlice(
                 		AbstractCassandraPersistence.CQS_KEYSPACE, COLUMN_FAMILY_PARTITIONED_QUEUE_MESSAGES, key, null, null, 1, 
                         CMB_SERIALIZER.STRING_SERIALIZER,
-                        CMB_SERIALIZER.COMPOSITE_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER,
+                        CMB_SERIALIZER.COMPOSITE_SERIALIZER,
                         CMB_SERIALIZER.STRING_SERIALIZER);
                
-                List<CQSMessage> messages = Util.readMessagesFromSuperColumns(queueUrl, 1, null, null, superSlice, false);
+                List<CQSMessage> messages = extractMessagesFromColumnSlice(queueUrl, 1, null, null, columnSlice, false);
                 numFound += messages.size();
                 messageList.addAll(messages);
             }

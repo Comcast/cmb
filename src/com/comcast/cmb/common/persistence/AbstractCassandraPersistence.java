@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
+import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CmbColumn;
+import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CmbSerializer;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.PersistenceException;
 
@@ -146,17 +148,17 @@ public abstract class AbstractCassandraPersistence {
 	public abstract CmbComposite getCmbComposite(Object... os);
 
 	public abstract <K, N, V> void update(String keyspace, String columnFamily, K key, N column, V value, 
-			CmbSerializer keySerializer, CmbSerializer nameSerializer, CmbSerializer valueSerializer) throws PersistenceException;
+			CmbSerializer keySerializer, CmbSerializer nameSerializer, CmbSerializer valueSerializer, Integer ttl) throws PersistenceException;
 
-	public abstract <K, SN, N, V> void insertSuperColumn(String keyspace, String columnFamily, K key, CmbSerializer keySerializer, SN superName, Integer ttl, 
+	/*public abstract <K, SN, N, V> void insertSuperColumn(String keyspace, String columnFamily, K key, CmbSerializer keySerializer, SN superName, Integer ttl, 
 			CmbSerializer superNameSerializer, Map<N, V> subColumnNameValues, CmbSerializer columnSerializer,
-			CmbSerializer valueSerializer)	throws PersistenceException;
+			CmbSerializer valueSerializer)	throws PersistenceException;*/
 
-	public abstract <K, SN, N, V> void insertSuperColumns(
+	/*public abstract <K, SN, N, V> void insertSuperColumns(
 			String keyspace, String columnFamily, K key, CmbSerializer keySerializer,
 			Map<SN, Map<N, V>> superNameSubColumnsMap, int ttl,
 			CmbSerializer superNameSerializer, CmbSerializer columnSerializer,
-			CmbSerializer valueSerializer)	throws PersistenceException;
+			CmbSerializer valueSerializer)	throws PersistenceException;*/
 
 	public abstract <K, N, V> List<CmbRow<K, N, V>> readNextNNonEmptyRows(
 			String keyspace, String columnFamily, K lastKey, int numRows, int numCols,
@@ -183,28 +185,28 @@ public abstract class AbstractCassandraPersistence {
 			int numCols, CmbSerializer keySerializer,
 			CmbSerializer columnNameSerializer, CmbSerializer valueSerializer) throws PersistenceException;
 
-	public abstract <K, SN, N, V> CmbSuperColumnSlice<SN, N, V> readRowFromSuperColumnFamily(
+	/*public abstract <K, SN, N, V> CmbSuperColumnSlice<SN, N, V> readRowFromSuperColumnFamily(
 			String keyspace, String columnFamily, K key, SN firstColumnName, SN lastColumnName,
 			int numCols, CmbSerializer keySerializer,
 			CmbSerializer superNameSerializer,
-			CmbSerializer columnNameSerializer, CmbSerializer valueSerializer) throws PersistenceException;
+			CmbSerializer columnNameSerializer, CmbSerializer valueSerializer) throws PersistenceException;*/
 
-	public abstract <K, SN, N, V> CmbSuperColumn<SN, N, V> readColumnFromSuperColumnFamily(
+	/*public abstract <K, SN, N, V> CmbSuperColumn<SN, N, V> readColumnFromSuperColumnFamily(
 			String keyspace, String columnFamily, K key, SN columnName,
 			CmbSerializer keySerializer, CmbSerializer superNameSerializer,
-			CmbSerializer columnNameSerializer, CmbSerializer valueSerializer) throws PersistenceException;
+			CmbSerializer columnNameSerializer, CmbSerializer valueSerializer) throws PersistenceException;*/
 
-	public abstract <K, SN, N, V> List<CmbSuperColumn<SN, N, V>> readMultipleColumnsFromSuperColumnFamily(
+	/*public abstract <K, SN, N, V> List<CmbSuperColumn<SN, N, V>> readMultipleColumnsFromSuperColumnFamily(
 			String keyspace, String columnFamily, Collection<K> keys,
 			Collection<SN> columnNames, CmbSerializer keySerializer,
 			CmbSerializer superNameSerializer,
-			CmbSerializer columnNameSerializer, CmbSerializer valueSerializer) throws PersistenceException;
+			CmbSerializer columnNameSerializer, CmbSerializer valueSerializer) throws PersistenceException;*/
 
-	public abstract <K, SN, N, V> List<CmbSuperColumn<SN, N, V>> readColumnsFromSuperColumnFamily(
+	/*public abstract <K, SN, N, V> List<CmbSuperColumn<SN, N, V>> readColumnsFromSuperColumnFamily(
 			String keyspace, String columnFamily, K key, CmbSerializer keySerializer,
 			CmbSerializer superNameSerializer,
 			CmbSerializer columnNameSerializer, CmbSerializer valueSerializer,
-			 SN firstCol, SN lastCol, int numCol) throws PersistenceException;
+			 SN firstCol, SN lastCol, int numCol) throws PersistenceException;*/
 
 	public abstract <K, N, V> void insertRow(String keyspace, K rowKey,
 			String columnFamily, Map<N, V> columnValues,
@@ -223,8 +225,8 @@ public abstract class AbstractCassandraPersistence {
 			List<K> keyList, List<N> columnList, CmbSerializer keySerializer,
 			 CmbSerializer columnSerializer) throws PersistenceException;
 
-	public abstract <K, SN, N> void deleteSuperColumn(
-			String keyspace, String superColumnFamily, K key, SN superColumn, CmbSerializer keySerializer, CmbSerializer superColumnSerializer) throws PersistenceException;
+	/*public abstract <K, SN, N> void deleteSuperColumn(
+			String keyspace, String superColumnFamily, K key, SN superColumn, CmbSerializer keySerializer, CmbSerializer superColumnSerializer) throws PersistenceException;*/
 
 	public abstract <K, N> int getCount(String keyspace, String columnFamily, K key,
 			CmbSerializer keySerializer, CmbSerializer columnNameSerializer) throws PersistenceException;
@@ -245,4 +247,8 @@ public abstract class AbstractCassandraPersistence {
 			N columnName, CmbSerializer keySerializer,
 			CmbSerializer columnNameSerializer) throws PersistenceException;
 
+	public abstract <K, N, V> CmbColumn<N, V> readColumn(String keyspace, String columnFamily,
+			K key, N columnName, CmbSerializer keySerializer,
+			CmbSerializer columnNameSerializer, CmbSerializer valueSerializer)
+			throws PersistenceException;
 }

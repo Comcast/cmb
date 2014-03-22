@@ -101,7 +101,7 @@ public class CNSTopicCassandraPersistence implements ICNSTopicPersistence {
 			topic.checkIsValid();
 			
 			cassandraHandler.insertRow(AbstractCassandraPersistence.CNS_KEYSPACE, topic.getArn(), columnFamilyTopics, getColumnValues(topic), CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, null);
-			cassandraHandler.update(AbstractCassandraPersistence.CNS_KEYSPACE, columnFamilyTopicsByUserId, userId, topic.getArn(), "", CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+			cassandraHandler.update(AbstractCassandraPersistence.CNS_KEYSPACE, columnFamilyTopicsByUserId, userId, topic.getArn(), "", CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, null);
 			cassandraHandler.delete(AbstractCassandraPersistence.CNS_KEYSPACE, columnFamilyTopicStats, arn, null, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 			
 			cassandraHandler.deleteCounter(AbstractCassandraPersistence.CNS_KEYSPACE, columnFamilyTopicStats, arn, "subscriptionConfirmed", CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);

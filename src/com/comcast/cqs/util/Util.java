@@ -498,7 +498,7 @@ public class Util {
 		return queueUrlHash;
 	}
 	
-	public static CQSMessage buildMessageFromMap(Map<String, String> messageMap) throws NoSuchAlgorithmException, UnsupportedEncodingException {
+	/*public static CQSMessage buildMessageFromMap(Map<String, String> messageMap) throws NoSuchAlgorithmException, UnsupportedEncodingException {
 		
 		if (messageMap == null || messageMap.size() == 0) {
 			return null;
@@ -523,9 +523,9 @@ public class Util {
 		}
 		
 		return message;
-	}
+	}*/
 	
-	public static List<CQSMessage> readMessagesFromSuperColumns(String queueUrl, int length, CmbComposite previousHandle, CmbComposite nextHandle, CmbSuperColumnSlice<CmbComposite, String, String> superSlice, boolean ignoreFirstLastColumn) throws PersistenceException, NoSuchAlgorithmException, IOException  {
+	/*public static List<CQSMessage> readMessagesFromSuperColumns(String queueUrl, int length, CmbComposite previousHandle, CmbComposite nextHandle, CmbSuperColumnSlice<CmbComposite, String, String> superSlice, boolean ignoreFirstLastColumn) throws PersistenceException, NoSuchAlgorithmException, IOException  {
 		
 		List<CQSMessage> messageList = new ArrayList<CQSMessage>();
 
@@ -555,7 +555,7 @@ public class Util {
 		}
 		
 		return messageList;
-	}
+	}*/
 	
     public static List<String> fillGetAttributesRequests(HttpServletRequest request) {
         
@@ -581,7 +581,7 @@ public class Util {
         return attributeNames;
     }
     
-	public static CQSMessage extractMessageFromSuperColumn(String queueUrl, CmbSuperColumn<CmbComposite, String, String> superColumn) throws NoSuchAlgorithmException, PersistenceException, IOException {
+	/*public static CQSMessage extractMessageFromSuperColumn(String queueUrl, CmbSuperColumn<CmbComposite, String, String> superColumn) throws NoSuchAlgorithmException, PersistenceException, IOException {
 		
 		Map<String, String> messageMap = new HashMap<String, String>();
 		
@@ -610,7 +610,7 @@ public class Util {
 		
 		message.setTimebasedId(columnName);
 		return message;
-	}
+	}*/
 	
 	public static long getQueueMessageCount(CQSQueue queue) throws NoSuchAlgorithmException, UnsupportedEncodingException, PersistenceException {
 		

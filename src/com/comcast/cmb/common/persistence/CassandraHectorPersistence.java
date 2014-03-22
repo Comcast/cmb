@@ -51,6 +51,7 @@ import me.prettyprint.hector.api.ddl.KeyspaceDefinition;
 import me.prettyprint.hector.api.factory.HFactory;
 import me.prettyprint.hector.api.mutation.MutationResult;
 import me.prettyprint.hector.api.mutation.Mutator;
+import me.prettyprint.hector.api.query.ColumnQuery;
 import me.prettyprint.hector.api.query.CounterQuery;
 import me.prettyprint.hector.api.query.MultigetSuperSliceQuery;
 import me.prettyprint.hector.api.query.QueryResult;
@@ -72,6 +73,10 @@ import com.comcast.cmb.common.util.ValueAccumulator.AccumulatorName;
  * @author aseem, bwolf, vvenkatraman, jorge, baosen, michael
  */
 public class CassandraHectorPersistence extends AbstractCassandraPersistence {
+	
+	//TODO: add support for composite where needed!
+	//TODO: adjust schema
+	//TODO: remove dead code
 
 	private static final int hectorPoolSize = CMBProperties.getInstance().getHectorPoolSize();
 	private static final String hectorBalancingPolicy = CMBProperties.getInstance().getHectorBalancingPolicy();
@@ -402,18 +407,22 @@ public class CassandraHectorPersistence extends AbstractCassandraPersistence {
 
 	@Override
 	public <K, N, V> void update(String keyspace, String columnFamily, K key, N column, V value, 
-			CmbSerializer keySerializer, CmbSerializer nameSerializer, CmbSerializer valueSerializer) throws PersistenceException {
+			CmbSerializer keySerializer, CmbSerializer nameSerializer, CmbSerializer valueSerializer, Integer ttl) throws PersistenceException {
 		long ts1 = System.currentTimeMillis();	    
 		logger.debug("event=update column_family=" + columnFamily + " key=" + key + " column=" + column + " value=" + value);
 		Mutator<K> mutator = HFactory.createMutator(getKeyspace(keyspace), getSerializer(keySerializer));
-		mutator.addInsertion(key, columnFamily, HFactory.createColumn(column, value, getSerializer(nameSerializer), getSerializer(valueSerializer)));
+		HColumn c = HFactory.createColumn(column, value, getSerializer(nameSerializer), getSerializer(valueSerializer));
+		if (ttl != null) {
+			c.setTtl(ttl);
+		}
+		mutator.addInsertion(key, columnFamily, c);
 		mutator.execute();
 		long ts2 = System.currentTimeMillis();
 		CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CassandraTime, (ts2 - ts1));
 		CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CassandraWrite, 1L);
 	}
 
-	@Override
+	/*@Override
 	public <K, SN, N, V> void insertSuperColumn(String keyspace, String columnFamily, K key, CmbSerializer keySerializer, SN superName, Integer ttl, 
 			CmbSerializer superNameSerializer, Map<N, V> subColumnNameValues, CmbSerializer columnSerializer,
 			CmbSerializer valueSerializer) throws PersistenceException {
@@ -447,9 +456,9 @@ public class CassandraHectorPersistence extends AbstractCassandraPersistence {
 			CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CassandraTime, (ts2 - ts1));
 			CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CassandraWrite, 1L);
 		}
-	}
+	}*/
 
-	@Override
+	/*@Override
 	public <K, SN, N, V> void insertSuperColumns(String keyspace, String columnFamily, K key, CmbSerializer keySerializer,
 			Map<SN, Map<N, V>> superNameSubColumnsMap, int ttl,
 			CmbSerializer superNameSerializer, CmbSerializer columnSerializer,
@@ -493,7 +502,7 @@ public class CassandraHectorPersistence extends AbstractCassandraPersistence {
 			CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CassandraTime, (ts2 - ts1));
 			CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CassandraWrite, superNameSubColumnsMap.size());
 		}
-	}
+	}*/
 
 	@Override
 	public <K, N, V> List<CmbRow<K, N, V>> readNextNNonEmptyRows(String keyspace, String columnFamily, K lastKey, int numRows, int numCols,
@@ -710,6 +719,34 @@ public class CassandraHectorPersistence extends AbstractCassandraPersistence {
 	}
 
 	@Override
+	public <K, N, V> CmbColumn<N, V> readColumn(String keyspace, String columnFamily, K key, N columnName, CmbSerializer keySerializer,
+			CmbSerializer columnNameSerializer, CmbSerializer valueSerializer) throws PersistenceException {
+
+		long ts1 = System.currentTimeMillis();
+		logger.debug("event=read_row cf=" + columnFamily + " key=" + key + " col=" + columnName);
+
+		try {
+
+			ColumnQuery<K, N, V> columnQuery = HFactory.createColumnQuery(getKeyspace(keyspace), getSerializer(keySerializer), getSerializer(columnNameSerializer), getSerializer(valueSerializer))
+			.setColumnFamily(columnFamily).setKey(key).setName(columnName);
+			
+			QueryResult<HColumn<N, V>> result = columnQuery.execute();
+			
+			if (result.get() == null) {
+				return null;
+			}
+
+			return new CmbHectorColumn<N, V>(result.get());
+
+		} finally { 
+
+			long ts2 = System.currentTimeMillis();
+			CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CassandraRead, 1L);
+			CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CassandraTime, (ts2 - ts1));      
+		}
+	}
+
+	/*@Override
 	public <K, SN, N, V> CmbSuperColumnSlice<SN, N, V> readRowFromSuperColumnFamily(String keyspace, String columnFamily, K key, SN firstColumnName, SN lastColumnName,
 			int numCols, CmbSerializer keySerializer,
 			CmbSerializer superNameSerializer,
@@ -742,9 +779,9 @@ public class CassandraHectorPersistence extends AbstractCassandraPersistence {
 			long ts2 = System.currentTimeMillis();
 			CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CassandraTime, (ts2 - ts1));      
 		}
-	}
+	}*/
 
-	@Override
+	/*@Override
 	public <K, SN, N, V> CmbSuperColumn<SN, N, V> readColumnFromSuperColumnFamily(String keyspace, String columnFamily, K key, SN columnName,
 			CmbSerializer keySerializer, CmbSerializer superNameSerializer,
 			CmbSerializer columnNameSerializer, CmbSerializer valueSerializer) throws PersistenceException {
@@ -775,9 +812,9 @@ public class CassandraHectorPersistence extends AbstractCassandraPersistence {
 			long ts2 = System.currentTimeMillis();
 			CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CassandraTime, (ts2 - ts1));      
 		}
-	}
+	}*/
 
-	@Override
+	/*@Override
 	public <K, SN, N, V> List<CmbSuperColumn<SN, N, V>> readMultipleColumnsFromSuperColumnFamily(String keyspace, String columnFamily, Collection<K> keys,
 			Collection<SN> columnNames, CmbSerializer keySerializer,
 			CmbSerializer superNameSerializer,
@@ -814,9 +851,9 @@ public class CassandraHectorPersistence extends AbstractCassandraPersistence {
 			long ts2 = System.currentTimeMillis();
 			CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CassandraTime, (ts2 - ts1));      
 		}
-	}
+	}*/
 
-	@Override
+	/*@Override
 	public 	<K, SN, N, V> List<CmbSuperColumn<SN, N, V>> readColumnsFromSuperColumnFamily(String keyspace, String columnFamily, K key, CmbSerializer keySerializer,
 			CmbSerializer superNameSerializer,
 			CmbSerializer columnNameSerializer, CmbSerializer valueSerializer,
@@ -842,7 +879,7 @@ public class CassandraHectorPersistence extends AbstractCassandraPersistence {
 			long ts2 = System.currentTimeMillis();
 			CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CassandraTime, (ts2 - ts1));      
 		}	    
-	}
+	}*/
 
 	@Override
 	public <K, N, V> void insertRow(String keyspace, K rowKey,
@@ -976,7 +1013,7 @@ public class CassandraHectorPersistence extends AbstractCassandraPersistence {
 	}
 
 
-	@Override
+	/*@Override
 	public <K, SN, N> void deleteSuperColumn(String keyspace, String superColumnFamily, K key, SN superColumn, CmbSerializer keySerializer, CmbSerializer superColumnSerializer) throws PersistenceException {
 
 		long ts1 = System.currentTimeMillis();
@@ -999,7 +1036,7 @@ public class CassandraHectorPersistence extends AbstractCassandraPersistence {
 			long ts2 = System.currentTimeMillis();
 			CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CassandraTime, (ts2 - ts1));    
 		}
-	}
+	}*/
 
 	@Override
 	public <K, N> int getCount(String keyspace, String columnFamily, K key,

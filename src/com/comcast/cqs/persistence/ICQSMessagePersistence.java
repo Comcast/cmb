@@ -21,6 +21,8 @@ import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.Map;
 
+import org.json.JSONException;
+
 import com.comcast.cmb.common.util.PersistenceException;
 import com.comcast.cqs.model.CQSMessage;
 import com.comcast.cqs.model.CQSQueue;
@@ -40,8 +42,9 @@ public interface ICQSMessagePersistence {
      * @throws InterruptedException 
      * @return the message-=id
      * @throws NoSuchAlgorithmException 
+     * @throws JSONException 
      */
-    public String sendMessage(CQSQueue queue, int shard, CQSMessage message) throws PersistenceException, IOException, InterruptedException, NoSuchAlgorithmException;
+    public String sendMessage(CQSQueue queue, int shard, CQSMessage message) throws PersistenceException, IOException, InterruptedException, NoSuchAlgorithmException, JSONException;
 
     /**
      * Create a batch of messages on a specific shard and a random partition.
@@ -54,8 +57,9 @@ public interface ICQSMessagePersistence {
      * @throws InterruptedException
      * @return mapping from client-provided-message-id to internal message-id 
      * @throws NoSuchAlgorithmException 
+     * @throws JSONException 
      */
-    public Map<String, String> sendMessageBatch(CQSQueue queue, int shard, List<CQSMessage> messages) throws PersistenceException, IOException, InterruptedException, NoSuchAlgorithmException;
+    public Map<String, String> sendMessageBatch(CQSQueue queue, int shard, List<CQSMessage> messages) throws PersistenceException, IOException, InterruptedException, NoSuchAlgorithmException, JSONException;
 
     /**
      * Delete a message given the receiptHandle
@@ -73,8 +77,9 @@ public interface ICQSMessagePersistence {
      * @throws NoSuchAlgorithmException 
      * @throws InterruptedException 
      * @return list of messages
+     * @throws JSONException 
      */
-    public List<CQSMessage> receiveMessage(CQSQueue queue, Map<String, String> receiveAttributes) throws PersistenceException, IOException, NoSuchAlgorithmException, InterruptedException;
+    public List<CQSMessage> receiveMessage(CQSQueue queue, Map<String, String> receiveAttributes) throws PersistenceException, IOException, NoSuchAlgorithmException, InterruptedException, JSONException;
 
     /**
      * Change the message visibility timeout of a simple message
@@ -98,8 +103,9 @@ public interface ICQSMessagePersistence {
      * @throws IOException 
      * @throws NoSuchAlgorithmException 
      * @return list of messages between previousReceiptHandle & nextReceiptHandle
+     * @throws JSONException 
      */
-    public List<CQSMessage> peekQueue(String queueUrl, int shard, String previousReceiptHandle, String nextReceiptHandle, int length) throws PersistenceException, IOException, NoSuchAlgorithmException;
+    public List<CQSMessage> peekQueue(String queueUrl, int shard, String previousReceiptHandle, String nextReceiptHandle, int length) throws PersistenceException, IOException, NoSuchAlgorithmException, JSONException;
     
     /**
      * Peek the queue with the given Queue URL for the next set of messages chosen at random from the queue
@@ -110,8 +116,9 @@ public interface ICQSMessagePersistence {
      * @throws IOException 
      * @throws NoSuchAlgorithmException 
      * @return list of messages
+     * @throws JSONException 
      */
-    public List<CQSMessage> peekQueueRandom(String queueUrl, int shard, int length) throws PersistenceException, IOException, NoSuchAlgorithmException;
+    public List<CQSMessage> peekQueueRandom(String queueUrl, int shard, int length) throws PersistenceException, IOException, NoSuchAlgorithmException, JSONException;
 
     /**
      * Clear a specific shard of a queue
@@ -130,6 +137,7 @@ public interface ICQSMessagePersistence {
      * @throws UnsupportedEncodingException 
      * @throws NoSuchAlgorithmException 
      * @throws IOException 
+     * @throws JSONException 
      */
-	Map<String, CQSMessage> getMessages(String queueUrl, List<String> ids) throws PersistenceException, NoSuchAlgorithmException, UnsupportedEncodingException, IOException;
+	Map<String, CQSMessage> getMessages(String queueUrl, List<String> ids) throws PersistenceException, NoSuchAlgorithmException, UnsupportedEncodingException, IOException, JSONException;
 }

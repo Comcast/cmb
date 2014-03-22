@@ -166,7 +166,7 @@ public class Util {
 	    	jw.endObject();	    	    	
 	    	writer.flush();
 	    		    	
-    	} catch(Exception e) {
+    	} catch (Exception e) {
     		return "";
     	}   	
     	

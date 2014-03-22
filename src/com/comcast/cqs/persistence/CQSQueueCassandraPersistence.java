@@ -75,7 +75,7 @@ public class CQSQueueCassandraPersistence implements ICQSQueuePersistence {
 		queueData.put(CQSConstants.COL_COMPRESSED, (new Boolean(queue.isCompressed())).toString());
 
 		cassandraHandler.insertRow(AbstractCassandraPersistence.CQS_KEYSPACE, queue.getRelativeUrl(), COLUMN_FAMILY_QUEUES, queueData, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, null);
-		cassandraHandler.update(AbstractCassandraPersistence.CQS_KEYSPACE, COLUMN_FAMILY_QUEUES_BY_USER, queue.getOwnerUserId(), queue.getArn(), "", CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+		cassandraHandler.update(AbstractCassandraPersistence.CQS_KEYSPACE, COLUMN_FAMILY_QUEUES_BY_USER, queue.getOwnerUserId(), queue.getArn(), "", CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, null);
 	}
 	
 	@Override
@@ -255,7 +255,7 @@ public class CQSQueueCassandraPersistence implements ICQSQueuePersistence {
 		if (queueUrl == null || queueUrl.trim().isEmpty() || policy == null || policy.trim().isEmpty()) {
 			return false;
 		}
-		cassandraHandler.update(AbstractCassandraPersistence.CQS_KEYSPACE, COLUMN_FAMILY_QUEUES, queueUrl, CQSConstants.COL_POLICY, policy, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+		cassandraHandler.update(AbstractCassandraPersistence.CQS_KEYSPACE, COLUMN_FAMILY_QUEUES, queueUrl, CQSConstants.COL_POLICY, policy, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, null);
 		return true;
 	}
 }

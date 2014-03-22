@@ -26,6 +26,8 @@ import javax.servlet.AsyncContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.json.JSONException;
+
 import com.comcast.cmb.common.model.User;
 import com.comcast.cmb.common.persistence.PersistenceFactory;
 import com.comcast.cmb.common.util.CMBErrorCodes;
@@ -75,7 +77,7 @@ public class CQSPeekMessageAction extends CQSAction {
         return messageList == null ? false : true;
 	}
 	
-	protected List<CQSMessage> getMessages(HttpServletRequest request, boolean useParams, CQSQueue queue) throws PersistenceException, CMBException, IOException, NoSuchAlgorithmException, InterruptedException {
+	protected List<CQSMessage> getMessages(HttpServletRequest request, boolean useParams, CQSQueue queue) throws PersistenceException, CMBException, IOException, NoSuchAlgorithmException, InterruptedException, JSONException {
 		
 		String previousReceiptHandle = request.getParameter("PreviousReceiptHandle");
 		String nextReceiptHandle = request.getParameter("NextReceiptHandle");

@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Random;
 
 import org.apache.log4j.Logger;
+import org.json.JSONException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -94,7 +95,7 @@ public class CQSMessagePartitionedCassandraPersistenceTest {
     }
 
 	@Test
-	public void testSendMessage() throws NoSuchAlgorithmException, PersistenceException, IOException, InterruptedException {
+	public void testSendMessage() throws NoSuchAlgorithmException, PersistenceException, IOException, InterruptedException, JSONException {
 		
         CQSMessage message = new CQSMessage("This is a test message " + (new Random()).nextInt(), attributes);
         attributes.put("SentTimestamp", "" + Calendar.getInstance().getTimeInMillis());
@@ -103,7 +104,7 @@ public class CQSMessagePartitionedCassandraPersistenceTest {
 	}
 	
 	@Test
-	public void testSendMessageBatch() throws NoSuchAlgorithmException, PersistenceException, IOException, InterruptedException {
+	public void testSendMessageBatch() throws NoSuchAlgorithmException, PersistenceException, IOException, InterruptedException, JSONException {
 		
         attributes.put("SentTimestamp", "" + Calendar.getInstance().getTimeInMillis());
 		List<CQSMessage> messageList = new ArrayList<CQSMessage>();
@@ -119,7 +120,7 @@ public class CQSMessagePartitionedCassandraPersistenceTest {
 	}
 
 	@Test
-	public void testGetMessages()  throws NoSuchAlgorithmException, PersistenceException, IOException, InterruptedException {
+	public void testGetMessages()  throws NoSuchAlgorithmException, PersistenceException, IOException, InterruptedException, JSONException {
 		
 		List<CQSMessage> messageList = new ArrayList<CQSMessage>();
 		
@@ -146,7 +147,7 @@ public class CQSMessagePartitionedCassandraPersistenceTest {
 	}
 	
 	@Test
-	public void testGetMessagesBulk() throws PersistenceException, NoSuchAlgorithmException, IOException, InterruptedException {
+	public void testGetMessagesBulk() throws PersistenceException, NoSuchAlgorithmException, IOException, InterruptedException, JSONException {
 		
 		List<CQSMessage> messageList = new ArrayList<CQSMessage>();
 		

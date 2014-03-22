@@ -440,7 +440,7 @@ public class CassandraAstyanaxPersistence extends AbstractCassandraPersistence {
 	@Override
 	public <K, N, V> void update(String keyspace, String columnFamily, K key,
 			N column, V value, CmbSerializer keySerializer,
-			CmbSerializer nameSerializer, CmbSerializer valueSerializer)
+			CmbSerializer nameSerializer, CmbSerializer valueSerializer, Integer ttl)
 			throws PersistenceException {
 		
 		long ts1 = System.currentTimeMillis();	    
@@ -448,7 +448,7 @@ public class CassandraAstyanaxPersistence extends AbstractCassandraPersistence {
 
 		try {
 			MutationBatch m = getKeyspace(keyspace).prepareMutationBatch();
-			m.withRow((ColumnFamily<K, N>)getColumnFamily(columnFamily), key).putColumn(column, value, getSerializer(valueSerializer), null);
+			m.withRow((ColumnFamily<K, N>)getColumnFamily(columnFamily), key).putColumn(column, value, getSerializer(valueSerializer), ttl);
 			OperationResult<Void> result = m.execute();
 		} catch (ConnectionException ex) {
 			throw new PersistenceException(ex);
@@ -459,16 +459,16 @@ public class CassandraAstyanaxPersistence extends AbstractCassandraPersistence {
 		}
 	}
 
-	@Override
+	/*@Override
 	public <K, SN, N, V> void insertSuperColumn(String keyspace,
 			String columnFamily, K key, CmbSerializer keySerializer,
 			SN superName, Integer ttl, CmbSerializer superNameSerializer,
 			Map<N, V> subColumnNameValues, CmbSerializer columnSerializer,
 			CmbSerializer valueSerializer) throws PersistenceException {
 		// TODO : remove
-	}
+	}*/
 
-	@Override
+	/*@Override
 	public <K, SN, N, V> void insertSuperColumns(String keyspace,
 			String columnFamily, K key, CmbSerializer keySerializer,
 			Map<SN, Map<N, V>> superNameSubColumnsMap, int ttl,
@@ -476,7 +476,7 @@ public class CassandraAstyanaxPersistence extends AbstractCassandraPersistence {
 			CmbSerializer columnSerializer, CmbSerializer valueSerializer)
 			throws PersistenceException {
 		// TODO : remove
-	}
+	}*/
 	
 	// TODO: check if astyanax returns empty rows 
 
@@ -651,7 +651,7 @@ public class CassandraAstyanaxPersistence extends AbstractCassandraPersistence {
 		}
 	}
 
-	@Override
+	/*@Override
 	public <K, SN, N, V> CmbSuperColumnSlice<SN, N, V> readRowFromSuperColumnFamily(
 			String keyspace, String columnFamily, K key, SN firstColumnName,
 			SN lastColumnName, int numCols, CmbSerializer keySerializer,
@@ -660,9 +660,9 @@ public class CassandraAstyanaxPersistence extends AbstractCassandraPersistence {
 			throws PersistenceException {
 		// TODO : remove
 		return null;
-	}
+	}*/
 
-	@Override
+	/*@Override
 	public <K, SN, N, V> CmbSuperColumn<SN, N, V> readColumnFromSuperColumnFamily(
 			String keyspace, String columnFamily, K key, SN columnName,
 			CmbSerializer keySerializer, CmbSerializer superNameSerializer,
@@ -670,9 +670,9 @@ public class CassandraAstyanaxPersistence extends AbstractCassandraPersistence {
 			throws PersistenceException {
 		// TODO : remove
 		return null;
-	}
+	}*/
 
-	@Override
+	/*@Override
 	public <K, SN, N, V> List<CmbSuperColumn<SN, N, V>> readMultipleColumnsFromSuperColumnFamily(
 			String keyspace, String columnFamily, Collection<K> keys,
 			Collection<SN> columnNames, CmbSerializer keySerializer,
@@ -681,9 +681,9 @@ public class CassandraAstyanaxPersistence extends AbstractCassandraPersistence {
 			throws PersistenceException {
 		// TODO : remove
 		return null;
-	}
+	}*/
 
-	@Override
+	/*@Override
 	public <K, SN, N, V> List<CmbSuperColumn<SN, N, V>> readColumnsFromSuperColumnFamily(
 			String keyspace, String columnFamily, K key,
 			CmbSerializer keySerializer, CmbSerializer superNameSerializer,
@@ -692,7 +692,7 @@ public class CassandraAstyanaxPersistence extends AbstractCassandraPersistence {
 			throws PersistenceException {
 		// TODO : remove
 		return null;
-	}
+	}*/
 
 	@Override
 	public <K, N, V> void insertRow(String keyspace, K rowKey, 
@@ -805,13 +805,13 @@ public class CassandraAstyanaxPersistence extends AbstractCassandraPersistence {
 		}
 	}
 
-	@Override
+	/*@Override
 	public <K, SN, N> void deleteSuperColumn(String keyspace,
 			String superColumnFamily, K key, SN superColumn,
 			CmbSerializer keySerializer, CmbSerializer superColumnSerializer)
 			throws PersistenceException {
 		// TODO : remove
-	}
+	}*/
 
 	@Override
 	public <K, N> int getCount(String keyspace, String columnFamily, K key,
@@ -904,5 +904,14 @@ public class CassandraAstyanaxPersistence extends AbstractCassandraPersistence {
 			CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CassandraTime, (ts2 - ts1));
 			CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CassandraRead, 1L);
 		}
+	}
+
+	@Override
+	public <K, N, V> CmbColumn<N, V> readColumn(String keyspace,
+			String columnFamily, K key, N columnName,
+			CmbSerializer keySerializer, CmbSerializer columnNameSerializer,
+			CmbSerializer valueSerializer) throws PersistenceException {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }
