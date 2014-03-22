@@ -28,6 +28,7 @@ import me.prettyprint.cassandra.connection.RoundRobinBalancingPolicy;
 import me.prettyprint.cassandra.model.IndexedSlicesQuery;
 import me.prettyprint.cassandra.model.MultigetCountQuery;
 import me.prettyprint.cassandra.serializers.CompositeSerializer;
+import me.prettyprint.cassandra.serializers.LongSerializer;
 import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.cassandra.service.CassandraHostConfigurator;
 import me.prettyprint.cassandra.service.OperationType;
@@ -178,7 +179,10 @@ public class CassandraHectorPersistence extends AbstractCassandraPersistence {
 			return StringSerializer.get();
 		} else if (s instanceof CmbCompositeSerializer) {
 			return CompositeSerializer.get();
+		} else if (s instanceof CmbLongSerializer) {
+			return LongSerializer.get();
 		}
+		
 		throw new PersistenceException(CMBErrorCodes.InternalError, "Unknown serializer " + s);
 	}
 

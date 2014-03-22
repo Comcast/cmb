@@ -19,7 +19,27 @@ public abstract class AbstractCassandraPersistence {
 	public static class CMB_SERIALIZER { 
 		public static final CmbStringSerializer STRING_SERIALIZER = new CmbStringSerializer();
 		public static final CmbCompositeSerializer COMPOSITE_SERIALIZER = new CmbCompositeSerializer();
+		public static final CmbLongSerializer LONG_SERIALIZER = new CmbLongSerializer();
 	};
+	
+	public static final String CNS_TOPICS = "CNSTopics";
+	public static final String CNS_TOPICS_BY_USER_ID = "CNSTopicsByUserId";
+	public static final String CNS_TOPIC_SUBSCRIPTIONS = "CNSTopicSubscriptions";
+	public static final String CNS_TOPIC_SUBSCRIPTIONS_INDEX = "CNSTopicSubscriptionsIndex";
+	public static final String CNS_TOPIC_SUBSCRIPTIONS_USER_INDEX = "CNSTopicSubscriptionsUserIndex";
+	public static final String CNS_TOPIC_SUBSCRIPTIONS_TOKEN_INDEX = "CNSTopicSubscriptionsTokenIndex";
+	public static final String CNS_TOPIC_ATTRIBUTES = "CNSTopicAttributes";
+	public static final String CNS_SUBSCRIPTION_ATTRIBUTES = "CNSSubscriptionAttributes";
+	public static final String CNS_TOPIC_STATS = "CNSTopicStats";
+	public static final String CNS_WORKERS = "CNSWorkers";
+	public static final String CNS_API_SERVERS = "CNSAPIServers";
+	
+	public static final String CQS_QUEUES = "CQSQueues";
+	public static final String CQS_QUEUES_BY_USER_ID = "CQSQueuesByUserId";
+	public static final String CQS_PARTITIONED_QUEUE_MESSAGES = "CQSPartitionedQueueMessages";
+	public static final String CQS_API_SERVERS = "CQSAPIServers";
+	
+	public static final String CMB_USERS = "Users";
 	
 	public static abstract class CmbSerializer {
 	}
@@ -30,6 +50,9 @@ public abstract class AbstractCassandraPersistence {
 	public static class CmbCompositeSerializer extends CmbSerializer {
 	}
 	
+	public static class CmbLongSerializer extends CmbSerializer {
+	}
+
 	public static abstract class CmbComposite {
 		public CmbComposite() {
 		}
