@@ -41,24 +41,17 @@ import me.prettyprint.hector.api.beans.ColumnSlice;
 import me.prettyprint.hector.api.beans.Composite;
 import me.prettyprint.hector.api.beans.HColumn;
 import me.prettyprint.hector.api.beans.HCounterColumn;
-import me.prettyprint.hector.api.beans.HSuperColumn;
 import me.prettyprint.hector.api.beans.OrderedRows;
 import me.prettyprint.hector.api.beans.Row;
-import me.prettyprint.hector.api.beans.SuperRow;
-import me.prettyprint.hector.api.beans.SuperRows;
-import me.prettyprint.hector.api.beans.SuperSlice;
 import me.prettyprint.hector.api.ddl.KeyspaceDefinition;
 import me.prettyprint.hector.api.factory.HFactory;
 import me.prettyprint.hector.api.mutation.MutationResult;
 import me.prettyprint.hector.api.mutation.Mutator;
 import me.prettyprint.hector.api.query.ColumnQuery;
 import me.prettyprint.hector.api.query.CounterQuery;
-import me.prettyprint.hector.api.query.MultigetSuperSliceQuery;
 import me.prettyprint.hector.api.query.QueryResult;
 import me.prettyprint.hector.api.query.RangeSlicesQuery;
 import me.prettyprint.hector.api.query.SliceQuery;
-import me.prettyprint.hector.api.query.SuperColumnQuery;
-import me.prettyprint.hector.api.query.SuperSliceQuery;
 
 import org.apache.log4j.Logger;
 
@@ -74,8 +67,6 @@ import com.comcast.cmb.common.util.ValueAccumulator.AccumulatorName;
  */
 public class CassandraHectorPersistence extends AbstractCassandraPersistence {
 	
-	//TODO: add support for composite where needed!
-	//TODO: adjust schema
 	//TODO: remove dead code
 
 	private static final int hectorPoolSize = CMBProperties.getInstance().getHectorPoolSize();
@@ -274,7 +265,7 @@ public class CassandraHectorPersistence extends AbstractCassandraPersistence {
 		}
 		@Override
 		public N getName() {
-			return hectorColumn.getName();
+			return (N)getCmbComposite(hectorColumn.getName());
 		}
 		@Override
 		public V getValue() {
@@ -303,6 +294,7 @@ public class CassandraHectorPersistence extends AbstractCassandraPersistence {
 
 	public static class CmbHectorColumnSlice<N, V> extends CmbColumnSlice<N, V> {
 		private ColumnSlice<N, V> hectorSlice;
+		private List<CmbColumn<N, V>> columns = null;
 		public CmbHectorColumnSlice(ColumnSlice<N, V> hectorSlice) {
 			this.hectorSlice = hectorSlice;
 		}
@@ -314,21 +306,27 @@ public class CassandraHectorPersistence extends AbstractCassandraPersistence {
 				return null;
 			}
 		}
+		private void loadColumns() {
+			if (columns == null) {
+				columns = new ArrayList<CmbColumn<N, V>>();
+				for (HColumn<N, V> c : hectorSlice.getColumns()) {
+					columns.add(new CmbHectorColumn<N, V>(c));
+				}
+			}
+		}
 		@Override
 		public List<CmbColumn<N, V>> getColumns() {
-			List<CmbColumn<N, V>> columns = new ArrayList<CmbColumn<N, V>>();
-			for (HColumn<N, V> c : hectorSlice.getColumns()) {
-				columns.add(new CmbHectorColumn<N, V>(c));
-			}
+			loadColumns();
 			return columns;
 		}
 		@Override
 		public int size() {
-			return hectorSlice.getColumns().size();
+			loadColumns();
+			return columns.size();
 		}
 	}
 
-	public static class CmbHectorSuperColumnSlice<SN, N, V> extends CmbSuperColumnSlice<SN, N, V> {
+	/*public static class CmbHectorSuperColumnSlice<SN, N, V> extends CmbSuperColumnSlice<SN, N, V> {
 		private SuperSlice<SN, N, V> hectorSuperSlice;
 		public CmbHectorSuperColumnSlice(SuperSlice<SN, N, V> hectorSuperSlice) {
 			this.hectorSuperSlice = hectorSuperSlice;
@@ -349,9 +347,9 @@ public class CassandraHectorPersistence extends AbstractCassandraPersistence {
 			}
 			return superColumns;
 		}
-	}
+	}*/
 
-	public static class CmbHectorSuperColumn<SN, N, V> extends CmbSuperColumn<SN, N, V> {
+	/*public static class CmbHectorSuperColumn<SN, N, V> extends CmbSuperColumn<SN, N, V> {
 		private HSuperColumn<SN, N, V> hectorSuperColumn;
 		public CmbHectorSuperColumn(HSuperColumn<SN, N, V> hectorSuperColumn) {
 			this.hectorSuperColumn = hectorSuperColumn;
@@ -368,7 +366,7 @@ public class CassandraHectorPersistence extends AbstractCassandraPersistence {
 			}
 			return columns;
 		}
-	}
+	}*/
 
 	private <K, N, V> List<CmbRow<K, N, V>> getRows(List<Row<K, N, V>> rows) throws PersistenceException {
 		List<CmbRow<K, N, V>> l = new ArrayList<CmbRow<K, N, V>>();
@@ -378,13 +376,13 @@ public class CassandraHectorPersistence extends AbstractCassandraPersistence {
 		return l;
 	}
 
-	private <SN, N, V> List<CmbSuperColumn<SN, N, V>> getSuperColumns(List<HSuperColumn<SN, N, V>> superColumns) throws PersistenceException {
+	/*private <SN, N, V> List<CmbSuperColumn<SN, N, V>> getSuperColumns(List<HSuperColumn<SN, N, V>> superColumns) throws PersistenceException {
 		List<CmbSuperColumn<SN, N, V>> l = new ArrayList<CmbSuperColumn<SN, N, V>>();
 		for (HSuperColumn<SN, N, V> superColumn : superColumns) {
 			l.add(new CmbHectorSuperColumn<SN, N, V>(superColumn));
 		}
 		return l;
-	}
+	}*/
 
 	@Override
 	public boolean isAlive() {
@@ -411,7 +409,7 @@ public class CassandraHectorPersistence extends AbstractCassandraPersistence {
 		long ts1 = System.currentTimeMillis();	    
 		logger.debug("event=update column_family=" + columnFamily + " key=" + key + " column=" + column + " value=" + value);
 		Mutator<K> mutator = HFactory.createMutator(getKeyspace(keyspace), getSerializer(keySerializer));
-		HColumn c = HFactory.createColumn(column, value, getSerializer(nameSerializer), getSerializer(valueSerializer));
+		HColumn c = HFactory.createColumn(getComposite(column), value, getSerializer(nameSerializer), getSerializer(valueSerializer));
 		if (ttl != null) {
 			c.setTtl(ttl);
 		}
@@ -651,8 +649,8 @@ public class CassandraHectorPersistence extends AbstractCassandraPersistence {
 					.setRange(null, null, false, numCols).setRowCount(numRows)
 					.setStartKey(lastKey);
 
-			for (N key : columnValues.keySet()) {
-				indexedSlicesQuery.addEqualsExpression(key, columnValues.get(key));
+			for (N name : columnValues.keySet()) {
+				indexedSlicesQuery.addEqualsExpression(name, columnValues.get(name));
 			}
 
 			QueryResult<OrderedRows<K, N, V>> result = indexedSlicesQuery.execute();
@@ -698,7 +696,7 @@ public class CassandraHectorPersistence extends AbstractCassandraPersistence {
 
 			SliceQuery<K, N, V> sliceQuery = HFactory.createSliceQuery(getKeyspace(keyspace), getSerializer(keySerializer), getSerializer(columnNameSerializer), getSerializer(valueSerializer))
 					.setColumnFamily(columnFamily)
-					.setRange(firstColumnName, lastColumnName, false, numCols)
+					.setRange(getComposite(firstColumnName), getComposite(lastColumnName), false, numCols)
 					.setKey(key);
 
 			QueryResult<ColumnSlice<N, V>> result = sliceQuery.execute();
@@ -728,7 +726,9 @@ public class CassandraHectorPersistence extends AbstractCassandraPersistence {
 		try {
 
 			ColumnQuery<K, N, V> columnQuery = HFactory.createColumnQuery(getKeyspace(keyspace), getSerializer(keySerializer), getSerializer(columnNameSerializer), getSerializer(valueSerializer))
-			.setColumnFamily(columnFamily).setKey(key).setName(columnName);
+			.setColumnFamily(columnFamily)
+			.setKey(key)
+			.setName(getComposite(columnName));
 			
 			QueryResult<HColumn<N, V>> result = columnQuery.execute();
 			
@@ -894,9 +894,9 @@ public class CassandraHectorPersistence extends AbstractCassandraPersistence {
 
 			Mutator<K> mutator = HFactory.createMutator(getKeyspace(keyspace), getSerializer(keySerializer));
 
-			for (N key : columnValues.keySet()) {
+			for (N name : columnValues.keySet()) {
 
-				HColumn<N, V> col = HFactory.createColumn(key, columnValues.get(key), getSerializer(nameSerializer), getSerializer(valueSerializer));
+				HColumn<N, V> col = HFactory.createColumn(getComposite(name), columnValues.get(name), getSerializer(nameSerializer), getSerializer(valueSerializer));
 
 				if (ttl != null) {
 					col.setTtl(ttl);
@@ -931,9 +931,9 @@ public class CassandraHectorPersistence extends AbstractCassandraPersistence {
 
 				Map<N, V> columnValues = rowColumnValues.get(rowKey);
 
-				for (N key : columnValues.keySet()) {
+				for (N name : columnValues.keySet()) {
 
-					HColumn<N, V> col = HFactory.createColumn(key, columnValues.get(key), getSerializer(nameSerializer), getSerializer(valueSerializer));
+					HColumn<N, V> col = HFactory.createColumn(getComposite(name), columnValues.get(name), getSerializer(nameSerializer), getSerializer(valueSerializer));
 
 					if (ttl != null) {
 						col.setTtl(ttl);
@@ -965,7 +965,7 @@ public class CassandraHectorPersistence extends AbstractCassandraPersistence {
 			Mutator<K> mutator = HFactory.createMutator(getKeyspace(keyspace), getSerializer(keySerializer));
 
 			if (column != null) {
-				mutator.addDeletion(key, columnFamily, column, getSerializer(columnSerializer));
+				mutator.addDeletion(key, columnFamily, getComposite(column), getSerializer(columnSerializer));
 			} else {
 				mutator.addDeletion(key, columnFamily);
 			}
@@ -998,7 +998,7 @@ public class CassandraHectorPersistence extends AbstractCassandraPersistence {
 				}			
 			} else {
 				for (int i=0; i< keyList.size();i++) {
-					mutator.addDeletion(keyList.get(i), columnFamily, columnList.get(i), getSerializer(columnSerializer));
+					mutator.addDeletion(keyList.get(i), columnFamily, getComposite(columnList.get(i)), getSerializer(columnSerializer));
 				}
 			}
 

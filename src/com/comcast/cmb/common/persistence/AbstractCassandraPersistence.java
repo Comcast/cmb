@@ -1,12 +1,9 @@
 package com.comcast.cmb.common.persistence;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CmbColumn;
-import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CmbSerializer;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.PersistenceException;
 
@@ -89,19 +86,19 @@ public abstract class AbstractCassandraPersistence {
 		public abstract int size();
 	}
 	
-	public static abstract class CmbSuperColumnSlice<SN, N, V> {
+	/*public static abstract class CmbSuperColumnSlice<SN, N, V> {
 		public CmbSuperColumnSlice() {
 		}
 		public abstract CmbSuperColumn<SN, N, V> getColumnByName(SN name);
 		public abstract List<CmbSuperColumn<SN, N, V>> getSuperColumns();
-	}
+	}*/
 	
-	public static abstract class CmbSuperColumn<SN, N, V> {
+	/*public static abstract class CmbSuperColumn<SN, N, V> {
 		public CmbSuperColumn() {
 		}
 		public abstract SN getName();
 		public abstract List<CmbColumn<N, V>> getColumns();
-	}
+	}*/
 
 	public static final String CLUSTER_NAME = CMBProperties.getInstance().getClusterName();
 	public static final String CLUSTER_URL = CMBProperties.getInstance().getClusterUrl();

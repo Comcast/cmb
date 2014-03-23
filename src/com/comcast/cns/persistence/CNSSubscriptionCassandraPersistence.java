@@ -15,7 +15,6 @@
  */
 package com.comcast.cns.persistence;
 
-import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.util.ArrayList;
@@ -35,7 +34,6 @@ import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CMB_SERIA
 import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CmbColumn;
 import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CmbColumnSlice;
 import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CmbComposite;
-import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CmbSuperColumn;
 import com.comcast.cmb.common.persistence.CassandraPersistenceFactory;
 import com.comcast.cmb.common.persistence.PersistenceFactory;
 import com.comcast.cmb.common.util.CMBErrorCodes;
@@ -112,13 +110,16 @@ public class CNSSubscriptionCassandraPersistence implements ICNSSubscriptionPers
 	    	jw.key("requestDate").value(s.getRequestDate().getTime() + "");
 		}
 		
-			jw.key("authenticateOnSubscribe").value(s.isAuthenticateOnUnsubscribe() + "");
+		jw.key("authenticateOnSubscribe").value(s.isAuthenticateOnUnsubscribe() + "");
     	jw.key("isConfirmed").value(s.isConfirmed() + "");
     	jw.key("rawMessageDelivery").value(s.getRawMessageDelivery() + "");
+    	
+    	jw.endObject();
+    	
     	return writer.toString();
 	}
 	
-	private Map<String, String> getColumnValues(CNSSubscription s) {
+	/*private Map<String, String> getColumnValues(CNSSubscription s) {
 		
 		Map<String, String> columnValues = new HashMap<String, String>();
 		
@@ -155,9 +156,9 @@ public class CNSSubscriptionCassandraPersistence implements ICNSSubscriptionPers
 		columnValues.put("rawMessageDelivery", s.getRawMessageDelivery() + "");
 
 		return columnValues;
-	}
+	}*/
 	
-	private static CNSSubscription getSubscriptionFromMap(Map<String, String> map) {
+	/*private static CNSSubscription getSubscriptionFromMap(Map<String, String> map) {
 		
 	    String subArn = map.get("subArn");
 	    
@@ -204,7 +205,7 @@ public class CNSSubscriptionCassandraPersistence implements ICNSSubscriptionPers
         }
         
         return s;
-	}
+	}*/
 	
 	private static String getEndpointAndProtoIndexVal(String endpoint, CnsSubscriptionProtocol protocol) {
 	    return protocol.name() + ":" + endpoint;
@@ -407,7 +408,7 @@ public class CNSSubscriptionCassandraPersistence implements ICNSSubscriptionPers
         return s;
 	}
 
-	private static CNSSubscription extractSubscriptionFromSuperColumn(CmbSuperColumn<CmbComposite, String, String> superCol, String topicArn) {
+	/*private static CNSSubscription extractSubscriptionFromSuperColumn(CmbSuperColumn<CmbComposite, String, String> superCol, String topicArn) {
 	    
 	    Map<String, String> messageMap = new HashMap<String, String>(superCol.getColumns().size());
 	    
@@ -419,7 +420,7 @@ public class CNSSubscriptionCassandraPersistence implements ICNSSubscriptionPers
         sub.setTopicArn(topicArn);
         
         return sub;
-	}
+	}*/
 
     @Override
     /**
@@ -567,11 +568,9 @@ public class CNSSubscriptionCassandraPersistence implements ICNSSubscriptionPers
 
 		CmbColumnSlice<CmbComposite, String> cols = cassandraHandler.readColumnSlice(AbstractCassandraPersistence.CNS_KEYSPACE, columnFamilySubscriptions, topicArn, nextTokenComposite, null, pageSize, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.COMPOSITE_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 		
-		//TODO: what about remove?
-		
-		/*if (nextToken != null && cols.size() > 0) {
+		if (nextToken != null && cols.size() > 0) {
 		    cols.getColumns().remove(0);
-		}*/
+		}
 		
 		while (l.size() < pageSize) {
 			
@@ -614,8 +613,6 @@ public class CNSSubscriptionCassandraPersistence implements ICNSSubscriptionPers
 		    
 		    nextTokenComposite = cols.getColumns().get(cols.size() - 1).getName();
 		    cols = cassandraHandler.readColumnSlice(AbstractCassandraPersistence.CNS_KEYSPACE, columnFamilySubscriptions, topicArn, nextTokenComposite, null, pageSize, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.COMPOSITE_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);		    
-		    
-		    //TOD: what about remove?
 		    
 		    if (cols.size() > 0) {
 		        cols.getColumns().remove(0);

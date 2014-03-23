@@ -4,9 +4,9 @@
 
 -- note: drop keyspaces only if they exist already
 
---drop keyspace CNS;
---drop keyspace CQS;
---drop keyspace CMB;
+drop keyspace CNS;
+drop keyspace CQS;
+drop keyspace CMB;
 
 create keyspace CNS;
 create keyspace CQS;
@@ -68,35 +68,15 @@ create column family CNSTopicsByUserId
 --
 
 create column family CNSTopicSubscriptions
-  with column_type = 'Super'
+  with column_type = 'Standard'
   with caching = 'keys_only'
   and comparator = 'CompositeType(UTF8Type, UTF8Type)'
-  and subcomparator = 'UTF8Type'
   and default_validation_class = 'UTF8Type'
   and key_validation_class = 'UTF8Type'
   and read_repair_chance = 0
   and dclocal_read_repair_chance = 0.05
   and replicate_on_write = true
   and compaction_strategy = 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy'
-  and column_metadata = [
-    {column_name : 'endPoint',
-    validation_class : UTF8Type},
-    {column_name : 'userId',
-    validation_class : UTF8Type},
-    {column_name : 'confirmDate',
-    validation_class : UTF8Type},
-    {column_name : 'subArn',
-    validation_class : UTF8Type},
-    {column_name : 'requestDate',
-    validation_class : UTF8Type},
-    {column_name : 'protocol',
-    validation_class : UTF8Type},
-    {column_name : 'isConfirmed',
-    validation_class : UTF8Type},
-    {column_name : 'token',
-    validation_class : UTF8Type},
-    {column_name : 'authenticateOnSubscribe',
-    validation_class : UTF8Type}]
   and compression_options = {'chunk_length_kb' : '64', 'sstable_compression' : 'org.apache.cassandra.io.compress.SnappyCompressor'};
 
 --
@@ -322,10 +302,9 @@ create column family CQSQueuesByUserId
 --
     
  create column family CQSPartitionedQueueMessages
-  with column_type = 'Super'
+  with column_type = 'Standard'
   with caching = 'keys_only'
   and comparator = 'CompositeType(LongType, LongType)'
-  and subcomparator = 'UTF8Type'
   and default_validation_class = 'UTF8Type'
   and key_validation_class = 'UTF8Type'
   and read_repair_chance = 0
@@ -333,21 +312,6 @@ create column family CQSQueuesByUserId
   and gc_grace = 5
   and replicate_on_write = true
   and compaction_strategy = 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy'
-  and column_metadata = [
-    {column_name : 'ApproximateFirstReceiveTimestamp',
-    validation_class : UTF8Type},
-    {column_name : 'ApproximateReceiveCount',
-    validation_class : UTF8Type},
-    {column_name : 'Body',
-    validation_class : UTF8Type},
-    {column_name : 'MD5OfBody',
-    validation_class : UTF8Type},
-    {column_name : 'MessageId',
-    validation_class : UTF8Type},
-    {column_name : 'SenderId',
-    validation_class : UTF8Type},
-    {column_name : 'SentTimestamp',
-    validation_class : UTF8Type}]
   and compression_options = {'chunk_length_kb' : '64', 'sstable_compression' : 'org.apache.cassandra.io.compress.SnappyCompressor'};
     
 --

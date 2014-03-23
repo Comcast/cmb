@@ -44,7 +44,6 @@ public class CassandraAstyanaxPersistence extends AbstractCassandraPersistence {
 	
 	// TODO: set consistency level everywhere
 	// TODO: timeout exception
-	// TODO: get rid of super column stuff
 	
 	private static Map<String, Keyspace> keyspaces = new HashMap<String, Keyspace>();
 	
@@ -182,7 +181,7 @@ public class CassandraAstyanaxPersistence extends AbstractCassandraPersistence {
 		}
 		@Override
 		public N getName() {
-			return astyanaxColumn.getName();
+			return (N)getCmbComposite(astyanaxColumn.getName());
 		}
 		@Override
 		public V getValue() {
@@ -218,6 +217,7 @@ public class CassandraAstyanaxPersistence extends AbstractCassandraPersistence {
 
 	public static class CmbAstyanaxColumnSlice<N, V> extends CmbColumnSlice<N, V> {
 		private ColumnList<N> astyanaxColumns;
+		private List<CmbColumn<N, V>> columns = null;
 		public CmbAstyanaxColumnSlice(ColumnList<N> columns) {
 			this.astyanaxColumns = columns;
 		}
@@ -229,17 +229,23 @@ public class CassandraAstyanaxPersistence extends AbstractCassandraPersistence {
 				return null;
 			}
 		}
+		private void loadColumns() {
+			if (columns == null) {
+				columns = new ArrayList<CmbColumn<N, V>>();
+				for (Column<N> c : astyanaxColumns) {
+					columns.add(new CmbAstyanaxColumn<N, V>(c));
+				}
+			}
+		}
 		@Override
 		public List<CmbColumn<N, V>> getColumns() {
-			List<CmbColumn<N, V>> columns = new ArrayList<CmbColumn<N, V>>();
-			for (Column<N> c : astyanaxColumns) {
-				columns.add(new CmbAstyanaxColumn<N, V>(c));
-			}
+			loadColumns();
 			return columns;
 		}
 		@Override
 		public int size() {
-			return astyanaxColumns.size();
+			loadColumns();
+			return columns.size();
 		}
 	}
 
@@ -448,7 +454,8 @@ public class CassandraAstyanaxPersistence extends AbstractCassandraPersistence {
 
 		try {
 			MutationBatch m = getKeyspace(keyspace).prepareMutationBatch();
-			m.withRow((ColumnFamily<K, N>)getColumnFamily(columnFamily), key).putColumn(column, value, getSerializer(valueSerializer), ttl);
+			m.withRow((ColumnFamily<K, N>)getColumnFamily(columnFamily), key)
+			.putColumn((N)getComposite(column), value, getSerializer(valueSerializer), ttl);
 			OperationResult<Void> result = m.execute();
 		} catch (ConnectionException ex) {
 			throw new PersistenceException(ex);
@@ -634,7 +641,7 @@ public class CassandraAstyanaxPersistence extends AbstractCassandraPersistence {
 
 		    RowQuery<K, N> rq = getKeyspace(keyspace).
 		    		prepareQuery(getColumnFamily(columnFamily)).getKey(key).
-		    		withColumnRange(firstColumnName, lastColumnName, false, numCols);
+		    		withColumnRange(getComposite(firstColumnName), getComposite(lastColumnName), false, numCols);
 		    ColumnList<N> columns = rq.execute().getResult();
 			
 			return new CmbAstyanaxColumnSlice(columns);
@@ -707,7 +714,7 @@ public class CassandraAstyanaxPersistence extends AbstractCassandraPersistence {
 			MutationBatch m = getKeyspace(keyspace).prepareMutationBatch();
 			ColumnListMutation<N> clm = m.withRow((ColumnFamily<K, N>)getColumnFamily(columnFamily), rowKey);
 			for (N columnName : columnValues.keySet()) {
-				clm.putColumn(columnName, columnValues.get(columnName), getSerializer(valueSerializer), ttl);
+				clm.putColumn((N)getComposite(columnName), columnValues.get(columnName), getSerializer(valueSerializer), ttl);
 				CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CassandraWrite, 1L);
 			}
 			OperationResult<Void> result = m.execute();
@@ -733,7 +740,7 @@ public class CassandraAstyanaxPersistence extends AbstractCassandraPersistence {
 			for (K rowKey : rowColumnValues.keySet()) { 
 				ColumnListMutation<N> clm = m.withRow((ColumnFamily<K, N>)getColumnFamily(columnFamily), rowKey);
 				for (N columnName : rowColumnValues.get(rowKey).keySet()) {
-					clm.putColumn(columnName, rowColumnValues.get(rowKey).get(columnName), getSerializer(valueSerializer), ttl);
+					clm.putColumn((N)getComposite(columnName), rowColumnValues.get(rowKey).get(columnName), getSerializer(valueSerializer), ttl);
 					CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CassandraWrite, 1L);
 				}
 			}
@@ -758,7 +765,7 @@ public class CassandraAstyanaxPersistence extends AbstractCassandraPersistence {
 			MutationBatch m = getKeyspace(keyspace).prepareMutationBatch();
 			ColumnListMutation<N> clm = m.withRow((ColumnFamily<K, N>)getColumnFamily(columnFamily), key);
 			if (column != null) {
-				clm.deleteColumn(column);
+				clm.deleteColumn((N)getComposite(column));
 			} else {
 				clm.delete();
 			}
@@ -792,7 +799,7 @@ public class CassandraAstyanaxPersistence extends AbstractCassandraPersistence {
 				// TODO: review this logic with jane 
 				for (int i=0; i< keyList.size();i++) {
 					ColumnListMutation<N> clm = m.withRow((ColumnFamily<K, N>)getColumnFamily(columnFamily), keyList.get(i));
-					clm.deleteColumn(columnList.get(i));
+					clm.deleteColumn((N)getComposite(columnList.get(i)));
 					CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CassandraWrite, 1L);
 				}
 			}

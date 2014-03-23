@@ -22,8 +22,6 @@ import java.io.Writer;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -41,13 +39,10 @@ import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CMB_SERIA
 import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CmbColumn;
 import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CmbColumnSlice;
 import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CmbComposite;
-import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CmbSuperColumn;
-import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CmbSuperColumnSlice;
 import com.comcast.cmb.common.persistence.CassandraPersistenceFactory;
 import com.comcast.cmb.common.util.CMBErrorCodes;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.PersistenceException;
-import com.comcast.cns.model.CNSSubscription;
 import com.comcast.cqs.controller.CQSCache;
 import com.comcast.cqs.model.CQSMessage;
 import com.comcast.cqs.model.CQSQueue;
@@ -178,7 +173,9 @@ public class CQSMessagePartitionedCassandraPersistence implements ICQSMessagePer
 			m.getAttributes().put(CQSConstants.APPROXIMATE_RECEIVE_COUNT, json.getString(CQSConstants.APPROXIMATE_RECEIVE_COUNT));
 		}
 
-		//TODO: what about other attributes?
+		if (json.has(CQSConstants.SENDER_ID)) {
+			m.getAttributes().put(CQSConstants.SENDER_ID, json.getString(CQSConstants.SENDER_ID));
+		}
 		
 		m.setTimebasedId(column.getName());
 		
@@ -225,6 +222,8 @@ public class CQSMessagePartitionedCassandraPersistence implements ICQSMessagePer
 				jw.key(key).value(value);
 			}
 		}
+		
+		jw.endObject();
 		
 		return writer.toString();
 	}

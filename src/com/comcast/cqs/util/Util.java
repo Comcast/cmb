@@ -41,10 +41,6 @@ import org.apache.log4j.Logger;
 
 import com.comcast.cmb.common.persistence.AbstractCassandraPersistence;
 import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CMB_SERIALIZER;
-import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CmbColumn;
-import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CmbComposite;
-import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CmbSuperColumn;
-import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CmbSuperColumnSlice;
 import com.comcast.cmb.common.persistence.CassandraPersistenceFactory;
 import com.comcast.cmb.common.util.CMBErrorCodes;
 import com.comcast.cmb.common.util.CMBException;
