@@ -272,7 +272,7 @@ public class CQSMessagePartitionedCassandraPersistence implements ICQSMessagePer
 			ret.put(message.getSuppliedMessageId(), message.getMessageId());
 		}
 
-		cassandraHandler.insertRow(AbstractCassandraPersistence.CQS_KEYSPACE, COLUMN_FAMILY_PARTITIONED_QUEUE_MESSAGES, key, messageDataMap,
+		cassandraHandler.insertRow(AbstractCassandraPersistence.CQS_KEYSPACE, key, COLUMN_FAMILY_PARTITIONED_QUEUE_MESSAGES, messageDataMap,
 				CMB_SERIALIZER.STRING_SERIALIZER,
 				CMB_SERIALIZER.COMPOSITE_SERIALIZER,
 				CMB_SERIALIZER.STRING_SERIALIZER, ttl);
