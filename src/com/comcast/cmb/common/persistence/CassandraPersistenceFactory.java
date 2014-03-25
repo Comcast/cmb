@@ -6,6 +6,7 @@ public class CassandraPersistenceFactory {
 	}
 
 	public static AbstractCassandraPersistence getInstance() {
-		return CassandraHectorPersistence.getInstance();
+		//return CassandraHectorPersistence.getInstance();
+		return CassandraAstyanaxPersistence.getInstance();
 	}
 }

@@ -30,6 +30,7 @@ import com.netflix.astyanax.model.Column;
 import com.netflix.astyanax.model.ColumnFamily;
 import com.netflix.astyanax.model.ColumnList;
 import com.netflix.astyanax.model.Composite;
+import com.netflix.astyanax.model.ConsistencyLevel;
 import com.netflix.astyanax.model.Row;
 import com.netflix.astyanax.model.Rows;
 import com.netflix.astyanax.query.IndexQuery;
@@ -42,14 +43,25 @@ import com.netflix.astyanax.util.RangeBuilder;
 
 public class CassandraAstyanaxPersistence extends AbstractCassandraPersistence {
 	
-	// TODO: set consistency level everywhere
+	// TODO: fine tune astyanax settings
 	// TODO: timeout exception
 	
 	private static Map<String, Keyspace> keyspaces = new HashMap<String, Keyspace>();
 	
 	private static Logger logger = Logger.getLogger(CassandraAstyanaxPersistence.class);
 	
-	public CassandraAstyanaxPersistence() {
+	private static CassandraAstyanaxPersistence instance;
+	
+	public static CassandraAstyanaxPersistence getInstance() {
+		
+		if (instance == null) {
+			instance = new CassandraAstyanaxPersistence();
+		}
+		
+		return instance;
+	}
+	
+	private CassandraAstyanaxPersistence() {
 		initPersistence();
 	}
 	
@@ -64,22 +76,20 @@ public class CassandraAstyanaxPersistence extends AbstractCassandraPersistence {
 		
 			AstyanaxContext<Keyspace> context = new AstyanaxContext.Builder()
 			.forCluster(CLUSTER_NAME)
-			.forKeyspace(CMBProperties.getInstance().getCMBKeyspace())
+			.forKeyspace(k)
 			.withAstyanaxConfiguration(new AstyanaxConfigurationImpl()      
 			.setDiscoveryType(NodeDiscoveryType.RING_DESCRIBE)
-					)
+			.setDefaultReadConsistencyLevel(ConsistencyLevel.valueOf("CL_"+CMBProperties.getInstance().getReadConsistencyLevel()))
+			.setDefaultWriteConsistencyLevel(ConsistencyLevel.valueOf("CL_"+CMBProperties.getInstance().getWriteConsistencyLevel())))
 					.withConnectionPoolConfiguration(new ConnectionPoolConfigurationImpl("CMBAstyananxConnectionPool")
-					//.setPort(9160)
+					.setPort(9160)
 					.setMaxConnsPerHost(1)
-					.setSeeds(AbstractCassandraPersistence.CLUSTER_URL)
-							)
+					.setSeeds(AbstractCassandraPersistence.CLUSTER_URL))
 							.withConnectionPoolMonitor(new CountingConnectionPoolMonitor())
 							.buildKeyspace(ThriftFamilyFactory.getInstance());
-	
 			context.start();
 			Keyspace keyspace = context.getClient();
-			
-			keyspaces.put(CMBProperties.getInstance().getCMBKeyspace(), keyspace);
+			keyspaces.put(k, keyspace);
 		}
 	}
 	
@@ -338,105 +348,105 @@ public class CassandraAstyanaxPersistence extends AbstractCassandraPersistence {
 						CNS_TOPICS_BY_USER_ID,  // column family name
 						StringSerializer.get(), // key serializer
 						StringSerializer.get()); // column serializer
-		cf.put(CNS_TOPICS_BY_USER_ID, CF_CNS_TOPICS);
+		cf.put(CNS_TOPICS_BY_USER_ID, CF_CNS_TOPICS_BY_USER_ID);
 
 		ColumnFamily<String, String> CF_CNS_TOPIC_SUBSCRIPTIONS =
 				new ColumnFamily<String, String>(
 						CNS_TOPIC_SUBSCRIPTIONS,  // column family name
 						StringSerializer.get(), // key serializer
 						StringSerializer.get()); // column serializer
-		cf.put(CNS_TOPIC_SUBSCRIPTIONS, CF_CNS_TOPICS);
+		cf.put(CNS_TOPIC_SUBSCRIPTIONS, CF_CNS_TOPIC_SUBSCRIPTIONS);
 
 		ColumnFamily<String, String> CF_CNS_TOPIC_SUBSCRIPTIONS_INDEX =
 				new ColumnFamily<String, String>(
 						CNS_TOPIC_SUBSCRIPTIONS_INDEX,  // column family name
 						StringSerializer.get(), // key serializer
 						StringSerializer.get()); // column serializer
-		cf.put(CNS_TOPIC_SUBSCRIPTIONS_INDEX, CF_CNS_TOPICS);
+		cf.put(CNS_TOPIC_SUBSCRIPTIONS_INDEX, CF_CNS_TOPIC_SUBSCRIPTIONS_INDEX);
 
 		ColumnFamily<String, String> CF_CNS_TOPIC_SUBSCRIPTIONS_USER_INDEX =
 				new ColumnFamily<String, String>(
 						CNS_TOPIC_SUBSCRIPTIONS_USER_INDEX,  // column family name
 						StringSerializer.get(), // key serializer
 						StringSerializer.get()); // column serializer
-		cf.put(CNS_TOPIC_SUBSCRIPTIONS_USER_INDEX, CF_CNS_TOPICS);
+		cf.put(CNS_TOPIC_SUBSCRIPTIONS_USER_INDEX, CF_CNS_TOPIC_SUBSCRIPTIONS_USER_INDEX);
 		
 		ColumnFamily<String, String> CF_CNS_TOPIC_SUBSCRIPTIONS_TOKEN_INDEX =
 				new ColumnFamily<String, String>(
 						CNS_TOPIC_SUBSCRIPTIONS_TOKEN_INDEX,  // column family name
 						StringSerializer.get(), // key serializer
 						StringSerializer.get()); // column serializer
-		cf.put(CNS_TOPIC_SUBSCRIPTIONS_TOKEN_INDEX, CF_CNS_TOPICS);
+		cf.put(CNS_TOPIC_SUBSCRIPTIONS_TOKEN_INDEX, CF_CNS_TOPIC_SUBSCRIPTIONS_TOKEN_INDEX);
 
 		ColumnFamily<String, String> CF_CNS_TOPIC_ATTRIBUTES =
 				new ColumnFamily<String, String>(
 						CNS_TOPIC_ATTRIBUTES,  // column family name
 						StringSerializer.get(), // key serializer
 						StringSerializer.get()); // column serializer
-		cf.put(CNS_TOPIC_ATTRIBUTES, CF_CNS_TOPICS);
+		cf.put(CNS_TOPIC_ATTRIBUTES, CF_CNS_TOPIC_ATTRIBUTES);
 
 		ColumnFamily<String, String> CF_CNS_SUBSCRIPTION_ATTRIBUTES =
 				new ColumnFamily<String, String>(
 						CNS_SUBSCRIPTION_ATTRIBUTES,  // column family name
 						StringSerializer.get(), // key serializer
 						StringSerializer.get()); // column serializer
-		cf.put(CNS_SUBSCRIPTION_ATTRIBUTES, CF_CNS_TOPICS);
+		cf.put(CNS_SUBSCRIPTION_ATTRIBUTES, CF_CNS_SUBSCRIPTION_ATTRIBUTES);
 
 		ColumnFamily<String, String> CF_CNS_TOPIC_STATS =
 				new ColumnFamily<String, String>(
 						CNS_TOPIC_STATS,  // column family name
 						StringSerializer.get(), // key serializer
 						StringSerializer.get()); // column serializer
-		cf.put(CNS_TOPIC_STATS, CF_CNS_TOPICS);
+		cf.put(CNS_TOPIC_STATS, CF_CNS_TOPIC_STATS);
 
 		ColumnFamily<String, String> CF_CNS_WORKERS =
 				new ColumnFamily<String, String>(
 						CNS_WORKERS,  // column family name
 						StringSerializer.get(), // key serializer
 						StringSerializer.get()); // column serializer
-		cf.put(CNS_WORKERS, CF_CNS_TOPICS);
+		cf.put(CNS_WORKERS, CF_CNS_WORKERS);
 
 		ColumnFamily<String, String> CF_CNS_API_SERVERS =
 				new ColumnFamily<String, String>(
 						CNS_API_SERVERS,  // column family name
 						StringSerializer.get(), // key serializer
 						StringSerializer.get()); // column serializer
-		cf.put(CNS_API_SERVERS, CF_CNS_TOPICS);
+		cf.put(CNS_API_SERVERS, CF_CNS_API_SERVERS);
 	
 		ColumnFamily<String, String> CF_CQS_QUEUES =
 				new ColumnFamily<String, String>(
 						CQS_QUEUES,  // column family name
 						StringSerializer.get(), // key serializer
 						StringSerializer.get()); // column serializer
-		cf.put(CQS_QUEUES, CF_CNS_TOPICS);
+		cf.put(CQS_QUEUES, CF_CQS_QUEUES);
 	
 		ColumnFamily<String, String> CF_CQS_QUEUES_BY_USER_ID =
 				new ColumnFamily<String, String>(
 						CQS_QUEUES_BY_USER_ID,  // column family name
 						StringSerializer.get(), // key serializer
 						StringSerializer.get()); // column serializer
-		cf.put(CQS_QUEUES_BY_USER_ID, CF_CNS_TOPICS);
+		cf.put(CQS_QUEUES_BY_USER_ID, CF_CQS_QUEUES_BY_USER_ID);
 
 		ColumnFamily<String, Composite> CF_CQS_PARTITIONED_QUEUE_MESSAGES =
 				new ColumnFamily<String, Composite>(
 						CQS_PARTITIONED_QUEUE_MESSAGES,  // column family name
 						StringSerializer.get(), // key serializer
 						CompositeSerializer.get()); // column serializer
-		cf.put(CQS_PARTITIONED_QUEUE_MESSAGES, CF_CNS_TOPICS);
+		cf.put(CQS_PARTITIONED_QUEUE_MESSAGES, CF_CQS_PARTITIONED_QUEUE_MESSAGES);
 
 		ColumnFamily<String, String> CF_CQS_API_SERVERS =
 				new ColumnFamily<String, String>(
 						CQS_API_SERVERS,  // column family name
 						StringSerializer.get(), // key serializer
 						StringSerializer.get()); // column serializer
-		cf.put(CQS_API_SERVERS, CF_CNS_TOPICS);
+		cf.put(CQS_API_SERVERS, CF_CQS_API_SERVERS);
 
 		ColumnFamily<String, String> CF_CMB_USERS =
 				new ColumnFamily<String, String>(
 						CMB_USERS,  // column family name
 						StringSerializer.get(), // key serializer
 						StringSerializer.get()); // column serializer
-		cf.put(CMB_USERS, CF_CNS_TOPICS);
+		cf.put(CMB_USERS, CF_CMB_USERS);
 	}
 
 	private static ColumnFamily getColumnFamily(String columnFamily) {
