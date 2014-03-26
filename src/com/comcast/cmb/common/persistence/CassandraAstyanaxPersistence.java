@@ -3,6 +3,7 @@ package com.comcast.cmb.common.persistence;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -186,8 +187,8 @@ public class CassandraAstyanaxPersistence extends AbstractCassandraPersistence {
 
 	public static class CmbAstyanaxColumn<N, V> extends CmbColumn<N, V> {
 		private Column<N> astyanaxColumn;
-		public CmbAstyanaxColumn(Column<N> hectorColumn) {
-			this.astyanaxColumn = hectorColumn;
+		public CmbAstyanaxColumn(Column<N> astyanaxColumn) {
+			this.astyanaxColumn = astyanaxColumn;
 		}
 		@Override
 		public N getName() {
@@ -311,8 +312,9 @@ public class CassandraAstyanaxPersistence extends AbstractCassandraPersistence {
 	
 	private <K, N, V> List<CmbRow<K, N, V>> getRows(Rows<K, N> rows) throws PersistenceException {
 		List<CmbRow<K, N, V>> l = new ArrayList<CmbRow<K, N, V>>();
-		for (int i=0; i<rows.size(); i++) {
-			Row<K, N> r = rows.getRowByIndex(i);
+		Iterator<Row<K, N>> iter = rows.iterator();
+		while (iter.hasNext()) {
+			Row<K, N> r = iter.next();
 			l.add(new CmbAstyanaxRow<K, N, V>(r));
 		}
 		return l;
@@ -350,11 +352,11 @@ public class CassandraAstyanaxPersistence extends AbstractCassandraPersistence {
 						StringSerializer.get()); // column serializer
 		cf.put(CNS_TOPICS_BY_USER_ID, CF_CNS_TOPICS_BY_USER_ID);
 
-		ColumnFamily<String, String> CF_CNS_TOPIC_SUBSCRIPTIONS =
-				new ColumnFamily<String, String>(
+		ColumnFamily<String, Composite> CF_CNS_TOPIC_SUBSCRIPTIONS =
+				new ColumnFamily<String, Composite>(
 						CNS_TOPIC_SUBSCRIPTIONS,  // column family name
 						StringSerializer.get(), // key serializer
-						StringSerializer.get()); // column serializer
+						CompositeSerializer.get()); // column serializer
 		cf.put(CNS_TOPIC_SUBSCRIPTIONS, CF_CNS_TOPIC_SUBSCRIPTIONS);
 
 		ColumnFamily<String, String> CF_CNS_TOPIC_SUBSCRIPTIONS_INDEX =
@@ -464,9 +466,9 @@ public class CassandraAstyanaxPersistence extends AbstractCassandraPersistence {
 
 		try {
 			MutationBatch m = getKeyspace(keyspace).prepareMutationBatch();
-			m.withRow((ColumnFamily<K, N>)getColumnFamily(columnFamily), key)
-			.putColumn((N)getComposite(column), value, getSerializer(valueSerializer), ttl);
-			OperationResult<Void> result = m.execute();
+			m.withRow((ColumnFamily)getColumnFamily(columnFamily), key)
+			.putColumn(getComposite(column), value, getSerializer(valueSerializer), ttl);
+			m.execute();
 		} catch (ConnectionException ex) {
 			throw new PersistenceException(ex);
 		} finally {
@@ -510,16 +512,45 @@ public class CassandraAstyanaxPersistence extends AbstractCassandraPersistence {
 		try {
 
 		    Rows<K, N> rows = null;
+		    
+		    //TODO: why don't key range queries work like they do in hector
 
-		    OperationResult<Rows<K, N>> or = getKeyspace(keyspace).
+		    /*OperationResult<Rows<K, N>> or = getKeyspace(keyspace).
 		    		prepareQuery(getColumnFamily(columnFamily)).
 		    		getRowRange(lastKey, null, null, null, numRows).
 		    		withColumnRange(new RangeBuilder().setLimit(numCols).build()).
 		    		execute();
+		    rows = or.getResult();*/
+		    
+		    OperationResult<Rows<K, N>> or = getKeyspace(keyspace).
+		    		prepareQuery(getColumnFamily(columnFamily)).getAllRows().setIncludeEmptyRows(false).execute();
+
 		    rows = or.getResult();
+
+		    if (lastKey == null) {
+		    	return getRows(rows);
+		    }
+		    
+		    Iterator<Row<K, N>> iter = rows.iterator();
+
+		    while (iter.hasNext()) {
+		    	Row<K, N> row = iter.next();
+		    	if (row.getKey().equals(lastKey)) {
+		    		break;
+		    	}
+		    }
+		    
+		    List<Row<K, N>> myRows = new ArrayList<Row<K, N>>();
+		    
+		    for (int i=0; i<numRows; i++) {
+		    	if (!iter.hasNext()) {
+		    		break;
+		    	}
+		    	Row<K, N> row = iter.next();
+		    	myRows.add(row);
+		    }
 			
-			
-			return getRows(rows);
+			return getRows(myRows);
 
 		} catch (ConnectionException ex) {
 		
@@ -545,15 +576,44 @@ public class CassandraAstyanaxPersistence extends AbstractCassandraPersistence {
 		try {
 
 		    Rows<K, N> rows = null;
+		    
+		    //TODO: why don't key range queries work like they do in hector
 
-		    OperationResult<Rows<K, N>> or = getKeyspace(keyspace).
+		    /*OperationResult<Rows<K, N>> or = getKeyspace(keyspace).
 		    		prepareQuery(getColumnFamily(columnFamily)).
 		    		getRowRange(lastKey, null, null, null, numRows).
 		    		withColumnRange(new RangeBuilder().setLimit(numCols).build()).
-		    		execute();
+		    		execute();*/
+
+		    OperationResult<Rows<K, N>> or = getKeyspace(keyspace).
+		    		prepareQuery(getColumnFamily(columnFamily)).getAllRows().setIncludeEmptyRows(false).execute();
+
 		    rows = or.getResult();
+
+		    if (lastKey == null) {
+		    	return getRows(rows);
+		    }
+		    
+		    Iterator<Row<K, N>> iter = rows.iterator();
+
+		    while (iter.hasNext()) {
+		    	Row<K, N> row = iter.next();
+		    	if (row.getKey().equals(lastKey)) {
+		    		break;
+		    	}
+		    }
+		    
+		    List<Row<K, N>> myRows = new ArrayList<Row<K, N>>();
+		    
+		    for (int i=0; i<numRows; i++) {
+		    	if (!iter.hasNext()) {
+		    		break;
+		    	}
+		    	Row<K, N> row = iter.next();
+		    	myRows.add(row);
+		    }
 			
-			return getRows(rows);
+			return getRows(myRows);
 
 		} catch (ConnectionException ex) {
 		
@@ -653,6 +713,10 @@ public class CassandraAstyanaxPersistence extends AbstractCassandraPersistence {
 		    		prepareQuery(getColumnFamily(columnFamily)).getKey(key).
 		    		withColumnRange(getComposite(firstColumnName), getComposite(lastColumnName), false, numCols);
 		    ColumnList<N> columns = rq.execute().getResult();
+		    
+		    if (columns == null || columns.isEmpty()) {
+		    	return null;
+		    }
 			
 			return new CmbAstyanaxColumnSlice(columns);
 
@@ -928,7 +992,20 @@ public class CassandraAstyanaxPersistence extends AbstractCassandraPersistence {
 			String columnFamily, K key, N columnName,
 			CmbSerializer keySerializer, CmbSerializer columnNameSerializer,
 			CmbSerializer valueSerializer) throws PersistenceException {
-		// TODO Auto-generated method stub
-		return null;
+		long ts1 = System.currentTimeMillis();	    
+		logger.debug("event=get_column column_family=" + columnFamily + " column_name=" + columnName);
+		try {
+			Column<N> column = (Column<N>)getKeyspace(keyspace).prepareQuery(getColumnFamily(columnFamily))
+					.getKey(key)
+					.getColumn(getComposite(columnName))
+					.execute().getResult();
+			return new CmbAstyanaxColumn(column);
+		} catch (ConnectionException ex) {
+			throw new PersistenceException(ex);
+		} finally {
+			long ts2 = System.currentTimeMillis();
+			CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CassandraTime, (ts2 - ts1));
+			CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CassandraRead, 1L);
+		}
 	}
 }
