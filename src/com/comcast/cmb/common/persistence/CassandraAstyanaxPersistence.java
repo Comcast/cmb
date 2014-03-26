@@ -979,7 +979,7 @@ public class CassandraAstyanaxPersistence extends AbstractCassandraPersistence {
 			Long counterValue = result.getLongValue();
 			return counterValue;
 		} catch (ConnectionException ex) {
-			throw new PersistenceException(ex);
+			return 0;
 		} finally {
 			long ts2 = System.currentTimeMillis();
 			CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CassandraTime, (ts2 - ts1));
