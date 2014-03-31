@@ -440,71 +440,23 @@ public class CassandraHectorPersistence extends AbstractCassandraPersistence {
 	}
 
 	@Override
-	public <K, N, V> List<CmbRow<K, N, V>> readNextNRows(String keyspace, String columnFamily, K lastKey, int numRows, int numCols,
-			CmbSerializer keySerializer, CmbSerializer columnNameSerializer,
-			CmbSerializer valueSerializer) throws PersistenceException {
-
-		long ts1 = System.currentTimeMillis();
-		logger.debug("event=read_nextn_rows cf=" + columnFamily + " last_key=" + lastKey + " num_rows=" + numRows + " num_cols=" + numCols);
-
-		try {
-
-			List<Row<K, N, V>> rows = new ArrayList<Row<K, N, V>>();
-
-			RangeSlicesQuery<K, N, V> rangeSlicesQuery = HFactory.createRangeSlicesQuery(getKeyspace(keyspace), getSerializer(keySerializer), getSerializer(columnNameSerializer), getSerializer(valueSerializer))
-					.setColumnFamily(columnFamily)
-					.setRange(null, null, false, numCols).setRowCount(numRows)
-					.setKeys(lastKey, null);
-
-			QueryResult<OrderedRows<K, N, V>> result = rangeSlicesQuery.execute();
-
-			OrderedRows<K, N, V> orderedRows = result.get();
-			Iterator<Row<K, N, V>> rowsIterator = orderedRows.iterator();
-
-			if (lastKey != null && rowsIterator != null && rowsIterator.hasNext()) {
-				rowsIterator.next();
-			}
-
-			while (rowsIterator.hasNext()) {
-
-				Row<K, N, V> row = rowsIterator.next();
-
-				if (row.getColumnSlice().getColumns().isEmpty()) {
-					continue;
-				}
-
-				rows.add(row);
-			}
-
-			return getRows(rows);
-
-		} finally {
-
-			long ts2 = System.currentTimeMillis();
-			CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CassandraTime, (ts2 - ts1));      
-			CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CassandraRead, 1L);
-		}
-	}
-
-
-	@Override
-	public <K, N, V> List<CmbRow<K, N, V>> readNextNRows(String keyspace, String columnFamily, K lastKey, N whereColumn, V whereValue,
+	public <K, N, V> List<CmbRow<K, N, V>> readRowsByIndex(String keyspace, String columnFamily, N whereColumn, V whereValue,
 			int numRows, int numCols, CmbSerializer keySerializer,
 			CmbSerializer columnNameSerializer, CmbSerializer valueSerializer) throws PersistenceException {
 
 		Map<N, V> columnValues = new HashMap<N, V>();
 		columnValues.put(whereColumn, whereValue);
 
-		return readNextNRows(keyspace, columnFamily, lastKey, columnValues, numRows, numCols, keySerializer, columnNameSerializer, valueSerializer);
+		return readRowsByIndices(keyspace, columnFamily, columnValues, numRows, numCols, keySerializer, columnNameSerializer, valueSerializer);
 	}
 
 	@Override
-	public <K, N, V> List<CmbRow<K, N, V>> readNextNRows(String keyspace, String columnFamily, K lastKey, Map<N, V> columnValues,
+	public <K, N, V> List<CmbRow<K, N, V>> readRowsByIndices(String keyspace, String columnFamily, Map<N, V> columnValues,
 			int numRows, int numCols, CmbSerializer keySerializer,
 			CmbSerializer columnNameSerializer, CmbSerializer valueSerializer) throws PersistenceException {
 
 		long ts1 = System.currentTimeMillis();
-		logger.debug("event=read_nextn_rows cf=" + columnFamily + " last_key=" + lastKey + " num_rows=" + numRows + " num_cols=" + numCols + " values=" + columnValues);
+		logger.debug("event=read_nextn_rows cf=" + columnFamily + " num_rows=" + numRows + " num_cols=" + numCols + " values=" + columnValues);
 
 		try {
 
@@ -512,8 +464,7 @@ public class CassandraHectorPersistence extends AbstractCassandraPersistence {
 
 			IndexedSlicesQuery<K, N, V> indexedSlicesQuery = HFactory.createIndexedSlicesQuery(getKeyspace(keyspace), getSerializer(keySerializer), getSerializer(columnNameSerializer), getSerializer(valueSerializer))
 					.setColumnFamily(columnFamily)
-					.setRange(null, null, false, numCols).setRowCount(numRows)
-					.setStartKey(lastKey);
+					.setRange(null, null, false, numCols).setRowCount(numRows);
 
 			for (N name : columnValues.keySet()) {
 				indexedSlicesQuery.addEqualsExpression(name, columnValues.get(name));
@@ -525,10 +476,6 @@ public class CassandraHectorPersistence extends AbstractCassandraPersistence {
 
 			OrderedRows<K, N, V> orderedRows = result.get();
 			Iterator<Row<K, N, V>> rowsIterator = orderedRows.iterator();
-
-			if (lastKey != null && rowsIterator != null && rowsIterator.hasNext()) {
-				rowsIterator.next();
-			}
 
 			while (rowsIterator.hasNext()) {
 

@@ -138,18 +138,13 @@ public abstract class AbstractCassandraPersistence {
 			CmbSerializer keySerializer, CmbSerializer columnNameSerializer,
 			CmbSerializer valueSerializer) throws PersistenceException;
 
-	public abstract <K, N, V> List<CmbRow<K, N, V>> readNextNRows(
-			String keyspace, String columnFamily, K lastKey, int numRows, int numCols,
-			CmbSerializer keySerializer, CmbSerializer columnNameSerializer,
-			CmbSerializer valueSerializer) throws PersistenceException;
-
-	public abstract <K, N, V> List<CmbRow<K, N, V>> readNextNRows(
-			String keyspace, String columnFamily, K lastKey, N whereColumn, V whereValue,
+	public abstract <K, N, V> List<CmbRow<K, N, V>> readRowsByIndex(
+			String keyspace, String columnFamily, N whereColumn, V whereValue,
 			int numRows, int numCols, CmbSerializer keySerializer,
 			CmbSerializer columnNameSerializer, CmbSerializer valueSerializer) throws PersistenceException;
 
-	public abstract <K, N, V> List<CmbRow<K, N, V>> readNextNRows(
-			String keyspace, String columnFamily, K lastKey, Map<N, V> columnValues,
+	public abstract <K, N, V> List<CmbRow<K, N, V>> readRowsByIndices(
+			String keyspace, String columnFamily, Map<N, V> columnValues,
 			int numRows, int numCols, CmbSerializer keySerializer,
 			CmbSerializer columnNameSerializer, CmbSerializer valueSerializer) throws PersistenceException;
 

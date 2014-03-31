@@ -495,77 +495,14 @@ public class CassandraAstyanaxPersistence extends AbstractCassandraPersistence {
 	}
 
 	@Override
-	public <K, N, V> List<CmbRow<K, N, V>> readNextNRows(String keyspace,
-			String columnFamily, K lastKey, int numRows, int numCols,
-			CmbSerializer keySerializer, CmbSerializer columnNameSerializer,
-			CmbSerializer valueSerializer) throws PersistenceException {
-
-		long ts1 = System.currentTimeMillis();
-		logger.debug("event=read_next_n_rows cf=" + columnFamily + " last_key=" + lastKey + " num_rows=" + numRows + " num_cols=" + numCols);
-
-		try {
-
-		    Rows<K, N> rows = null;
-		    
-		    //TODO: why don't key range queries work like they do in hector
-
-		    /*OperationResult<Rows<K, N>> or = getKeyspace(keyspace).
-		    		prepareQuery(getColumnFamily(columnFamily)).
-		    		getRowRange(lastKey, null, null, null, numRows).
-		    		withColumnRange(new RangeBuilder().setLimit(numCols).build()).
-		    		execute();*/
-
-		    OperationResult<Rows<K, N>> or = getKeyspace(keyspace).
-		    		prepareQuery(getColumnFamily(columnFamily)).getAllRows().setIncludeEmptyRows(false).execute();
-
-		    rows = or.getResult();
-
-		    if (lastKey == null) {
-		    	return getRows(rows);
-		    }
-		    
-		    Iterator<Row<K, N>> iter = rows.iterator();
-
-		    while (iter.hasNext()) {
-		    	Row<K, N> row = iter.next();
-		    	if (row.getKey().equals(lastKey)) {
-		    		break;
-		    	}
-		    }
-		    
-		    List<Row<K, N>> myRows = new ArrayList<Row<K, N>>();
-		    
-		    for (int i=0; i<numRows; i++) {
-		    	if (!iter.hasNext()) {
-		    		break;
-		    	}
-		    	Row<K, N> row = iter.next();
-		    	myRows.add(row);
-		    }
-			
-			return getRows(myRows);
-
-		} catch (ConnectionException ex) {
-		
-			throw new PersistenceException(ex);
-
-		} finally {
-
-			long ts2 = System.currentTimeMillis();
-			CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CassandraTime, (ts2 - ts1));      
-			CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CassandraRead, 1L);
-		}
-	}
-
-	@Override
-	public <K, N, V> List<CmbRow<K, N, V>> readNextNRows(String keyspace,
-			String columnFamily, K lastKey, N whereColumn, V whereValue,
+	public <K, N, V> List<CmbRow<K, N, V>> readRowsByIndex(String keyspace,
+			String columnFamily, N whereColumn, V whereValue,
 			int numRows, int numCols, CmbSerializer keySerializer,
 			CmbSerializer columnNameSerializer, CmbSerializer valueSerializer)
 			throws PersistenceException {
 
 		long ts1 = System.currentTimeMillis();
-		logger.debug("event=read_nextn_rows cf=" + columnFamily + " last_key=" + lastKey + " num_rows=" + numRows + " num_cols=" + numCols);
+		logger.debug("event=read_nextn_rows cf=" + columnFamily + " num_rows=" + numRows + " num_cols=" + numCols);
 
 		try {
 
@@ -592,14 +529,14 @@ public class CassandraAstyanaxPersistence extends AbstractCassandraPersistence {
 	}
 
 	@Override
-	public <K, N, V> List<CmbRow<K, N, V>> readNextNRows(String keyspace,
-			String columnFamily, K lastKey, Map<N, V> columnValues,
+	public <K, N, V> List<CmbRow<K, N, V>> readRowsByIndices(String keyspace,
+			String columnFamily, Map<N, V> columnValues,
 			int numRows, int numCols, CmbSerializer keySerializer,
 			CmbSerializer columnNameSerializer, CmbSerializer valueSerializer)
 			throws PersistenceException {
 		
 		long ts1 = System.currentTimeMillis();
-		logger.debug("event=read_nextn_rows cf=" + columnFamily + " last_key=" + lastKey + " num_rows=" + numRows + " num_cols=" + numCols);
+		logger.debug("event=read_nextn_rows cf=" + columnFamily + " num_rows=" + numRows + " num_cols=" + numCols);
 
 		try {
 

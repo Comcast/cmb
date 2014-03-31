@@ -228,7 +228,7 @@ public class CNSTopicCassandraPersistence implements ICNSTopicPersistence {
 
 		List<CNSTopic> topics = new ArrayList<CNSTopic>();
 
-		List<CmbRow<String, String, String>> rows = cassandraHandler.readNextNRows(AbstractCassandraPersistence.CNS_KEYSPACE, columnFamilyTopics, nextToken, 1000, 100, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+		List<CmbRow<String, String, String>> rows = cassandraHandler.readNextNNonEmptyRows(AbstractCassandraPersistence.CNS_KEYSPACE, columnFamilyTopics, nextToken, 1000, 100, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 
 		for (CmbRow<String, String, String> row : rows) {
 

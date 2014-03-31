@@ -130,7 +130,7 @@ public class UserCassandraPersistence implements IUserPersistence {
 	@Override
 	public User getUserById(String userId) throws PersistenceException {
 
-		List<CmbRow<String, String, String>> rows = cassandraHandler.readNextNRows(AbstractCassandraPersistence.CMB_KEYSPACE, COLUMN_FAMILY_USERS, null, USER_ID, userId, 10, 10, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);	
+		List<CmbRow<String, String, String>> rows = cassandraHandler.readRowsByIndex(AbstractCassandraPersistence.CMB_KEYSPACE, COLUMN_FAMILY_USERS, USER_ID, userId, 10, 10, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);	
 		
 		if (rows == null || rows.size() == 0) {
 			return null;
@@ -156,7 +156,7 @@ public class UserCassandraPersistence implements IUserPersistence {
 	@Override
 	public User getUserByAccessKey(String accessKey) throws PersistenceException {
 
-		List<CmbRow<String, String, String>> rows = cassandraHandler.readNextNRows(AbstractCassandraPersistence.CMB_KEYSPACE, COLUMN_FAMILY_USERS, null, ACCESS_KEY, accessKey, 10, 10, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);	
+		List<CmbRow<String, String, String>> rows = cassandraHandler.readRowsByIndex(AbstractCassandraPersistence.CMB_KEYSPACE, COLUMN_FAMILY_USERS, ACCESS_KEY, accessKey, 10, 10, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);	
 		
 		if (rows == null || rows.size() == 0) {
 			return null;
@@ -169,7 +169,7 @@ public class UserCassandraPersistence implements IUserPersistence {
 
 	public List<User> getAllUsers() throws PersistenceException {
 		
-		List<CmbRow<String, String, String>> rows = cassandraHandler.readNextNRows(AbstractCassandraPersistence.CMB_KEYSPACE, COLUMN_FAMILY_USERS, null, 1000, 10, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);	
+		List<CmbRow<String, String, String>> rows = cassandraHandler.readRowsByIndices(AbstractCassandraPersistence.CMB_KEYSPACE, COLUMN_FAMILY_USERS, null, 1000, 10, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);	
 		List<User> userList = new ArrayList<User>();
 
 		if (rows == null || rows.size() == 0) {
