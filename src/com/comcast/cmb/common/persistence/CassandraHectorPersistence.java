@@ -67,8 +67,6 @@ import com.comcast.cmb.common.util.ValueAccumulator.AccumulatorName;
  */
 public class CassandraHectorPersistence extends AbstractCassandraPersistence {
 	
-	//TODO: remove dead code
-
 	private static final int hectorPoolSize = CMBProperties.getInstance().getHectorPoolSize();
 	private static final String hectorBalancingPolicy = CMBProperties.getInstance().getHectorBalancingPolicy();
 	private static final Map<String, String> credentials = CMBProperties.getInstance().getHectorCredentials();
@@ -326,48 +324,6 @@ public class CassandraHectorPersistence extends AbstractCassandraPersistence {
 		}
 	}
 
-	/*public static class CmbHectorSuperColumnSlice<SN, N, V> extends CmbSuperColumnSlice<SN, N, V> {
-		private SuperSlice<SN, N, V> hectorSuperSlice;
-		public CmbHectorSuperColumnSlice(SuperSlice<SN, N, V> hectorSuperSlice) {
-			this.hectorSuperSlice = hectorSuperSlice;
-		}
-		@Override
-		public CmbHectorSuperColumn<SN, N, V> getColumnByName(SN name) {
-			if (hectorSuperSlice.getColumnByName(name) != null) {
-				return new CmbHectorSuperColumn<SN, N, V>(hectorSuperSlice.getColumnByName(name));
-			} else {
-				return null;
-			}
-		}
-		@Override
-		public List<CmbSuperColumn<SN, N, V>> getSuperColumns() {
-			List<CmbSuperColumn<SN, N, V>> superColumns = new ArrayList<CmbSuperColumn<SN, N, V>>();
-			for (HSuperColumn<SN, N, V> sc : hectorSuperSlice.getSuperColumns()) {
-				superColumns.add(new CmbHectorSuperColumn<SN, N, V>(sc));
-			}
-			return superColumns;
-		}
-	}*/
-
-	/*public static class CmbHectorSuperColumn<SN, N, V> extends CmbSuperColumn<SN, N, V> {
-		private HSuperColumn<SN, N, V> hectorSuperColumn;
-		public CmbHectorSuperColumn(HSuperColumn<SN, N, V> hectorSuperColumn) {
-			this.hectorSuperColumn = hectorSuperColumn;
-		}
-		@Override
-		public SN getName() {
-			return (SN)getCmbComposite(hectorSuperColumn.getName());
-		}
-		@Override
-		public List<CmbColumn<N, V>> getColumns() {
-			List<CmbColumn<N, V>> columns = new ArrayList<CmbColumn<N, V>>();
-			for (HColumn<N, V> c : this.hectorSuperColumn.getColumns()) {
-				columns.add(new CmbHectorColumn<N, V>(c));
-			}
-			return columns;
-		}
-	}*/
-
 	private <K, N, V> List<CmbRow<K, N, V>> getRows(List<Row<K, N, V>> rows) throws PersistenceException {
 		List<CmbRow<K, N, V>> l = new ArrayList<CmbRow<K, N, V>>();
 		for (Row<K, N, V> r : rows) {
@@ -375,14 +331,6 @@ public class CassandraHectorPersistence extends AbstractCassandraPersistence {
 		}
 		return l;
 	}
-
-	/*private <SN, N, V> List<CmbSuperColumn<SN, N, V>> getSuperColumns(List<HSuperColumn<SN, N, V>> superColumns) throws PersistenceException {
-		List<CmbSuperColumn<SN, N, V>> l = new ArrayList<CmbSuperColumn<SN, N, V>>();
-		for (HSuperColumn<SN, N, V> superColumn : superColumns) {
-			l.add(new CmbHectorSuperColumn<SN, N, V>(superColumn));
-		}
-		return l;
-	}*/
 
 	@Override
 	public boolean isAlive() {
@@ -419,88 +367,6 @@ public class CassandraHectorPersistence extends AbstractCassandraPersistence {
 		CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CassandraTime, (ts2 - ts1));
 		CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CassandraWrite, 1L);
 	}
-
-	/*@Override
-	public <K, SN, N, V> void insertSuperColumn(String keyspace, String columnFamily, K key, CmbSerializer keySerializer, SN superName, Integer ttl, 
-			CmbSerializer superNameSerializer, Map<N, V> subColumnNameValues, CmbSerializer columnSerializer,
-			CmbSerializer valueSerializer) throws PersistenceException {
-
-		long ts1 = System.currentTimeMillis();
-		logger.debug("event=insert_super_column key=" + key + " cf=" + columnFamily + " super_name=" + superName + " ttl=" + (ttl == null ? "null" : ttl) + " sub_column_values=" + subColumnNameValues);
-
-		try {
-
-			List<HColumn<N, V>> subColumns = new ArrayList<HColumn<N, V>>();
-			Mutator<K> mutator = HFactory.createMutator(getKeyspace(keyspace), getSerializer(keySerializer));
-
-			for (N name : subColumnNameValues.keySet()) {
-
-				V value = subColumnNameValues.get(name);
-				HColumn<N, V> subColumn = HFactory.createColumn(name, value, getSerializer(columnSerializer), getSerializer(valueSerializer));
-
-				if (ttl != null) {
-					subColumn.setTtl(ttl);
-				}
-
-				subColumns.add(subColumn);
-			}
-
-			HSuperColumn<SN, N, V> superColumn = HFactory.createSuperColumn(getComposite(superName), subColumns, System.currentTimeMillis(), getSerializer(superNameSerializer), getSerializer(columnSerializer), getSerializer(valueSerializer));
-			mutator.insert(key, columnFamily, superColumn);
-
-		} finally {
-
-			long ts2 = System.currentTimeMillis();
-			CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CassandraTime, (ts2 - ts1));
-			CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CassandraWrite, 1L);
-		}
-	}*/
-
-	/*@Override
-	public <K, SN, N, V> void insertSuperColumns(String keyspace, String columnFamily, K key, CmbSerializer keySerializer,
-			Map<SN, Map<N, V>> superNameSubColumnsMap, int ttl,
-			CmbSerializer superNameSerializer, CmbSerializer columnSerializer,
-			CmbSerializer valueSerializer)
-					throws PersistenceException {
-
-		long ts1 = System.currentTimeMillis();
-		logger.debug("event=insert_super_columns cf=" + columnFamily + " columns=" + superNameSubColumnsMap);
-
-		try {
-
-			List<HColumn<N, V>> subColumns = new ArrayList<HColumn<N, V>>();
-			Mutator<K> mutator = HFactory.createMutator(getKeyspace(keyspace), getSerializer(keySerializer));
-
-			for (SN superName : superNameSubColumnsMap.keySet()) {
-
-				Map<N, V> subColumnsMap = superNameSubColumnsMap.get(superName);
-
-				if (subColumnsMap != null) {
-
-					subColumns.clear();
-
-					for (N name : subColumnsMap.keySet()) {
-						V value = subColumnsMap.get(name);
-						HColumn<N, V> subColumn = HFactory.createColumn(name, value, getSerializer(columnSerializer), getSerializer(valueSerializer));
-						subColumn.setTtl(ttl);
-						subColumns.add(subColumn);
-					}
-
-					HSuperColumn<SN, N, V> superColumn = HFactory.createSuperColumn(getComposite(superName), subColumns, System.currentTimeMillis(), getSerializer(superNameSerializer), getSerializer(columnSerializer),	getSerializer(valueSerializer));
-					mutator.addInsertion(key, columnFamily, superColumn);
-					superColumn = null;
-				}
-			}
-
-			mutator.execute();
-
-		} finally {
-
-			long ts2 = System.currentTimeMillis();
-			CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CassandraTime, (ts2 - ts1));
-			CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CassandraWrite, superNameSubColumnsMap.size());
-		}
-	}*/
 
 	@Override
 	public <K, N, V> List<CmbRow<K, N, V>> readNextNNonEmptyRows(String keyspace, String columnFamily, K lastKey, int numRows, int numCols,
@@ -746,141 +612,6 @@ public class CassandraHectorPersistence extends AbstractCassandraPersistence {
 		}
 	}
 
-	/*@Override
-	public <K, SN, N, V> CmbSuperColumnSlice<SN, N, V> readRowFromSuperColumnFamily(String keyspace, String columnFamily, K key, SN firstColumnName, SN lastColumnName,
-			int numCols, CmbSerializer keySerializer,
-			CmbSerializer superNameSerializer,
-			CmbSerializer columnNameSerializer, CmbSerializer valueSerializer) throws PersistenceException {
-
-		long ts1 = System.currentTimeMillis();
-
-		logger.debug("event=read_row_from_super_column_family cf=" + columnFamily + "key=" + key  +" first_column=" + firstColumnName + " last_column_name=" + lastColumnName + " num_cols=" + numCols);
-
-		try {
-
-			SuperSliceQuery<K, SN, N, V> rangeSlicesQuery = HFactory.createSuperSliceQuery(getKeyspace(keyspace), getSerializer(keySerializer), getSerializer(superNameSerializer), getSerializer(columnNameSerializer), getSerializer(valueSerializer))
-					.setColumnFamily(columnFamily)
-					.setRange(getComposite(firstColumnName), getComposite(lastColumnName), false, numCols)
-					.setKey(key);
-
-			QueryResult<SuperSlice<SN, N, V>> result = rangeSlicesQuery.execute();
-
-			CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CassandraRead, 1L);
-
-			SuperSlice<SN, N, V> superSlice = result.get();
-
-			if (superSlice.getSuperColumns() == null || superSlice.getSuperColumns().size() == 0) {
-				return null;
-			}
-
-			return new CmbHectorSuperColumnSlice<SN, N, V>(superSlice);
-
-		} finally {
-			long ts2 = System.currentTimeMillis();
-			CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CassandraTime, (ts2 - ts1));      
-		}
-	}*/
-
-	/*@Override
-	public <K, SN, N, V> CmbSuperColumn<SN, N, V> readColumnFromSuperColumnFamily(String keyspace, String columnFamily, K key, SN columnName,
-			CmbSerializer keySerializer, CmbSerializer superNameSerializer,
-			CmbSerializer columnNameSerializer, CmbSerializer valueSerializer) throws PersistenceException {
-
-		long ts1 = System.currentTimeMillis();
-		logger.debug("event=read_column_from_super_column_family cf=" + columnFamily + " key=" + key + "column_name=" + columnName);
-
-		try {
-
-			SuperColumnQuery<K, SN, N, V> superColumnQuery = HFactory.createSuperColumnQuery(getKeyspace(keyspace), getSerializer(keySerializer), getSerializer(superNameSerializer), getSerializer(columnNameSerializer), getSerializer(valueSerializer))
-					.setColumnFamily(columnFamily)
-					.setSuperName(getComposite(columnName))
-					.setKey(key);
-
-			QueryResult<HSuperColumn<SN, N, V>> result = superColumnQuery.execute();
-
-			CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CassandraRead, 1L);
-
-			HSuperColumn<SN, N, V> superColumn = result.get();
-
-			if (superColumn == null) {
-				return null;
-			}
-
-			return new CmbHectorSuperColumn<SN, N, V>(superColumn);
-
-		} finally {
-			long ts2 = System.currentTimeMillis();
-			CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CassandraTime, (ts2 - ts1));      
-		}
-	}*/
-
-	/*@Override
-	public <K, SN, N, V> List<CmbSuperColumn<SN, N, V>> readMultipleColumnsFromSuperColumnFamily(String keyspace, String columnFamily, Collection<K> keys,
-			Collection<SN> columnNames, CmbSerializer keySerializer,
-			CmbSerializer superNameSerializer,
-			CmbSerializer columnNameSerializer, CmbSerializer valueSerializer) throws PersistenceException {
-
-		long ts1 = System.currentTimeMillis();
-		logger.debug("event=read_column_from_super_column_family cf=" + columnFamily + " key_count=" + keys.size() + "column_count=" + columnNames.size());
-
-		try {
-
-			List<HSuperColumn<SN, N, V>> list = new ArrayList<HSuperColumn<SN, N, V>>();
-
-			MultigetSuperSliceQuery<K, SN, N, V> query = HFactory.createMultigetSuperSliceQuery(getKeyspace(keyspace), getSerializer(keySerializer), getSerializer(superNameSerializer), getSerializer(columnNameSerializer), getSerializer(valueSerializer))
-					.setColumnFamily(columnFamily)
-					.setColumnNames(getComposites(columnNames))
-					.setKeys(keys);
-
-			QueryResult<SuperRows<K, SN, N, V>> result = query.execute();
-			SuperRows<K, SN, N, V> rows = result.get();
-			Iterator<SuperRow<K, SN, N, V>> iter = rows.iterator();
-
-			while (iter.hasNext()) {
-				SuperRow<K, SN, N, V> row = iter.next();
-				SuperSlice<SN, N, V> slice = row.getSuperSlice();
-				List<HSuperColumn<SN, N, V>> columns = slice.getSuperColumns();
-				list.addAll(columns);
-			}
-
-			CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CassandraRead, 1L);
-
-			return getSuperColumns(list);
-
-		} finally {
-			long ts2 = System.currentTimeMillis();
-			CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CassandraTime, (ts2 - ts1));      
-		}
-	}*/
-
-	/*@Override
-	public 	<K, SN, N, V> List<CmbSuperColumn<SN, N, V>> readColumnsFromSuperColumnFamily(String keyspace, String columnFamily, K key, CmbSerializer keySerializer,
-			CmbSerializer superNameSerializer,
-			CmbSerializer columnNameSerializer, CmbSerializer valueSerializer,
-			SN firstCol, SN lastCol, int numCol) throws PersistenceException {
-
-		long ts1 = System.currentTimeMillis();
-		logger.debug("event=read_columns_from_super_column_family cf=" + columnFamily + " key=" + key);
-
-		try {
-
-			SuperSliceQuery<K, SN, N, V> superSliceQuery = HFactory.createSuperSliceQuery(getKeyspace(keyspace), getSerializer(keySerializer), getSerializer(superNameSerializer), getSerializer(columnNameSerializer), getSerializer(valueSerializer))
-					.setColumnFamily(columnFamily)
-					.setKey(key)
-					.setRange(getComposite(firstCol), getComposite(lastCol), false, numCol);
-
-			QueryResult<SuperSlice<SN, N, V>> result = superSliceQuery.execute();
-
-			CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CassandraRead, 1L);
-
-			return getSuperColumns(result.get().getSuperColumns());
-
-		} finally {
-			long ts2 = System.currentTimeMillis();
-			CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CassandraTime, (ts2 - ts1));      
-		}	    
-	}*/
-
 	@Override
 	public <K, N, V> void insertRow(String keyspace, K rowKey,
 			String columnFamily, Map<N, V> columnValues,
@@ -1011,32 +742,6 @@ public class CassandraHectorPersistence extends AbstractCassandraPersistence {
 			CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CassandraTime, (ts2 - ts1));     
 		}
 	}
-
-
-	/*@Override
-	public <K, SN, N> void deleteSuperColumn(String keyspace, String superColumnFamily, K key, SN superColumn, CmbSerializer keySerializer, CmbSerializer superColumnSerializer) throws PersistenceException {
-
-		long ts1 = System.currentTimeMillis();
-		logger.debug("event=delete_super_column key=" + key + " super_column=" + superColumn + " cf=" + superColumnFamily);
-
-		try {
-
-			Mutator<K> mutator = HFactory.createMutator(getKeyspace(keyspace), getSerializer(keySerializer));
-
-			if (superColumn != null) {
-				mutator.addSuperDelete(key, superColumnFamily, getComposite(superColumn), getSerializer(superColumnSerializer));
-			} else {
-				mutator.addSuperDelete(key, superColumnFamily, null, null);
-			}
-
-			mutator.execute();
-
-		} finally {
-			CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CassandraWrite, 1L);
-			long ts2 = System.currentTimeMillis();
-			CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CassandraTime, (ts2 - ts1));    
-		}
-	}*/
 
 	@Override
 	public <K, N> int getCount(String keyspace, String columnFamily, K key,

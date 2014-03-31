@@ -40,7 +40,6 @@ import com.netflix.astyanax.serializers.CompositeSerializer;
 import com.netflix.astyanax.serializers.LongSerializer;
 import com.netflix.astyanax.serializers.StringSerializer;
 import com.netflix.astyanax.thrift.ThriftFamilyFactory;
-import com.netflix.astyanax.util.RangeBuilder;
 
 public class CassandraAstyanaxPersistence extends AbstractCassandraPersistence {
 	
@@ -260,48 +259,6 @@ public class CassandraAstyanaxPersistence extends AbstractCassandraPersistence {
 		}
 	}
 
-	/*public static class CmbAstyanaxSuperColumnSlice<SN, N, V> extends CmbSuperColumnSlice<SN, N, V> {
-		private SuperSlice<SN, N, V> hectorSuperSlice;
-		public CmbAstyanaxSuperColumnSlice(SuperSlice<SN, N, V> hectorSuperSlice) {
-			this.hectorSuperSlice = hectorSuperSlice;
-		}
-		@Override
-		public CmbAstyanaxSuperColumn<SN, N, V> getColumnByName(SN name) {
-			if (hectorSuperSlice.getColumnByName(name) != null) {
-				return new CmbAstyanaxSuperColumn<SN, N, V>(hectorSuperSlice.getColumnByName(name));
-			} else {
-				return null;
-			}
-		}
-		@Override
-		public List<CmbSuperColumn<SN, N, V>> getSuperColumns() {
-			List<CmbSuperColumn<SN, N, V>> superColumns = new ArrayList<CmbSuperColumn<SN, N, V>>();
-			for (HSuperColumn<SN, N, V> sc : hectorSuperSlice.getSuperColumns()) {
-				superColumns.add(new CmbAstyanaxSuperColumn<SN, N, V>(sc));
-			}
-			return superColumns;
-		}
-	}*/
-
-	/*public static class CmbAstyanaxSuperColumn<SN, N, V> extends CmbSuperColumn<SN, N, V> {
-		private SuperColumn<SN, N, V> hectorSuperColumn;
-		public CmbAstyanaxSuperColumn(HSuperColumn<SN, N, V> hectorSuperColumn) {
-			this.hectorSuperColumn = hectorSuperColumn;
-		}
-		@Override
-		public SN getName() {
-			return (SN)getCmbComposite(hectorSuperColumn.getName());
-		}
-		@Override
-		public List<CmbColumn<N, V>> getColumns() {
-			List<CmbColumn<N, V>> columns = new ArrayList<CmbColumn<N, V>>();
-			for (HColumn<N, V> c : this.hectorSuperColumn.getColumns()) {
-				columns.add(new CmbAstyanaxColumn<N, V>(c));
-			}
-			return columns;
-		}
-	}*/
-
 	private <K, N, V> List<CmbRow<K, N, V>> getRows(List<Row<K, N>> rows) throws PersistenceException {
 		List<CmbRow<K, N, V>> l = new ArrayList<CmbRow<K, N, V>>();
 		for (Row<K, N> r : rows) {
@@ -320,17 +277,11 @@ public class CassandraAstyanaxPersistence extends AbstractCassandraPersistence {
 		return l;
 	}
 
-	/*private <SN, N, V> List<CmbSuperColumn<SN, N, V>> getSuperColumns(List<SuperColumn<SN, N, V>> superColumns) throws PersistenceException {
-		List<CmbSuperColumn<SN, N, V>> l = new ArrayList<CmbSuperColumn<SN, N, V>>();
-		for (SuperColumn<SN, N, V> superColumn : superColumns) {
-			l.add(new CmbAstyanaxSuperColumn<SN, N, V>(superColumn));
-		}
-		return l;
-	}*/
-	
 	@Override
 	public boolean isAlive() {
+
 		// TODO: implement
+		
 		return true;
 	}
 	
@@ -478,27 +429,6 @@ public class CassandraAstyanaxPersistence extends AbstractCassandraPersistence {
 		}
 	}
 
-	/*@Override
-	public <K, SN, N, V> void insertSuperColumn(String keyspace,
-			String columnFamily, K key, CmbSerializer keySerializer,
-			SN superName, Integer ttl, CmbSerializer superNameSerializer,
-			Map<N, V> subColumnNameValues, CmbSerializer columnSerializer,
-			CmbSerializer valueSerializer) throws PersistenceException {
-		// TODO : remove
-	}*/
-
-	/*@Override
-	public <K, SN, N, V> void insertSuperColumns(String keyspace,
-			String columnFamily, K key, CmbSerializer keySerializer,
-			Map<SN, Map<N, V>> superNameSubColumnsMap, int ttl,
-			CmbSerializer superNameSerializer,
-			CmbSerializer columnSerializer, CmbSerializer valueSerializer)
-			throws PersistenceException {
-		// TODO : remove
-	}*/
-	
-	// TODO: check if astyanax returns empty rows 
-
 	@Override
 	public <K, N, V> List<CmbRow<K, N, V>> readNextNNonEmptyRows(
 			String keyspace, String columnFamily, K lastKey, int numRows,
@@ -513,7 +443,7 @@ public class CassandraAstyanaxPersistence extends AbstractCassandraPersistence {
 
 		    Rows<K, N> rows = null;
 		    
-		    //TODO: why don't key range queries work like they do in hector
+		    //TODO: check why don't key range queries work like they do in hector
 
 		    /*OperationResult<Rows<K, N>> or = getKeyspace(keyspace).
 		    		prepareQuery(getColumnFamily(columnFamily)).
@@ -732,49 +662,6 @@ public class CassandraAstyanaxPersistence extends AbstractCassandraPersistence {
 		}
 	}
 
-	/*@Override
-	public <K, SN, N, V> CmbSuperColumnSlice<SN, N, V> readRowFromSuperColumnFamily(
-			String keyspace, String columnFamily, K key, SN firstColumnName,
-			SN lastColumnName, int numCols, CmbSerializer keySerializer,
-			CmbSerializer superNameSerializer,
-			CmbSerializer columnNameSerializer, CmbSerializer valueSerializer)
-			throws PersistenceException {
-		// TODO : remove
-		return null;
-	}*/
-
-	/*@Override
-	public <K, SN, N, V> CmbSuperColumn<SN, N, V> readColumnFromSuperColumnFamily(
-			String keyspace, String columnFamily, K key, SN columnName,
-			CmbSerializer keySerializer, CmbSerializer superNameSerializer,
-			CmbSerializer columnNameSerializer, CmbSerializer valueSerializer)
-			throws PersistenceException {
-		// TODO : remove
-		return null;
-	}*/
-
-	/*@Override
-	public <K, SN, N, V> List<CmbSuperColumn<SN, N, V>> readMultipleColumnsFromSuperColumnFamily(
-			String keyspace, String columnFamily, Collection<K> keys,
-			Collection<SN> columnNames, CmbSerializer keySerializer,
-			CmbSerializer superNameSerializer,
-			CmbSerializer columnNameSerializer, CmbSerializer valueSerializer)
-			throws PersistenceException {
-		// TODO : remove
-		return null;
-	}*/
-
-	/*@Override
-	public <K, SN, N, V> List<CmbSuperColumn<SN, N, V>> readColumnsFromSuperColumnFamily(
-			String keyspace, String columnFamily, K key,
-			CmbSerializer keySerializer, CmbSerializer superNameSerializer,
-			CmbSerializer columnNameSerializer,
-			CmbSerializer valueSerializer, SN firstCol, SN lastCol, int numCol)
-			throws PersistenceException {
-		// TODO : remove
-		return null;
-	}*/
-
 	@Override
 	public <K, N, V> void insertRow(String keyspace, K rowKey, 
 			String columnFamily, Map<N, V> columnValues,
@@ -885,14 +772,6 @@ public class CassandraAstyanaxPersistence extends AbstractCassandraPersistence {
 			CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CassandraTime, (ts2 - ts1));
 		}
 	}
-
-	/*@Override
-	public <K, SN, N> void deleteSuperColumn(String keyspace,
-			String superColumnFamily, K key, SN superColumn,
-			CmbSerializer keySerializer, CmbSerializer superColumnSerializer)
-			throws PersistenceException {
-		// TODO : remove
-	}*/
 
 	@Override
 	public <K, N> int getCount(String keyspace, String columnFamily, K key,
