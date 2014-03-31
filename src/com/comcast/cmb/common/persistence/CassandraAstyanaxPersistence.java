@@ -897,9 +897,25 @@ public class CassandraAstyanaxPersistence extends AbstractCassandraPersistence {
 	@Override
 	public <K, N> int getCount(String keyspace, String columnFamily, K key,
 			CmbSerializer keySerializer, CmbSerializer columnNameSerializer)
-			throws PersistenceException {
-		// TODO: implement
-		return 0;
+					throws PersistenceException {
+
+		long ts1 = System.currentTimeMillis();	    
+		logger.debug("event=increment_counter column_family=" + columnFamily);
+
+		try {
+
+			int count = getKeyspace(keyspace).prepareQuery(getColumnFamily(columnFamily))
+					.getKey(key)
+					.getCount()
+					.execute().getResult();
+			return count;
+		} catch (ConnectionException ex) {
+			throw new PersistenceException(ex);
+		} finally {
+			long ts2 = System.currentTimeMillis();
+			CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CassandraTime, (ts2 - ts1));
+			CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CassandraRead, 1L);
+		}
 	}
 
 	@Override
