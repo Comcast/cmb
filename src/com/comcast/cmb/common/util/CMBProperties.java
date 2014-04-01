@@ -36,6 +36,11 @@ public class CMBProperties {
 	    SYNC, ASYNC 
 	}
 	
+	private final int cqsPoolSize;
+	private final int cqsQueueSize;
+	private final int cnsPoolSize;
+	private final int cnsQueueSize;
+	
 	private final boolean cmbUseInlineApiCalls;
 	
 	private final boolean useCmbIOBuffers;
@@ -218,6 +223,11 @@ public class CMBProperties {
 			FileInputStream fileStream = new FileInputStream(file);
 			props.load(fileStream);
 			
+			cqsPoolSize = Integer.parseInt(props.getProperty("cqs.jettypool.size", "512"));
+			cqsQueueSize = Integer.parseInt(props.getProperty("cqs.jettyqueue.size", "1024"));
+			cnsPoolSize = Integer.parseInt(props.getProperty("cns.jettypool.size", "512"));
+			cnsQueueSize = Integer.parseInt(props.getProperty("cns.jettyqueue.size", "1024"));
+			
 			cmbUseInlineApiCalls = Boolean.parseBoolean(props.getProperty("cmb.useInlineApiCalls", "true"));
 			useCmbIOBuffers = Boolean.parseBoolean(props.getProperty("cmb.useCmbIOBuffers", "true"));
 			
@@ -379,6 +389,22 @@ public class CMBProperties {
 		}
 	}
 	
+	public int getCqsPoolSize() {
+		return cqsPoolSize;
+	}
+
+	public int getCqsQueueSize() {
+		return cqsQueueSize;
+	}
+
+	public int getCnsPoolSize() {
+		return cnsPoolSize;
+	}
+
+	public int getCnsQueueSize() {
+		return cnsQueueSize;
+	}
+
 	public String getCNSHttpProxy() {
 		return cnsHttpProxy;
 	}

@@ -17,6 +17,7 @@ package com.comcast.cmb.common.controller;
 
 import org.apache.log4j.Logger;
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.eclipse.jetty.webapp.WebAppContext;
 
 import com.comcast.cmb.common.util.CMBProperties;
@@ -59,6 +60,10 @@ public class CMB {
         	cqsServer = new Server(CMBProperties.getInstance().getCQSServerPort());
         	cqsServer.setAttribute("org.eclipse.jetty.server.Request.maxFormContentSize", MAX_REQUEST_LENGTH);
 
+        	QueuedThreadPool cqsThreadPool = new QueuedThreadPool(CMBProperties.getInstance().getCqsPoolSize());
+        	cqsThreadPool.setMaxQueued(CMBProperties.getInstance().getCqsQueueSize());
+        	cqsServer.setThreadPool(cqsThreadPool);
+        	
         	cqsWebContext = new WebAppContext();
 	
 	        cqsWebContext.setDescriptor("config/WEB-INF-CQS/web.xml");
@@ -88,7 +93,11 @@ public class CMB {
         	cnsServer = new Server(CMBProperties.getInstance().getCNSServerPort());
         	cnsServer.setAttribute("org.eclipse.jetty.server.Request.maxFormContentSize", MAX_REQUEST_LENGTH);
 	    	
-	        WebAppContext cnsWebContext = new WebAppContext();
+        	QueuedThreadPool cnsThreadPool = new QueuedThreadPool(CMBProperties.getInstance().getCnsPoolSize());
+        	cnsThreadPool.setMaxQueued(CMBProperties.getInstance().getCnsQueueSize());
+        	cnsServer.setThreadPool(cnsThreadPool);
+
+        	WebAppContext cnsWebContext = new WebAppContext();
 	
 	        cnsWebContext.setDescriptor("config/WEB-INF-CNS/web.xml");
 	        cnsWebContext.setResourceBase("WebContent");      
