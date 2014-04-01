@@ -291,114 +291,114 @@ public class CassandraAstyanaxPersistence extends AbstractCassandraPersistence {
 		
 		ColumnFamily<String, String> CF_CNS_TOPICS =
 				new ColumnFamily<String, String>(
-						CNS_TOPICS,  // column family name
-						StringSerializer.get(), // key serializer
-						StringSerializer.get()); // column serializer
+						CNS_TOPICS,  
+						StringSerializer.get(), 
+						StringSerializer.get()); 
 		cf.put(CNS_TOPICS, CF_CNS_TOPICS);
 
 		ColumnFamily<String, String> CF_CNS_TOPICS_BY_USER_ID =
 				new ColumnFamily<String, String>(
-						CNS_TOPICS_BY_USER_ID,  // column family name
-						StringSerializer.get(), // key serializer
-						StringSerializer.get()); // column serializer
+						CNS_TOPICS_BY_USER_ID,  
+						StringSerializer.get(), 
+						StringSerializer.get()); 
 		cf.put(CNS_TOPICS_BY_USER_ID, CF_CNS_TOPICS_BY_USER_ID);
 
 		ColumnFamily<String, Composite> CF_CNS_TOPIC_SUBSCRIPTIONS =
 				new ColumnFamily<String, Composite>(
-						CNS_TOPIC_SUBSCRIPTIONS,  // column family name
-						StringSerializer.get(), // key serializer
-						CompositeSerializer.get()); // column serializer
+						CNS_TOPIC_SUBSCRIPTIONS,  
+						StringSerializer.get(), 
+						CompositeSerializer.get()); 
 		cf.put(CNS_TOPIC_SUBSCRIPTIONS, CF_CNS_TOPIC_SUBSCRIPTIONS);
 
 		ColumnFamily<String, String> CF_CNS_TOPIC_SUBSCRIPTIONS_INDEX =
 				new ColumnFamily<String, String>(
-						CNS_TOPIC_SUBSCRIPTIONS_INDEX,  // column family name
-						StringSerializer.get(), // key serializer
-						StringSerializer.get()); // column serializer
+						CNS_TOPIC_SUBSCRIPTIONS_INDEX,  
+						StringSerializer.get(), 
+						StringSerializer.get()); 
 		cf.put(CNS_TOPIC_SUBSCRIPTIONS_INDEX, CF_CNS_TOPIC_SUBSCRIPTIONS_INDEX);
 
 		ColumnFamily<String, String> CF_CNS_TOPIC_SUBSCRIPTIONS_USER_INDEX =
 				new ColumnFamily<String, String>(
-						CNS_TOPIC_SUBSCRIPTIONS_USER_INDEX,  // column family name
-						StringSerializer.get(), // key serializer
-						StringSerializer.get()); // column serializer
+						CNS_TOPIC_SUBSCRIPTIONS_USER_INDEX,  
+						StringSerializer.get(), 
+						StringSerializer.get()); 
 		cf.put(CNS_TOPIC_SUBSCRIPTIONS_USER_INDEX, CF_CNS_TOPIC_SUBSCRIPTIONS_USER_INDEX);
 		
 		ColumnFamily<String, String> CF_CNS_TOPIC_SUBSCRIPTIONS_TOKEN_INDEX =
 				new ColumnFamily<String, String>(
-						CNS_TOPIC_SUBSCRIPTIONS_TOKEN_INDEX,  // column family name
-						StringSerializer.get(), // key serializer
-						StringSerializer.get()); // column serializer
+						CNS_TOPIC_SUBSCRIPTIONS_TOKEN_INDEX,  
+						StringSerializer.get(), 
+						StringSerializer.get()); 
 		cf.put(CNS_TOPIC_SUBSCRIPTIONS_TOKEN_INDEX, CF_CNS_TOPIC_SUBSCRIPTIONS_TOKEN_INDEX);
 
 		ColumnFamily<String, String> CF_CNS_TOPIC_ATTRIBUTES =
 				new ColumnFamily<String, String>(
-						CNS_TOPIC_ATTRIBUTES,  // column family name
-						StringSerializer.get(), // key serializer
-						StringSerializer.get()); // column serializer
+						CNS_TOPIC_ATTRIBUTES,  
+						StringSerializer.get(), 
+						StringSerializer.get()); 
 		cf.put(CNS_TOPIC_ATTRIBUTES, CF_CNS_TOPIC_ATTRIBUTES);
 
 		ColumnFamily<String, String> CF_CNS_SUBSCRIPTION_ATTRIBUTES =
 				new ColumnFamily<String, String>(
-						CNS_SUBSCRIPTION_ATTRIBUTES,  // column family name
-						StringSerializer.get(), // key serializer
-						StringSerializer.get()); // column serializer
+						CNS_SUBSCRIPTION_ATTRIBUTES,  
+						StringSerializer.get(), 
+						StringSerializer.get()); 
 		cf.put(CNS_SUBSCRIPTION_ATTRIBUTES, CF_CNS_SUBSCRIPTION_ATTRIBUTES);
 
 		ColumnFamily<String, String> CF_CNS_TOPIC_STATS =
 				new ColumnFamily<String, String>(
-						CNS_TOPIC_STATS,  // column family name
-						StringSerializer.get(), // key serializer
-						StringSerializer.get()); // column serializer
+						CNS_TOPIC_STATS,  
+						StringSerializer.get(), 
+						StringSerializer.get()); 
 		cf.put(CNS_TOPIC_STATS, CF_CNS_TOPIC_STATS);
 
 		ColumnFamily<String, String> CF_CNS_WORKERS =
 				new ColumnFamily<String, String>(
-						CNS_WORKERS,  // column family name
-						StringSerializer.get(), // key serializer
-						StringSerializer.get()); // column serializer
+						CNS_WORKERS,  
+						StringSerializer.get(), 
+						StringSerializer.get()); 
 		cf.put(CNS_WORKERS, CF_CNS_WORKERS);
 
 		ColumnFamily<String, String> CF_CNS_API_SERVERS =
 				new ColumnFamily<String, String>(
-						CNS_API_SERVERS,  // column family name
-						StringSerializer.get(), // key serializer
-						StringSerializer.get()); // column serializer
+						CNS_API_SERVERS,  
+						StringSerializer.get(), 
+						StringSerializer.get()); 
 		cf.put(CNS_API_SERVERS, CF_CNS_API_SERVERS);
 	
 		ColumnFamily<String, String> CF_CQS_QUEUES =
 				new ColumnFamily<String, String>(
-						CQS_QUEUES,  // column family name
-						StringSerializer.get(), // key serializer
-						StringSerializer.get()); // column serializer
+						CQS_QUEUES,  
+						StringSerializer.get(), 
+						StringSerializer.get()); 
 		cf.put(CQS_QUEUES, CF_CQS_QUEUES);
 	
 		ColumnFamily<String, String> CF_CQS_QUEUES_BY_USER_ID =
 				new ColumnFamily<String, String>(
-						CQS_QUEUES_BY_USER_ID,  // column family name
-						StringSerializer.get(), // key serializer
-						StringSerializer.get()); // column serializer
+						CQS_QUEUES_BY_USER_ID,  
+						StringSerializer.get(), 
+						StringSerializer.get()); 
 		cf.put(CQS_QUEUES_BY_USER_ID, CF_CQS_QUEUES_BY_USER_ID);
 
 		ColumnFamily<String, Composite> CF_CQS_PARTITIONED_QUEUE_MESSAGES =
 				new ColumnFamily<String, Composite>(
-						CQS_PARTITIONED_QUEUE_MESSAGES,  // column family name
-						StringSerializer.get(), // key serializer
-						CompositeSerializer.get()); // column serializer
+						CQS_PARTITIONED_QUEUE_MESSAGES,  
+						StringSerializer.get(), 
+						CompositeSerializer.get()); 
 		cf.put(CQS_PARTITIONED_QUEUE_MESSAGES, CF_CQS_PARTITIONED_QUEUE_MESSAGES);
 
 		ColumnFamily<String, String> CF_CQS_API_SERVERS =
 				new ColumnFamily<String, String>(
-						CQS_API_SERVERS,  // column family name
-						StringSerializer.get(), // key serializer
-						StringSerializer.get()); // column serializer
+						CQS_API_SERVERS,  
+						StringSerializer.get(), 
+						StringSerializer.get()); 
 		cf.put(CQS_API_SERVERS, CF_CQS_API_SERVERS);
 
 		ColumnFamily<String, String> CF_CMB_USERS =
 				new ColumnFamily<String, String>(
-						CMB_USERS,  // column family name
-						StringSerializer.get(), // key serializer
-						StringSerializer.get()); // column serializer
+						CMB_USERS,  
+						StringSerializer.get(), 
+						StringSerializer.get()); 
 		cf.put(CMB_USERS, CF_CMB_USERS);
 	}
 
@@ -416,9 +416,11 @@ public class CassandraAstyanaxPersistence extends AbstractCassandraPersistence {
 		logger.debug("event=update column_family=" + columnFamily + " key=" + key + " column=" + column + " value=" + value);
 
 		try {
-			MutationBatch m = getKeyspace(keyspace).prepareMutationBatch();
-			m.withRow((ColumnFamily)getColumnFamily(columnFamily), key)
-			.putColumn(getComposite(column), value, getSerializer(valueSerializer), ttl);
+			MutationBatch m = 
+					getKeyspace(keyspace).
+					prepareMutationBatch();
+			m.withRow((ColumnFamily)getColumnFamily(columnFamily), key).
+				putColumn(getComposite(column), value, getSerializer(valueSerializer), ttl);
 			m.execute();
 		} catch (ConnectionException ex) {
 			throw new PersistenceException(ex);
@@ -452,8 +454,13 @@ public class CassandraAstyanaxPersistence extends AbstractCassandraPersistence {
 		    		execute();
 		    rows = or.getResult();*/
 		    
-		    OperationResult<Rows<K, N>> or = getKeyspace(keyspace).
-		    		prepareQuery(getColumnFamily(columnFamily)).getAllRows().setIncludeEmptyRows(false).execute();
+		    OperationResult<Rows<K, N>> or = 
+		    		getKeyspace(keyspace).
+		    		prepareQuery(getColumnFamily(columnFamily)).
+		    		getAllRows().
+		    		setRowLimit(numRows).
+		    		setIncludeEmptyRows(false).
+		    		execute();
 
 		    rows = or.getResult();
 
@@ -506,11 +513,15 @@ public class CassandraAstyanaxPersistence extends AbstractCassandraPersistence {
 
 		try {
 
-			IndexQuery<K, N> query = getKeyspace(keyspace).
-					   prepareQuery(getColumnFamily(columnFamily)).
-					   searchWithIndex().
-					   addExpression().
-					   whereColumn(whereColumn).equals().value(whereValue, getSerializer(valueSerializer));
+			IndexQuery<K, N> query = 
+					getKeyspace(keyspace).
+					prepareQuery(getColumnFamily(columnFamily)).
+					searchWithIndex().
+					setRowLimit(numRows);
+			
+			if (whereColumn != null && whereValue != null) {
+				query.addExpression().whereColumn(whereColumn).equals().value(whereValue, getSerializer(valueSerializer));
+			}
 			
 			OperationResult<Rows<K, N>> or = query.execute();
 			Rows<K, N> rows = or.getResult();
@@ -541,11 +552,13 @@ public class CassandraAstyanaxPersistence extends AbstractCassandraPersistence {
 		try {
 
 			IndexQuery<K, N> query = getKeyspace(keyspace).
-					   prepareQuery(getColumnFamily(columnFamily)).
-					   searchWithIndex();
+					prepareQuery(getColumnFamily(columnFamily)).
+					searchWithIndex().setRowLimit(numRows);
 			
-			for (N columnName : columnValues.keySet()) {
-				query.addExpression().whereColumn(columnName).equals().value(columnValues.get(columnName), getSerializer(valueSerializer));
+			if (columnValues != null) {
+				for (N columnName : columnValues.keySet()) {
+					query.addExpression().whereColumn(columnName).equals().value(columnValues.get(columnName), getSerializer(valueSerializer));
+				}
 			}
 			
 			OperationResult<Rows<K, N>> or = query.execute();
@@ -576,8 +589,10 @@ public class CassandraAstyanaxPersistence extends AbstractCassandraPersistence {
 
 		try {
 
-		    RowQuery<K, N> rq = getKeyspace(keyspace).
-		    		prepareQuery(getColumnFamily(columnFamily)).getKey(key).
+		    RowQuery<K, N> rq = 
+		    		getKeyspace(keyspace).
+		    		prepareQuery(getColumnFamily(columnFamily)).
+		    		getKey(key).
 		    		withColumnRange(getComposite(firstColumnName), getComposite(lastColumnName), false, numCols);
 		    ColumnList<N> columns = rq.execute().getResult();
 		    
@@ -720,10 +735,13 @@ public class CassandraAstyanaxPersistence extends AbstractCassandraPersistence {
 
 		try {
 
-			int count = getKeyspace(keyspace).prepareQuery(getColumnFamily(columnFamily))
-					.getKey(key)
-					.getCount()
-					.execute().getResult();
+			int count = 
+					getKeyspace(keyspace).
+					prepareQuery(getColumnFamily(columnFamily)).
+					getKey(key).
+					getCount().
+					execute().
+					getResult();
 			return count;
 		} catch (ConnectionException ex) {
 			throw new PersistenceException(ex);
@@ -744,9 +762,10 @@ public class CassandraAstyanaxPersistence extends AbstractCassandraPersistence {
 		logger.debug("event=increment_counter column_family=" + columnFamily);
 
 		try {
-			getKeyspace(keyspace).prepareColumnMutation(getColumnFamily(columnFamily), rowKey, columnName)
-		    .incrementCounterColumn(incrementBy)
-		    .execute();
+			getKeyspace(keyspace).
+				prepareColumnMutation(getColumnFamily(columnFamily), rowKey, columnName).
+				incrementCounterColumn(incrementBy).
+				execute();
 		} catch (ConnectionException ex) {
 			throw new PersistenceException(ex);
 		} finally {
@@ -787,7 +806,9 @@ public class CassandraAstyanaxPersistence extends AbstractCassandraPersistence {
 		logger.debug("event=delete_counter column_family=" + columnFamily);
 
 		try {
-			getKeyspace(keyspace).prepareColumnMutation(getColumnFamily(columnFamily),rowKey,columnName).deleteCounterColumn().execute();
+			getKeyspace(keyspace).
+				prepareColumnMutation(getColumnFamily(columnFamily),rowKey,columnName).
+				deleteCounterColumn().execute();
 		} catch (ConnectionException ex) {
 			throw new PersistenceException(ex);
 		} finally {
@@ -804,10 +825,13 @@ public class CassandraAstyanaxPersistence extends AbstractCassandraPersistence {
 		long ts1 = System.currentTimeMillis();	    
 		logger.debug("event=get_counter column_family=" + columnFamily);
 		try {
-			Column<N> result = getKeyspace(keyspace).prepareQuery((ColumnFamily<K, N>)getColumnFamily(columnFamily))
-					.getKey(rowKey)
-					.getColumn(columnName)
-					.execute().getResult();
+			Column<N> result = 
+					getKeyspace(keyspace).
+					prepareQuery((ColumnFamily<K, N>)getColumnFamily(columnFamily)).
+					getKey(rowKey).
+					getColumn(columnName).
+					execute().
+					getResult();
 			Long counterValue = result.getLongValue();
 			return counterValue;
 		} catch (ConnectionException ex) {
@@ -827,10 +851,13 @@ public class CassandraAstyanaxPersistence extends AbstractCassandraPersistence {
 		long ts1 = System.currentTimeMillis();	    
 		logger.debug("event=get_column column_family=" + columnFamily + " column_name=" + columnName);
 		try {
-			Column<N> column = (Column<N>)getKeyspace(keyspace).prepareQuery(getColumnFamily(columnFamily))
-					.getKey(key)
-					.getColumn(getComposite(columnName))
-					.execute().getResult();
+			Column<N> column = 
+					(Column<N>)getKeyspace(keyspace).
+					prepareQuery(getColumnFamily(columnFamily)).
+					getKey(key).
+					getColumn(getComposite(columnName)).
+					execute().
+					getResult();
 			return new CmbAstyanaxColumn(column);
 		} catch (ConnectionException ex) {
 			throw new PersistenceException(ex);
