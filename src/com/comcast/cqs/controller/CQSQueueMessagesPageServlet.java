@@ -191,15 +191,19 @@ public class CQSQueueMessagesPageServlet extends AdminServletBase {
 			out.println("</table></p>");
 		}
 		
-		//for receive message
+		// for receive message
+		
         out.println("<form id='formsendmessage' action=\"/webui/cqsuser/message/?userId="+userId+"&queueName="+queueName+"\" method=POST>");
 		out.println("<table><tr><td><b>Receive Message:</b></td>");
         out.println("<td><input type='hidden' name='userId' value='"+ userId + "'></td><td valign='bottom'><input type='submit' value='Receive Message' name='Receive' /></td>");
         out.println("</form></tr></table>");
         
-        //showing received message
+        // showing received message
         
-        if(receivedMessage!=null){
+   		out.println("<p><hr width='100%' align='left' /><p>");
+   		out.println("<h3>Received Messages</h3>");
+
+   		if (receivedMessage!=null) {
         	
 			Map<String, String> attributes = receivedMessage.getAttributes();
         	
@@ -215,8 +219,6 @@ public class CQSQueueMessagesPageServlet extends AdminServletBase {
         		try { timeReceived = new Date(Long.parseLong(attributes.get("ApproximateFirstReceiveTimestamp"))).toString(); } catch (Exception ex) {}
         	}
         	
-       		out.println("<p><hr width='100%' align='left' /><p>");
-       		out.println("Received Message");
        		out.println("<table class = 'alternatecolortable'>");
        		out.println("<tr><th></th><th>Receipt Handle</th><th>MD5</th><th>Body</th><th>Time Sent</th><th>Time First Received (Appr.)</th><th>Receive Count (Appr.)</th><th>Sender</th><th>&nbsp;</th></tr>");
         	
@@ -227,7 +229,9 @@ public class CQSQueueMessagesPageServlet extends AdminServletBase {
         	String messageBody=receivedMessage.getBody();
         	String messageBodyPart1=null;
         	String messageBodyPart2=null;
-        	if((messageBody!=null)&&(messageBody.length()>300)){
+        	
+        	if ((messageBody!=null) && (messageBody.length()>300)) {
+        		
         		messageBodyPart1=messageBody.substring(0, 299);
         		messageBodyPart2=messageBody.substring(299);
 
@@ -239,6 +243,7 @@ public class CQSQueueMessagesPageServlet extends AdminServletBase {
         	} else {
         		out.println("<td>"+ receivedMessage.getBody() + "</td>");
         	}
+        	
         	out.println("<td>"+ timeSent + "</td>");
         	out.println("<td>"+ timeReceived + "</td>");
         	out.println("<td>"+ attributes.get("ApproximateReceiveCount") + "</td>");
@@ -246,9 +251,11 @@ public class CQSQueueMessagesPageServlet extends AdminServletBase {
 		    out.println("<td><form action=\"/webui/cqsuser/message/?userId="+user.getUserId()+"&queueName="+queueName+"&receiptHandle="+receivedMessage.getReceiptHandle()+"\" method=POST><input type='submit' value='Delete' name='Delete'/><input type='hidden' name='queueUrl' value='"+ queueUrl+ "' /></form></td></tr>");
 	        out.println("</table>");
 		    
+        } else {
+        	out.println("<p><i>no messages</i></p>");
         }
 		
-        List<CQSMessage> messages = null;
+        List<CQSMessage> availableMessages = null;
         
 		try {
 			
@@ -271,8 +278,8 @@ public class CQSQueueMessagesPageServlet extends AdminServletBase {
 				
 				for (Element messageElement : messageElements) {
 					
-					if (messages == null) {
-						messages = new ArrayList<CQSMessage>();
+					if (availableMessages == null) {
+						availableMessages = new ArrayList<CQSMessage>();
 					}
 					
 					String body = XmlUtil.getCurrentLevelTextValue(messageElement, "Body");
@@ -298,7 +305,7 @@ public class CQSQueueMessagesPageServlet extends AdminServletBase {
 					
 					msg.setAttributes(attributes);
 					
-					messages.add(msg);
+					availableMessages.add(msg);
 				}
 			}
 		
@@ -310,13 +317,16 @@ public class CQSQueueMessagesPageServlet extends AdminServletBase {
 		String previousHandle = null;
 		nextHandle = null;
 		
-		if((messages==null) || (messages.size()==0)){
-			out.println("No Message");
+		out.println("<p><hr width='100%' align='left' /><p>");
+		out.println("<h3>Available Messages</h3>");
+
+		if ((availableMessages==null) || (availableMessages.size()==0)) {
+			out.println("<p><i>no messages</i></p>");
 		}
+
+		for (int i = 0; availableMessages != null && i < availableMessages.size(); i++) {
         
-		for (int i = 0; messages != null && i < messages.size(); i++) {
-        
-			CQSMessage message = messages.get(i);
+			CQSMessage message = availableMessages.get(i);
         	
 			Map<String, String> attributes = message.getAttributes();
         	
@@ -333,10 +343,6 @@ public class CQSQueueMessagesPageServlet extends AdminServletBase {
         	}
         	
         	if (i == 0) {
-        		out.println("<p><hr width='100%' align='left' /><p>");
-        		if(receivedMessage!=null){
-        			out.println("Peek Message");
-        		}
         		out.println("<table class = 'alternatecolortable'>");
         		out.println("<tr><th></th><th>Receipt Handle</th><th>MD5</th><th>Body</th><th>Time Sent</th><th>Time First Received (Appr.)</th><th>Receive Count (Appr.)</th><th>Sender</th><th>&nbsp;</th></tr>");
         		previousHandle = message.getReceiptHandle();
@@ -365,9 +371,9 @@ public class CQSQueueMessagesPageServlet extends AdminServletBase {
         	out.println("<td>"+ timeReceived + "</td>");
         	out.println("<td>"+ attributes.get("ApproximateReceiveCount") + "</td>");
         	out.println("<td>"+ attributes.get("SenderId") + "</td>");
-		    out.println("<td><form action=\"/webui/cqsuser/message/?userId="+user.getUserId()+"&queueName="+queueName+"&receiptHandle="+message.getReceiptHandle()+"\" method=POST><input type='submit' value='Delete' name='Delete'/><input type='hidden' name='queueUrl' value='"+ queueUrl+ "' /></form></td></tr>");
+		    out.println("<td></td></tr>");
 		    
-		    if (i == messages.size() - 1) {
+		    if (i == availableMessages.size() - 1) {
 		    	nextHandle = message.getReceiptHandle();
 		    }
         }
@@ -383,7 +389,7 @@ public class CQSQueueMessagesPageServlet extends AdminServletBase {
         	}
         }
         
-        if (messages != null && messages.size() > 0) {
+        if (availableMessages != null && availableMessages.size() > 0) {
         	out.println("<a style='float:right;' href='/webui/cqsuser/message/?userId="+user.getUserId()+"&queueName="+queueName+"&prevHandle="+nextHandle+"'>Next</a>");
         }
         
