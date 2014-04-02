@@ -24,7 +24,6 @@ import com.comcast.cmb.common.persistence.AbstractDurablePersistence;
 import com.comcast.cmb.common.persistence.AbstractDurablePersistence.CMB_SERIALIZER;
 import com.comcast.cmb.common.persistence.AbstractDurablePersistence.CmbColumn;
 import com.comcast.cmb.common.persistence.AbstractDurablePersistence.CmbColumnSlice;
-import com.comcast.cmb.common.persistence.AbstractDurablePersistence.CmbRow;
 import com.comcast.cmb.common.persistence.DurablePersistenceFactory;
 import com.comcast.cmb.common.persistence.PersistenceFactory;
 import com.comcast.cmb.common.util.CMBException;
@@ -211,41 +210,6 @@ public class CNSTopicCassandraPersistence implements ICNSTopicPersistence {
 					cassandraHandler.delete(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilyTopicsByUserId, userId, arn, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 				}
 			}
-		}
-
-		return topics;
-	}
-
-	@Override
-	public List<CNSTopic> listAllTopics(String nextToken) throws Exception {
-
-		if (nextToken != null) {
-			if (getTopic(nextToken) == null) {
-				nextToken = null;
-				//throw new CMBException(CMBErrorCodes.InvalidParameterValue, "Invalid parameter nextToken");
-			}
-		}
-
-		List<CNSTopic> topics = new ArrayList<CNSTopic>();
-
-		List<CmbRow<String, String, String>> rows = cassandraHandler.readNextNRows(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilyTopics, nextToken, 1000, 100, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
-
-		for (CmbRow<String, String, String> row : rows) {
-
-			String arn = row.getKey();
-			String name = row.getColumnSlice().getColumnByName("name").getValue();
-
-			String displayName = null;
-
-			if (row.getColumnSlice().getColumnByName("displayName") != null) {
-				displayName = row.getColumnSlice().getColumnByName("displayName").getValue();
-			}
-
-			String user = row.getColumnSlice().getColumnByName("userId").getValue();
-			CNSTopic topic = new CNSTopic(arn, name, displayName, user);
-
-			topics.add(topic);
-
 		}
 
 		return topics;

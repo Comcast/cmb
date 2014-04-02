@@ -432,24 +432,20 @@ public class CassandraAstyanaxPersistence extends AbstractDurablePersistence {
 	}
 
 	@Override
-	public <K, N, V> List<CmbRow<K, N, V>> readNextNRows(
-			String keyspace, String columnFamily, K lastKey, int numRows,
-			int numCols, CmbSerializer keySerializer,
-			CmbSerializer columnNameSerializer, CmbSerializer valueSerializer)
+	public <K, N, V> List<CmbRow<K, N, V>> readAllRows(
+			String keyspace, String columnFamily, int numRows, int numCols,
+			CmbSerializer keySerializer, CmbSerializer columnNameSerializer,
+			CmbSerializer valueSerializer)
 			throws PersistenceException {
 
 		long ts1 = System.currentTimeMillis();
-		logger.debug("event=read_next_n_non_empty_rows cf=" + columnFamily + " last_key=" + lastKey + " num_rows=" + numRows + " num_cols=" + numCols);
+		logger.debug("event=read_next_n_non_empty_rows cf=" + columnFamily + " num_rows=" + numRows + " num_cols=" + numCols);
 
 		try {
 
-		    Rows<K, N> rows = null;
-		    
-		    //TODO: check why don't key range queries work like they do in hector
-
 		    /*OperationResult<Rows<K, N>> or = getKeyspace(keyspace).
 		    		prepareQuery(getColumnFamily(columnFamily)).
-		    		getRowRange(lastKey, null, null, null, numRows).
+		    		getRowRange(lastKey, null, null, null, numRows). // this wouldn't work in Astyanax, hence getting rid of fake row range queries with random partitioner
 		    		withColumnRange(new RangeBuilder().setLimit(numCols).build()).
 		    		execute();
 		    rows = or.getResult();*/
@@ -462,32 +458,7 @@ public class CassandraAstyanaxPersistence extends AbstractDurablePersistence {
 		    		setIncludeEmptyRows(false).
 		    		execute();
 
-		    rows = or.getResult();
-
-		    if (lastKey == null) {
-		    	return getRows(rows);
-		    }
-		    
-		    Iterator<Row<K, N>> iter = rows.iterator();
-
-		    while (iter.hasNext()) {
-		    	Row<K, N> row = iter.next();
-		    	if (row.getKey().equals(lastKey)) {
-		    		break;
-		    	}
-		    }
-		    
-		    List<Row<K, N>> myRows = new ArrayList<Row<K, N>>();
-		    
-		    for (int i=0; i<numRows; i++) {
-		    	if (!iter.hasNext()) {
-		    		break;
-		    	}
-		    	Row<K, N> row = iter.next();
-		    	myRows.add(row);
-		    }
-			
-			return getRows(myRows);
+	    	return getRows(or.getResult());
 
 		} catch (ConnectionException ex) {
 		

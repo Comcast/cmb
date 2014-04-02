@@ -32,7 +32,7 @@ public class CNSWorkerStatWrapper {
 	private static final String CNS_WORKERS = "CNSWorkers";
 	public static List<CNSWorkerStats> getCassandraWorkerStats() throws PersistenceException {
 
-		List<CmbRow<String, String, String>> rows = cassandraHandler.readNextNRows(AbstractDurablePersistence.CNS_KEYSPACE, CNS_WORKERS, null, 1000, 10, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+		List<CmbRow<String, String, String>> rows = cassandraHandler.readAllRows(AbstractDurablePersistence.CNS_KEYSPACE, CNS_WORKERS, 1000, 10, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 		List<CNSWorkerStats> statsList = new ArrayList<CNSWorkerStats>();
 
 		if (rows != null) {

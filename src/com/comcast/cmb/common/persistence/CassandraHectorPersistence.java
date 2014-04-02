@@ -369,72 +369,29 @@ public class CassandraHectorPersistence extends AbstractDurablePersistence {
 	}
 
 	@Override
-	public <K, N, V> List<CmbRow<K, N, V>> readNextNRows(String keyspace, String columnFamily, K lastKey, int numRows, int numCols,
-			CmbSerializer keySerializer, CmbSerializer columnNameSerializer,
-			CmbSerializer valueSerializer) throws PersistenceException {
+	public <K, N, V> List<CmbRow<K, N, V>> readAllRows(String keyspace, String columnFamily, int numRows, int numCols, CmbSerializer keySerializer,
+			CmbSerializer columnNameSerializer, CmbSerializer valueSerializer) throws PersistenceException {
 
 		long ts1 = System.currentTimeMillis();
-		logger.debug("event=read_nextn_nonempty_rows cf=" + columnFamily + " last_key=" + lastKey + " num_rows=" + numRows + " num_cols" + numCols);
+		logger.debug("event=read_nextn_nonempty_rows cf=" + columnFamily + " num_rows=" + numRows + " num_cols" + numCols);
 
 		try {
 
-			int pageSize = 100;
-
-			List<Row<K, N, V>> rows = new ArrayList<Row<K, N, V>>();
-			RangeSlicesQuery<K, N, V> rangeSlicesQuery;
-
-			// page through rows in increments of 100 until the desired number of
-			// rows is found
-
-			while (true) {
-
-				rangeSlicesQuery = HFactory.createRangeSlicesQuery(getKeyspace(keyspace), getSerializer(keySerializer),
+				RangeSlicesQuery rangeSlicesQuery = HFactory.createRangeSlicesQuery(getKeyspace(keyspace), getSerializer(keySerializer),
 						getSerializer(columnNameSerializer), getSerializer(valueSerializer))
 						.setColumnFamily(columnFamily)
-						.setRange(null, null, false, numCols).setRowCount(pageSize)
-						.setKeys(lastKey, null);
+						.setRange(null, null, false, numCols).setRowCount(numRows);
+						//.setKeys(lastKey, null);
 
 				QueryResult<OrderedRows<K, N, V>> result = rangeSlicesQuery.execute();
-
-				CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CassandraRead, 1L);
-
 				OrderedRows<K, N, V> orderedRows = result.get();
-				Iterator<Row<K, N, V>> rowsIterator = orderedRows.iterator();
+				List<Row<K, N, V>> rows = orderedRows.getList();
+				return getRows(rows);
 
-				// skip last row
-
-				if (lastKey != null && rowsIterator.hasNext()) {
-					rowsIterator.next();
-				}
-
-				// return if there are no more rows in cassandra
-
-				if (!rowsIterator.hasNext()) {
-					return getRows(rows);
-				}
-
-				while (rowsIterator.hasNext()) {
-
-					Row<K, N, V> row = rowsIterator.next();
-
-					lastKey = row.getKey();
-
-					if (row.getColumnSlice().getColumns().isEmpty()) {
-						continue;
-					}
-
-					rows.add(row);
-
-					// return if we have the desired number of rows
-
-							if (rows.size() >= numRows) {
-								return getRows(rows);
-							}
-				}
-			}
 
 		} finally {
 			long ts2 = System.currentTimeMillis();
+			CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CassandraRead, 1L);
 			CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CassandraTime, (ts2 - ts1));      
 		}
 	}

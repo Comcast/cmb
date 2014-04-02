@@ -133,10 +133,9 @@ public abstract class AbstractDurablePersistence {
 	public abstract <K, N, V> void update(String keyspace, String columnFamily, K key, N column, V value, 
 			CmbSerializer keySerializer, CmbSerializer nameSerializer, CmbSerializer valueSerializer, Integer ttl) throws PersistenceException;
 
-	public abstract <K, N, V> List<CmbRow<K, N, V>> readNextNRows(
-			String keyspace, String columnFamily, K lastKey, int numRows, int numCols,
-			CmbSerializer keySerializer, CmbSerializer columnNameSerializer,
-			CmbSerializer valueSerializer) throws PersistenceException;
+	public abstract <K, N, V> List<CmbRow<K, N, V>> readAllRows(
+			String keyspace, String columnFamily, int numRows, int numCols, CmbSerializer keySerializer,
+			CmbSerializer columnNameSerializer, CmbSerializer valueSerializer) throws PersistenceException;
 
 	public abstract <K, N, V> List<CmbRow<K, N, V>> readRowsByIndex(
 			String keyspace, String columnFamily, N whereColumn, V whereValue,

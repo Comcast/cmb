@@ -21,7 +21,7 @@ public class CQSAPIStatWrapper {
 	
 	public static List<CQSAPIStats> getCNSAPIStats() throws PersistenceException{
 		
-		List<CmbRow<String, String, String>> rows = cassandraHandler.readNextNRows(AbstractDurablePersistence.CNS_KEYSPACE, CNS_API_SERVERS, null, 1000, 10, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+		List<CmbRow<String, String, String>> rows = cassandraHandler.readAllRows(AbstractDurablePersistence.CNS_KEYSPACE, CNS_API_SERVERS, 1000, 10, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 		List<CQSAPIStats> statsList = new ArrayList<CQSAPIStats>();
 		
 		if (rows != null) {
@@ -120,7 +120,7 @@ public class CQSAPIStatWrapper {
 	
 	public static List<CQSAPIStats> getCQSAPIStats() throws PersistenceException {
 		
-		List<CmbRow<String, String, String>> rows = cassandraHandler.readNextNRows(AbstractDurablePersistence.CQS_KEYSPACE, CQS_API_SERVERS, null, 1000, 10, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+		List<CmbRow<String, String, String>> rows = cassandraHandler.readAllRows(AbstractDurablePersistence.CQS_KEYSPACE, CQS_API_SERVERS, 1000, 10, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 		List<CQSAPIStats> statsList = new ArrayList<CQSAPIStats>();
 		
 		if (rows != null) {

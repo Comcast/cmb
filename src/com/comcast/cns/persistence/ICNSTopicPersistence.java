@@ -62,14 +62,6 @@ public interface ICNSTopicPersistence {
 	public List<CNSTopic> listTopics(String userId, String nextToken) throws Exception;
 	
 	/**
-	 * List all topics across all users. Pagination for more than 100 subscriptions. Not part of official AWS API.
-	 * @param nextToken
-	 * @return
-	 * @throws Exception
-	 */
-	public List<CNSTopic> listAllTopics(String nextToken) throws Exception;
-	
-	/**
 	 * Update topic display name
 	 * @param arn
 	 * @param displayName

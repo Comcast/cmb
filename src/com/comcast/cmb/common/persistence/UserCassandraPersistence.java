@@ -169,7 +169,7 @@ public class UserCassandraPersistence implements IUserPersistence {
 
 	public List<User> getAllUsers() throws PersistenceException {
 		
-		List<CmbRow<String, String, String>> rows = cassandraHandler.readNextNRows(AbstractDurablePersistence.CMB_KEYSPACE, COLUMN_FAMILY_USERS, null, 1000, 10, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);	
+		List<CmbRow<String, String, String>> rows = cassandraHandler.readAllRows(AbstractDurablePersistence.CMB_KEYSPACE, COLUMN_FAMILY_USERS, 1000, 10, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);	
 		List<User> userList = new ArrayList<User>();
 
 		if (rows == null || rows.size() == 0) {

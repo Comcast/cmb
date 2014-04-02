@@ -154,7 +154,7 @@ public class CQSLongPollSender {
 
 	                // read all other pings but ensure we are data-center local and looking at a cqs service
 	        		
-	        		List<CmbRow<String, String, String>> rows = DurablePersistenceFactory.getInstance().readNextNRows(AbstractDurablePersistence.CQS_KEYSPACE, CQS_API_SERVERS, null, 1000, 10, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+	        		List<CmbRow<String, String, String>> rows = DurablePersistenceFactory.getInstance().readAllRows(AbstractDurablePersistence.CQS_KEYSPACE, CQS_API_SERVERS, 1000, 10, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 	        		
 	        		Map<String, CQSAPIStats> cqsAPIServers = new HashMap<String, CQSAPIStats>();
 	        		
