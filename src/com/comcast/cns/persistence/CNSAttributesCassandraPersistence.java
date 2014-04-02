@@ -21,10 +21,10 @@ import java.util.Map;
 import org.apache.log4j.Logger;
 import org.json.JSONObject;
 
-import com.comcast.cmb.common.persistence.AbstractCassandraPersistence;
-import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CMB_SERIALIZER;
-import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CmbColumnSlice;
-import com.comcast.cmb.common.persistence.CassandraPersistenceFactory;
+import com.comcast.cmb.common.persistence.AbstractDurablePersistence;
+import com.comcast.cmb.common.persistence.AbstractDurablePersistence.CMB_SERIALIZER;
+import com.comcast.cmb.common.persistence.AbstractDurablePersistence.CmbColumnSlice;
+import com.comcast.cmb.common.persistence.DurablePersistenceFactory;
 import com.comcast.cmb.common.persistence.PersistenceFactory;
 import com.comcast.cns.controller.CNSCache;
 import com.comcast.cns.model.CNSSubscription;
@@ -44,7 +44,7 @@ public class CNSAttributesCassandraPersistence implements ICNSAttributesPersiste
 	private static final String columnFamilySubscriptionAttributes = "CNSSubscriptionAttributes";
 	private static final String columnFamilyTopicStats = "CNSTopicStats";
 	private static Logger logger = Logger.getLogger(CNSAttributesCassandraPersistence.class);
-	private static final AbstractCassandraPersistence cassandraHandler = CassandraPersistenceFactory.getInstance();
+	private static final AbstractDurablePersistence cassandraHandler = DurablePersistenceFactory.getInstance();
 	
 	public CNSAttributesCassandraPersistence() {
 	}
@@ -52,7 +52,7 @@ public class CNSAttributesCassandraPersistence implements ICNSAttributesPersiste
 	@Override
 	public void setTopicAttributes(CNSTopicAttributes topicAttributes, String topicArn) throws Exception {
 		
-		cassandraHandler.insertRow(AbstractCassandraPersistence.CNS_KEYSPACE, topicArn, columnFamilyTopicAttributes, getColumnValues(topicAttributes), CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, null);
+		cassandraHandler.insertRow(AbstractDurablePersistence.CNS_KEYSPACE, topicArn, columnFamilyTopicAttributes, getColumnValues(topicAttributes), CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, null);
 		
 		if (topicAttributes.getDisplayName() != null) {
 			PersistenceFactory.getTopicPersistence().updateTopicDisplayName(topicArn, topicAttributes.getDisplayName());
@@ -108,7 +108,7 @@ public class CNSAttributesCassandraPersistence implements ICNSAttributesPersiste
 		CNSTopicAttributes topicAttributes = new CNSTopicAttributes();
 		topicAttributes.setTopicArn(topicArn);
 		
-		CmbColumnSlice<String, String> slice = cassandraHandler.readColumnSlice(AbstractCassandraPersistence.CNS_KEYSPACE, columnFamilyTopicAttributes, topicArn, null, null, 10, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+		CmbColumnSlice<String, String> slice = cassandraHandler.readColumnSlice(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilyTopicAttributes, topicArn, null, null, 10, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 		
 		if (slice != null) {
 			
@@ -134,13 +134,13 @@ public class CNSAttributesCassandraPersistence implements ICNSAttributesPersiste
 			topicAttributes.setDisplayName(PersistenceFactory.getTopicPersistence().getTopic(topicArn).getDisplayName());
 		}
 		
-		long subscriptionConfirmedCount = cassandraHandler.getCounter(AbstractCassandraPersistence.CNS_KEYSPACE, columnFamilyTopicStats, topicArn, "subscriptionConfirmed", CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+		long subscriptionConfirmedCount = cassandraHandler.getCounter(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilyTopicStats, topicArn, "subscriptionConfirmed", CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 		topicAttributes.setSubscriptionsConfirmed(subscriptionConfirmedCount);
 		
-		long subscriptionPendingCount = cassandraHandler.getCounter(AbstractCassandraPersistence.CNS_KEYSPACE, columnFamilyTopicStats, topicArn, "subscriptionPending", CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+		long subscriptionPendingCount = cassandraHandler.getCounter(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilyTopicStats, topicArn, "subscriptionPending", CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 		topicAttributes.setSubscriptionsPending(subscriptionPendingCount);
 		
-		long subscriptionDeletedCount = cassandraHandler.getCounter(AbstractCassandraPersistence.CNS_KEYSPACE, columnFamilyTopicStats, topicArn, "subscriptionDeleted", CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+		long subscriptionDeletedCount = cassandraHandler.getCounter(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilyTopicStats, topicArn, "subscriptionDeleted", CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 		topicAttributes.setSubscriptionsDeleted(subscriptionDeletedCount);
 
 		return topicAttributes;
@@ -149,7 +149,7 @@ public class CNSAttributesCassandraPersistence implements ICNSAttributesPersiste
 	@Override
 	public void setSubscriptionAttributes(CNSSubscriptionAttributes subscriptionAtributes, String subscriptionArn) throws Exception {
 
-		cassandraHandler.insertRow(AbstractCassandraPersistence.CNS_KEYSPACE, subscriptionArn, columnFamilySubscriptionAttributes, getColumnValues(subscriptionAtributes), CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, null);
+		cassandraHandler.insertRow(AbstractDurablePersistence.CNS_KEYSPACE, subscriptionArn, columnFamilySubscriptionAttributes, getColumnValues(subscriptionAtributes), CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, null);
 		String topicArn = com.comcast.cns.util.Util.getCnsTopicArn(subscriptionArn);
 		CNSCache.removeTopicAttributes(topicArn);
 	}
@@ -188,7 +188,7 @@ public class CNSAttributesCassandraPersistence implements ICNSAttributesPersiste
 	public CNSSubscriptionAttributes getSubscriptionAttributes(String subscriptionArn) throws Exception {
 		
 		CNSSubscriptionAttributes subscriptionAttributes = null;
-		CmbColumnSlice<String, String> slice = cassandraHandler.readColumnSlice(AbstractCassandraPersistence.CNS_KEYSPACE, columnFamilySubscriptionAttributes, subscriptionArn, null, null, 10, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+		CmbColumnSlice<String, String> slice = cassandraHandler.readColumnSlice(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilySubscriptionAttributes, subscriptionArn, null, null, 10, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 		
 		if (slice != null) {
 			

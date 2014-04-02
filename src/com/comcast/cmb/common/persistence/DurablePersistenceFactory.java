@@ -1,11 +1,11 @@
 package com.comcast.cmb.common.persistence;
 
-public class CassandraPersistenceFactory {
+public class DurablePersistenceFactory {
 	
 	private void CassandraPersistenceFactory() {
 	}
 
-	public static AbstractCassandraPersistence getInstance() {
+	public static AbstractDurablePersistence getInstance() {
 		//return CassandraHectorPersistence.getInstance();
 		return CassandraAstyanaxPersistence.getInstance();
 	}

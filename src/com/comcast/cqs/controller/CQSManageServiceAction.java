@@ -24,9 +24,9 @@ import org.apache.log4j.Logger;
 import com.comcast.cmb.common.controller.CMBControllerServlet;
 import com.comcast.cmb.common.model.CMBPolicy;
 import com.comcast.cmb.common.model.User;
-import com.comcast.cmb.common.persistence.AbstractCassandraPersistence;
-import com.comcast.cmb.common.persistence.CassandraPersistenceFactory;
-import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CMB_SERIALIZER;
+import com.comcast.cmb.common.persistence.AbstractDurablePersistence;
+import com.comcast.cmb.common.persistence.DurablePersistenceFactory;
+import com.comcast.cmb.common.persistence.AbstractDurablePersistence.CMB_SERIALIZER;
 import com.comcast.cmb.common.util.CMBException;
 import com.comcast.cns.io.CNSPopulator;
 import com.comcast.cns.util.CNSErrorCodes;
@@ -82,7 +82,7 @@ public class CQSManageServiceAction extends CQSAction {
 			
 		} else if (task.equals("RemoveRecord")) {
 			
-			CassandraPersistenceFactory.getInstance().delete(AbstractCassandraPersistence.CQS_KEYSPACE, CQS_API_SERVERS, host, null, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+			DurablePersistenceFactory.getInstance().delete(AbstractDurablePersistence.CQS_KEYSPACE, CQS_API_SERVERS, host, null, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 			String out = CNSPopulator.getResponseMetadata();
             writeResponse(out, response);
 			return true;

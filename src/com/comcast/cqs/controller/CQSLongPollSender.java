@@ -47,10 +47,10 @@ import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.channel.SimpleChannelHandler;
 import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
 
-import com.comcast.cmb.common.persistence.AbstractCassandraPersistence;
-import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CMB_SERIALIZER;
-import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CmbRow;
-import com.comcast.cmb.common.persistence.CassandraPersistenceFactory;
+import com.comcast.cmb.common.persistence.AbstractDurablePersistence;
+import com.comcast.cmb.common.persistence.AbstractDurablePersistence.CMB_SERIALIZER;
+import com.comcast.cmb.common.persistence.AbstractDurablePersistence.CmbRow;
+import com.comcast.cmb.common.persistence.DurablePersistenceFactory;
 import com.comcast.cmb.common.util.CMBProperties;
 
 public class CQSLongPollSender {
@@ -154,7 +154,7 @@ public class CQSLongPollSender {
 
 	                // read all other pings but ensure we are data-center local and looking at a cqs service
 	        		
-	        		List<CmbRow<String, String, String>> rows = CassandraPersistenceFactory.getInstance().readNextNNonEmptyRows(AbstractCassandraPersistence.CQS_KEYSPACE, CQS_API_SERVERS, null, 1000, 10, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+	        		List<CmbRow<String, String, String>> rows = DurablePersistenceFactory.getInstance().readNextNRows(AbstractDurablePersistence.CQS_KEYSPACE, CQS_API_SERVERS, null, 1000, 10, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 	        		
 	        		Map<String, CQSAPIStats> cqsAPIServers = new HashMap<String, CQSAPIStats>();
 	        		

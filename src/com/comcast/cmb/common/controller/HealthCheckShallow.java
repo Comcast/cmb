@@ -21,8 +21,8 @@ import javax.servlet.http.HttpServletResponse;
 
 import com.comcast.cmb.common.model.CMBPolicy;
 import com.comcast.cmb.common.model.User;
-import com.comcast.cmb.common.persistence.AbstractCassandraPersistence;
-import com.comcast.cmb.common.persistence.CassandraPersistenceFactory;
+import com.comcast.cmb.common.persistence.AbstractDurablePersistence;
+import com.comcast.cmb.common.persistence.DurablePersistenceFactory;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cqs.controller.CQSAction;
 import com.comcast.cqs.persistence.RedisCachedCassandraPersistence;
@@ -77,7 +77,7 @@ public class HealthCheckShallow extends CQSAction {
         
         try {
         	
-        	AbstractCassandraPersistence cassandra = CassandraPersistenceFactory.getInstance();
+        	AbstractDurablePersistence cassandra = DurablePersistenceFactory.getInstance();
         	
         	if (cassandra.isAlive()) {
         		sb.append("\t<Cassandra>OK</Cassandra>\n");

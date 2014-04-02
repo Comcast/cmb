@@ -7,7 +7,7 @@ import java.util.Random;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.PersistenceException;
 
-public abstract class AbstractCassandraPersistence {
+public abstract class AbstractDurablePersistence {
 	
 	protected static Random rand = new Random();
 	
@@ -133,7 +133,7 @@ public abstract class AbstractCassandraPersistence {
 	public abstract <K, N, V> void update(String keyspace, String columnFamily, K key, N column, V value, 
 			CmbSerializer keySerializer, CmbSerializer nameSerializer, CmbSerializer valueSerializer, Integer ttl) throws PersistenceException;
 
-	public abstract <K, N, V> List<CmbRow<K, N, V>> readNextNNonEmptyRows(
+	public abstract <K, N, V> List<CmbRow<K, N, V>> readNextNRows(
 			String keyspace, String columnFamily, K lastKey, int numRows, int numCols,
 			CmbSerializer keySerializer, CmbSerializer columnNameSerializer,
 			CmbSerializer valueSerializer) throws PersistenceException;

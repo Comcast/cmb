@@ -18,8 +18,8 @@ package com.comcast.cmb.test.tools;
 import java.io.UnsupportedEncodingException;
 import java.security.NoSuchAlgorithmException;
 
-import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CMB_SERIALIZER;
-import com.comcast.cmb.common.persistence.CassandraPersistenceFactory;
+import com.comcast.cmb.common.persistence.AbstractDurablePersistence.CMB_SERIALIZER;
+import com.comcast.cmb.common.persistence.DurablePersistenceFactory;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.PersistenceException;
 import com.comcast.cqs.util.Util;
@@ -52,7 +52,7 @@ public class CQSTestUtils {
 		long messageCount = 0;
 		for (int i=0; i<numberOfPartitions; i++) {
 			String queueKey = queueHash + "_" + i;
-			long partitionCount = CassandraPersistenceFactory.getInstance().getCount(CMBProperties.getInstance().getCQSKeyspace(), "CQSPartitionedQueueMessages", queueKey, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.COMPOSITE_SERIALIZER);
+			long partitionCount = DurablePersistenceFactory.getInstance().getCount(CMBProperties.getInstance().getCQSKeyspace(), "CQSPartitionedQueueMessages", queueKey, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.COMPOSITE_SERIALIZER);
 			messageCount += partitionCount;
 			System.out.println("# of messages in " + queueKey + " =" + partitionCount);
 		}

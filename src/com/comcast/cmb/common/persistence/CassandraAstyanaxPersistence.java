@@ -41,7 +41,7 @@ import com.netflix.astyanax.serializers.LongSerializer;
 import com.netflix.astyanax.serializers.StringSerializer;
 import com.netflix.astyanax.thrift.ThriftFamilyFactory;
 
-public class CassandraAstyanaxPersistence extends AbstractCassandraPersistence {
+public class CassandraAstyanaxPersistence extends AbstractDurablePersistence {
 	
 	// TODO: fine tune astyanax settings
 	// TODO: timeout exception
@@ -84,7 +84,7 @@ public class CassandraAstyanaxPersistence extends AbstractCassandraPersistence {
 					.withConnectionPoolConfiguration(new ConnectionPoolConfigurationImpl("CMBAstyananxConnectionPool")
 					.setPort(9160)
 					.setMaxConnsPerHost(1)
-					.setSeeds(AbstractCassandraPersistence.CLUSTER_URL))
+					.setSeeds(AbstractDurablePersistence.CLUSTER_URL))
 							.withConnectionPoolMonitor(new CountingConnectionPoolMonitor())
 							.buildKeyspace(ThriftFamilyFactory.getInstance());
 			context.start();
@@ -432,7 +432,7 @@ public class CassandraAstyanaxPersistence extends AbstractCassandraPersistence {
 	}
 
 	@Override
-	public <K, N, V> List<CmbRow<K, N, V>> readNextNNonEmptyRows(
+	public <K, N, V> List<CmbRow<K, N, V>> readNextNRows(
 			String keyspace, String columnFamily, K lastKey, int numRows,
 			int numCols, CmbSerializer keySerializer,
 			CmbSerializer columnNameSerializer, CmbSerializer valueSerializer)

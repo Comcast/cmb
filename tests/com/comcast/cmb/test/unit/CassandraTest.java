@@ -18,9 +18,9 @@ package com.comcast.cmb.test.unit;
 import static org.junit.Assert.assertTrue;
 
 import com.comcast.cmb.common.controller.CMBControllerServlet;
-import com.comcast.cmb.common.persistence.AbstractCassandraPersistence;
-import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CMB_SERIALIZER;
-import com.comcast.cmb.common.persistence.CassandraPersistenceFactory;
+import com.comcast.cmb.common.persistence.AbstractDurablePersistence;
+import com.comcast.cmb.common.persistence.AbstractDurablePersistence.CMB_SERIALIZER;
+import com.comcast.cmb.common.persistence.DurablePersistenceFactory;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.PersistenceException;
 import com.comcast.cmb.common.util.Util;
@@ -45,7 +45,7 @@ public class CassandraTest {
 		
 		log.info("Testing Cassandra counters");
 		
-		AbstractCassandraPersistence cassandraHandler = CassandraPersistenceFactory.getInstance();
+		AbstractDurablePersistence cassandraHandler = DurablePersistenceFactory.getInstance();
 		
 		long i = cassandraHandler.getCounter(CMBProperties.getInstance().getCNSKeyspace(), "CNSTopicStats", "bla", "foo", CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 		

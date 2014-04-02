@@ -34,12 +34,12 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONWriter;
 
-import com.comcast.cmb.common.persistence.AbstractCassandraPersistence;
-import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CMB_SERIALIZER;
-import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CmbColumn;
-import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CmbColumnSlice;
-import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CmbComposite;
-import com.comcast.cmb.common.persistence.CassandraPersistenceFactory;
+import com.comcast.cmb.common.persistence.AbstractDurablePersistence;
+import com.comcast.cmb.common.persistence.AbstractDurablePersistence.CMB_SERIALIZER;
+import com.comcast.cmb.common.persistence.AbstractDurablePersistence.CmbColumn;
+import com.comcast.cmb.common.persistence.AbstractDurablePersistence.CmbColumnSlice;
+import com.comcast.cmb.common.persistence.AbstractDurablePersistence.CmbComposite;
+import com.comcast.cmb.common.persistence.DurablePersistenceFactory;
 import com.comcast.cmb.common.util.CMBErrorCodes;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.PersistenceException;
@@ -64,7 +64,7 @@ public class CQSMessagePartitionedCassandraPersistence implements ICQSMessagePer
 
 	private static Logger logger = Logger.getLogger(CQSMessagePartitionedCassandraPersistence.class);
 	
-	private static final AbstractCassandraPersistence cassandraHandler = CassandraPersistenceFactory.getInstance();
+	private static final AbstractDurablePersistence cassandraHandler = DurablePersistenceFactory.getInstance();
 
 	public CQSMessagePartitionedCassandraPersistence() {
 	}
@@ -87,7 +87,7 @@ public class CQSMessagePartitionedCassandraPersistence implements ICQSMessagePer
 		}
 		
 		long ts = System.currentTimeMillis() + delaySeconds*1000;
-		CmbComposite columnName = cassandraHandler.getCmbComposite(AbstractCassandraPersistence.newTime(ts, false), UUIDGen.getClockSeqAndNode());
+		CmbComposite columnName = cassandraHandler.getCmbComposite(AbstractDurablePersistence.newTime(ts, false), UUIDGen.getClockSeqAndNode());
 		int ttl = queue.getMsgRetentionPeriod();
 		int partition = rand.nextInt(queue.getNumberOfPartitions());
 		String key = Util.hashQueueUrl(queue.getRelativeUrl()) + "_" + shard + "_" + partition;
@@ -100,7 +100,7 @@ public class CQSMessagePartitionedCassandraPersistence implements ICQSMessagePer
 
 		logger.debug("event=send_message ttl=" + ttl + " delay_sec=" + delaySeconds + " msg_id=" + message.getMessageId() + " key=" + key + " col=" + columnName);
 		
-		cassandraHandler.update(AbstractCassandraPersistence.CQS_KEYSPACE, COLUMN_FAMILY_PARTITIONED_QUEUE_MESSAGES, key, columnName, getMessageJSON(message),
+		cassandraHandler.update(AbstractDurablePersistence.CQS_KEYSPACE, COLUMN_FAMILY_PARTITIONED_QUEUE_MESSAGES, key, columnName, getMessageJSON(message),
 				CMB_SERIALIZER.STRING_SERIALIZER,
 				CMB_SERIALIZER.COMPOSITE_SERIALIZER,
 				CMB_SERIALIZER.STRING_SERIALIZER, ttl);
@@ -261,7 +261,7 @@ public class CQSMessagePartitionedCassandraPersistence implements ICQSMessagePer
 			}
 			
 			long ts = System.currentTimeMillis() + delaySeconds*1000;
-			CmbComposite columnName = cassandraHandler.getCmbComposite(AbstractCassandraPersistence.newTime(ts, false), UUIDGen.getClockSeqAndNode());
+			CmbComposite columnName = cassandraHandler.getCmbComposite(AbstractDurablePersistence.newTime(ts, false), UUIDGen.getClockSeqAndNode());
 
 			message.setMessageId(key + ":" + columnName.get(0) + ":" + columnName.get(1));
 			
@@ -272,7 +272,7 @@ public class CQSMessagePartitionedCassandraPersistence implements ICQSMessagePer
 			ret.put(message.getSuppliedMessageId(), message.getMessageId());
 		}
 
-		cassandraHandler.insertRow(AbstractCassandraPersistence.CQS_KEYSPACE, key, COLUMN_FAMILY_PARTITIONED_QUEUE_MESSAGES, messageDataMap,
+		cassandraHandler.insertRow(AbstractDurablePersistence.CQS_KEYSPACE, key, COLUMN_FAMILY_PARTITIONED_QUEUE_MESSAGES, messageDataMap,
 				CMB_SERIALIZER.STRING_SERIALIZER,
 				CMB_SERIALIZER.COMPOSITE_SERIALIZER,
 				CMB_SERIALIZER.STRING_SERIALIZER, ttl);
@@ -299,7 +299,7 @@ public class CQSMessagePartitionedCassandraPersistence implements ICQSMessagePer
 		
 		if (columnName != null) {
 			logger.debug("event=delete_message receipt_handle=" + receiptHandle + " col=" + columnName + " key=" + receiptHandleParts[0]);
-			cassandraHandler.delete(AbstractCassandraPersistence.CQS_KEYSPACE, COLUMN_FAMILY_PARTITIONED_QUEUE_MESSAGES, receiptHandleParts[0], columnName, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.COMPOSITE_SERIALIZER);
+			cassandraHandler.delete(AbstractDurablePersistence.CQS_KEYSPACE, COLUMN_FAMILY_PARTITIONED_QUEUE_MESSAGES, receiptHandleParts[0], columnName, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.COMPOSITE_SERIALIZER);
 		}
 	}
 
@@ -380,7 +380,7 @@ public class CQSMessagePartitionedCassandraPersistence implements ICQSMessagePer
 			key = queueHash + "_" + shardNumber + "_" + partitionNumber;
 			
 			CmbColumnSlice<CmbComposite, String> columnSlice = cassandraHandler.readColumnSlice(
-					AbstractCassandraPersistence.CQS_KEYSPACE, COLUMN_FAMILY_PARTITIONED_QUEUE_MESSAGES, key, previousHandle,
+					AbstractDurablePersistence.CQS_KEYSPACE, COLUMN_FAMILY_PARTITIONED_QUEUE_MESSAGES, key, previousHandle,
 					nextHandle, length-messageList.size()+1, CMB_SERIALIZER.STRING_SERIALIZER,
 					CMB_SERIALIZER.COMPOSITE_SERIALIZER,
 					CMB_SERIALIZER.STRING_SERIALIZER);
@@ -394,7 +394,7 @@ public class CQSMessagePartitionedCassandraPersistence implements ICQSMessagePer
 					partitionNumber++;
 					
 					if (partitionNumber > -1) {
-						previousHandle = cassandraHandler.getCmbComposite(Arrays.asList(AbstractCassandraPersistence.newTime(System.currentTimeMillis()-1209600000, false), UUIDGen.getClockSeqAndNode()));
+						previousHandle = cassandraHandler.getCmbComposite(Arrays.asList(AbstractDurablePersistence.newTime(System.currentTimeMillis()-1209600000, false), UUIDGen.getClockSeqAndNode()));
 					}
 				
 				} else if (nextHandle != null) {
@@ -402,7 +402,7 @@ public class CQSMessagePartitionedCassandraPersistence implements ICQSMessagePer
 					partitionNumber--;
 					
 					if (partitionNumber < numberPartitions) {
-						nextHandle = cassandraHandler.getCmbComposite(Arrays.asList(AbstractCassandraPersistence.newTime(System.currentTimeMillis()+1209600000, false), UUIDGen.getClockSeqAndNode()));
+						nextHandle = cassandraHandler.getCmbComposite(Arrays.asList(AbstractDurablePersistence.newTime(System.currentTimeMillis()+1209600000, false), UUIDGen.getClockSeqAndNode()));
 					}
 					
 				} else {
@@ -424,7 +424,7 @@ public class CQSMessagePartitionedCassandraPersistence implements ICQSMessagePer
 		for (int i=0; i<numberPartitions; i++) {
 			String key = Util.hashQueueUrl(queueUrl) + "_" + shard + "_" + i;
 			//cassandraHandler.deleteSuperColumn(COLUMN_FAMILY_PARTITIONED_QUEUE_MESSAGES, key, null, CMB_SERIALIZER.STRING_SERIALIZER, CompositeSerializer.get());
-			cassandraHandler.delete(AbstractCassandraPersistence.CQS_KEYSPACE, COLUMN_FAMILY_PARTITIONED_QUEUE_MESSAGES, key, null, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+			cassandraHandler.delete(AbstractDurablePersistence.CQS_KEYSPACE, COLUMN_FAMILY_PARTITIONED_QUEUE_MESSAGES, key, null, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 		}
 	}
 
@@ -452,7 +452,7 @@ public class CQSMessagePartitionedCassandraPersistence implements ICQSMessagePer
 			
 			CmbComposite columnName = cassandraHandler.getCmbComposite(Arrays.asList(Long.parseLong(idParts[1]), Long.parseLong(idParts[2])));
 			
-			CmbColumn<CmbComposite, String> column = cassandraHandler.readColumn(AbstractCassandraPersistence.CQS_KEYSPACE, COLUMN_FAMILY_PARTITIONED_QUEUE_MESSAGES, 
+			CmbColumn<CmbComposite, String> column = cassandraHandler.readColumn(AbstractDurablePersistence.CQS_KEYSPACE, COLUMN_FAMILY_PARTITIONED_QUEUE_MESSAGES, 
 					idParts[0], columnName, CMB_SERIALIZER.STRING_SERIALIZER, 
 					CMB_SERIALIZER.COMPOSITE_SERIALIZER,
 					CMB_SERIALIZER.STRING_SERIALIZER);
@@ -489,7 +489,7 @@ public class CQSMessagePartitionedCassandraPersistence implements ICQSMessagePer
 			String lastParts[] = firstLastForPartition.get("Last").split(":");
 			
 			CmbColumnSlice<CmbComposite, String> columnSlice = cassandraHandler.readColumnSlice(
-					AbstractCassandraPersistence.CQS_KEYSPACE, COLUMN_FAMILY_PARTITIONED_QUEUE_MESSAGES, queuePartition, cassandraHandler.getCmbComposite(Arrays.asList(Long.parseLong(firstParts[0]), Long.parseLong(firstParts[1]))),
+					AbstractDurablePersistence.CQS_KEYSPACE, COLUMN_FAMILY_PARTITIONED_QUEUE_MESSAGES, queuePartition, cassandraHandler.getCmbComposite(Arrays.asList(Long.parseLong(firstParts[0]), Long.parseLong(firstParts[1]))),
 					cassandraHandler.getCmbComposite(Arrays.asList(Long.parseLong(lastParts[0]), Long.parseLong(lastParts[1]))), messageCount, CMB_SERIALIZER.STRING_SERIALIZER,
 					CMB_SERIALIZER.COMPOSITE_SERIALIZER,
 					CMB_SERIALIZER.STRING_SERIALIZER);
@@ -618,7 +618,7 @@ public class CQSMessagePartitionedCassandraPersistence implements ICQSMessagePer
                 String key = queueHash + "_" + shard + "_" + partition;
                 
                 CmbColumnSlice<CmbComposite, String> columnSlice = cassandraHandler.readColumnSlice(
-                		AbstractCassandraPersistence.CQS_KEYSPACE, COLUMN_FAMILY_PARTITIONED_QUEUE_MESSAGES, key, null, null, 1, 
+                		AbstractDurablePersistence.CQS_KEYSPACE, COLUMN_FAMILY_PARTITIONED_QUEUE_MESSAGES, key, null, null, 1, 
                         CMB_SERIALIZER.STRING_SERIALIZER,
                         CMB_SERIALIZER.COMPOSITE_SERIALIZER,
                         CMB_SERIALIZER.STRING_SERIALIZER);

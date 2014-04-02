@@ -39,9 +39,9 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.log4j.Logger;
 
-import com.comcast.cmb.common.persistence.AbstractCassandraPersistence;
-import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CMB_SERIALIZER;
-import com.comcast.cmb.common.persistence.CassandraPersistenceFactory;
+import com.comcast.cmb.common.persistence.AbstractDurablePersistence;
+import com.comcast.cmb.common.persistence.AbstractDurablePersistence.CMB_SERIALIZER;
+import com.comcast.cmb.common.persistence.DurablePersistenceFactory;
 import com.comcast.cmb.common.util.CMBErrorCodes;
 import com.comcast.cmb.common.util.CMBException;
 import com.comcast.cmb.common.util.CMBProperties;
@@ -611,7 +611,7 @@ public class Util {
 	public static long getQueueMessageCount(CQSQueue queue) throws NoSuchAlgorithmException, UnsupportedEncodingException, PersistenceException {
 		
 		int numberOfPartitions = queue.getNumberOfPartitions();
-		AbstractCassandraPersistence cassandraHandler = CassandraPersistenceFactory.getInstance();
+		AbstractDurablePersistence cassandraHandler = DurablePersistenceFactory.getInstance();
 		String queueHash = Util.hashQueueUrl(queue.getRelativeUrl());
 		long messageCount = 0;
 		
@@ -627,7 +627,7 @@ public class Util {
 	public static List<Long> getPartitionMessageCounts(CQSQueue queue) throws NoSuchAlgorithmException, UnsupportedEncodingException, PersistenceException {
 		
 		int numberOfPartitions = queue.getNumberOfPartitions();
-		AbstractCassandraPersistence cassandraHandler = CassandraPersistenceFactory.getInstance();
+		AbstractDurablePersistence cassandraHandler = DurablePersistenceFactory.getInstance();
 		String queueHash = Util.hashQueueUrl(queue.getRelativeUrl());
 		List<Long> messageCounts = new ArrayList<Long>();
 		

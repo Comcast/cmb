@@ -14,10 +14,10 @@ import javax.management.remote.JMXServiceURL;
 
 import org.apache.log4j.Logger;
 
-import com.comcast.cmb.common.persistence.AbstractCassandraPersistence;
-import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CMB_SERIALIZER;
-import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CmbRow;
-import com.comcast.cmb.common.persistence.CassandraPersistenceFactory;
+import com.comcast.cmb.common.persistence.AbstractDurablePersistence;
+import com.comcast.cmb.common.persistence.AbstractDurablePersistence.CMB_SERIALIZER;
+import com.comcast.cmb.common.persistence.AbstractDurablePersistence.CmbRow;
+import com.comcast.cmb.common.persistence.DurablePersistenceFactory;
 import com.comcast.cmb.common.util.CMBErrorCodes;
 import com.comcast.cmb.common.util.CMBException;
 import com.comcast.cmb.common.util.PersistenceException;
@@ -28,11 +28,11 @@ import com.comcast.cns.tools.CNSWorkerMonitorMBean;
 public class CNSWorkerStatWrapper {
 	
 	private static Logger logger = Logger.getLogger(CNSWorkerStatWrapper.class);
-	private static AbstractCassandraPersistence cassandraHandler = CassandraPersistenceFactory.getInstance();
+	private static AbstractDurablePersistence cassandraHandler = DurablePersistenceFactory.getInstance();
 	private static final String CNS_WORKERS = "CNSWorkers";
 	public static List<CNSWorkerStats> getCassandraWorkerStats() throws PersistenceException {
 
-		List<CmbRow<String, String, String>> rows = cassandraHandler.readNextNNonEmptyRows(AbstractCassandraPersistence.CNS_KEYSPACE, CNS_WORKERS, null, 1000, 10, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+		List<CmbRow<String, String, String>> rows = cassandraHandler.readNextNRows(AbstractDurablePersistence.CNS_KEYSPACE, CNS_WORKERS, null, 1000, 10, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 		List<CNSWorkerStats> statsList = new ArrayList<CNSWorkerStats>();
 
 		if (rows != null) {

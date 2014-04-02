@@ -35,12 +35,12 @@ import org.junit.Test;
 
 import com.comcast.cmb.common.controller.CMBControllerServlet;
 import com.comcast.cmb.common.model.User;
-import com.comcast.cmb.common.persistence.AbstractCassandraPersistence;
-import com.comcast.cmb.common.persistence.CassandraPersistenceFactory;
+import com.comcast.cmb.common.persistence.AbstractDurablePersistence;
+import com.comcast.cmb.common.persistence.DurablePersistenceFactory;
 import com.comcast.cmb.common.persistence.IUserPersistence;
 import com.comcast.cmb.common.persistence.PersistenceFactory;
 import com.comcast.cmb.common.persistence.UserCassandraPersistence;
-import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CMB_SERIALIZER;
+import com.comcast.cmb.common.persistence.AbstractDurablePersistence.CMB_SERIALIZER;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.PersistenceException;
 import com.comcast.cmb.common.util.Util;
@@ -215,7 +215,7 @@ public class CQSMessagePartitionedCassandraPersistenceTest {
  		assertEquals(messageList.size(), peekMessageList.size());
  		previousHandle = null;
  		nextHandle = com.comcast.cqs.util.Util.hashQueueUrl(queue.getRelativeUrl()) + "_0_" + (CMBProperties.getInstance().getCQSNumberOfQueuePartitions()-1) +
- 				":" + AbstractCassandraPersistence.newTime(System.currentTimeMillis()+1209600000, false) + ":" + UUIDGen.getClockSeqAndNode();
+ 				":" + AbstractDurablePersistence.newTime(System.currentTimeMillis()+1209600000, false) + ":" + UUIDGen.getClockSeqAndNode();
  		peekMessageList.clear();
  		newMessageList.clear();
  		
@@ -281,7 +281,7 @@ public class CQSMessagePartitionedCassandraPersistenceTest {
 		for (int k=0; k<numberOfShards; k++) {
 			for (int i=0; i<numberOfPartitions; i++) {
 				String queueKey = queueHash + "_" + k + "_" + i;
-				long partitionCount = CassandraPersistenceFactory.getInstance().getCount(CMBProperties.getInstance().getCQSKeyspace(), "CQSPartitionedQueueMessages", queueKey, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.COMPOSITE_SERIALIZER);
+				long partitionCount = DurablePersistenceFactory.getInstance().getCount(CMBProperties.getInstance().getCQSKeyspace(), "CQSPartitionedQueueMessages", queueKey, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.COMPOSITE_SERIALIZER);
 				messageCount += partitionCount;
 				logger.debug("# of messages in " + queueKey + " =" + partitionCount);
 			}

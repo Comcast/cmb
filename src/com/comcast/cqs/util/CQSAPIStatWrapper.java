@@ -5,10 +5,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import com.comcast.cmb.common.persistence.AbstractCassandraPersistence;
-import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CmbRow;
-import com.comcast.cmb.common.persistence.CassandraPersistenceFactory;
-import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CMB_SERIALIZER;
+import com.comcast.cmb.common.persistence.AbstractDurablePersistence;
+import com.comcast.cmb.common.persistence.AbstractDurablePersistence.CmbRow;
+import com.comcast.cmb.common.persistence.DurablePersistenceFactory;
+import com.comcast.cmb.common.persistence.AbstractDurablePersistence.CMB_SERIALIZER;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.PersistenceException;
 import com.comcast.cqs.model.CQSAPIStats;
@@ -17,11 +17,11 @@ public class CQSAPIStatWrapper {
 	
 	public static final String CNS_API_SERVERS = "CNSAPIServers";
 	public static final String CQS_API_SERVERS = "CQSAPIServers";
-	public static final AbstractCassandraPersistence cassandraHandler = CassandraPersistenceFactory.getInstance();
+	public static final AbstractDurablePersistence cassandraHandler = DurablePersistenceFactory.getInstance();
 	
 	public static List<CQSAPIStats> getCNSAPIStats() throws PersistenceException{
 		
-		List<CmbRow<String, String, String>> rows = cassandraHandler.readNextNNonEmptyRows(AbstractCassandraPersistence.CNS_KEYSPACE, CNS_API_SERVERS, null, 1000, 10, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+		List<CmbRow<String, String, String>> rows = cassandraHandler.readNextNRows(AbstractDurablePersistence.CNS_KEYSPACE, CNS_API_SERVERS, null, 1000, 10, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 		List<CQSAPIStats> statsList = new ArrayList<CQSAPIStats>();
 		
 		if (rows != null) {
@@ -120,7 +120,7 @@ public class CQSAPIStatWrapper {
 	
 	public static List<CQSAPIStats> getCQSAPIStats() throws PersistenceException {
 		
-		List<CmbRow<String, String, String>> rows = cassandraHandler.readNextNNonEmptyRows(AbstractCassandraPersistence.CQS_KEYSPACE, CQS_API_SERVERS, null, 1000, 10, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+		List<CmbRow<String, String, String>> rows = cassandraHandler.readNextNRows(AbstractDurablePersistence.CQS_KEYSPACE, CQS_API_SERVERS, null, 1000, 10, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 		List<CQSAPIStats> statsList = new ArrayList<CQSAPIStats>();
 		
 		if (rows != null) {

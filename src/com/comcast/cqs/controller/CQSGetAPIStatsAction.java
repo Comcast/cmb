@@ -34,8 +34,8 @@ import org.apache.log4j.Logger;
 
 import com.comcast.cmb.common.model.CMBPolicy;
 import com.comcast.cmb.common.model.User;
-import com.comcast.cmb.common.persistence.AbstractCassandraPersistence;
-import com.comcast.cmb.common.persistence.CassandraPersistenceFactory;
+import com.comcast.cmb.common.persistence.AbstractDurablePersistence;
+import com.comcast.cmb.common.persistence.DurablePersistenceFactory;
 import com.comcast.cqs.io.CQSAPIStatsPopulator;
 import com.comcast.cqs.model.CQSAPIStats;
 import com.comcast.cqs.persistence.RedisCachedCassandraPersistence;
@@ -192,7 +192,7 @@ public class CQSGetAPIStatsAction extends CQSAction {
 				
 	        	try {
 				
-					AbstractCassandraPersistence cassandra = CassandraPersistenceFactory.getInstance();
+					AbstractDurablePersistence cassandra = DurablePersistenceFactory.getInstance();
 		        	
 		        	if (!cassandra.isAlive()) {
 						stats.addStatus("CASSANDRA UNAVAILABLE");

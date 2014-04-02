@@ -29,12 +29,12 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONWriter;
 
-import com.comcast.cmb.common.persistence.AbstractCassandraPersistence;
-import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CMB_SERIALIZER;
-import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CmbColumn;
-import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CmbColumnSlice;
-import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CmbComposite;
-import com.comcast.cmb.common.persistence.CassandraPersistenceFactory;
+import com.comcast.cmb.common.persistence.AbstractDurablePersistence;
+import com.comcast.cmb.common.persistence.AbstractDurablePersistence.CMB_SERIALIZER;
+import com.comcast.cmb.common.persistence.AbstractDurablePersistence.CmbColumn;
+import com.comcast.cmb.common.persistence.AbstractDurablePersistence.CmbColumnSlice;
+import com.comcast.cmb.common.persistence.AbstractDurablePersistence.CmbComposite;
+import com.comcast.cmb.common.persistence.DurablePersistenceFactory;
 import com.comcast.cmb.common.persistence.PersistenceFactory;
 import com.comcast.cmb.common.util.CMBErrorCodes;
 import com.comcast.cmb.common.util.CMBException;
@@ -64,7 +64,7 @@ public class CNSSubscriptionCassandraPersistence implements ICNSSubscriptionPers
 	private static final String columnFamilySubscriptionsTokenIndex = "CNSTopicSubscriptionsTokenIndex";
 	private static final String columnFamilyTopicStats = "CNSTopicStats";
 	
-	private static final AbstractCassandraPersistence cassandraHandler = CassandraPersistenceFactory.getInstance();
+	private static final AbstractDurablePersistence cassandraHandler = DurablePersistenceFactory.getInstance();
 	
 	public CNSSubscriptionCassandraPersistence() {
 	}
@@ -234,10 +234,10 @@ public class CNSSubscriptionCassandraPersistence implements ICNSSubscriptionPers
     private void insertOrUpdateSubsAndIndexes(final CNSSubscription subscription, Integer ttl) throws Exception {
         subscription.checkIsValid();
         CmbComposite columnName = cassandraHandler.getCmbComposite(subscription.getEndpoint(), subscription.getProtocol().name());
-        cassandraHandler.update(AbstractCassandraPersistence.CNS_KEYSPACE, columnFamilySubscriptions, subscription.getTopicArn(), columnName, getColumnValuesJSON(subscription), CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.COMPOSITE_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, ttl);
-        cassandraHandler.insertRow(AbstractCassandraPersistence.CNS_KEYSPACE, subscription.getArn(), columnFamilySubscriptionsIndex, getIndexColumnValues(subscription.getEndpoint(), subscription.getProtocol()), CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, ttl);
-        cassandraHandler.insertRow(AbstractCassandraPersistence.CNS_KEYSPACE, subscription.getUserId(), columnFamilySubscriptionsUserIndex, new HashMap<String, String>() {{ put(subscription.getArn(), "");}}, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, ttl);
-        cassandraHandler.insertRow(AbstractCassandraPersistence.CNS_KEYSPACE, subscription.getToken(), columnFamilySubscriptionsTokenIndex, new HashMap<String, String>() {{ put(subscription.getArn(), "");}}, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, ttl);
+        cassandraHandler.update(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilySubscriptions, subscription.getTopicArn(), columnName, getColumnValuesJSON(subscription), CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.COMPOSITE_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, ttl);
+        cassandraHandler.insertRow(AbstractDurablePersistence.CNS_KEYSPACE, subscription.getArn(), columnFamilySubscriptionsIndex, getIndexColumnValues(subscription.getEndpoint(), subscription.getProtocol()), CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, ttl);
+        cassandraHandler.insertRow(AbstractDurablePersistence.CNS_KEYSPACE, subscription.getUserId(), columnFamilySubscriptionsUserIndex, new HashMap<String, String>() {{ put(subscription.getArn(), "");}}, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, ttl);
+        cassandraHandler.insertRow(AbstractDurablePersistence.CNS_KEYSPACE, subscription.getToken(), columnFamilySubscriptionsTokenIndex, new HashMap<String, String>() {{ put(subscription.getArn(), "");}}, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, ttl);
 	}
 	
 	@Override
@@ -290,7 +290,7 @@ public class CNSSubscriptionCassandraPersistence implements ICNSSubscriptionPers
 			insertOrUpdateSubsAndIndexes(subscription, null);
 			
 			if (retrievedSubscription==null) {
-				cassandraHandler.incrementCounter(AbstractCassandraPersistence.CNS_KEYSPACE, columnFamilyTopicStats, subscription.getTopicArn(), "subscriptionConfirmed", 1, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+				cassandraHandler.incrementCounter(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilyTopicStats, subscription.getTopicArn(), "subscriptionConfirmed", 1, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 			}
 			
 		} else {
@@ -314,7 +314,7 @@ public class CNSSubscriptionCassandraPersistence implements ICNSSubscriptionPers
 					
 		            insertOrUpdateSubsAndIndexes(subscription, null);
 		            if (retrievedSubscription==null) {
-						cassandraHandler.incrementCounter(AbstractCassandraPersistence.CNS_KEYSPACE, columnFamilyTopicStats, subscription.getTopicArn(), "subscriptionConfirmed", 1, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+						cassandraHandler.incrementCounter(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilyTopicStats, subscription.getTopicArn(), "subscriptionConfirmed", 1, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 
 		            }
 				} else {
@@ -322,7 +322,7 @@ public class CNSSubscriptionCassandraPersistence implements ICNSSubscriptionPers
                     // use cassandra ttl to implement expiration after 3 days 
 		            insertOrUpdateSubsAndIndexes(subscription, 3*24*60*60);
 		            if (retrievedSubscription==null) {
-						cassandraHandler.incrementCounter(AbstractCassandraPersistence.CNS_KEYSPACE, columnFamilyTopicStats, subscription.getTopicArn(), "subscriptionPending", 1, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+						cassandraHandler.incrementCounter(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilyTopicStats, subscription.getTopicArn(), "subscriptionPending", 1, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 		            }
 				}
 			
@@ -331,7 +331,7 @@ public class CNSSubscriptionCassandraPersistence implements ICNSSubscriptionPers
 				// use cassandra ttl to implement expiration after 3 days 
 			    insertOrUpdateSubsAndIndexes(subscription, 3*24*60*60);			    
 			    if (retrievedSubscription==null) {
-					cassandraHandler.incrementCounter(AbstractCassandraPersistence.CNS_KEYSPACE, columnFamilyTopicStats, subscription.getTopicArn(), "subscriptionPending", 1, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+					cassandraHandler.incrementCounter(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilyTopicStats, subscription.getTopicArn(), "subscriptionPending", 1, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 			    }
 			}
 		}
@@ -347,7 +347,7 @@ public class CNSSubscriptionCassandraPersistence implements ICNSSubscriptionPers
 		
 	    //read form index to get composite col-name
 
-		CmbColumnSlice<String, String> slice = cassandraHandler.readColumnSlice(AbstractCassandraPersistence.CNS_KEYSPACE, columnFamilySubscriptionsIndex, arn, null, null, 1, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);	 
+		CmbColumnSlice<String, String> slice = cassandraHandler.readColumnSlice(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilySubscriptionsIndex, arn, null, null, 1, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);	 
 	    		
 		if (slice != null) {
 		
@@ -357,7 +357,7 @@ public class CNSSubscriptionCassandraPersistence implements ICNSSubscriptionPers
 		    CnsSubscriptionProtocol protocol = getEndpointAndProtoIndexValProtocol(colName);
 		    String endpoint = getEndpointAndProtoIndexValEndpoint(colName);
 		    CmbComposite columnName = cassandraHandler.getCmbComposite(endpoint, protocol.name());
-		    CmbColumn<CmbComposite, String> column = cassandraHandler.readColumn(AbstractCassandraPersistence.CNS_KEYSPACE, columnFamilySubscriptions, Util.getCnsTopicArn(arn), columnName, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.COMPOSITE_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+		    CmbColumn<CmbComposite, String> column = cassandraHandler.readColumn(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilySubscriptions, Util.getCnsTopicArn(arn), columnName, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.COMPOSITE_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 		    
 		    if (column != null) {
 		        CNSSubscription s = extractSubscriptionFromColumn(column, Util.getCnsTopicArn(arn));
@@ -448,7 +448,7 @@ public class CNSSubscriptionCassandraPersistence implements ICNSSubscriptionPers
 		
         while (l.size() < 100) {
         	
-            CmbColumnSlice<String, String> slice = cassandraHandler.readColumnSlice(AbstractCassandraPersistence.CNS_KEYSPACE, columnFamilySubscriptionsUserIndex, userId, nextToken, null, 500, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);     
+            CmbColumnSlice<String, String> slice = cassandraHandler.readColumnSlice(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilySubscriptionsUserIndex, userId, nextToken, null, 500, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);     
 
             if (slice == null) {
                 return l;
@@ -545,7 +545,7 @@ public class CNSSubscriptionCassandraPersistence implements ICNSSubscriptionPers
 		CmbComposite nextTokenComposite = null;
 		
 		if (nextToken != null) {
-		    CmbColumnSlice<String, String> slice = cassandraHandler.readColumnSlice(AbstractCassandraPersistence.CNS_KEYSPACE, columnFamilySubscriptionsIndex, nextToken, null, null, 1, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+		    CmbColumnSlice<String, String> slice = cassandraHandler.readColumnSlice(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilySubscriptionsIndex, nextToken, null, null, 1, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 		    if (slice == null) {
 		    	throw new IllegalArgumentException("Could not find any subscription with arn " + nextToken);
 		    }
@@ -566,7 +566,7 @@ public class CNSSubscriptionCassandraPersistence implements ICNSSubscriptionPers
 		
 		// read pageSize at a time
 
-		CmbColumnSlice<CmbComposite, String> cols = cassandraHandler.readColumnSlice(AbstractCassandraPersistence.CNS_KEYSPACE, columnFamilySubscriptions, topicArn, nextTokenComposite, null, pageSize, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.COMPOSITE_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+		CmbColumnSlice<CmbComposite, String> cols = cassandraHandler.readColumnSlice(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilySubscriptions, topicArn, nextTokenComposite, null, pageSize, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.COMPOSITE_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 		
 		if (nextToken != null && cols.size() > 0) {
 		    cols.getColumns().remove(0);
@@ -612,7 +612,7 @@ public class CNSSubscriptionCassandraPersistence implements ICNSSubscriptionPers
 		    }
 		    
 		    nextTokenComposite = cols.getColumns().get(cols.size() - 1).getName();
-		    cols = cassandraHandler.readColumnSlice(AbstractCassandraPersistence.CNS_KEYSPACE, columnFamilySubscriptions, topicArn, nextTokenComposite, null, pageSize, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.COMPOSITE_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);		    
+		    cols = cassandraHandler.readColumnSlice(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilySubscriptions, topicArn, nextTokenComposite, null, pageSize, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.COMPOSITE_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);		    
 		    
 		    if (cols.size() > 0) {
 		        cols.getColumns().remove(0);
@@ -631,7 +631,7 @@ public class CNSSubscriptionCassandraPersistence implements ICNSSubscriptionPers
 	public CNSSubscription confirmSubscription(boolean authenticateOnUnsubscribe, String token, String topicArn) throws Exception {
 		
 	    //get Sub-arn given token
-	    CmbColumnSlice<String, String> slice = cassandraHandler.readColumnSlice(AbstractCassandraPersistence.CNS_KEYSPACE, columnFamilySubscriptionsTokenIndex, token, null, null, 1, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+	    CmbColumnSlice<String, String> slice = cassandraHandler.readColumnSlice(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilySubscriptionsTokenIndex, token, null, null, 1, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 	    
 	    if (slice == null) {
 	        throw new CMBException(CMBErrorCodes.NotFound, "Resource not found.");
@@ -654,8 +654,8 @@ public class CNSSubscriptionCassandraPersistence implements ICNSSubscriptionPers
         //re-insert with no TTL. will clobber the old one which had ttl
         insertOrUpdateSubsAndIndexes(s, null);    
         
-		cassandraHandler.decrementCounter(AbstractCassandraPersistence.CNS_KEYSPACE, columnFamilyTopicStats, s.getTopicArn(), "subscriptionPending", 1, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
-		cassandraHandler.incrementCounter(AbstractCassandraPersistence.CNS_KEYSPACE, columnFamilyTopicStats, s.getTopicArn(), "subscriptionConfirmed", 1, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+		cassandraHandler.decrementCounter(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilyTopicStats, s.getTopicArn(), "subscriptionPending", 1, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+		cassandraHandler.incrementCounter(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilyTopicStats, s.getTopicArn(), "subscriptionConfirmed", 1, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
         
         return s;
 	}
@@ -669,15 +669,15 @@ public class CNSSubscriptionCassandraPersistence implements ICNSSubscriptionPers
 			userIdList.add(sub.getUserId());
 			tokenList.add(sub.getToken());
 		}
-		cassandraHandler.deleteBatch(AbstractCassandraPersistence.CNS_KEYSPACE, columnFamilySubscriptionsIndex, subArnList, null, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
-		cassandraHandler.deleteBatch(AbstractCassandraPersistence.CNS_KEYSPACE, columnFamilySubscriptionsUserIndex, userIdList, subArnList, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
-		cassandraHandler.deleteBatch(AbstractCassandraPersistence.CNS_KEYSPACE, columnFamilySubscriptionsTokenIndex, tokenList, subArnList, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+		cassandraHandler.deleteBatch(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilySubscriptionsIndex, subArnList, null, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+		cassandraHandler.deleteBatch(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilySubscriptionsUserIndex, userIdList, subArnList, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+		cassandraHandler.deleteBatch(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilySubscriptionsTokenIndex, tokenList, subArnList, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
  	}
 	
 	private void deleteIndexes(String subArn, String userId, String token) throws PersistenceException {
-		cassandraHandler.delete(AbstractCassandraPersistence.CNS_KEYSPACE, columnFamilySubscriptionsIndex, subArn, null, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
-		cassandraHandler.delete(AbstractCassandraPersistence.CNS_KEYSPACE, columnFamilySubscriptionsUserIndex, userId, subArn, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
-		cassandraHandler.delete(AbstractCassandraPersistence.CNS_KEYSPACE, columnFamilySubscriptionsTokenIndex, token, subArn, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+		cassandraHandler.delete(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilySubscriptionsIndex, subArn, null, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+		cassandraHandler.delete(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilySubscriptionsUserIndex, userId, subArn, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+		cassandraHandler.delete(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilySubscriptionsTokenIndex, token, subArn, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 	}
 	
 	@Override
@@ -689,20 +689,20 @@ public class CNSSubscriptionCassandraPersistence implements ICNSSubscriptionPers
 
 			deleteIndexes(arn, s.getUserId(), s.getToken());
 			CmbComposite columnName = cassandraHandler.getCmbComposite(s.getEndpoint(), s.getProtocol().name());
-			cassandraHandler.delete(AbstractCassandraPersistence.CNS_KEYSPACE, columnFamilySubscriptions, Util.getCnsTopicArn(arn), columnName, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.COMPOSITE_SERIALIZER);
+			cassandraHandler.delete(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilySubscriptions, Util.getCnsTopicArn(arn), columnName, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.COMPOSITE_SERIALIZER);
 			
 			if (s.isConfirmed()) {
-				cassandraHandler.decrementCounter(AbstractCassandraPersistence.CNS_KEYSPACE, columnFamilyTopicStats, s.getTopicArn(), "subscriptionConfirmed", 1, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+				cassandraHandler.decrementCounter(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilyTopicStats, s.getTopicArn(), "subscriptionConfirmed", 1, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 			} else {
-				cassandraHandler.decrementCounter(AbstractCassandraPersistence.CNS_KEYSPACE, columnFamilyTopicStats, s.getTopicArn(), "subscriptionPending", 1, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+				cassandraHandler.decrementCounter(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilyTopicStats, s.getTopicArn(), "subscriptionPending", 1, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 			}
 			
-			cassandraHandler.incrementCounter(AbstractCassandraPersistence.CNS_KEYSPACE, columnFamilyTopicStats, s.getTopicArn(), "subscriptionDeleted", 1, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+			cassandraHandler.incrementCounter(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilyTopicStats, s.getTopicArn(), "subscriptionDeleted", 1, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 		}
 	}
 	
 	public long getCountSubscription(String topicArn, String columnName) throws Exception {
-		return cassandraHandler.getCounter(AbstractCassandraPersistence.CNS_KEYSPACE, columnFamilyTopicStats, topicArn, columnName, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+		return cassandraHandler.getCounter(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilyTopicStats, topicArn, columnName, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 	}
 
     @Override
@@ -735,11 +735,11 @@ public class CNSSubscriptionCassandraPersistence implements ICNSSubscriptionPers
 		//int subscriptionConfirmedNum = (int)cassandraHandler.getCounter(CNS_KEYSPACE, columnFamilyTopicStats, topicArn, "subscriptionConfirmed", CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 		//int subscriptionPendingNum = (int)cassandraHandler.getCounter(CNS_KEYSPACE, columnFamilyTopicStats, topicArn, "subscriptionPending", CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 
-		cassandraHandler.incrementCounter(AbstractCassandraPersistence.CNS_KEYSPACE, columnFamilyTopicStats, topicArn, "subscriptionDeleted", 1, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
-		cassandraHandler.decrementCounter(AbstractCassandraPersistence.CNS_KEYSPACE, columnFamilyTopicStats, topicArn, "subscriptionConfirmed", 1, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
-		cassandraHandler.decrementCounter(AbstractCassandraPersistence.CNS_KEYSPACE, columnFamilyTopicStats, topicArn, "subscriptionPending", 1, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+		cassandraHandler.incrementCounter(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilyTopicStats, topicArn, "subscriptionDeleted", 1, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+		cassandraHandler.decrementCounter(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilyTopicStats, topicArn, "subscriptionConfirmed", 1, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+		cassandraHandler.decrementCounter(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilyTopicStats, topicArn, "subscriptionPending", 1, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 
-		cassandraHandler.delete(AbstractCassandraPersistence.CNS_KEYSPACE, columnFamilySubscriptions, topicArn, null, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+		cassandraHandler.delete(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilySubscriptions, topicArn, null, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
     }
 
 	@Override

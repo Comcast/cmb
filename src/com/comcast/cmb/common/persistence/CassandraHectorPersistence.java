@@ -65,7 +65,7 @@ import com.comcast.cmb.common.util.ValueAccumulator.AccumulatorName;
  * This class represents generic functionality for all Cassandra persistence objects
  * @author aseem, bwolf, vvenkatraman, jorge, baosen, michael
  */
-public class CassandraHectorPersistence extends AbstractCassandraPersistence {
+public class CassandraHectorPersistence extends AbstractDurablePersistence {
 	
 	private static final int hectorPoolSize = CMBProperties.getInstance().getHectorPoolSize();
 	private static final String hectorBalancingPolicy = CMBProperties.getInstance().getHectorBalancingPolicy();
@@ -149,7 +149,7 @@ public class CassandraHectorPersistence extends AbstractCassandraPersistence {
 
 		//cassandraHostConfigurator.setExhaustedPolicy(ExhaustedPolicy.WHEN_EXHAUSTED_GROW);
 
-		cluster = HFactory.getOrCreateCluster(AbstractCassandraPersistence.CLUSTER_NAME, cassandraHostConfigurator, credentials);
+		cluster = HFactory.getOrCreateCluster(AbstractDurablePersistence.CLUSTER_NAME, cassandraHostConfigurator, credentials);
 		keyspaces = new HashMap<String, Keyspace>();
 
 		List<String> keyspaceNames = new ArrayList<String>();
@@ -369,7 +369,7 @@ public class CassandraHectorPersistence extends AbstractCassandraPersistence {
 	}
 
 	@Override
-	public <K, N, V> List<CmbRow<K, N, V>> readNextNNonEmptyRows(String keyspace, String columnFamily, K lastKey, int numRows, int numCols,
+	public <K, N, V> List<CmbRow<K, N, V>> readNextNRows(String keyspace, String columnFamily, K lastKey, int numRows, int numCols,
 			CmbSerializer keySerializer, CmbSerializer columnNameSerializer,
 			CmbSerializer valueSerializer) throws PersistenceException {
 

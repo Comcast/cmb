@@ -33,10 +33,10 @@ import com.comcast.cmb.common.controller.CMBControllerServlet;
 import com.comcast.cmb.common.controller.HealthCheckShallow;
 import com.comcast.cmb.common.model.CMBPolicy;
 import com.comcast.cmb.common.model.User;
-import com.comcast.cmb.common.persistence.AbstractCassandraPersistence;
-import com.comcast.cmb.common.persistence.CassandraPersistenceFactory;
+import com.comcast.cmb.common.persistence.AbstractDurablePersistence;
+import com.comcast.cmb.common.persistence.DurablePersistenceFactory;
 import com.comcast.cmb.common.persistence.PersistenceFactory;
-import com.comcast.cmb.common.persistence.AbstractCassandraPersistence.CMB_SERIALIZER;
+import com.comcast.cmb.common.persistence.AbstractDurablePersistence.CMB_SERIALIZER;
 import com.comcast.cmb.common.util.CMBErrorCodes;
 import com.comcast.cmb.common.util.CMBException;
 import com.comcast.cmb.common.util.CMBProperties;
@@ -167,7 +167,7 @@ public class CQSControllerServlet extends CMBControllerServlet {
 
         	try {
 
-        		AbstractCassandraPersistence cassandraHandler = CassandraPersistenceFactory.getInstance();
+        		AbstractDurablePersistence cassandraHandler = DurablePersistenceFactory.getInstance();
 
         		// write ping
         		
@@ -185,7 +185,7 @@ public class CQSControllerServlet extends CMBControllerServlet {
 	        	values.put("serviceUrl", CMBProperties.getInstance().getCQSServiceUrl());
 	        	values.put("redisServerList", CMBProperties.getInstance().getRedisServerList());
 	        	
-                cassandraHandler.insertRow(AbstractCassandraPersistence.CQS_KEYSPACE, serverIp + ":" + serverPort, CQS_API_SERVERS, values, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, null);
+                cassandraHandler.insertRow(AbstractDurablePersistence.CQS_KEYSPACE, serverIp + ":" + serverPort, CQS_API_SERVERS, values, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, null);
                 
         	} catch (Exception ex) {
         		logger.warn("event=ping_failed", ex);

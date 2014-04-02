@@ -45,8 +45,8 @@ import com.amazonaws.services.sns.model.PublishRequest;
 import com.amazonaws.services.sns.model.SubscribeRequest;
 import com.comcast.cmb.common.controller.CMBControllerServlet;
 import com.comcast.cmb.common.model.User;
-import com.comcast.cmb.common.persistence.AbstractCassandraPersistence;
-import com.comcast.cmb.common.persistence.CassandraPersistenceFactory;
+import com.comcast.cmb.common.persistence.AbstractDurablePersistence;
+import com.comcast.cmb.common.persistence.DurablePersistenceFactory;
 import com.comcast.cmb.common.persistence.IUserPersistence;
 import com.comcast.cmb.common.persistence.UserCassandraPersistence;
 import com.comcast.cmb.common.util.CMBProperties;
@@ -88,7 +88,7 @@ public class CNSStressTest {
 	private List<String> topics = new ArrayList<String>();
 	private static final Random rand = new Random();
 	
-	private static AbstractCassandraPersistence cassandraHandler = CassandraPersistenceFactory.getInstance();
+	private static AbstractDurablePersistence cassandraHandler = DurablePersistenceFactory.getInstance();
 	
     @Before
     public void setup() throws Exception {
