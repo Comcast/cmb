@@ -29,6 +29,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicLong;
 import com.comcast.cqs.model.CQSAPIStats;
+import com.comcast.cqs.persistence.RedisCachedCassandraPersistence;
+import com.comcast.cqs.util.Util;
 
 import org.apache.log4j.Logger;
 import org.jboss.netty.bootstrap.ClientBootstrap;
@@ -265,20 +267,23 @@ public class CQSLongPollSender {
 	    }
 	    
 		public void run() {
+
+			String queueArn = null;
+			String queueMessageNumberString = null;
+			int messageSendCount = 1;
+			int separatorIndex = -1;
 			
 			while (true) {
-				
-				String queueArn = null;
-				
+		
 				// blocking wait for next pending notification
 				
 				try {
-					queueArn = pendingNotifications.take();
+					queueMessageNumberString = pendingNotifications.take();
 				} catch (InterruptedException ex) {
 					logger.warn("event=taking_pending_notifcation_from_queue_failed");
 				}
 				
-				if (queueArn == null) {
+				if (queueMessageNumberString == null) {
 					
 					try { 
 						Thread.sleep(1000); 
@@ -287,18 +292,37 @@ public class CQSLongPollSender {
 					}
 					
 					continue;
+				} else {
+					//queueArn example: cmb:cqs:ccp:390328612038:test, this means a send with 1 message
+					if (Util.isValidQueueArn(queueMessageNumberString)){
+						queueArn = queueMessageNumberString;
+						messageSendCount = 1;						
+					} else { //send with multiple message
+						separatorIndex = queueMessageNumberString.lastIndexOf(":");
+						queueArn = queueMessageNumberString.substring(0, separatorIndex);
+						messageSendCount = Integer.parseInt(queueMessageNumberString.substring(separatorIndex+1));
+					}
 				}
 
 				// don't go through tcp stack for loopback
 				
-				int messageCount = CQSLongPollReceiver.processNotification(queueArn, "localhost");
-				logger.debug("event=longpoll_notification_sent endpoint=localhost queue_arn=" + queueArn + " num_msg_found=" + messageCount);
+				int messageReceiveCount = CQSLongPollReceiver.processNotification(queueArn, "localhost");
+				logger.debug("event=longpoll_notification_sent endpoint=localhost queue_arn=" + queueArn + " num_msg_found=" + messageReceiveCount);
 				
-				if (messageCount > 0) {
-					continue;
+				// if messageSendCound is already been received by local or empty queue, finish 
+				try {
+					if (messageReceiveCount >= messageSendCount
+							|| RedisCachedCassandraPersistence
+									.getInstance()
+									.getRedisQueueMessageCount(
+											Util.getRelativeQueueUrlForArn(queueArn)) == 0) {
+						continue;
+					}
+				} catch (Exception ex) {
+					logger.error("event=error_check_queue_depth", ex);
 				}
 
-				// if no messages found locally, send notification on all other established channels to remote cqs api servers
+				// send notification on all other established channels to remote cqs api servers
 				
 				for (String endpoint : activeCQSApiServers.keySet()) {
 					
@@ -349,5 +373,15 @@ public class CQSLongPollSender {
 		}
 		
 		pendingNotifications.add(queueArn);
+	}
+	
+	public static void send(String queueArn, int messageNum) {
+		
+		if (!initialized) {
+			return;
+		}
+		//for batch sending, add message number in the pendingNotification for optimization.
+		//as AWS, queue name only allow alphanumeric characters plus hyphens (-) and underscores (_).
+		pendingNotifications.add(queueArn+":"+messageNum);
 	}
 }

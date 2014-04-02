@@ -81,7 +81,7 @@ abstract public class CMBControllerServlet extends HttpServlet {
 	 */
 	public final static ValueAccumulator valueAccumulator = new ValueAccumulator();
 
-	public final static String VERSION = "2.2.38";
+	public final static String VERSION = "2.2.39";
 	
 	public final static int HARD_TIMEOUT_SEC = CMBProperties.getInstance().getCMBRequestTimeoutSec();
 
@@ -385,11 +385,11 @@ abstract public class CMBControllerServlet extends HttpServlet {
 		}
 	}
 
-	private String getLogLine(AsyncContext asyncContext, CQSHttpServletRequest request, User user, long responseTimeMS, String success) {
+	private String getLogLine(AsyncContext asyncContext, CQSHttpServletRequest request, User user, long responseTimeMS, String status) {
 
 		StringBuffer logLine = new StringBuffer("");
 
-		logLine.append("event=request status="+success+" client=").append(request.getRemoteAddr());
+		logLine.append("event=request status="+status+" client=").append(request.getRemoteAddr());
 
 		logLine.append(((this instanceof CQSControllerServlet) ? (" queue_url=" + request.getRequestURL()) : ""));
 
@@ -403,17 +403,18 @@ abstract public class CMBControllerServlet extends HttpServlet {
 		logLine.append((user != null ? "user=" + user.getUserName() : ""));
 		
 		if (request.getAttribute("lp") == null) {
-
-			logLine.append(" resp_ms=").append(responseTimeMS);
-			logLine.append(" cass_ms=" + valueAccumulator.getCounter(AccumulatorName.CassandraTime));
-			logLine.append(" cass_num_rd=" + valueAccumulator.getCounter(AccumulatorName.CassandraRead));
-			logLine.append(" cass_num_wr=" + valueAccumulator.getCounter(AccumulatorName.CassandraWrite));
-			logLine.append(((this instanceof CNSControllerServlet) ? (" cnscqs_ms=" + CMBControllerServlet.valueAccumulator.getCounter(AccumulatorName.CNSCQSTime)) : ""));
-			logLine.append(((this instanceof CQSControllerServlet) ? (" redis_ms=" + valueAccumulator.getCounter(AccumulatorName.RedisTime)) : ""));
-			logLine.append(" io_ms=" + valueAccumulator.getCounter(AccumulatorName.IOTime));
-			logLine.append(" asyncq_ms=" + valueAccumulator.getCounter(AccumulatorName.AsyncQueueTime));
-			logLine.append(" auth_ms=" + valueAccumulator.getCounter(AccumulatorName.CMBControllerPreHandleAction));
-
+			//if status is timeout for normal action, it does not have below info
+			if((status != null) && (!status.equals("timeout"))){
+				logLine.append(" resp_ms=").append(responseTimeMS);
+				logLine.append(" cass_ms=" + valueAccumulator.getCounter(AccumulatorName.CassandraTime));
+				logLine.append(" cass_num_rd=" + valueAccumulator.getCounter(AccumulatorName.CassandraRead));
+				logLine.append(" cass_num_wr=" + valueAccumulator.getCounter(AccumulatorName.CassandraWrite));
+				logLine.append(((this instanceof CNSControllerServlet) ? (" cnscqs_ms=" + CMBControllerServlet.valueAccumulator.getCounter(AccumulatorName.CNSCQSTime)) : ""));
+				logLine.append(((this instanceof CQSControllerServlet) ? (" redis_ms=" + valueAccumulator.getCounter(AccumulatorName.RedisTime)) : ""));
+				logLine.append(" io_ms=" + valueAccumulator.getCounter(AccumulatorName.IOTime));
+				logLine.append(" asyncq_ms=" + valueAccumulator.getCounter(AccumulatorName.AsyncQueueTime));
+				logLine.append(" auth_ms=" + valueAccumulator.getCounter(AccumulatorName.CMBControllerPreHandleAction));				
+			} 
 		} else if (request.getAttribute("lp").equals("yy")) {  // long poll receive with messages
 
 			logLine.append(" resp_ms=").append(responseTimeMS);
@@ -766,7 +767,7 @@ abstract public class CMBControllerServlet extends HttpServlet {
 					}
 
 				} else {
-					logger.error("event=on_timeout");
+					logger.error("event=on_timeout "+getLogLine(asyncContext, request, authModule.getUserByRequest(request), 0, "timeout"));
 				}
 				asyncContext.complete();
 			}
