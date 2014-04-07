@@ -163,7 +163,7 @@ public class CQSMessagePopulator extends CQSPopulator {
         messageXml.append("\t\t\t<MessageId>").append(message.getMessageId()).append("</MessageId>\n");
         messageXml.append("\t\t\t<ReceiptHandle>").append(message.getReceiptHandle()).append("</ReceiptHandle>\n");
         messageXml.append("\t\t\t<MD5OfBody>").append(message.getMD5OfBody()).append("</MD5OfBody>\n");
-        messageXml.append("\t\t\t<Body>").append(StringEscapeUtils.escapeXml(message.getBody())).append("</Body>\n");
+        messageXml.append("\t\t\t<Body>").append(StringEscapeUtils.escapeXml(message.getBody()).replaceAll("\r", "&#xD;")).append("</Body>\n");
         messageXml.append(attributesXmlFragment);
         messageXml.append("\t\t</Message>\n");
         
