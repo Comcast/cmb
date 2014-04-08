@@ -38,8 +38,8 @@ public class CQSMonitorTest {
     public void testMessageCount() {
         CQSMonitor.getInstance().addNumberOfMessagesReturned("test", 10);
         CQSMonitor.getInstance().addNumberOfMessagesReturned("test", 10);
-        if (CQSMonitor.getInstance().getNumberOfMessagesReturned("test") != 20) {
-            fail("Expected 20 messages. Got=" + CQSMonitor.getInstance().getNumberOfMessagesReturned("test"));
+        if (CQSMonitor.getInstance().getRecentNumberOfReceives("test") != 20) {
+            fail("Expected 20 messages. Got=" + CQSMonitor.getInstance().getRecentNumberOfReceives("test"));
         }
     }
     
@@ -56,12 +56,12 @@ public class CQSMonitorTest {
     @Test
     public void testNumMessages() {
         CQSMonitor.getInstance().addNumberOfMessagesReceived("test", 1);
-        if (CQSMonitor.getInstance().getNumberOfMessagesInQueue("test") != 1) {
-            fail("Expected 1. Got:" + CQSMonitor.getInstance().getNumberOfMessagesInQueue("test"));
+        if (CQSMonitor.getInstance().getQueueDepth("test") != 1) {
+            fail("Expected 1. Got:" + CQSMonitor.getInstance().getQueueDepth("test"));
         }
         CQSMonitor.getInstance().addNumberOfMessagesReturned("test", 1);
-        if (CQSMonitor.getInstance().getNumberOfMessagesInQueue("test") != 0) {
-            fail("Expected 0. Got:" + CQSMonitor.getInstance().getNumberOfMessagesInQueue("test"));
+        if (CQSMonitor.getInstance().getQueueDepth("test") != 0) {
+            fail("Expected 0. Got:" + CQSMonitor.getInstance().getQueueDepth("test"));
         }
         
         if (CQSMonitor.getInstance().getNumberOfMessagesDeleted("test") != 1) {

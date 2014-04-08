@@ -429,7 +429,7 @@ public class CQSRedisCachedCassandraPersistenceTest {
     @Test
     public void testSendMessage() throws Exception {
         testSendMessage(false);
-        Long oldestMsgTS = CQSMonitor.getInstance().getOldestMessageCreatedTSMS("testQueue"); 
+        Long oldestMsgTS = CQSMonitor.getInstance().getOldestAvailableMessageTS("testQueue"); 
         if (oldestMsgTS == null || oldestMsgTS > System.currentTimeMillis()) {
             fail("Expected oldestMsgs. Instead failed");
         }
@@ -453,12 +453,7 @@ public class CQSRedisCachedCassandraPersistenceTest {
         if (messages.size() != 10) {
             fail("Expected 10 messages. got=" + messages.size());            
         }
-        
-        //ensure the cache hit ratio was 100%
-        if (CQSMonitor.getInstance().getReceiveMessageCacheHitPercent("testQueue") != 100) {
-            fail("Expected cache hit to be 100% instead got:" + CQSMonitor.getInstance().getReceiveMessageCacheHitPercent("testQueue"));
-        }
-        
+             
         
         //capture the message-id of the first message and verify we don't get the same one again in the next batch
         String firstMessageId = messages.get(0).getMessageId();
@@ -510,11 +505,7 @@ public class CQSRedisCachedCassandraPersistenceTest {
         if (messages.size() != 10) {
             fail("Expected 10 messages. got=" + messages.size());            
         }
-        
-        //ensure the cache hit ratio was 100%
-        if (CQSMonitor.getInstance().getReceiveMessageCacheHitPercent("testQueue") != 100) {
-            fail("Expected cache hit to be 100% instead got:" + CQSMonitor.getInstance().getReceiveMessageCacheHitPercent("testQueue"));
-        }
+
         
         
         //capture the message-id of the first message and verify we don't get the same one again in the next batch

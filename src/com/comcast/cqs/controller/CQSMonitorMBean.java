@@ -31,36 +31,20 @@ public interface CQSMonitorMBean {
      * @param queueUrl the Queue Url
      * @return the number of messages returned by CQS as a result of the ReceiveMessage() call in a rolling window
      */
-    public int getNumberOfMessagesReturned(String queueUrl);
+    public int getRecentNumberOfReceives(String queueUrl);
 
     /**
      * 
      * @param queueUrl
      * @return the number of messages received by CQS by the SendMessage() call in a rolling window
      */
-    public int getNumberOfMessagesReceived(String queueUrl);
-        
-    /**
-     * Get the In Mem cache hit rate in a rolling-window
-     */
-    public int getReceiveMessageCacheHitPercent(String queueUrl);
-    
-    /**
-     * Get the payload cache hit rate in a rolling-window
-     */
-    public int getGetMessagePayloadCacheHitPercent(String queueUrl);
-    
-    /**s
-     * @param queueUrl
-     * @return approximate number of messages in a queue in a rolling window
-     */
-    public int getNumberOfMessagesInQueue(String queueUrl);
+    public int getRecentNumberOfSends(String queueUrl);
 
     /**
      * @param queueUrl
      * @return approximate number of messages in a queue in Redis
      */
-    public int getRedisNumberOfMessagesInQueue(String queueUrl);
+    public int getQueueDepth(String queueUrl);
     /**
      * 
      * @param queueUrl
@@ -69,16 +53,11 @@ public interface CQSMonitorMBean {
     public int getNumberOfMessagesDeleted(String queueUrl);
     
     /**
-     * This is exactly the number of messages returned in the window
-     */
-    public int getNumberOfMessagesMarkedInvisible(String queueUrl);
-    
-    /**
      * 
      * @param queueUrl
      * @return number of empty responses in rolling-window
      */
-    public int getNumEmptyResponses(String queueUrl);
+    public int getRecentNumberOfEmptyReceives(String queueUrl);
 
     //----------End of rolling window metrics
     
@@ -88,18 +67,11 @@ public interface CQSMonitorMBean {
     public int getNumberOpenRedisConnections();
     
     /**
-     * Number of messages in queue
-     * @param queueUrl
-     * @return
-     */
-    public int getNumberOfMessages(String queueUrl);
-
-    /**
      * 
      * @param queueUrl
      * @return The timestamp in milliseconds of the oldest message in queue or null if none exists
      */
-    public Long getOldestMessageCreatedTSMS(String queueUrl);
+    public Long getOldestAvailableMessageTS(String queueUrl);
     
 	/**
 	 * 

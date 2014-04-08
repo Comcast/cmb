@@ -147,7 +147,7 @@ public class CQSMonitor implements CQSMonitorMBean {
     }
     
     @Override
-    public int getNumberOfMessagesReturned(String queueUrl) {
+    public int getRecentNumberOfReceives(String queueUrl) {
         return getNumberOfMessages(queueUrl, numMessagesRetRW);
     }
     
@@ -161,7 +161,7 @@ public class CQSMonitor implements CQSMonitorMBean {
     }
 
     @Override
-    public int getNumberOfMessagesReceived(String queueUrl) {
+    public int getRecentNumberOfSends(String queueUrl) {
         return getNumberOfMessages(queueUrl, numMessagesRecRW);
     }
     
@@ -241,22 +241,6 @@ public class CQSMonitor implements CQSMonitorMBean {
         
         return (int)(((float)v.hitCount / (float)v.totalCount) * 100);
     }
-
-    @Override
-    public int getReceiveMessageCacheHitPercent(String queueUrl) {
-        return getCacheHitPercent(queueUrl, CacheType.QCache);
-    }
-    
-    
-    @Override
-    public int getGetMessagePayloadCacheHitPercent(String queueUrl) {
-        return getCacheHitPercent(queueUrl, CacheType.PayloadCache);
-    }
-
-    @Override
-    public int getNumberOfMessagesInQueue(String queueUrl) {
-        return getNumberOfMessages(queueUrl, numMessagesRw);
-    }
     
     @Override
     public int getNumberOfMessagesDeleted(String queueUrl) {
@@ -264,12 +248,7 @@ public class CQSMonitor implements CQSMonitorMBean {
     }
 
     @Override
-    public int getNumberOfMessagesMarkedInvisible(String queueUrl) {
-        return getNumberOfMessagesReturned(queueUrl);
-    }
-
-    @Override
-    public int getNumEmptyResponses(String queueUrl) {
+    public int getRecentNumberOfEmptyReceives(String queueUrl) {
         return getNumberOfMessages(queueUrl, numEmptyRespRW);
     }
     
@@ -278,19 +257,7 @@ public class CQSMonitor implements CQSMonitorMBean {
     }
 
     @Override
-    public int getNumberOfMessages(String queueUrl) {
-        int numberOfMessages = 0;
-        RedisCachedCassandraPersistence redisPersistence = RedisCachedCassandraPersistence.getInstance();
-    	try {
-    		numberOfMessages = (int)redisPersistence.getQueueMessageCount(queueUrl, false);
-    	} catch (Exception ex) {
-    		logger.error("event=failed_to_get_number_of_messages queue_url=" + queueUrl);
-    	}
-        return numberOfMessages;
-    }
-
-    @Override
-    public Long getOldestMessageCreatedTSMS(String queueUrl) {
+    public Long getOldestAvailableMessageTS(String queueUrl) {
 
     	RedisCachedCassandraPersistence redisP = RedisCachedCassandraPersistence.getInstance();
         List<String> ids;
@@ -475,7 +442,7 @@ public class CQSMonitor implements CQSMonitorMBean {
 	}
 	
 	@Override
-	public int getRedisNumberOfMessagesInQueue(String queueUrl){
+	public int getQueueDepth(String queueUrl){
 		int numberOfMessages = 0;
 		try {
 			numberOfMessages = (int) RedisCachedCassandraPersistence.getInstance().getRedisQueueMessageCount(queueUrl);

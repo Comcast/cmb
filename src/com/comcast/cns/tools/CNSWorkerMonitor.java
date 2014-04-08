@@ -75,14 +75,14 @@ public class CNSWorkerMonitor implements CNSWorkerMonitorMBean {
     private RollingWindowCapture<GenericEvent> publishMsgRW = new RollingWindowCapture<GenericEvent>(CMBProperties.getInstance().getRollingWindowTimeSec(), 10000);
 
     @Override
-    public int getNumPublishedMessages() {
+    public int getRecentNumberOfPublishedMessages() {
         CountMessagesVisitor c = new CountMessagesVisitor();
         publishMsgRW.visitAllNodes(c);
         return c.num;
     }
 
     @Override
-    public int getNumPooledHttpConnections() {
+    public int getPublishHttpPoolSize() {
         return HTTPEndpointSyncPublisher.getNumConnectionsInPool();
     }
     

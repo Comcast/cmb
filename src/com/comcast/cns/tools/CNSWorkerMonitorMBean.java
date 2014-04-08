@@ -27,12 +27,12 @@ public interface CNSWorkerMonitorMBean {
     /**
      * @return total number of publishMessage() called across all topics in a rolling window
      */
-    public int getNumPublishedMessages();
+    public int getRecentNumberOfPublishedMessages();
     
     /**
      * @return number of http connections in the pool for HTTP publisher
      */    
-    public int getNumPooledHttpConnections();
+    public int getPublishHttpPoolSize();
     
     /**
      * 
