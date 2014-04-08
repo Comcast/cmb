@@ -66,7 +66,7 @@ public class CMBProperties {
 	private boolean cnsPublisherEnabled;
 	private final String cnsPublisherMode;
 	
-	private final int requestParameterValueMaxLength;
+	private final int maxMessagePayloadLogLength;
 	
 	private final int requestTimeoutSec;
 	
@@ -254,7 +254,7 @@ public class CMBProperties {
 			
 			cmbDataCenter = props.getProperty("cmb.dc.name", "default");
 			
-			requestParameterValueMaxLength = Integer.parseInt(props.getProperty("cmb.log.requestParameterValueMaxLength", "128"));
+			maxMessagePayloadLogLength = Integer.parseInt(props.getProperty("cmb.log.maxMessagePayloadLogLength", "128"));
 			
 			requestTimeoutSec = Integer.parseInt(props.getProperty("cmb.request.timeoutSec", "20"));
 			
@@ -781,8 +781,8 @@ public class CMBProperties {
 		return cnsMaxMsgSize;
 	}
 	
-	public int getCMBRequestParameterValueMaxLength() {
-		return requestParameterValueMaxLength;
+	public int getMaxMessagePayloadLogLength() {
+		return maxMessagePayloadLogLength;
 	}
 	
 	public int getCMBRequestTimeoutSec() {

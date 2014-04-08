@@ -197,6 +197,7 @@ abstract public class CMBControllerServlet extends HttpServlet {
 		HttpServletRequest request = (HttpServletRequest)asyncContext.getRequest();
 		Enumeration<String> keys = request.getParameterNames();
 		StringBuffer params = new StringBuffer("");
+		boolean logMessageBodyFlag = true;
 
 		while (keys.hasMoreElements()) {
 
@@ -208,10 +209,19 @@ abstract public class CMBControllerServlet extends HttpServlet {
 				length = value.length();
 			}
 			
-			if (value != null && value.length() > CMBProperties.getInstance().getCMBRequestParameterValueMaxLength()) {
-				value = value.substring(0, CMBProperties.getInstance().getCMBRequestParameterValueMaxLength()) + "...";
+			if (key.equals("MessageBody")) {
+				if (CMBProperties.getInstance().getMaxMessagePayloadLogLength() > 0) {
+					if (value != null && value.length() > CMBProperties.getInstance().getMaxMessagePayloadLogLength()) {
+						value = value.substring(0, CMBProperties.getInstance().getMaxMessagePayloadLogLength())
+								+ "...";
+						logMessageBodyFlag = true;
+					}
+				} else {
+					logMessageBodyFlag = false;
+					value = null;
+				}
 			}
-
+			
 			if (value != null) {
 				if (value.indexOf('\n') >= 0) {
 					value = value.replace("\n", "\\n");
@@ -221,8 +231,9 @@ abstract public class CMBControllerServlet extends HttpServlet {
 				}
 			}
 
-			params.append(key).append("=").append(value).append(" ");
-			
+			if (!key.equals("MessageBody") || logMessageBodyFlag == true){
+				params.append(key).append("=").append(value).append(" ");
+			}
 			if (key.equals("MessageBody")) {
 				params.append("msg_size=").append(length).append(" ");
 			}
@@ -242,8 +253,8 @@ abstract public class CMBControllerServlet extends HttpServlet {
 			String key = keys.nextElement();
 			String value = request.getParameter(key);
 
-			if (value != null && value.length() > CMBProperties.getInstance().getCMBRequestParameterValueMaxLength()) {
-				value = value.substring(0, CMBProperties.getInstance().getCMBRequestParameterValueMaxLength()) + "...";
+			if (value != null && value.length() > CMBProperties.getInstance().getMaxMessagePayloadLogLength()) {
+				value = value.substring(0, CMBProperties.getInstance().getMaxMessagePayloadLogLength()) + "...";
 			}
 
 			if (value != null) {
