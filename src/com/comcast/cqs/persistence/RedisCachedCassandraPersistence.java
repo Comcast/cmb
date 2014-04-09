@@ -735,7 +735,7 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
             }
             return true;
         } catch (JedisConnectionException e) {
-            logger.warn("event=check_cache_consistency error_code=redis_unavailable num_connections=" + numRedisConnections.get());
+            logger.error("event=check_cache_consistency error_code=redis_unavailable num_connections=" + numRedisConnections.get());
             return false;
         }
     }
@@ -831,7 +831,7 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
                 logger.debug("event=send_message cache_available=false msg_id= " + memId + " queue_url=" + queue.getAbsoluteUrl() + " shard=" + shard);
             }
         } catch (JedisConnectionException e) {
-            logger.warn("event=send_message error_code=redis_unavailable num_connections=" + numRedisConnections.get());
+            logger.error("event=send_message error_code=redis_unavailable num_connections=" + numRedisConnections.get());
             brokenJedis = true;
             trySettingCacheState(queue.getRelativeUrl(), shard, QCacheState.Unavailable);
         } finally {
@@ -927,7 +927,7 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
                 long ts2 = System.currentTimeMillis();
                 CQSControllerServlet.valueAccumulator.addToCounter(AccumulatorName.RedisTime, (ts2 - ts1));
             } catch (JedisConnectionException e) {
-                logger.warn("event=delete_message error_code=redis_unavailable num_connections=" + numRedisConnections.get());
+                logger.error("event=delete_message error_code=redis_unavailable num_connections=" + numRedisConnections.get());
                 brokenJedis = true;
                 cacheAvailable = false;
                 trySettingCacheState(queueUrl, shard, QCacheState.Unavailable);
@@ -1137,7 +1137,7 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
                     }
                 } 
             } catch (JedisConnectionException e) {
-                logger.warn("event=receive_message error_code=redis_unavailable num_connections=" + numRedisConnections.get());
+                logger.error("event=receive_message error_code=redis_unavailable num_connections=" + numRedisConnections.get());
                 brokenJedis = true;
                 trySettingCacheState(queue.getRelativeUrl(), shard, QCacheState.Unavailable);            
                 cacheAvailable = false;
@@ -1209,7 +1209,7 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
                 return true; 
                 
             } catch (JedisConnectionException e) {
-                logger.warn("event=change_message_visibility reason=redis_unavailable num_connections=" + numRedisConnections.get());
+                logger.error("event=change_message_visibility reason=redis_unavailable num_connections=" + numRedisConnections.get());
                 brokenJedis = true;
                 cacheAvailable = false;
                 return false;
@@ -1272,7 +1272,7 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
 	                }
 	            }
             } catch (JedisConnectionException e) {
-                logger.warn("event=peek_message error_code=redis_unavailable num_connections=" + numRedisConnections.get());
+                logger.error("event=peek_message error_code=redis_unavailable num_connections=" + numRedisConnections.get());
                 brokenJedis = true;
                 cacheAvailable = false;
             } finally {
@@ -1338,7 +1338,7 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
                 CQSControllerServlet.valueAccumulator.addToCounter(AccumulatorName.RedisTime, (ts2 - ts1));
                 logger.debug("event=cleared_queue queue_url=" + queueUrl + " shard=" + shard);
             } catch (JedisConnectionException e) {
-                logger.warn("event=clear_queue error_code=redis_unavailable num_connections=" + numRedisConnections.get());
+                logger.error("event=clear_queue error_code=redis_unavailable num_connections=" + numRedisConnections.get());
                 brokenJedis = true;
                 trySettingCacheState(queueUrl, shard, QCacheState.Unavailable);
                 cacheAvailable = false;
