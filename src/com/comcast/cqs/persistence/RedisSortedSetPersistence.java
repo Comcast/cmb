@@ -116,8 +116,7 @@ public class RedisSortedSetPersistence implements ICQSMessagePersistence, ICQSMe
 	//TODO: cache consistency check
 
 	@Override
-	public List<String> getIdsFromHead(String queueUrl, int shard, int num)
-			throws PersistenceException {
+	public List<String> getIdsFromHead(String queueUrl, int shard, int num) throws PersistenceException {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -129,68 +128,49 @@ public class RedisSortedSetPersistence implements ICQSMessagePersistence, ICQSMe
 	}
 
 	@Override
-	public String sendMessage(CQSQueue queue, int shard, CQSMessage message)
-			throws PersistenceException, IOException, InterruptedException,
-			NoSuchAlgorithmException, JSONException {
+	public String sendMessage(CQSQueue queue, int shard, CQSMessage message) throws PersistenceException, IOException, InterruptedException, NoSuchAlgorithmException, JSONException {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public Map<String, String> sendMessageBatch(CQSQueue queue, int shard,
-			List<CQSMessage> messages) throws PersistenceException,
-			IOException, InterruptedException, NoSuchAlgorithmException,
-			JSONException {
+	public Map<String, String> sendMessageBatch(CQSQueue queue, int shard, List<CQSMessage> messages) throws PersistenceException, IOException, InterruptedException, NoSuchAlgorithmException, JSONException {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public void deleteMessage(String queueUrl, String receiptHandle)
-			throws PersistenceException {
+	public void deleteMessage(String queueUrl, String receiptHandle) throws PersistenceException {
 		// TODO Auto-generated method stub
 
 	}
 
 	@Override
-	public List<CQSMessage> receiveMessage(CQSQueue queue,
-			Map<String, String> receiveAttributes) throws PersistenceException,
-			IOException, NoSuchAlgorithmException, InterruptedException,
-			JSONException {
+	public List<CQSMessage> receiveMessage(CQSQueue queue, Map<String, String> receiveAttributes) throws PersistenceException, IOException, NoSuchAlgorithmException, InterruptedException,	JSONException {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public boolean changeMessageVisibility(CQSQueue queue,
-			String receiptHandle, int visibilityTO)
-			throws PersistenceException, IOException, NoSuchAlgorithmException,
-			InterruptedException {
+	public boolean changeMessageVisibility(CQSQueue queue, String receiptHandle, int visibilityTO) throws PersistenceException, IOException, NoSuchAlgorithmException, InterruptedException {
 		// TODO Auto-generated method stub
 		return false;
 	}
 
 	@Override
-	public List<CQSMessage> peekQueue(String queueUrl, int shard,
-			String previousReceiptHandle, String nextReceiptHandle, int length)
-			throws PersistenceException, IOException, NoSuchAlgorithmException,
-			JSONException {
+	public List<CQSMessage> peekQueue(String queueUrl, int shard, String previousReceiptHandle, String nextReceiptHandle, int length) throws PersistenceException, IOException, NoSuchAlgorithmException, JSONException {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public List<CQSMessage> peekQueueRandom(String queueUrl, int shard,
-			int length) throws PersistenceException, IOException,
-			NoSuchAlgorithmException, JSONException {
+	public List<CQSMessage> peekQueueRandom(String queueUrl, int shard,	int length) throws PersistenceException, IOException, NoSuchAlgorithmException, JSONException {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public void clearQueue(String queueUrl, int shard)
-			throws PersistenceException, NoSuchAlgorithmException,
-			UnsupportedEncodingException {
+	public void clearQueue(String queueUrl, int shard) throws PersistenceException, NoSuchAlgorithmException, UnsupportedEncodingException {
 		// TODO Auto-generated method stub
 
 	}
