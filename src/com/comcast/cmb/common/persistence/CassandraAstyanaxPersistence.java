@@ -82,8 +82,10 @@ public class CassandraAstyanaxPersistence extends AbstractDurablePersistence {
 			.setDefaultReadConsistencyLevel(ConsistencyLevel.valueOf("CL_"+CMBProperties.getInstance().getReadConsistencyLevel()))
 			.setDefaultWriteConsistencyLevel(ConsistencyLevel.valueOf("CL_"+CMBProperties.getInstance().getWriteConsistencyLevel())))
 					.withConnectionPoolConfiguration(new ConnectionPoolConfigurationImpl("CMBAstyananxConnectionPool")
-					.setPort(9160)
-					.setMaxConnsPerHost(1)
+					.setMaxConnsPerHost(CMBProperties.getInstance().getAstyanaxMaxConnectionsPerNode())
+					.setSocketTimeout(CMBProperties.getInstance().getCassandraThriftSocketTimeOutMS())
+					.setConnectTimeout(CMBProperties.getInstance().getAstyanaxConnectionWaitTimeOutMS())
+//					.setLocalDatacenter("datacenter1")
 					.setSeeds(AbstractDurablePersistence.CLUSTER_URL))
 							.withConnectionPoolMonitor(new CountingConnectionPoolMonitor())
 							.buildKeyspace(ThriftFamilyFactory.getInstance());

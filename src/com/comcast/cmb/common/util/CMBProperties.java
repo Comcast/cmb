@@ -170,6 +170,8 @@ public class CMBProperties {
     private final int redisExpireTTLSec;
     
     private final int cassandraThriftSocketTimeOutMS;
+    private final int astyanaxMaxConnectionsPerNode;
+    private final int astyanaxConnectionWaitTimeOutMS;
     
     private final int cqsNumberOfQueuePartitions;
         
@@ -361,7 +363,9 @@ public class CMBProperties {
             redisRevisibleFrequencySec = Integer.parseInt(props.getProperty("cmb.redis.revisibleFrequencySec", "10"));
             redisRevisibleSetFrequencySec = Integer.parseInt(props.getProperty("cmb.redis.revisibleSetFrequencySec", "1"));
             
-            cassandraThriftSocketTimeOutMS = Integer.parseInt(props.getProperty("cmb.cassandra.thriftSocketTimeOutMS", "2000"));
+            cassandraThriftSocketTimeOutMS = Integer.parseInt(props.getProperty("cmb.cassandra.thriftSocketTimeOutMS", "10000"));
+            astyanaxMaxConnectionsPerNode = Integer.parseInt(props.getProperty("cmb.astyanax.maxConnectionsPerNode", "10"));
+            astyanaxConnectionWaitTimeOutMS = Integer.parseInt(props.getProperty("cmb.astyanax.connectionWaitTimeOutMS","2000"));
             
             numEPPubJobProducers = Integer.parseInt(props.getProperty("cmb.cns.publisher.numProducers", "8"));
             numEPPubJobConsumers = Integer.parseInt(props.getProperty("cmb.cns.publisher.numConsumers", "4"));
@@ -621,6 +625,14 @@ public class CMBProperties {
         return cassandraThriftSocketTimeOutMS;
     }
 
+    public int getAstyanaxMaxConnectionsPerNode() {
+        return astyanaxMaxConnectionsPerNode;
+    }
+    
+    public int getAstyanaxConnectionWaitTimeOutMS() {
+        return astyanaxConnectionWaitTimeOutMS;
+    }
+    
     public int getCNSNumPublishJobQueues() {
         return numPublishJobQs;
     }
