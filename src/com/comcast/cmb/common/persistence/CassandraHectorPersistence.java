@@ -128,7 +128,7 @@ public class CassandraHectorPersistence extends AbstractDurablePersistence {
 		cassandraHostConfigurator.setAutoDiscoverHosts(CMBProperties.getInstance().isHectorAutoDiscovery());
 		cassandraHostConfigurator.setAutoDiscoveryDelayInSeconds(CMBProperties.getInstance().getHectorAutoDiscoveryDelaySeconds());
 
-		String dataCenter = CMBProperties.getInstance().getHectorAutoDiscoveryDataCenter();
+		String dataCenter = CMBProperties.getInstance().getCassandraDataCenter();
 
 		if (dataCenter != null && !dataCenter.equals("")) {
 			cassandraHostConfigurator.setAutoDiscoveryDataCenter(dataCenter);
