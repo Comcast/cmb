@@ -1,3 +1,19 @@
+CMB VERSION 2.2.40
+--------------------------------------------------------------------
+
+New features:
+
+- add cassandra astyanax 
+- remove super columns
+
+Bug fixes:
+
+- remove unnecessary dependencies, upgrade dependency versions
+- fix \r bug in message body
+- clean and refactor persistence
+- clean logs
+- clean and refactor JMX operations
+
 CMB VERSION 2.2.39
 --------------------------------------------------------------------
 
