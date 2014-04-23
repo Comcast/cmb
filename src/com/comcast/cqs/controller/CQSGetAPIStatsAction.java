@@ -38,7 +38,7 @@ import com.comcast.cmb.common.persistence.AbstractDurablePersistence;
 import com.comcast.cmb.common.persistence.DurablePersistenceFactory;
 import com.comcast.cqs.io.CQSAPIStatsPopulator;
 import com.comcast.cqs.model.CQSAPIStats;
-import com.comcast.cqs.persistence.RedisCachedCassandraPersistence;
+import com.comcast.cqs.persistence.RedisSortedSetPersistence;
 import com.comcast.cqs.util.CQSAPIStatWrapper;
 /**
  * Subscribe action
@@ -183,7 +183,7 @@ public class CQSGetAPIStatsAction extends CQSAction {
 				}
 				
 				try {
-					if (!RedisCachedCassandraPersistence.isAlive()) {
+					if (!RedisSortedSetPersistence.isAlive()) {
 						stats.addStatus("REDIS UNAVAILABLE");
 					}
 				} catch (Exception ex) {

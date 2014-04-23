@@ -28,8 +28,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicLong;
+
 import com.comcast.cqs.model.CQSAPIStats;
-import com.comcast.cqs.persistence.RedisCachedCassandraPersistence;
 import com.comcast.cqs.util.Util;
 
 import org.apache.log4j.Logger;
@@ -53,6 +53,7 @@ import com.comcast.cmb.common.persistence.AbstractDurablePersistence;
 import com.comcast.cmb.common.persistence.AbstractDurablePersistence.CMB_SERIALIZER;
 import com.comcast.cmb.common.persistence.AbstractDurablePersistence.CmbRow;
 import com.comcast.cmb.common.persistence.DurablePersistenceFactory;
+import com.comcast.cmb.common.persistence.PersistenceFactory;
 import com.comcast.cmb.common.util.CMBProperties;
 
 public class CQSLongPollSender {
@@ -312,9 +313,8 @@ public class CQSLongPollSender {
 				// if messageSendCound is already been received by local or empty queue, finish 
 				try {
 					if (messageReceiveCount >= messageSendCount
-							|| RedisCachedCassandraPersistence
-									.getInstance()
-									.getRedisQueueMessageCount(
+							|| PersistenceFactory.getCQSMessagePersistence()
+									.getQueueMessageCount(
 											Util.getRelativeQueueUrlForArn(queueArn)) == 0) {
 						continue;
 					}

@@ -25,7 +25,7 @@ import com.comcast.cmb.common.persistence.AbstractDurablePersistence;
 import com.comcast.cmb.common.persistence.DurablePersistenceFactory;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cqs.controller.CQSAction;
-import com.comcast.cqs.persistence.RedisCachedCassandraPersistence;
+import com.comcast.cqs.persistence.RedisSortedSetPersistence;
 
 /**
  * Provide a basic health-check URL for load-balancers to hit to monitor whether service is up and version
@@ -62,7 +62,7 @@ public class HealthCheckShallow extends CQSAction {
         if (CMBProperties.getInstance().getCQSServiceEnabled()) {
 	        try {
 	        	
-	        	if (RedisCachedCassandraPersistence.isAlive()) {
+	        	if (RedisSortedSetPersistence.isAlive()) {
 	        		sb.append("\t<Redis>OK</Redis>\n");
 	        	} else {
 	        		sb.append("\t<Redis>All shards down.</Redis>\n");

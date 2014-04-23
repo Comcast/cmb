@@ -29,11 +29,13 @@ import org.apache.log4j.Logger;
 
 import com.comcast.cmb.common.controller.CMB;
 import com.comcast.cmb.common.controller.CMBControllerServlet;
+import com.comcast.cmb.common.persistence.PersistenceFactory;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.PersistenceException;
 import com.comcast.cmb.common.util.RollingWindowCapture;
 import com.comcast.cmb.common.util.RollingWindowCapture.PayLoad;
-import com.comcast.cqs.persistence.RedisCachedCassandraPersistence;
+import com.comcast.cqs.persistence.ICQSMessagePersistence;
+import com.comcast.cqs.persistence.RedisSortedSetPersistence;
 
 /**
  * Implement the monitoring for CQS
@@ -175,7 +177,7 @@ public class CQSMonitor implements CQSMonitorMBean {
 
     @Override
     public int getNumberOpenRedisConnections() {
-        return RedisCachedCassandraPersistence.getInstance().getNumRedisConnections();
+        return PersistenceFactory.getCQSMessagePersistence().getNumConnections();
     }    
     
     /**
@@ -280,9 +282,9 @@ public class CQSMonitor implements CQSMonitorMBean {
     @Override
     public int getNumberOfMessages(String queueUrl) {
         int numberOfMessages = 0;
-        RedisCachedCassandraPersistence redisPersistence = RedisCachedCassandraPersistence.getInstance();
+        ICQSMessagePersistence redisPersistence = PersistenceFactory.getCQSMessagePersistence();
     	try {
-    		numberOfMessages = (int)redisPersistence.getQueueMessageCount(queueUrl, false);
+    		numberOfMessages = (int)redisPersistence.getQueueMessageCount(queueUrl);
     	} catch (Exception ex) {
     		logger.error("event=failed_to_get_number_of_messages queue_url=" + queueUrl);
     	}
@@ -292,7 +294,7 @@ public class CQSMonitor implements CQSMonitorMBean {
     @Override
     public Long getOldestMessageCreatedTSMS(String queueUrl) {
 
-    	RedisCachedCassandraPersistence redisP = RedisCachedCassandraPersistence.getInstance();
+    	RedisSortedSetPersistence redisP = RedisSortedSetPersistence.getInstance();
         List<String> ids;
 		try {
 
@@ -302,7 +304,7 @@ public class CQSMonitor implements CQSMonitorMBean {
 	        	return null;
 	        }
 			
-	        return RedisCachedCassandraPersistence.getMemQueueMessageCreatedTS(ids.get(0));
+	        return RedisSortedSetPersistence.getMemQueueMessageCreatedTS(ids.get(0));
 
 		} catch (PersistenceException ex) {
 			logger.error("event=failed_to_get_oldest_queue_message_timestamp queue_url=" + queueUrl, ex);
@@ -401,17 +403,17 @@ public class CQSMonitor implements CQSMonitorMBean {
 
 	@Override
 	public int getNumberOfRedisShards() {
-		return RedisCachedCassandraPersistence.getNumberOfRedisShards();
+		return RedisSortedSetPersistence.getNumberOfRedisShards();
 	}
 
 	@Override
 	public List<Map<String, String>> getRedisShardInfos() {
-		return RedisCachedCassandraPersistence.getInfo();
+		return RedisSortedSetPersistence.getInfo();
 	}
 
 	@Override
 	public void flushRedis() {
-		RedisCachedCassandraPersistence.flushAll();
+		RedisSortedSetPersistence.flushAll();
 	}
 
 	@Override
@@ -478,7 +480,7 @@ public class CQSMonitor implements CQSMonitorMBean {
 	public int getRedisNumberOfMessagesInQueue(String queueUrl){
 		int numberOfMessages = 0;
 		try {
-			numberOfMessages = (int) RedisCachedCassandraPersistence.getInstance().getRedisQueueMessageCount(queueUrl);
+			numberOfMessages = (int) PersistenceFactory.getCQSMessagePersistence().getCacheQueueMessageCount(queueUrl);
 		} catch (Exception ex) {
     		logger.error("event=failed_to_get_redis_number_of_messages queue_url=" + queueUrl);
     	}

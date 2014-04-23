@@ -140,4 +140,62 @@ public interface ICQSMessagePersistence {
      * @throws JSONException 
      */
 	Map<String, CQSMessage> getMessages(String queueUrl, List<String> ids) throws PersistenceException, NoSuchAlgorithmException, UnsupportedEncodingException, IOException, JSONException;
+	
+    /**
+     * @param queueUrl
+     * @param num number of message-ids to return
+     * @return message ids from the head of the queue. If data not available, empty list is returned
+     */
+    public List<String> getIdsFromHead(String queueUrl, int shard, int num) throws PersistenceException;
+    
+    /**
+     * @param queueUrl
+     * @return number of messages in queue
+     */
+    public long getQueueMessageCount(String queueUrl);
+    
+    /**
+     * 
+     * @param queueUrl
+     * @param processRevisibilitySet if true, run re-visibility processing.
+     * @return number of mem-ids in Redis Queue
+     * @throws Exception 
+     */    
+    public long getQueueMessageCount(String queueUrl, boolean processHiddenIds) throws Exception;
+    
+    /**
+     * 
+     * @param queueUrl
+     * @param visibilityProcessFlag if true, run visibility processing.
+     * @return number of mem-ids in Redis list
+     * @throws Exception 
+     */
+    public long getQueueNotVisibleMessageCount(String queueUrl, boolean visibilityProcessFlag) throws Exception;
+    
+    /**
+     * 
+     * @param queueUrl
+     * @param visibilityProcessFlag if true, run visibility processing.
+     * @return number of mem-ids in Redis set for delayed messages
+     * @throws Exception 
+     */
+    public long getQueueDelayedMessageCount(String queueUrl, boolean visibilityProcessFlag) throws Exception;
+    /**
+     * Check if the queue is in the cache and in ok state. Else kick off initialization
+     * and return false. 
+     * @param queueUrl
+     * @param trueOnFiller returns true if the current state is Filling.
+     * @return true if the cache is good for use. false if it is unavailable
+     */
+    public boolean checkCacheConsistency(String queueUrl, int shard, boolean trueOnFiller) ;
+    
+    public int getNumConnections() ;
+    
+    /**
+     * 
+     * @param queueUrl
+     * @return number of mem-ids in Redis Queue. If Redis queue is empty, do not load from Cassandra.
+     * @throws Exception 
+     */
+    public long getCacheQueueMessageCount(String queueUrl) throws Exception ;
 }

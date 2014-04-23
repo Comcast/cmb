@@ -70,7 +70,7 @@ import com.comcast.cqs.util.Util;
  * Class is thread-safe
  */
 
-public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, ICQSMessagePersistenceIdSequence {
+public class RedisCachedCassandraPersistence implements ICQSMessagePersistence {
 	
     private static final Logger logger = Logger.getLogger(RedisCachedCassandraPersistence.class);
     private static final Random rand = new Random();
@@ -221,7 +221,7 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
     
     static AtomicInteger numRedisConnections = new AtomicInteger(0);
     
-    public int getNumRedisConnections() {
+    public int getNumConnections() {
         return numRedisConnections.get();
     }
     
@@ -1526,7 +1526,7 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
      * @return number of mem-ids in Redis Queue. If Redis queue is empty, do not load from Cassandra.
      * @throws Exception 
      */
-    public long getRedisQueueMessageCount(String queueUrl) throws Exception  {
+    public long getCacheQueueMessageCount(String queueUrl) throws Exception  {
     	
     	long messageCount = 0;
     	CQSQueue queue = CQSCache.getCachedQueue(queueUrl);
@@ -1808,5 +1808,10 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
 	    }
     	
     	return atLeastOneShardIsUp;
+	}
+	
+	public static void shutdown (){
+        executor.shutdown();
+        revisibilityExecutor.shutdown();
 	}
 }

@@ -25,6 +25,7 @@ import java.io.ObjectOutputStream;
 import java.io.UnsupportedEncodingException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -39,8 +40,10 @@ import java.util.concurrent.TimeUnit;
 import org.apache.log4j.Logger;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
+import redis.clients.jedis.Jedis;
 import redis.clients.jedis.ShardedJedis;
 import redis.clients.jedis.exceptions.JedisException;
 import redis.clients.util.SafeEncoder;
@@ -54,19 +57,18 @@ import com.comcast.cqs.controller.CQSMonitor;
 import com.comcast.cqs.model.CQSMessage;
 import com.comcast.cqs.model.CQSQueue;
 import com.comcast.cqs.persistence.ICQSMessagePersistence;
-import com.comcast.cqs.persistence.RedisCachedCassandraPersistence;
 import com.comcast.cqs.persistence.RedisSortedSetPersistence;
-import com.comcast.cqs.persistence.RedisCachedCassandraPersistence.QCacheState;
+import com.comcast.cqs.persistence.RedisSortedSetPersistence.QCacheState;
 import com.comcast.cqs.util.CQSConstants;
 
-public class CQSRedisCachedCassandraPersistenceTest {
-    private static Logger log = Logger.getLogger(CQSRedisCachedCassandraPersistenceTest.class);
+public class CQSRedisSortedSetPersistenceTest {
+    private static Logger log = Logger.getLogger(CQSRedisSortedSetPersistenceTest.class);
 
     @Before
     public void setup() throws Exception {
         Util.initLog4jTest();
         CMBControllerServlet.valueAccumulator.initializeAllCounters();
-        RedisCachedCassandraPersistence redisP = RedisCachedCassandraPersistence.getInstance();
+        RedisSortedSetPersistence redisP = RedisSortedSetPersistence.getInstance();
         Thread.sleep(1000); //give previously running cache fillers to complete before we clear cache state
         redisP.testInterface.resetTestQueue();
         if (redisP.testInterface.getCacheState("testQueue") != null) {
@@ -82,12 +84,12 @@ public class CQSRedisCachedCassandraPersistenceTest {
 
     @Test
     public void testInitialize() {
-        RedisCachedCassandraPersistence.getInstance();
+        RedisSortedSetPersistence.getInstance();
     }
     
     @Test
     public void testGetState() throws Exception {
-        RedisCachedCassandraPersistence redisP = RedisCachedCassandraPersistence.getInstance();        
+        RedisSortedSetPersistence redisP = RedisSortedSetPersistence.getInstance();        
 
         if (redisP.testInterface.getCacheState("testQueue") != null) {
             fail("expected no cache state");
@@ -108,7 +110,7 @@ public class CQSRedisCachedCassandraPersistenceTest {
         }
         @Override
         public void run() {
-            RedisCachedCassandraPersistence redisP = RedisCachedCassandraPersistence.getInstance();
+            RedisSortedSetPersistence redisP = RedisSortedSetPersistence.getInstance();
             try {
                 QCacheState state;
                 if (waitOrCount) {
@@ -142,7 +144,7 @@ public class CQSRedisCachedCassandraPersistenceTest {
     
     @Test
     public void testMemId() throws Exception {
-        RedisCachedCassandraPersistence redisP = RedisCachedCassandraPersistence.getInstance();
+        RedisSortedSetPersistence redisP = RedisSortedSetPersistence.getInstance();
         long currTs = System.currentTimeMillis();
         String memId = redisP.testInterface.getMemQueueMessage("45c1596598f85ce59f060dc2b8ec4ebb_0_72:2923737900040323074:-8763141905575923938");
         System.out.println("memId=" + memId);
@@ -168,7 +170,7 @@ public class CQSRedisCachedCassandraPersistenceTest {
     @Test
     //test if the old format of Redis message key is still working in the new code
     public void testMemIdBackwardCompatible() throws Exception {
-        RedisCachedCassandraPersistence redisP = RedisCachedCassandraPersistence.getInstance();
+        RedisSortedSetPersistence redisP = RedisSortedSetPersistence.getInstance();
 //        String memId = redisP.testInterface.getMemQueueMessage("45c1596598f85ce59f060dc2b8ec4ebb_0_72:2923737900040323074:-8763141905575923938");
         //this is the old format of Redis message key
         String memId = "1394146871586:0:45c1596598f85ce59f060dc2b8ec4ebb_0_72:2923737900040323074:-8763141905575923938";
@@ -285,8 +287,11 @@ public class CQSRedisCachedCassandraPersistenceTest {
             	// This is only for unit test
             	//example of id: 45c1596598f85ce59f060dc2b8ec4ebb_0_72:2923737900040323074:20
             	String indexString = id.substring(id.lastIndexOf(":")+1);
-
+            	if(Integer.parseInt(indexString) <= messages.size()) {
                 ret.put(id, messages.get(Integer.parseInt(indexString)));
+            	} else {
+            		ret.put(id, null);
+            	}
             }
             getMessgeIds.addAll(ids);
             return ret;
@@ -295,7 +300,7 @@ public class CQSRedisCachedCassandraPersistenceTest {
         public List<String> getIdsFromHead(String queueUrl, int shard, int num) {
             LinkedList<String> ids = new LinkedList<String>();
             for (int i = headMarker; i < messages.size(); i++) {
-                ids.add(RedisCachedCassandraPersistence.getInstance().testInterface.getMemQueueMessage(""+i));
+                ids.add(RedisSortedSetPersistence.getInstance().testInterface.getMemQueueMessage(""+i));
             }
             return ids;
         }
@@ -369,7 +374,7 @@ public class CQSRedisCachedCassandraPersistenceTest {
     
     @Test
     public void testCacheFiller() throws Exception {
-        RedisCachedCassandraPersistence redisP = RedisCachedCassandraPersistence.getInstance();
+        RedisSortedSetPersistence redisP = RedisSortedSetPersistence.getInstance();
         
         redisP.testInterface.setCassandraPersistence(new TestDataPersistence(2000));
         boolean checkCache = redisP.testInterface.checkCacheConsistency("testQueue");
@@ -396,8 +401,8 @@ public class CQSRedisCachedCassandraPersistenceTest {
     }
         
     
-    public RedisCachedCassandraPersistence testSendMessage(boolean batch) throws Exception {
-        RedisCachedCassandraPersistence redisP = RedisCachedCassandraPersistence.getInstance();
+    public RedisSortedSetPersistence testSendMessage(boolean batch) throws Exception {
+        RedisSortedSetPersistence redisP = RedisSortedSetPersistence.getInstance();
 
         TestDataPersistence testP = new TestDataPersistence(2000);
         
@@ -424,7 +429,6 @@ public class CQSRedisCachedCassandraPersistenceTest {
         CQSQueue queue = new CQSQueue("testQueue", "testOwner");
         queue.setRelativeUrl("testQueue");        
         CQSMessage msg = new CQSMessage("test", new HashMap<String, String>());
-//        msg.setMessageId("2000");
         long timeHash = AbstractDurablePersistence.newTime(System.currentTimeMillis(), false);
         msg.setMessageId("45c1596598f85ce59f060dc2b8ec4ebb_0_72:"+timeHash+":2000");
         msg.setSuppliedMessageId("2000");
@@ -460,36 +464,180 @@ public class CQSRedisCachedCassandraPersistenceTest {
         return redisP;
     }
     
+    //When receive message, if the message in Redis but not in storage, the message will be removed from Redis 
+    @Test
+    public void testReceiveMessageAndClear() throws Exception {
+        RedisSortedSetPersistence redisP = testSendMessage(false); //creates a queue with 2001 messages in it
+        CQSQueue queue = new CQSQueue("testQueue", "testOwner");
+        queue.setRelativeUrl("testQueue");        
+        HashMap<String, String> receiveAttributes = new HashMap<String, String>();
+        receiveAttributes.put(CQSConstants.MAX_NUMBER_OF_MESSAGES, "10");
+        receiveAttributes.put(CQSConstants.VISIBILITY_TIMEOUT, "1"); //hide messages for 1 second       
+        List<CQSMessage> messages = redisP.receiveMessage(queue, receiveAttributes);
+        if (messages.size() != 10) {
+            fail("Expected 10 messages. got=" + messages.size());            
+        }
+
+        //check Redis message count
+        if (redisP.getQueueMessageCount("testQueue", false) != 2001) {
+            fail("Expected 2001. Got:" + redisP.getQueueMessageCount("testQueue", false));
+        }
+        //ensure the cache hit ratio was 100%
+        if (CQSMonitor.getInstance().getReceiveMessageCacheHitPercent("testQueue") != 100) {
+            fail("Expected cache hit to be 100% instead got:" + CQSMonitor.getInstance().getReceiveMessageCacheHitPercent("testQueue"));
+        }
+        
+        //add a new message only in Redis
+		boolean brokenJedis = false;
+		ShardedJedis jedis = redisP.getResource();
+		long currentTime = System.currentTimeMillis();
+		long oldTime = currentTime-24*60*60*1000L -1L;
+		try {
+			jedis.zadd(queue.getRelativeUrl() + "-" + 0 + "-Q", oldTime, "0:0:0_0_72:2932267777150418944:2002");
+    	
+		} catch (Exception ex) {
+	    	brokenJedis = true;
+	    } finally {
+	    	redisP.returnResource(jedis, brokenJedis);
+	    }
+        //end of add new message only in Redis
+		
+        //check Redis message count
+
+        if (redisP.getQueueMessageCount("testQueue", false) != 2002) {
+            fail("Expected 2002. Got:" + redisP.getQueueMessageCount("testQueue", false));
+        }        
+        //capture the message-id of the first message and verify we don't get the same one again in the next batch
+        String firstMessageId = messages.get(0).getMessageId();
+        
+        messages = redisP.receiveMessage(queue, receiveAttributes);
+        if (messages.size() != 9) {
+            fail("Expected 9 messages. got=" + messages.size());            
+        }
+        
+        for (CQSMessage msg : messages) {
+            if (msg.getMessageId().equals(firstMessageId)) {
+                fail("firstMessageId returned twice. Duplciates!: " + firstMessageId);
+            }
+        }
+        
+        //check Redis message count
+        if (redisP.getQueueMessageCount("testQueue", false) != 2001) {
+            fail("Expected 2001. Got:" + redisP.getQueueMessageCount("testQueue", false));
+        }
+    }
+    
+    @Test
+    public void testSendMessageAndClearExpiredMessage() throws Exception {
+    	boolean batch = false;
+        RedisSortedSetPersistence redisP = RedisSortedSetPersistence.getInstance();
+
+        TestDataPersistence testP = new TestDataPersistence(2000);
+        
+        redisP.testInterface.setCassandraPersistence(testP);
+        boolean checkCache = redisP.testInterface.checkCacheConsistency("testQueue");
+        if (checkCache == true) {
+            fail("first time around cache should not have existed and method should have returned false");
+        }
+        
+        //check that the state is filling
+        QCacheState st = redisP.testInterface.getCacheState("testQueue");
+        if (st != QCacheState.Filling) {
+            fail("Expected state of qcache is filling. Instead got:" + st.name());
+        }
+        
+        //wait a second and check that its now ok
+        Thread.sleep(2000);
+        checkCache = redisP.testInterface.checkCacheConsistency("testQueue");
+        if (checkCache == false) {
+            fail("Expected cache available");
+        }
+
+        //now sendMessage(Batch)
+        CQSQueue queue = new CQSQueue("testQueue", "testOwner");
+        queue.setRelativeUrl("testQueue");        
+        CQSMessage msg = new CQSMessage("test", new HashMap<String, String>());
+//        msg.setMessageId("2000");
+        //send first message
+        long timeHash = AbstractDurablePersistence.newTime(System.currentTimeMillis(), false);
+        msg.setMessageId("45c1596598f85ce59f060dc2b8ec4ebb_0_72:"+timeHash+":2000");
+        msg.setSuppliedMessageId("2000");
+        String newMessageId;
+        if (!batch) {
+            newMessageId = redisP.sendMessage(queue, 0, msg);
+        } else {
+            Map<String, String> clientToMessageId = redisP.sendMessageBatch(queue, 0, Arrays.asList(msg));
+            if (clientToMessageId.size() != 1) {
+                fail("Expected one messageId returned");
+            }
+            if (!clientToMessageId.containsKey("2000")) {
+                fail("Expected client's messageId 2000 in response but not found");
+            }
+            newMessageId = clientToMessageId.get("2000");
+        }
+        if (testP.messages.size() != 2001) {
+            fail("Expected to add one more message. count=" + testP.messages.size() );
+        }
+        //update the message to be an old message
+		boolean brokenJedis = false;
+		ShardedJedis jedis = redisP.getResource();
+		long currentTime = System.currentTimeMillis();
+		long oldTime = currentTime-(14*24*60*60*1000)*2L -1L;
+		try {
+			jedis.zadd(queue.getRelativeUrl() + "-" + 0 + "-Q", oldTime, newMessageId);
+    	
+		} catch (Exception ex) {
+	    	brokenJedis = true;
+	    } finally {
+	    	redisP.returnResource(jedis, brokenJedis);
+	    }
+        //end of update the message to be an old message
+		
+        //send the second message with and it will clean the previous expired message
+        msg = new CQSMessage("test2", new HashMap<String, String>());
+      timeHash = AbstractDurablePersistence.newTime(System.currentTimeMillis(), false);
+      msg.setMessageId("45c1596598f85ce59f060dc2b8ec4ebb_0_72:"+timeHash+":2001");
+      msg.setSuppliedMessageId("2001");
+      if (!batch) {
+          newMessageId = redisP.sendMessage(queue, 0, msg);
+      } else {
+          Map<String, String> clientToMessageId = redisP.sendMessageBatch(queue, 0, Arrays.asList(msg));
+          if (clientToMessageId.size() != 1) {
+              fail("Expected one messageId returned");
+          }
+          if (!clientToMessageId.containsKey("2001")) {
+              fail("Expected client's messageId 2001 in response but not found");
+          }
+          newMessageId = clientToMessageId.get("2001");
+      }
+      //end of send the second message
+        
+        if (testP.messages.size() != 2002) {
+            fail("Expected to add one more message. count=" + testP.messages.size() );
+        }
+        if (redisP.getQueueMessageCount("testQueue", false) != 2001) {
+            fail("Expected 2001. Got:" + redisP.getQueueMessageCount("testQueue", false));
+        }
+        
+        //get message and ensure its what you added
+        Map<String, CQSMessage> ret = redisP.getMessages("testQueue", Arrays.asList(newMessageId));
+        if (ret.size() !=1) {
+            fail("did not get the newly created mesage");
+        }
+        if (!ret.containsKey(newMessageId)) {
+            fail("returned map does not have newMessageId");
+        }
+    }
     @Test
     public void testSendMessage() throws Exception {
         testSendMessage(false);
-        Long oldestMsgTS = getOldestMessageCreatedTSMS("testQueue"); 
+        Long oldestMsgTS = CQSMonitor.getInstance().getOldestMessageCreatedTSMS("testQueue"); 
         if (oldestMsgTS == null || oldestMsgTS > System.currentTimeMillis()) {
             fail("Expected oldestMsgs. Instead failed");
         }
         log.info("oldestMsgTS=" + oldestMsgTS);
     }
     
-    private Long getOldestMessageCreatedTSMS(String queueUrl) {
-
-    	RedisCachedCassandraPersistence redisP = RedisCachedCassandraPersistence.getInstance();
-        List<String> ids;
-		try {
-
-			ids = redisP.getIdsFromHead(queueUrl, 0, 1);
-	        
-			if (ids.size() == 0) {
-	        	return null;
-	        }
-			
-	        return RedisSortedSetPersistence.getMemQueueMessageCreatedTS(ids.get(0));
-
-		} catch (PersistenceException ex) {
-			log.error("event=failed_to_get_oldest_queue_message_timestamp queue_url=" + queueUrl, ex);
-		}
-        
-		return null;
-    }
     @Test
     public void testSendMessageBatch() throws Exception {
         testSendMessage(true);
@@ -497,7 +645,7 @@ public class CQSRedisCachedCassandraPersistenceTest {
     
     @Test
     public void testReceiveMessage() throws Exception {
-        RedisCachedCassandraPersistence redisP = testSendMessage(false); //creates a queue with 2001 messages in it
+        RedisSortedSetPersistence redisP = testSendMessage(false); //creates a queue with 2001 messages in it
         CQSQueue queue = new CQSQueue("testQueue", "testOwner");
         queue.setRelativeUrl("testQueue");        
         HashMap<String, String> receiveAttributes = new HashMap<String, String>();
@@ -529,9 +677,9 @@ public class CQSRedisCachedCassandraPersistenceTest {
         }
     }
 
-    @Test
+    @Ignore
     public void testReceiveMessageBackwardCompatibile() throws Exception {
-        RedisCachedCassandraPersistence redisP = testSendMessage(false); //creates a queue with 2001 messages in it
+        RedisSortedSetPersistence redisP = testSendMessage(false); //creates a queue with 2001 messages in it
         CQSQueue queue = new CQSQueue("testQueue", "testOwner");
         queue.setRelativeUrl("testQueue");        
         HashMap<String, String> receiveAttributes = new HashMap<String, String>();
@@ -540,7 +688,7 @@ public class CQSRedisCachedCassandraPersistenceTest {
         //before receive, change Redis key to old format.
         String queueUrl = "testQueue";
         boolean brokenJedis = false;
-        ShardedJedis jedis = RedisCachedCassandraPersistence.getResource();
+        ShardedJedis jedis = RedisSortedSetPersistence.getResource();
         try {
             //jedis is lame and does not have a constant for "-inf" which Redis supports. So we have to
             //pick an arbitrary old min value.
@@ -557,7 +705,7 @@ public class CQSRedisCachedCassandraPersistenceTest {
             brokenJedis = true;
             throw e;
         } finally {
-        	RedisCachedCassandraPersistence.returnResource(jedis, brokenJedis);
+        	RedisSortedSetPersistence.returnResource(jedis, brokenJedis);
         }  
         //end of change Redis key
         List<CQSMessage> messages = redisP.receiveMessage(queue, receiveAttributes);
@@ -590,7 +738,7 @@ public class CQSRedisCachedCassandraPersistenceTest {
         //test that with 0 message visibility. The same message is returned everytime
         //also ensure the message-attributes are still done as with non-zero visibilityTO
 
-        RedisCachedCassandraPersistence redisP = testSendMessage(false); //creates a queue with 2001 messages in it
+        RedisSortedSetPersistence redisP = testSendMessage(false); //creates a queue with 2001 messages in it
         CQSQueue queue = new CQSQueue("testQueue", "testOwner");
         queue.setRelativeUrl("testQueue");        
         HashMap<String, String> receiveAttributes = new HashMap<String, String>();
@@ -617,7 +765,7 @@ public class CQSRedisCachedCassandraPersistenceTest {
     
     @Test
     public void testSendReceiveTwiceScenario() throws Exception {
-        RedisCachedCassandraPersistence redisP = testSendMessage(false); //creates a queue with 2001 messages in it
+        RedisSortedSetPersistence redisP = testSendMessage(false); //creates a queue with 2001 messages in it
         CMBProperties.getInstance().setRedisRevisibleFrequencySec(1); //1 sec
         CQSQueue queue = new CQSQueue("testQueue", "testOwner");
         queue.setRelativeUrl("testQueue");        
@@ -641,7 +789,7 @@ public class CQSRedisCachedCassandraPersistenceTest {
     
     @Test
     public void testDeleteMessage() throws Exception {
-        RedisCachedCassandraPersistence redisP = testSendMessage(false); //creates a queue with 2001 messages in it
+        RedisSortedSetPersistence redisP = testSendMessage(false); //creates a queue with 2001 messages in it
         CQSQueue queue = new CQSQueue("testQueue", "testOwner");
         queue.setRelativeUrl("testQueue");        
         HashMap<String, String> receiveAttributes = new HashMap<String, String>();
@@ -667,7 +815,7 @@ public class CQSRedisCachedCassandraPersistenceTest {
     
     //@Test
     public void testChangeVTO() throws Exception {
-        RedisCachedCassandraPersistence redisP = testSendMessage(false); //creates a queue with 2001 messages in it
+        RedisSortedSetPersistence redisP = testSendMessage(false); //creates a queue with 2001 messages in it
         CQSQueue queue = new CQSQueue("testQueue", "testOwner");
         queue.setRelativeUrl("testQueue");        
         
@@ -706,7 +854,7 @@ public class CQSRedisCachedCassandraPersistenceTest {
     
     //@Test
     public void testChangeVTOTwice() throws Exception {
-        RedisCachedCassandraPersistence redisP = testSendMessage(false); //creates a queue with 2001 messages in it
+        RedisSortedSetPersistence redisP = testSendMessage(false); //creates a queue with 2001 messages in it
         CQSQueue queue = new CQSQueue("testQueue", "testOwner");
         queue.setRelativeUrl("testQueue");        
         
@@ -742,7 +890,7 @@ public class CQSRedisCachedCassandraPersistenceTest {
     
     //@Test
     public void testMsgAttrs() throws Exception {
-        RedisCachedCassandraPersistence redisP = testSendMessage(false); //creates a queue with 2001 messages in it
+        RedisSortedSetPersistence redisP = testSendMessage(false); //creates a queue with 2001 messages in it
         CQSQueue queue = new CQSQueue("testQueue", "testOwner");
         queue.setRelativeUrl("testQueue");        
         
@@ -800,7 +948,7 @@ public class CQSRedisCachedCassandraPersistenceTest {
     
     @Test
     public void testClearQ() throws Exception {
-        RedisCachedCassandraPersistence redisP = testSendMessage(false); //creates a queue with 2001 messages in it
+        RedisSortedSetPersistence redisP = testSendMessage(false); //creates a queue with 2001 messages in it
         CQSQueue queue = new CQSQueue("testQueue", "testOwner");
         queue.setRelativeUrl("testQueue");        
 
@@ -829,7 +977,7 @@ public class CQSRedisCachedCassandraPersistenceTest {
     
     @Test
     public void testRevisible() throws Exception {
-        RedisCachedCassandraPersistence redisP = testSendMessage(false); //creates a queue with 2001 messages in it
+        RedisSortedSetPersistence redisP = testSendMessage(false); //creates a queue with 2001 messages in it
         CQSQueue queue = new CQSQueue("testQueue", "testOwner");
         queue.setRelativeUrl("testQueue");        
 
@@ -842,7 +990,7 @@ public class CQSRedisCachedCassandraPersistenceTest {
         }
 
         Thread.sleep(2001); //wait 2 second and ensure your old messages are all visible
-        redisP.testInterface.scheduleRevisibilityProcessor("testQueue");
+//        redisP.testInterface.scheduleRevisibilityProcessor("testQueue");
         Thread.sleep(4000);//give time for revisibilityprocessor to run
         messages = redisP.receiveMessage(queue, receiveAttributes);
         if (messages.size() != 2000) {
@@ -853,7 +1001,7 @@ public class CQSRedisCachedCassandraPersistenceTest {
     
     @Test
     public void testPeek() throws Exception {
-        RedisCachedCassandraPersistence redisP = testSendMessage(false); //creates a queue with 2001 messages in it
+        RedisSortedSetPersistence redisP = testSendMessage(false); //creates a queue with 2001 messages in it
         CQSQueue queue = new CQSQueue("testQueue", "testOwner");
         queue.setRelativeUrl("testQueue");        
 
@@ -923,7 +1071,7 @@ public class CQSRedisCachedCassandraPersistenceTest {
     @Test
     public void testByteArray() {
         String key = "fool";
-        RedisCachedCassandraPersistence redisP = RedisCachedCassandraPersistence.getInstance();
+        RedisSortedSetPersistence redisP = RedisSortedSetPersistence.getInstance();
         ShardedJedis jedis = redisP.testInterface.getResource();
         try {
             jedis.del(key);
@@ -940,7 +1088,7 @@ public class CQSRedisCachedCassandraPersistenceTest {
     
     @Test
     public void testhmget() throws Exception {
-        RedisCachedCassandraPersistence redisP = RedisCachedCassandraPersistence.getInstance();
+        RedisSortedSetPersistence redisP = RedisSortedSetPersistence.getInstance();
         ShardedJedis jedis = redisP.testInterface.getResource();
         try {
             String key = "testhmget";

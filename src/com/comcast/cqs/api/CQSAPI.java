@@ -19,7 +19,6 @@ import com.comcast.cqs.controller.CQSCache;
 import com.comcast.cqs.controller.CQSLongPollSender;
 import com.comcast.cqs.model.CQSMessage;
 import com.comcast.cqs.model.CQSQueue;
-import com.comcast.cqs.persistence.RedisCachedCassandraPersistence;
 import com.comcast.cqs.util.CQSConstants;
 import com.comcast.cqs.util.CQSErrorCodes;
 
@@ -258,7 +257,7 @@ public class CQSAPI {
 		
 		PersistenceFactory.getQueuePersistence().createQueue(queue);
 		for (int shard = 0; shard < numberOfShards; shard++) {
-			RedisCachedCassandraPersistence.getInstance().checkCacheConsistency(queue.getRelativeUrl(), shard, false);
+			PersistenceFactory.getCQSMessagePersistence().checkCacheConsistency(queue.getRelativeUrl(), shard, false);
 		}
 
 		long ts2 = System.currentTimeMillis();

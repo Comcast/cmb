@@ -30,7 +30,6 @@ import com.comcast.cmb.common.util.CMBException;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cqs.io.CQSQueuePopulator;
 import com.comcast.cqs.model.CQSQueue;
-import com.comcast.cqs.persistence.RedisCachedCassandraPersistence;
 import com.comcast.cqs.util.CQSConstants;
 import com.comcast.cqs.util.CQSErrorCodes;
 
@@ -268,7 +267,7 @@ public class CQSCreateQueueAction extends CQSAction {
     	PersistenceFactory.getQueuePersistence().createQueue(newQueue);
     	
     	for (int shard=0; shard<numberOfShards; shard++) {
-            RedisCachedCassandraPersistence.getInstance().checkCacheConsistency(newQueue.getRelativeUrl(), shard, false);
+    		PersistenceFactory.getCQSMessagePersistence().checkCacheConsistency(newQueue.getRelativeUrl(), shard, false);
     	}
         
         String out = CQSQueuePopulator.getCreateQueueResponse(newQueue);
