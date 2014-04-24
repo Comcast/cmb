@@ -23,6 +23,7 @@ import com.netflix.astyanax.Serializer;
 import com.netflix.astyanax.connectionpool.NodeDiscoveryType;
 import com.netflix.astyanax.connectionpool.OperationResult;
 import com.netflix.astyanax.connectionpool.exceptions.ConnectionException;
+import com.netflix.astyanax.connectionpool.exceptions.NotFoundException;
 import com.netflix.astyanax.connectionpool.impl.ConnectionPoolConfigurationImpl;
 import com.netflix.astyanax.connectionpool.impl.ConnectionPoolType;
 import com.netflix.astyanax.connectionpool.impl.CountingConnectionPoolMonitor;
@@ -840,7 +841,11 @@ public class CassandraAstyanaxPersistence extends AbstractDurablePersistence {
 					execute().
 					getResult();
 			return new CmbAstyanaxColumn(column);
-		} catch (ConnectionException ex) {
+		} catch (NotFoundException ex){
+			//ignore. This might happen when C* data expired.
+			return null;
+		}
+		catch (ConnectionException ex) {
 			throw new PersistenceException(ex);
 		} finally {
 			long ts2 = System.currentTimeMillis();
