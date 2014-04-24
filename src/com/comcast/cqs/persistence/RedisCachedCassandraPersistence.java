@@ -111,9 +111,8 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence {
      * Initialize the Redis connection pool
      */
     private static void initializePool() {
-    	
-        cfg.maxActive = CMBProperties.getInstance().getRedisConnectionsMaxActive();
-        cfg.maxIdle = -1;
+        cfg.setMaxTotal(CMBProperties.getInstance().getRedisConnectionsMaxTotal());
+        cfg.setMaxIdle(-1);
         List<JedisShardInfo> shardInfos = new LinkedList<JedisShardInfo>();
         String serverList = CMBProperties.getInstance().getRedisServerList();
         
@@ -139,8 +138,7 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence {
         pool = new ShardedJedisPool(cfg, shardInfos);
         executor = Executors.newFixedThreadPool(CMBProperties.getInstance().getRedisFillerThreads());
         revisibilityExecutor = Executors.newFixedThreadPool(CMBProperties.getInstance().getRedisRevisibleThreads());
-        
-        logger.info("event=initialize_redis pools_size=" + shardInfos.size() + " max_active=" + cfg.maxActive + " server_list=" + serverList);
+        logger.info("event=initialize_redis pools_size=" + shardInfos.size() + " max_total=" + cfg.getMaxTotal() + " server_list=" + serverList);
     }
     
     /**

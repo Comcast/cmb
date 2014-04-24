@@ -128,8 +128,8 @@ public class RedisSortedSetPersistence implements ICQSMessagePersistence {
      */
     private static void initializePool() {
     	
-        config.maxActive = CMBProperties.getInstance().getRedisConnectionsMaxActive();
-        config.maxIdle = -1;
+        config.setMaxTotal(CMBProperties.getInstance().getRedisConnectionsMaxTotal());
+        config.setMaxIdle(-1);
         List<JedisShardInfo> shardInfos = new LinkedList<JedisShardInfo>();
         String serverList = CMBProperties.getInstance().getRedisServerList();
         
@@ -156,8 +156,7 @@ public class RedisSortedSetPersistence implements ICQSMessagePersistence {
         
         pool = new ShardedJedisPool(config, shardInfos);
         executor = Executors.newFixedThreadPool(CMBProperties.getInstance().getRedisFillerThreads());
-        
-        logger.info("event=initialize_redis pools_size=" + shardInfos.size() + " max_active=" + config.maxActive + " server_list=" + serverList);
+        logger.info("event=initialize_redis pools_size=" + shardInfos.size() + " max_total=" + config.getMaxTotal() + " server_list=" + serverList);
     }
     
     /**
