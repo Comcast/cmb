@@ -33,8 +33,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import me.prettyprint.hector.api.exceptions.HTimedOutException;
-
 import org.apache.log4j.Logger;
 import org.json.JSONException;
 
@@ -1058,12 +1056,12 @@ public class RedisSortedSetPersistence implements ICQSMessagePersistence {
                             }
                         }
                         
-                    } catch (HTimedOutException e1) { //If Hector timedout, push messages back
-                        logger.error("event=hector_timeout num_messages=" + messageIds.size() + " action=pushing_messages_back_to_redis");
+                    } catch (PersistenceException e1) { //If cassandra exception, push messages back
+                        logger.error("event=persistence_exception num_messages=" + messageIds.size() + " action=pushing_messages_back_to_redis");
                         if (visibilityTO > 0) {
                             for (String messageId : messageIds) {
                                 String memId = messageIdToMemId.get(messageId);
-                                jedis.lpush(queue.getRelativeUrl() + "-" + shard + "-Q", memId);
+                                jedis.zadd(queue.getRelativeUrl() + "-" + shard + "-Q", System.currentTimeMillis() , memId);
                             }
                         }
                         throw e1;
