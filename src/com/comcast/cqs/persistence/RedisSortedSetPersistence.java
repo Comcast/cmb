@@ -569,46 +569,49 @@ public class RedisSortedSetPersistence implements ICQSMessagePersistence {
         	return Collections.emptyList();
         }
         
+    	CQSQueue queue = null;
+    	try {
+        	queue = CQSCache.getCachedQueue(queueUrl);
+    	} catch (Exception e) {
+    		throw new PersistenceException (e);
+    	}
+    	
         List<String> memIdsRet = new LinkedList<String>();
+        Set <String> memIds = null;
         boolean brokenJedis = false;
         ShardedJedis jedis = null;
         
         try {
         
         	jedis = getResource();
-            
-            long llen = jedis.zcard(queueUrl + "-" + shard + "-Q");
+            String key = queueUrl + "-" + shard + "-Q";
+           
+            long llen = jedis.zcard(key);
             
             if (llen == 0L) {
                 return Collections.emptyList();
             }
             
-            int retCount = 0;
-            long i = 0L;
-            boolean includeSet = (previousReceiptHandle == null) ? true : false;
-            while (retCount < num && i < llen) {
-            
-            	Set<String> memIds = jedis.zrange(queueUrl + "-" + shard + "-Q", i, i + num - 1);
-            	if (memIds.size() == 0) {
-                	break; // done
-                }
-                
-            	i += num; // next time, exclude the last one in this set
-                
-            	for (String memId : memIds) {
-                    if (!includeSet) {
-                        if (memId.equals(previousReceiptHandle)) {
-                            includeSet = true;
-                            //skip over this one since it was the last el of the last call
-                        }
-                    } else {
-                        memIdsRet.add(memId);
-                        retCount++;
-                    }
-                }
+            //if no previousReceiptHandle, just use zrangeByScore
+            if (previousReceiptHandle == null) {
+            	memIds = jedis.zrangeByScore(key, System.currentTimeMillis() - queue.getMsgRetentionPeriod() * 1000, System.currentTimeMillis(), 0, num);
             }
-            
-            // by here memIdsRet should have memIds to return messages for
+            //else find the score for previous receipt,
+            // 	if not exist, same as no previous receipt
+            // 	else use zrangeByScore with limit
+            else {
+            	Double previousScore = jedis.zscore(key, previousReceiptHandle);
+            	if (previousScore == null) { 
+            		memIds = jedis.zrangeByScore(key, System.currentTimeMillis() - queue.getMsgRetentionPeriod() * 1000, System.currentTimeMillis(), 0, num);
+            	} else {
+            		long startTime = previousScore.longValue();
+            		if (startTime < System.currentTimeMillis() - queue.getMsgRetentionPeriod() * 1000) {
+            			startTime = System.currentTimeMillis() - queue.getMsgRetentionPeriod() * 1000;
+            		}
+            		
+            		memIds = jedis.zrangeByScore(key, "("+startTime, Long.toString(System.currentTimeMillis()), 0, num);
+            	}
+            }
             
         } catch (JedisException e) {
             brokenJedis = true;
@@ -619,7 +622,11 @@ public class RedisSortedSetPersistence implements ICQSMessagePersistence {
             }
         }
         
-        return memIdsRet;
+    	if ((memIds == null) || memIds.isEmpty()) {
+    		return memIdsRet;
+    	} else {
+    		return new ArrayList<String>(memIds);
+    	}   
     }
     
 	@Override
