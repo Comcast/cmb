@@ -470,7 +470,9 @@ public class CassandraAstyanaxPersistence extends AbstractDurablePersistence {
 		    		execute();
 
 	    	return getRows(or.getResult());
-
+		} catch (NotFoundException ex){
+				//ignore. 
+				return null;
 		} catch (ConnectionException ex) {
 		
 			throw new PersistenceException(ex);
@@ -508,7 +510,9 @@ public class CassandraAstyanaxPersistence extends AbstractDurablePersistence {
 			OperationResult<Rows<K, N>> or = query.execute();
 			Rows<K, N> rows = or.getResult();
 			return getRows(rows);
-
+		} catch (NotFoundException ex){
+			//ignore. 
+			return null;
 		} catch (ConnectionException ex) {
 		
 			throw new PersistenceException(ex);
@@ -546,7 +550,9 @@ public class CassandraAstyanaxPersistence extends AbstractDurablePersistence {
 			OperationResult<Rows<K, N>> or = query.execute();
 			Rows<K, N> rows = or.getResult();
 			return getRows(rows);
-
+		} catch (NotFoundException ex){
+			//ignore. 
+			return null;
 		} catch (ConnectionException ex) {
 		
 			throw new PersistenceException(ex);
@@ -583,7 +589,9 @@ public class CassandraAstyanaxPersistence extends AbstractDurablePersistence {
 		    }
 			
 			return new CmbAstyanaxColumnSlice(columns);
-
+		} catch (NotFoundException ex){
+			//ignore. 
+			return null;
 		} catch (ConnectionException ex) {
 		
 			throw new PersistenceException(ex);
@@ -665,6 +673,8 @@ public class CassandraAstyanaxPersistence extends AbstractDurablePersistence {
 				clm.delete();
 			}
 			OperationResult<Void> result = m.execute();
+		} catch (NotFoundException ex){
+			//ignore. 
 		} catch (ConnectionException ex) {
 			throw new PersistenceException(ex);
 		} finally {
@@ -699,6 +709,8 @@ public class CassandraAstyanaxPersistence extends AbstractDurablePersistence {
 				}
 			}
 			OperationResult<Void> result = m.execute();
+		} catch (NotFoundException ex){
+			//ignore. 
 		} catch (ConnectionException ex) {
 			throw new PersistenceException(ex);
 		} finally {
@@ -725,6 +737,9 @@ public class CassandraAstyanaxPersistence extends AbstractDurablePersistence {
 					execute().
 					getResult();
 			return count;
+		} catch (NotFoundException ex){
+			//ignore. 
+			return 0;
 		} catch (ConnectionException ex) {
 			throw new PersistenceException(ex);
 		} finally {
