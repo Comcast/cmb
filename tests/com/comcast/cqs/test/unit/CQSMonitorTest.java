@@ -56,12 +56,12 @@ public class CQSMonitorTest {
     @Test
     public void testNumMessages() {
         CQSMonitor.getInstance().addNumberOfMessagesReceived("test", 1);
-        if (CQSMonitor.getInstance().getQueueDepth("test") != 1) {
-            fail("Expected 1. Got:" + CQSMonitor.getInstance().getQueueDepth("test"));
+        if (CQSMonitor.getInstance().getRecentNumberOfSends("test") != 1) {
+            fail("Expected 1. Got:" + CQSMonitor.getInstance().getRecentNumberOfSends("test"));
         }
         CQSMonitor.getInstance().addNumberOfMessagesReturned("test", 1);
-        if (CQSMonitor.getInstance().getQueueDepth("test") != 0) {
-            fail("Expected 0. Got:" + CQSMonitor.getInstance().getQueueDepth("test"));
+        if (CQSMonitor.getInstance().getRecentNumberOfReceives("test") != 1) {
+            fail("Expected 0. Got:" + CQSMonitor.getInstance().getRecentNumberOfReceives("test"));
         }
         
         if (CQSMonitor.getInstance().getNumberOfMessagesDeleted("test") != 1) {
