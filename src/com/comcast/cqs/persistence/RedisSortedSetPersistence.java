@@ -42,6 +42,7 @@ import redis.clients.jedis.JedisShardInfo;
 import redis.clients.jedis.ShardedJedis;
 import redis.clients.jedis.ShardedJedisPool;
 import redis.clients.jedis.Transaction;
+import redis.clients.jedis.Tuple;
 import redis.clients.jedis.exceptions.JedisConnectionException;
 import redis.clients.jedis.exceptions.JedisDataException;
 import redis.clients.jedis.exceptions.JedisException;
@@ -554,10 +555,10 @@ public class RedisSortedSetPersistence implements ICQSMessagePersistence {
     }
 	@Override
 	public List<String> getIdsFromHead(String queueUrl, int shard, int num) throws PersistenceException {
-        return getIdsFromHead(queueUrl, shard, null, num);
+        return getIdsFromHead(queueUrl, shard, null, null, num);
 	}
 
-    public List<String> getIdsFromHead(String queueUrl, int shard, String previousReceiptHandle, int num) throws PersistenceException {
+    public List<String> getIdsFromHead(String queueUrl, int shard, String previousReceiptHandle, String nextReceiptHandle, int num) throws PersistenceException {
 
     	if (previousReceiptHandle != null && Util.getShardFromReceiptHandle(previousReceiptHandle) != shard) {
     		logger.warn("event=inconsistent_shard_information shard=" + shard + " receipt_handle=" + previousReceiptHandle);
@@ -598,8 +599,8 @@ public class RedisSortedSetPersistence implements ICQSMessagePersistence {
                 return Collections.emptyList();
             }
             
-            //if no previousReceiptHandle, just use zrangeByScore
-            if (previousReceiptHandle == null) {
+            //if no previousReceiptHandle and no nextReceiptHandle, just retrieve from beginning
+            if (previousReceiptHandle == null && nextReceiptHandle == null) {
             	memIds = jedis.zrangeByScore(key, System.currentTimeMillis() - retention * 1000L, System.currentTimeMillis(), 0, num);
             	if (memIds != null){
             		memIdsRet = new ArrayList<String>(memIds);
@@ -608,7 +609,7 @@ public class RedisSortedSetPersistence implements ICQSMessagePersistence {
             //else find the score for previous receipt,
             // 	if not exist, same as no previous receipt
             // 	else use zrangeByScore with limit
-            else {
+            else if (previousReceiptHandle != null) {
             	Double previousScore = jedis.zscore(key, previousReceiptHandle);
             	if (previousScore == null) { 
             		memIds = jedis.zrangeByScore(key, System.currentTimeMillis() - retention * 1000L, System.currentTimeMillis(), 0, num);
@@ -645,12 +646,40 @@ public class RedisSortedSetPersistence implements ICQSMessagePersistence {
                             } else {
                                 memIdsRet.add(memId);
                                 retCount++;
+                                if (retCount >= num) {
+                                	break; //done
+                                }                               
                             }
                         }
                     }
             	}
-            }
-            
+            } else { //this means previousReceiptHandle == null and nextReceiptHandle != null. Retrieve id backward
+            	//return result will exclude the nextReceiptHandle
+            	//retrieve nextReceiptHandle, get index. if not exist, retrieve from beginning.
+            	Long endRank = jedis.zrank(key, nextReceiptHandle);
+            	if (endRank == null) {
+            		memIds = jedis.zrangeByScore(key, System.currentTimeMillis() - retention * 1000L, System.currentTimeMillis(), 0, num);
+                	if (memIds != null){
+                		memIdsRet = new ArrayList<String>(memIds);
+                	}
+            	}
+            	//if index exist, retrieve based on index. When get result, remove expired id
+            	else {
+            		long startIndex = endRank - num;
+            		if (startIndex < 0 ){
+            			startIndex = 0;
+            		}
+            		Set <Tuple> memIdWithScores = jedis.zrangeWithScores(key, startIndex, endRank);
+            		long expiredTime = System.currentTimeMillis() - retention * 1000L;
+            		for(Tuple t: memIdWithScores){
+            			if(t.getScore() < expiredTime || t.getElement().equals(nextReceiptHandle)){
+            				continue;
+            			} else {
+            				memIdsRet.add(t.getElement());
+            			}
+            		}
+            	}
+            }           
         } catch (JedisException e) {
             brokenJedis = true;
             throw e;
@@ -663,12 +692,21 @@ public class RedisSortedSetPersistence implements ICQSMessagePersistence {
         
     }
     
+    /**
+     * Possible type for message count
+     */
+    private enum MessageCountType {
+        ALL, //get all message count 
+        INVISIBLE; //get only invisible message count 
+    }
+    
+    
 	@Override
 	public long getQueueMessageCount(String queueUrl) {
     	long messageCount = 0;
         
     	try {
-        	messageCount = getQueueMessageCount(queueUrl, "ALL");
+        	messageCount = getQueueMessageCount(queueUrl, MessageCountType.ALL);
         } catch (Exception ex) {
     		logger.error("event=failed_to_get_number_of_messages queue_url=" + queueUrl);
         }
@@ -696,7 +734,7 @@ public class RedisSortedSetPersistence implements ICQSMessagePersistence {
     	long messageCount = 0;
         
     	try {
-        	messageCount = getQueueMessageCount(queueUrl, "INVISIBLE");
+        	messageCount = getQueueMessageCount(queueUrl, MessageCountType.INVISIBLE);
         } catch (Exception ex) {
     		logger.error("event=failed_to_get_number_of_not_visible_messages queue_url=" + queueUrl);
         }
@@ -710,14 +748,18 @@ public class RedisSortedSetPersistence implements ICQSMessagePersistence {
      * @return number of mem-ids in Redis Queue
      * @throws Exception 
      */
-    private long getQueueMessageCount(String queueUrl, String type) throws Exception  {
+    private long getQueueMessageCount(String queueUrl, MessageCountType type) throws Exception  {
     	
     	long messageCount = 0;
     	CQSQueue queue = CQSCache.getCachedQueue(queueUrl);
     	int numberOfShards = 1;
     	
+    	int retention;
     	if (queue != null) {
     		numberOfShards = queue.getNumberOfShards();
+    		retention = queue.getMsgRetentionPeriod();
+    	} else {
+    		retention = CMBProperties.getInstance().getCQSMessageRetentionPeriod();
     	}
 
 		ShardedJedis jedis = null;
@@ -735,9 +777,9 @@ public class RedisSortedSetPersistence implements ICQSMessagePersistence {
                 }
 
                 //get the count number
-                if(type.equals("ALL")){
-                	messageCount += jedis.zcard(queueUrl + "-" + shard + "-Q");
-                } else if (type.equals("INVISIBLE")) {
+                if(type == MessageCountType.ALL){
+                	messageCount += jedis.zcount(queueUrl + "-" + shard + "-Q", String.valueOf(System.currentTimeMillis() - retention * 1000L), "+inf");
+                } else if (type == MessageCountType.INVISIBLE) {
                 	messageCount += jedis.zcount(queueUrl + "-" + shard + "-Q", String.valueOf(System.currentTimeMillis()+1), "+inf");
                 }
             }
@@ -766,8 +808,12 @@ public class RedisSortedSetPersistence implements ICQSMessagePersistence {
     	CQSQueue queue = CQSCache.getCachedQueue(queueUrl);
     	int numberOfShards = 1;
     	
+    	int retention;
     	if (queue != null) {
     		numberOfShards = queue.getNumberOfShards();
+    		retention = queue.getMsgRetentionPeriod();
+    	} else {
+    		retention = CMBProperties.getInstance().getCQSMessageRetentionPeriod();
     	}
 
 		ShardedJedis jedis = null;
@@ -778,7 +824,7 @@ public class RedisSortedSetPersistence implements ICQSMessagePersistence {
         	jedis = getResource();
             
         	for (int shard=0; shard<numberOfShards; shard++) {         	
-                messageCount += jedis.zcard(queueUrl + "-" + shard + "-Q");
+        		messageCount += jedis.zcount(queueUrl + "-" + shard + "-Q", String.valueOf(System.currentTimeMillis() - retention * 1000L), "+inf");
             }
         	
         } catch (JedisException e) {
@@ -1197,7 +1243,7 @@ public class RedisSortedSetPersistence implements ICQSMessagePersistence {
         
     	if (cacheAvailable) {
         
-    		List<String> memIdsRet = getIdsFromHead(queueUrl, shard, previousReceiptHandle, length);                
+    		List<String> memIdsRet = getIdsFromHead(queueUrl, shard, previousReceiptHandle, nextReceiptHandle, length);                
             // by here memIdsRet should have memIds to return messages for
             Map<String, CQSMessage> ret = getMessages(queueUrl, memIdsRet);
             // return list in the same order as memIdsRet

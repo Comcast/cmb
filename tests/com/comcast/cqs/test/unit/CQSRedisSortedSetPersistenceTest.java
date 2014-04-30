@@ -1019,10 +1019,15 @@ public class CQSRedisSortedSetPersistenceTest {
                 fail("object returned twice:" + ret.get(9).getMessageId());
             }
         }
+        //get previous message
+        List<CQSMessage> ret3 = redisP.peekQueue("testQueue", 0, null, ret2.get(9).getMessageId(), 5); //length is way past the end
+        if (ret3.size() != 5) {
+            fail("Expected:" + 5 + " got:" + ret3.size());
+        }
         //get all the others
-        List<CQSMessage> ret3 = redisP.peekQueue("testQueue", 0, ret2.get(9).getMessageId(), null, 2001); //length is way past the end
-        if (ret3.size() != 2001 - 20) {
-            fail("Expected:" + (2001-20) + " got:" + ret3.size());
+        List<CQSMessage> ret4 = redisP.peekQueue("testQueue", 0, ret2.get(9).getMessageId(), null, 2001); //length is way past the end
+        if (ret4.size() != 2001 - 20) {
+            fail("Expected:" + (2001-20) + " got:" + ret4.size());
         }
     }
     
