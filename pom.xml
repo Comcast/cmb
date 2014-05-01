@@ -4,7 +4,7 @@
 	<!-- Use this pom.xml file to create a single jar build for all cmb components using the embedded Jetty option (recommended) -->
 
 	<properties>
-	    <buildnum>2.2.40</buildnum>
+	    <buildnum>2.2.41</buildnum>
 	    <projectname>cmb</projectname>
 	</properties>
 

@@ -1,3 +1,16 @@
+CMB VERSION 2.2.41
+--------------------------------------------------------------------
+
+New features:
+
+- implement Redis Sorted Set for cache layer
+- upgrade jedis version to 2.4.2
+
+Bug fixes:
+
+- fix bug for when nothing returned from Astyanax.
+- fix bug for receive message. When Cassandra has exception, put message back to
+
 CMB VERSION 2.2.40
 --------------------------------------------------------------------
 
