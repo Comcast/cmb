@@ -15,8 +15,8 @@
  */
 package com.comcast.cqs.io;
 
+import com.comcast.cmb.common.persistence.PersistenceFactory;
 import com.comcast.cqs.model.CQSQueue;
-import com.comcast.cqs.persistence.RedisCachedCassandraPersistence;
 import com.comcast.cqs.util.CQSConstants;
 
 import java.util.List;
@@ -94,9 +94,9 @@ public class CQSQueuePopulator extends CQSPopulator {
             out.append("\t\t").append(fillAttribute(CQSConstants.RECEIVE_MESSAGE_WAIT_TIME_SECONDS, "" + queue.getReceiveMessageWaitTimeSeconds())).append("\n");
             out.append("\t\t").append(fillAttribute(CQSConstants.NUMBER_OF_PARTITIONS, "" + queue.getNumberOfPartitions())).append("\n");
             out.append("\t\t").append(fillAttribute(CQSConstants.NUMBER_OF_SHARDS, "" + queue.getNumberOfShards())).append("\n");
-            out.append("\t\t").append(fillAttribute(CQSConstants.APPROXIMATE_NUMBER_OF_MESSAGES, "" + RedisCachedCassandraPersistence.getInstance().getQueueMessageCount(queue.getRelativeUrl(), true))).append("\n");
-            out.append("\t\t").append(fillAttribute(CQSConstants.APPROXIMATE_NUMBER_OF_MESSAGES_NOTVISIBLE, "" + RedisCachedCassandraPersistence.getInstance().getQueueNotVisibleMessageCount(queue.getRelativeUrl(), true))).append("\n");
-            out.append("\t\t").append(fillAttribute(CQSConstants.APPROXIMATE_NUMBER_OF_MESSAGES_DELAYED, "" + RedisCachedCassandraPersistence.getInstance().getQueueDelayedMessageCount(queue.getRelativeUrl(), true))).append("\n");
+            out.append("\t\t").append(fillAttribute(CQSConstants.APPROXIMATE_NUMBER_OF_MESSAGES, "" + PersistenceFactory.getCQSMessagePersistence().getQueueMessageCount(queue.getRelativeUrl(), true))).append("\n");
+            out.append("\t\t").append(fillAttribute(CQSConstants.APPROXIMATE_NUMBER_OF_MESSAGES_NOTVISIBLE, "" + PersistenceFactory.getCQSMessagePersistence().getQueueNotVisibleMessageCount(queue.getRelativeUrl(), true))).append("\n");
+            out.append("\t\t").append(fillAttribute(CQSConstants.APPROXIMATE_NUMBER_OF_MESSAGES_DELAYED, "" + PersistenceFactory.getCQSMessagePersistence().getQueueDelayedMessageCount(queue.getRelativeUrl(), true))).append("\n");
             out.append("\t\t").append(fillAttribute(CQSConstants.IS_COMPRESSED, "" + queue.isCompressed())).append("\n");
 
         } else {
@@ -130,13 +130,13 @@ public class CQSQueuePopulator extends CQSPopulator {
                     out.append("\t\t").append(fillAttribute(attributeName, "" + queue.getReceiveMessageWaitTimeSeconds())).append("\n");
                 }
                 if (attributeName.equals(CQSConstants.APPROXIMATE_NUMBER_OF_MESSAGES)) {
-                	out.append("\t\t").append(fillAttribute(attributeName, "" + RedisCachedCassandraPersistence.getInstance().getQueueMessageCount(queue.getRelativeUrl(), true))).append("\n");
+                	out.append("\t\t").append(fillAttribute(attributeName, "" + PersistenceFactory.getCQSMessagePersistence().getQueueMessageCount(queue.getRelativeUrl(), true))).append("\n");
                 }
                 if (attributeName.equals(CQSConstants.APPROXIMATE_NUMBER_OF_MESSAGES_NOTVISIBLE)) {
-                	out.append("\t\t").append(fillAttribute(attributeName, "" + RedisCachedCassandraPersistence.getInstance().getQueueNotVisibleMessageCount(queue.getRelativeUrl(), true))).append("\n");
+                	out.append("\t\t").append(fillAttribute(attributeName, "" + PersistenceFactory.getCQSMessagePersistence().getQueueNotVisibleMessageCount(queue.getRelativeUrl(), true))).append("\n");
                 }
                 if (attributeName.equals(CQSConstants.APPROXIMATE_NUMBER_OF_MESSAGES_DELAYED)) {
-                	out.append("\t\t").append(fillAttribute(attributeName, "" + RedisCachedCassandraPersistence.getInstance().getQueueDelayedMessageCount(queue.getRelativeUrl(), true))).append("\n");
+                	out.append("\t\t").append(fillAttribute(attributeName, "" + PersistenceFactory.getCQSMessagePersistence().getQueueDelayedMessageCount(queue.getRelativeUrl(), true))).append("\n");
                 }
                 if (attributeName.equals(CQSConstants.IS_COMPRESSED)) {
                     out.append("\t\t").append(fillAttribute(attributeName, "" + queue.isCompressed())).append("\n");

@@ -28,6 +28,7 @@ import com.comcast.cmb.common.persistence.AbstractDurablePersistence.CMB_SERIALI
 import com.comcast.cmb.common.persistence.AbstractDurablePersistence.CmbColumn;
 import com.comcast.cmb.common.persistence.AbstractDurablePersistence.CmbColumnSlice;
 import com.comcast.cmb.common.persistence.DurablePersistenceFactory;
+import com.comcast.cmb.common.persistence.PersistenceFactory;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.PersistenceException;
 import com.comcast.cqs.model.CQSQueue;
@@ -139,7 +140,7 @@ public class CQSQueueCassandraPersistence implements ICQSQueuePersistence {
 					
 					if (containingMessagesOnly) {
 						try {
-							if (RedisCachedCassandraPersistence.getInstance().getQueueMessageCount(queue.getRelativeUrl(), true) <= 0) {
+							if (PersistenceFactory.getCQSMessagePersistence().getQueueMessageCount(queue.getRelativeUrl(), true) <= 0) {
 								continue;
 							}
 						} catch (Exception ex) {

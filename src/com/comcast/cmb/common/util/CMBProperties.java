@@ -161,7 +161,7 @@ public class CMBProperties {
 
     private final int rollingWindowTimeSec;    
     
-    private final int redisConnectionsMaxActive;
+    private final int redisConnectionsMaxTotal;
     private final String redisServerList;
     private final int redisFillerThreads;
     private final int redisRevisibleThreads;
@@ -355,7 +355,7 @@ public class CMBProperties {
             
             rollingWindowTimeSec = Integer.parseInt(props.getProperty("cmb.rollingWindowSizeSec", "600"));
             
-            redisConnectionsMaxActive = Integer.parseInt(props.getProperty("cmb.redis.connectionsMaxActive", "100"));
+            redisConnectionsMaxTotal = Integer.parseInt(props.getProperty("cmb.redis.connectionsMaxTotal", "100"));
             redisServerList = props.getProperty("cmb.redis.serverList");
             redisFillerThreads = Integer.parseInt(props.getProperty("cmb.redis.fillerThreads", "5"));
             redisRevisibleThreads = Integer.parseInt(props.getProperty("cmb.redis.revisibleThreads", "3"));
@@ -745,8 +745,8 @@ public class CMBProperties {
         return redisServerList;
     }
 
-    public int getRedisConnectionsMaxActive() {
-        return redisConnectionsMaxActive;
+    public int getRedisConnectionsMaxTotal() {
+        return redisConnectionsMaxTotal;
     }
 
     public int getRollingWindowTimeSec() {

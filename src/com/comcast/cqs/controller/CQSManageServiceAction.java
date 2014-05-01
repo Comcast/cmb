@@ -31,7 +31,7 @@ import com.comcast.cmb.common.util.CMBException;
 import com.comcast.cns.io.CNSPopulator;
 import com.comcast.cns.util.CNSErrorCodes;
 import com.comcast.cqs.io.CQSPopulator;
-import com.comcast.cqs.persistence.RedisCachedCassandraPersistence;
+import com.comcast.cqs.persistence.RedisSortedSetPersistence;
 import com.comcast.cqs.util.CQSErrorCodes;
 
 /**
@@ -68,7 +68,7 @@ public class CQSManageServiceAction extends CQSAction {
 		
 		if (task.equals("ClearCache")) {
 
-	    	RedisCachedCassandraPersistence.flushAll();
+			RedisSortedSetPersistence.flushAll();
 	    	String out = CQSPopulator.getResponseMetadata();
             writeResponse(out, response);
 	        return true;

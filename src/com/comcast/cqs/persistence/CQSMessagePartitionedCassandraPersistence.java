@@ -631,4 +631,57 @@ public class CQSMessagePartitionedCassandraPersistence implements ICQSMessagePer
             return messageList;
         }        
     }
+
+	@Override
+	public List<String> getIdsFromHead(String queueUrl, int shard, int num)
+			throws PersistenceException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public long getQueueMessageCount(String queueUrl) {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public boolean checkCacheConsistency(String queueUrl, int shard,
+			boolean trueOnFiller) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public long getQueueMessageCount(String queueUrl, boolean processHiddenIds)
+			throws Exception {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public int getNumConnections() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public long getCacheQueueMessageCount(String queueUrl) throws Exception {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public long getQueueNotVisibleMessageCount(String queueUrl,
+			boolean visibilityProcessFlag) throws Exception {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public long getQueueDelayedMessageCount(String queueUrl,
+			boolean visibilityProcessFlag) throws Exception {
+		// TODO Auto-generated method stub
+		return 0;
+	}
 }

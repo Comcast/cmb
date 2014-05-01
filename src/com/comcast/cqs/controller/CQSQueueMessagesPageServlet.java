@@ -256,6 +256,7 @@ public class CQSQueueMessagesPageServlet extends AdminServletBase {
         }
 		
         List<CQSMessage> availableMessages = null;
+        String queueFirstMessageHandle = null;
         
 		try {
 			
@@ -306,6 +307,16 @@ public class CQSQueueMessagesPageServlet extends AdminServletBase {
 					msg.setAttributes(attributes);
 					
 					availableMessages.add(msg);
+				}
+				
+				//retrieve first messageId from queue. this is for pagination
+				String peekRequestFirstMessageUrl = cqsServiceBaseUrl + user.getUserId() + "/" + queueName + "?Action=PeekMessage&AWSAccessKeyId=" + user.getAccessKey() + "&MaxNumberOfMessages=1&Shard=" + shard;
+				String peekFirstMessageXml = httpPOST(cqsServiceBaseUrl, peekRequestFirstMessageUrl,awsCredentials);
+				Element rootFirstMessage = XmlUtil.buildDoc(peekFirstMessageXml);
+				
+				List<Element> messageElementsForFirstMessage = XmlUtil.getCurrentLevelChildNodes(XmlUtil.getCurrentLevelChildNodes(rootFirstMessage, "ReceiveMessageResult").get(0), "Message");
+				if (messageElementsForFirstMessage.size() == 1){
+					queueFirstMessageHandle = XmlUtil.getCurrentLevelTextValue(messageElementsForFirstMessage.get(0), "ReceiptHandle").trim();
 				}
 			}
 		
@@ -380,13 +391,16 @@ public class CQSQueueMessagesPageServlet extends AdminServletBase {
 		
         out.println("</table>");
         
-        if (prevHandle != null) {
+        //This case is for click on "Next" button of the previous page
+        if (prevHandle != null) { 
         	
-        	if (previousHandle != null) {
+        	if ((previousHandle) != null) {
         		out.println("<a style='float:left;' href='/webui/cqsuser/message/?userId="+user.getUserId()+"&queueName="+queueName+"&nextHandle="+previousHandle+"'>Prev</a>");
         	} else {
         		out.println("<a style='float:left;' href='javascript:history.back()'>Prev</a>");
         	}
+        } else if ( (previousHandle != null) && (!previousHandle.equals(queueFirstMessageHandle))){ //this is for all other cases
+        	out.println("<a style='float:left;' href='/webui/cqsuser/message/?userId="+user.getUserId()+"&queueName="+queueName+"&nextHandle="+previousHandle+"'>Prev</a>");
         }
         
         if (availableMessages != null && availableMessages.size() > 0) {

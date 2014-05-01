@@ -71,6 +71,7 @@ import com.comcast.cmb.common.model.User;
 import com.comcast.cmb.common.persistence.AbstractDurablePersistence;
 import com.comcast.cmb.common.persistence.DurablePersistenceFactory;
 import com.comcast.cmb.common.persistence.IUserPersistence;
+import com.comcast.cmb.common.persistence.PersistenceFactory;
 import com.comcast.cmb.common.persistence.UserCassandraPersistence;
 import com.comcast.cmb.common.util.CMBException;
 import com.comcast.cmb.common.util.CMBProperties;
@@ -78,7 +79,7 @@ import com.comcast.cmb.common.util.PersistenceException;
 import com.comcast.cmb.common.util.Util;
 import com.comcast.cns.io.CommunicationUtils;
 import com.comcast.cqs.model.CQSMessage;
-import com.comcast.cqs.persistence.RedisCachedCassandraPersistence;
+import com.comcast.cqs.persistence.ICQSMessagePersistence;
 import com.comcast.cqs.util.CQSErrorCodes;
 
 //
@@ -179,7 +180,7 @@ public class CqsStressTester {
     		totalNumberOfQueues = queueNames.length;
     	}
 
-        RedisCachedCassandraPersistence messagePersistence = RedisCachedCassandraPersistence.getInstance();
+        ICQSMessagePersistence messagePersistence = PersistenceFactory.getCQSMessagePersistence();
 
         for (int i=0; i<totalNumberOfQueues; i++) {
 

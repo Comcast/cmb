@@ -70,7 +70,7 @@ import com.comcast.cqs.util.Util;
  * Class is thread-safe
  */
 
-public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, ICQSMessagePersistenceIdSequence {
+public class RedisCachedCassandraPersistence implements ICQSMessagePersistence {
 	
     private static final Logger logger = Logger.getLogger(RedisCachedCassandraPersistence.class);
     private static final Random rand = new Random();
@@ -111,9 +111,8 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
      * Initialize the Redis connection pool
      */
     private static void initializePool() {
-    	
-        cfg.maxActive = CMBProperties.getInstance().getRedisConnectionsMaxActive();
-        cfg.maxIdle = -1;
+        cfg.setMaxTotal(CMBProperties.getInstance().getRedisConnectionsMaxTotal());
+        cfg.setMaxIdle(-1);
         List<JedisShardInfo> shardInfos = new LinkedList<JedisShardInfo>();
         String serverList = CMBProperties.getInstance().getRedisServerList();
         
@@ -139,8 +138,7 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
         pool = new ShardedJedisPool(cfg, shardInfos);
         executor = Executors.newFixedThreadPool(CMBProperties.getInstance().getRedisFillerThreads());
         revisibilityExecutor = Executors.newFixedThreadPool(CMBProperties.getInstance().getRedisRevisibleThreads());
-        
-        logger.info("event=initialize_redis pools_size=" + shardInfos.size() + " max_active=" + cfg.maxActive + " server_list=" + serverList);
+        logger.info("event=initialize_redis pools_size=" + shardInfos.size() + " max_total=" + cfg.getMaxTotal() + " server_list=" + serverList);
     }
     
     /**
@@ -221,7 +219,7 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
     
     static AtomicInteger numRedisConnections = new AtomicInteger(0);
     
-    public int getNumRedisConnections() {
+    public int getNumConnections() {
         return numRedisConnections.get();
     }
     
@@ -1526,7 +1524,7 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
      * @return number of mem-ids in Redis Queue. If Redis queue is empty, do not load from Cassandra.
      * @throws Exception 
      */
-    public long getRedisQueueMessageCount(String queueUrl) throws Exception  {
+    public long getCacheQueueMessageCount(String queueUrl) throws Exception  {
     	
     	long messageCount = 0;
     	CQSQueue queue = CQSCache.getCachedQueue(queueUrl);
@@ -1808,5 +1806,10 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence, 
 	    }
     	
     	return atLeastOneShardIsUp;
+	}
+	
+	public static void shutdown (){
+        executor.shutdown();
+        revisibilityExecutor.shutdown();
 	}
 }

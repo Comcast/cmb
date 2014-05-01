@@ -32,7 +32,6 @@ import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cns.controller.CNSCreateTopicAction;
 import com.comcast.cqs.io.CQSQueuePopulator;
 import com.comcast.cqs.model.CQSQueue;
-import com.comcast.cqs.persistence.RedisCachedCassandraPersistence;
 import com.comcast.cqs.util.CQSConstants;
 import com.comcast.cqs.util.Util;
 /**
@@ -186,7 +185,7 @@ public class CQSSetQueueAttributesAction extends CQSAction {
                 postVars.put(CQSConstants.COL_NUMBER_SHARDS, value);
                 
             	for (int shard=0; shard<v; shard++) {
-                    RedisCachedCassandraPersistence.getInstance().checkCacheConsistency(queue.getRelativeUrl(), shard, false);
+            		PersistenceFactory.getCQSMessagePersistence().checkCacheConsistency(queue.getRelativeUrl(), shard, false);
             	}
 
             } else if (attributeName.equals(CQSConstants.IS_COMPRESSED)) {
