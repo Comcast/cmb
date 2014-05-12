@@ -4,9 +4,9 @@
 
 -- note: drop keyspaces only if they exist already
 
-drop keyspace CNS;
-drop keyspace CQS;
-drop keyspace CMB;
+-- drop keyspace CNS;
+-- drop keyspace CQS;
+-- drop keyspace CMB;
 
 create keyspace CNS;
 create keyspace CQS;
