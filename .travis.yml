@@ -6,3 +6,4 @@ services:
 before_script: cassandra-cli -f schema/cassandra_1.2.schema
 install: bin/travisci_setup.sh
 test: MAVEN_OPTS="-Djdk.xml.entityExpansionLimit=0 -DentityExpansionLimit=0" mvn test
+after_failure: echo "##########"; cat /tmp/cmb.log
