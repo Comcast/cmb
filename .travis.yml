@@ -3,7 +3,7 @@ language: java
 services:
   - redis-server
   - cassandra
-before_script: cassandra-cli -f schema/cassandra_1.2.schema && sleep 5
+#before_script: cassandra-cli -f schema/cassandra_1.2.schema && sleep 5
 install: bin/travisci_setup.sh
 script: MAVEN_OPTS="-Djdk.xml.entityExpansionLimit=0 -DentityExpansionLimit=0" mvn -ff  test 
 after_failure: echo "##########"; cat /tmp/cmb.log
