@@ -151,7 +151,7 @@ persist to disk!).
    
    or download binary from
    
-   http://cmbdownloads.s3-website-us-west-1.amazonaws.com/
+   http://cmb-releases.s3-website-us-west-1.amazonaws.com/
    
 2. Unpack binary from target folder:
 
