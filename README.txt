@@ -28,7 +28,7 @@ https://groups.google.com/forum/#!forum/cmb-user-forum
 
 If you do not want to build from source you can download the latest stable build here:
 
-http://cmbdownloads.s3-website-us-west-1.amazonaws.com/
+https://s3-us-west-1.amazonaws.com/cmb-releases/index.html
 
 --------------------------------------------------------------------------------------
 - Accessing CQS/CNS Using AWS SDK
