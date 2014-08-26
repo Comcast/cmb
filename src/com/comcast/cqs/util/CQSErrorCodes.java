@@ -24,25 +24,25 @@ import com.comcast.cmb.common.util.CMBErrorCodes;
  */
 public final class CQSErrorCodes extends CMBErrorCodes {
     
-    public static final CQSErrorCodes NonExistentQueue = new CQSErrorCodes(400, "NonExistentQueue"); //Queue does not exist.
+    public static final CQSErrorCodes NonExistentQueue = new CQSErrorCodes(400, "AWS.SimpleQueueService.NonExistentQueue"); //Queue does not exist.
         
-    public static final CQSErrorCodes QueueDeletedRecently = new CQSErrorCodes(400, "QueueDeletedRecently"); //You must wait 60 seconds after deleting a queue before you can create another with the same name.
+    public static final CQSErrorCodes QueueDeletedRecently = new CQSErrorCodes(400, "AWS.SimpleQueueService.QueueDeletedRecently"); //You must wait 60 seconds after deleting a queue before you can create another with the same name.
         
-    public static final CQSErrorCodes QueueNameExists = new CQSErrorCodes(400, "QueueNameExists"); //Queue already exists. CQS returns this error only if the request includes an attribute name or value that differs from the name or value for the existing attribute.
+    public static final CQSErrorCodes QueueNameExists = new CQSErrorCodes(400, "AWS.SimpleQueueService.QueueNameExists"); //Queue already exists. CQS returns this error only if the request includes an attribute name or value that differs from the name or value for the existing attribute.
     
-    public static final CQSErrorCodes BatchEntryIdsNotDistinct = new CQSErrorCodes(400, "BatchEntryIdsNotDistinct"); // The supplied id must be distinct
+    public static final CQSErrorCodes BatchEntryIdsNotDistinct = new CQSErrorCodes(400, "AWS.SimpleQueueService.BatchEntryIdsNotDistinct"); // The supplied id must be distinct
 
-    public static final CQSErrorCodes BatchRequestTooLong = new CQSErrorCodes(400, "BatchRequestTooLong"); // Batch requests cannot be longer than 65536 bytes
+    public static final CQSErrorCodes BatchRequestTooLong = new CQSErrorCodes(400, "AWS.SimpleQueueService.BatchRequestTooLong"); // Batch requests cannot be longer than 65536 bytes
 
-    public static final CQSErrorCodes TooManyEntriesInBatchRequest = new CQSErrorCodes(400, "TooManyEntriesInBatchRequest"); // Batch requests cannot have more than 10 entries
+    public static final CQSErrorCodes TooManyEntriesInBatchRequest = new CQSErrorCodes(400, "AWS.SimpleQueueService.TooManyEntriesInBatchRequest"); // Batch requests cannot have more than 10 entries
     
-    public static final CQSErrorCodes InvalidBatchEntryId = new CQSErrorCodes(400, "InvalidBatchEntryId"); // A batch entry id can only contain alphanumeric characters, hyphens and underscores.
+    public static final CQSErrorCodes InvalidBatchEntryId = new CQSErrorCodes(400, "AWS.SimpleQueueService.InvalidBatchEntryId"); // A batch entry id can only contain alphanumeric characters, hyphens and underscores.
     
-    public static final CQSErrorCodes InvalidMessageContents = new CQSErrorCodes(400, "InvalidMessageContents"); // The message contains characters outside the allowed set.
+    public static final CQSErrorCodes InvalidMessageContents = new CQSErrorCodes(400, "AWS.SimpleQueueService.InvalidMessageContents"); // The message contains characters outside the allowed set.
 
-    public static final CQSErrorCodes BatchResultErrorEntry = new CQSErrorCodes(400, "BatchResultErrorEntry"); //A message was not added to the queue.
+    public static final CQSErrorCodes BatchResultErrorEntry = new CQSErrorCodes(400, "AWS.SimpleQueueService.BatchResultErrorEntry"); //A message was not added to the queue.
 
-    public static final CQSErrorCodes ReceiptHandleInvalid = new CQSErrorCodes(400, "ReceiptHandleInvalid"); //A message was not added to the queue.
+    public static final CQSErrorCodes ReceiptHandleInvalid = new CQSErrorCodes(400, "AWS.SimpleQueueService.ReceiptHandleInvalid"); //A message was not added to the queue.
 
     protected CQSErrorCodes(int httpCode, String awsCode) {
         super(httpCode, awsCode);
