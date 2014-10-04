@@ -1024,7 +1024,7 @@ public class RedisSortedSetPersistence implements ICQSMessagePersistence {
             try {
                 
             	jedis = getResource();
-            	Jedis j = jedis.getShard(queue.getRelativeUrl() + "-" + shard + "-" + CQSConstants.REDIS_STATE);
+            	Jedis j = jedis.getShard(queue.getRelativeUrl() + "-" + shard + "-" + "Q");
                 boolean done = false;
                 String key = queue.getRelativeUrl() + "-" + shard + "-Q";
                 Set <String> memIds;
