@@ -43,7 +43,7 @@ import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.ValueAccumulator.AccumulatorName;
 import com.comcast.cqs.model.CQSQueue;
 import com.comcast.cqs.persistence.ICQSMessagePersistence;
-import com.comcast.cqs.persistence.RedisSortedSetPersistence;
+
 /**
  * The main controller for CQS
  * @author baosen, bwolf, vvenkatraman, aseem
@@ -267,7 +267,7 @@ public class CQSControllerServlet extends CMBControllerServlet {
     		
             logger.info("event=servlet_destroy");
             
-            RedisSortedSetPersistence.shutdown();
+            PersistenceFactory.getCQSMessagePersistence().shutdown();
             CQSLongPollSender.shutdown();
             CQSLongPollReceiver.shutdown();
             

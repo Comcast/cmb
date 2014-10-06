@@ -259,14 +259,14 @@ Finally the admin UI provides a dashboard like view of
 Active-Passive Mode
 
 A CQS deployment consists of a Cassandra ring, one or more Redis shards and one or 
-more CMB service endpoints hosting the CNS/CQS REST API front end and Web UI . A 
+more CMB service endpoints hosting the CNS/CQS REST API front end and Web UI. A 
 production deployment typically consists of two (or more) identical deployments in 
 separate data centers with the ability to fail-over in case the service in one data 
 center becomes unavailable. 
 
 A small two-data-center deployment could look like this: One 8-Node Cassandra ring 
-(4 nodes in each data center), 2 independent redis shards per data center (4 machines 
-total), 2 redundant CQS API servers per data center (also 4 machines total). Each 
+(4 nodes in each data center), 2 independent redis shards per data center (4 nodes 
+total), 2 redundant CQS API servers per data center (also 4 nodes total). Each 
 data center also hosts a simple load balancer directing traffic to its two CQS API 
 servers. One of the two data centers is the designated active data center while the 
 second one operates in stand by mode. All CQS API calls are routed through a global 
@@ -298,8 +298,7 @@ You can do this with the current version of CMB but there are some limitations.
 Most notably, messages will never cross data center boundaries - in other words a 
 message sent by a client in data center A cannot be received by another client 
 in data center B. As long as you have redundant producers and consumers in both data 
-centers this is ok for many applications. An improved CMB design for active-active
-scenarios is currently discussed by the CMB community.  
+centers this is ok for many applications.  
 
 --------------------------------------------------------------------------------------
 - Known Limitations

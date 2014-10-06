@@ -167,18 +167,6 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence {
             RedisCachedCassandraPersistence.this.setCacheState(queueUrl, 0, state, oldState, checkOldState);
         }
         
-        public String getMemQueueMessage(String messageId) {
-            return RedisCachedCassandraPersistence.getMemQueueMessage(messageId);
-        }
-        
-        public long getMemQueueMessageCreatedTS(String memId) {
-            return RedisCachedCassandraPersistence.getMemQueueMessageCreatedTS(memId);
-        }
-        
-        public int getMemQueueMessageInitialDelay(String memId) {
-            return RedisCachedCassandraPersistence.getMemQueueMessageInitialDelay(memId);
-        }
-        
         public String getMemQueueMessageMessageId(String queueUrlHash, String memId) {
             return RedisCachedCassandraPersistence.getMemQueueMessageMessageId(queueUrlHash,memId);
         }
@@ -492,7 +480,7 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence {
      * @param messageId The Cassandra message-id
      * @return The in-memory message-id
      */
-    private static String getMemQueueMessage(String messageId) {
+    private String getMemQueueMessage(String messageId) {
         if (messageId.length() == 0) {
             throw new IllegalArgumentException("Messge Id cannot be an empty string");
         }
@@ -510,7 +498,7 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence {
      * @return The created timestamp encoded in the memId
      */
     //Example 0:0:0_0_72:2923737900040323074:-8763141905575923938
-    public static long getMemQueueMessageCreatedTS(String memId) {
+    public long getMemQueueMessageCreatedTS(String memId) {
         String []arr = memId.split(":");
         if (arr.length < 5) {
             throw new IllegalArgumentException("Bad format for memId. Must be of the form 0:0:<messge-id>. Got: " + memId);
@@ -523,7 +511,7 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence {
      * @param memId
      * @return The initial delay encoded in the memId
      */
-    private static int getMemQueueMessageInitialDelay(String memId) {
+    private int getMemQueueMessageInitialDelay(String memId) {
         String []arr = memId.split(":");
         if (arr.length < 3) {
             throw new IllegalArgumentException("Bad format for memId. Must be of the form 0:0:<messge-id>. Got: " + memId);
@@ -1691,7 +1679,7 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence {
 	 * Get all redis shard infos
 	 * @return list of hash maps, one for each shard
 	 */
-	public static List<Map<String, String>> getInfo() {
+	public List<Map<String, String>> getInfo() {
 	    
 		boolean brokenJedis = false;
 	    ShardedJedis jedis = getResource();
@@ -1739,7 +1727,7 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence {
 	 * Get number of redis shards
 	 * @return number of redis shards
 	 */
-	public static int getNumberOfRedisShards() {
+	public int getNumberOfRedisShards() {
 	    
 		boolean brokenJedis = false;
 	    ShardedJedis jedis = getResource();
@@ -1757,7 +1745,7 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence {
 	/**
 	 * Clear cache across all shards. Useful for data center fail-over scenarios.
 	 */
-	public static void flushAll() {
+	public void flushAll() {
 	    
 		boolean brokenJedis = false;
 	    ShardedJedis jedis = getResource();
@@ -1780,7 +1768,7 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence {
 	    }
 	}
 	
-	public static boolean isAlive() {
+	public boolean isAlive() {
 
     	boolean atLeastOneShardIsUp = false;
 		boolean brokenJedis = false;
@@ -1808,7 +1796,7 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence {
     	return atLeastOneShardIsUp;
 	}
 	
-	public static void shutdown (){
+	public void shutdown () {
         executor.shutdown();
         revisibilityExecutor.shutdown();
 	}

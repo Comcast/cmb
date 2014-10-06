@@ -27,11 +27,11 @@ import com.comcast.cmb.common.model.User;
 import com.comcast.cmb.common.persistence.AbstractDurablePersistence;
 import com.comcast.cmb.common.persistence.DurablePersistenceFactory;
 import com.comcast.cmb.common.persistence.AbstractDurablePersistence.CMB_SERIALIZER;
+import com.comcast.cmb.common.persistence.PersistenceFactory;
 import com.comcast.cmb.common.util.CMBException;
 import com.comcast.cns.io.CNSPopulator;
 import com.comcast.cns.util.CNSErrorCodes;
 import com.comcast.cqs.io.CQSPopulator;
-import com.comcast.cqs.persistence.RedisSortedSetPersistence;
 import com.comcast.cqs.util.CQSErrorCodes;
 
 /**
@@ -68,7 +68,7 @@ public class CQSManageServiceAction extends CQSAction {
 		
 		if (task.equals("ClearCache")) {
 
-			RedisSortedSetPersistence.flushAll();
+			PersistenceFactory.getCQSMessagePersistence().flushAll();
 	    	String out = CQSPopulator.getResponseMetadata();
             writeResponse(out, response);
 	        return true;

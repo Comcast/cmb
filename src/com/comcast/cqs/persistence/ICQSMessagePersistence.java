@@ -32,6 +32,42 @@ import com.comcast.cqs.model.CQSQueue;
  * @author baosen, aseem, vvenkatraman, bwolf
  */
 public interface ICQSMessagePersistence {
+	
+	/**
+	 * Redis
+	 * @param memId
+	 * @return
+	 */
+	public long getMemQueueMessageCreatedTS(String memId);
+	
+	/**
+	 * Redis
+	 * @return
+	 */
+	 public List<Map<String, String>> getInfo();
+	
+	/**
+	 * Redis
+	 * @return
+	 */
+	public int getNumberOfRedisShards();
+	
+	/**
+	 * Redis
+	 */
+	 public void shutdown();
+	
+	/**
+	 * Redis
+	 */
+	public void flushAll();
+	
+	/**
+	 * Redis
+	 * @return
+	 */
+	public boolean isAlive();
+	
     /**
      * Create a message on a specific shard and a random partition.
      * @param queue The CQS queue to post the message

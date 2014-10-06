@@ -24,7 +24,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.log4j.Logger;
-import org.jfree.util.Log;
 
 import com.comcast.cmb.common.controller.CMBControllerServlet;
 import com.comcast.cmb.common.util.CMBErrorCodes;
@@ -32,7 +31,6 @@ import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.PersistenceException;
 import com.comcast.cmb.common.util.ValueAccumulator.AccumulatorName;
 import com.netflix.astyanax.AstyanaxContext;
-import com.netflix.astyanax.AuthenticationCredentials;
 import com.netflix.astyanax.ColumnListMutation;
 import com.netflix.astyanax.Keyspace;
 import com.netflix.astyanax.MutationBatch;
@@ -62,7 +60,6 @@ import com.netflix.astyanax.thrift.ThriftFamilyFactory;
 
 public class CassandraAstyanaxPersistence extends AbstractDurablePersistence {
 	
-	// TODO: fine tune astyanax settings
 	// TODO: timeout exception
 	
 	private static Map<String, Keyspace> keyspaces = new HashMap<String, Keyspace>();

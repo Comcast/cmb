@@ -24,8 +24,8 @@ import com.comcast.cns.persistence.ICNSTopicPersistence;
 import com.comcast.cqs.persistence.CQSQueueCassandraPersistence;
 import com.comcast.cqs.persistence.ICQSMessagePersistence;
 import com.comcast.cqs.persistence.ICQSQueuePersistence;
+import com.comcast.cqs.persistence.RedisCachedCassandraPersistence;
 import com.comcast.cqs.persistence.RedisSortedSetPersistence;
-
 
 /**
  * The factory to create appt implementations of the various persistence interfaces
@@ -42,6 +42,7 @@ public class PersistenceFactory {
 	public static IUserPersistence userPersistence = new UserCassandraPersistence();
 	public static ICNSAttributesPersistence cnsAttributePersistence = new CNSAttributesCassandraPersistence(); 
 	public static ICQSMessagePersistence cqsMessagePersistence = RedisSortedSetPersistence.getInstance();
+	//public static ICQSMessagePersistence cqsMessagePersistence = RedisCachedCassandraPersistence.getInstance();
 	
 	public static IUserPersistence getUserPersistence() {
 		return userPersistence;
@@ -58,7 +59,6 @@ public class PersistenceFactory {
 	public static ICQSQueuePersistence getQueuePersistence() {
 		return cqsQueuePersistence;
 	}
-	
 		
 	public static ICNSAttributesPersistence getCNSAttributePersistence() {
 	    return cnsAttributePersistence;

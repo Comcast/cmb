@@ -684,4 +684,40 @@ public class CQSMessagePartitionedCassandraPersistence implements ICQSMessagePer
 		// TODO Auto-generated method stub
 		return 0;
 	}
+
+	@Override
+	public void flushAll() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public boolean isAlive() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public int getNumberOfRedisShards() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public void shutdown() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public List<Map<String, String>> getInfo() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public long getMemQueueMessageCreatedTS(String memId) {
+		// TODO Auto-generated method stub
+		return 0;
+	}
 }

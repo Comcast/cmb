@@ -34,8 +34,6 @@ import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.PersistenceException;
 import com.comcast.cmb.common.util.RollingWindowCapture;
 import com.comcast.cmb.common.util.RollingWindowCapture.PayLoad;
-import com.comcast.cqs.persistence.ICQSMessagePersistence;
-import com.comcast.cqs.persistence.RedisSortedSetPersistence;
 
 /**
  * Implement the monitoring for CQS
@@ -261,17 +259,16 @@ public class CQSMonitor implements CQSMonitorMBean {
     @Override
     public Long getOldestAvailableMessageTS(String queueUrl) {
 
-    	RedisSortedSetPersistence redisP = RedisSortedSetPersistence.getInstance();
         List<String> ids;
 		try {
 
-			ids = redisP.getIdsFromHead(queueUrl, 0, 1);
+			ids = PersistenceFactory.getCQSMessagePersistence().getIdsFromHead(queueUrl, 0, 1);
 	        
 			if (ids.size() == 0) {
 	        	return null;
 	        }
 			
-	        return RedisSortedSetPersistence.getMemQueueMessageCreatedTS(ids.get(0));
+	        return PersistenceFactory.getCQSMessagePersistence().getMemQueueMessageCreatedTS(ids.get(0));
 
 		} catch (PersistenceException ex) {
 			logger.error("event=failed_to_get_oldest_queue_message_timestamp queue_url=" + queueUrl, ex);
@@ -370,17 +367,17 @@ public class CQSMonitor implements CQSMonitorMBean {
 
 	@Override
 	public int getNumberOfRedisShards() {
-		return RedisSortedSetPersistence.getNumberOfRedisShards();
+		return PersistenceFactory.getCQSMessagePersistence().getNumberOfRedisShards();
 	}
 
 	@Override
 	public List<Map<String, String>> getRedisShardInfos() {
-		return RedisSortedSetPersistence.getInfo();
+		return PersistenceFactory.getCQSMessagePersistence().getInfo();
 	}
 
 	@Override
 	public void flushRedis() {
-		RedisSortedSetPersistence.flushAll();
+		PersistenceFactory.getCQSMessagePersistence().flushAll();
 	}
 
 	@Override
