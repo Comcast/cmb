@@ -256,7 +256,7 @@ public class CMBProperties {
 			
 			cmbDataCenter = props.getProperty("cmb.dc.name", "default");
 			
-			maxMessagePayloadLogLength = Integer.parseInt(props.getProperty("cmb.log.maxMessagePayloadLogLength", "128"));
+			maxMessagePayloadLogLength = Integer.parseInt(props.getProperty("cmb.log.maxMessagePayloadLogLength", "0"));
 			
 			requestTimeoutSec = Integer.parseInt(props.getProperty("cmb.request.timeoutSec", "20"));
 			

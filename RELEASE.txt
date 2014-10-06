@@ -10,6 +10,7 @@ Misc:
 
 - allow to set Cassandra credentials in Astyanax driver using 
   properties cmb.cassandra.username and cmb.cassandra.password
+- stream-lined logging
 
 CMB VERSION 2.2.41
 --------------------------------------------------------------------

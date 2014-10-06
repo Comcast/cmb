@@ -400,9 +400,9 @@ abstract public class CMBControllerServlet extends HttpServlet {
 
 		StringBuffer logLine = new StringBuffer("");
 
-		logLine.append("event=request status="+status+" client=").append(request.getRemoteAddr());
+		logLine.append("event=req status="+status+" client=").append(request.getRemoteAddr());
 
-		logLine.append(((this instanceof CQSControllerServlet) ? (" queue_url=" + request.getRequestURL()) : ""));
+		logLine.append(((this instanceof CQSControllerServlet) ? (" queue_url=" + request.getPathInfo()) : ""));
 
 		if (request.getReceiptHandles() != null && request.getReceiptHandles().size() > 0) {
 			for (int i=0; i<request.getReceiptHandles().size(); i++) {
@@ -510,7 +510,7 @@ abstract public class CMBControllerServlet extends HttpServlet {
 			long ts2 = System.currentTimeMillis();
 			//if it is waiting for long poll receive, do not log now. Wait till asyn request finished.
 			if(request.getAttribute("lp")==null){
-				String logLine = getLogLine(asyncContext, request, user, ts2-ts1, "success");
+				String logLine = getLogLine(asyncContext, request, user, ts2-ts1, "ok");
 				logger.info(logLine);
 			} 
 			//String rawRequest = this.getFullRequestUrl(asyncContext);
@@ -651,9 +651,9 @@ abstract public class CMBControllerServlet extends HttpServlet {
 						Object lp_ms = request.getAttribute("lp_ms");
 						String logLine = null;
 						if(lp_ms!=null){
-							logLine = getLogLine(asyncContext, request, user, (Long)request.getAttribute("lp_ms"), "success");
+							logLine = getLogLine(asyncContext, request, user, (Long)request.getAttribute("lp_ms"), "ok");
 						}else{
-							logLine = getLogLine(asyncContext, request, user, 0, "success");
+							logLine = getLogLine(asyncContext, request, user, 0, "ok");
 						}
 						logger.info(logLine);
 					}
