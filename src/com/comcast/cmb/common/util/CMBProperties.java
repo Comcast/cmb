@@ -110,7 +110,7 @@ public class CMBProperties {
 	private final boolean hectorAutoDiscovery;
     private final int hectorAutoDiscoveryDelaySeconds;
     private final String cassandraDataCenter;
-    private final Map<String, String> hectorCredentials;
+    private final Map<String, String> cassandraCredentials;
 	
 	private final String region;
     
@@ -287,12 +287,13 @@ public class CMBProperties {
             hectorAutoDiscoveryDelaySeconds = Integer.parseInt(props.getProperty("cmb.hector.autoDiscoveryDelaySeconds", "60"));
             hectorAutoDiscovery = Boolean.parseBoolean(props.getProperty("cmb.hector.autoDiscovery", "true"));
             hectorBalancingPolicy = props.getProperty("cmb.hector.balancingPolicy", "RoundRobinBalancingPolicy");
-            if (props.getProperty("cmb.hector.username") != null) {
-                hectorCredentials = new HashMap<String, String>(2);
-                hectorCredentials.put("username", props.getProperty("cmb.hector.username", ""));
-                hectorCredentials.put("password", props.getProperty("cmb.hector.password", ""));
+            
+            if (props.getProperty("cmb.cassandra.username") != null && props.getProperty("cmb.cassandra.password") != null) {
+                cassandraCredentials = new HashMap<String, String>(2);
+                cassandraCredentials.put("username", props.getProperty("cmb.cassandra.username", ""));
+                cassandraCredentials.put("password", props.getProperty("cmb.cassandra.password", ""));
             } else {
-                hectorCredentials = null;
+                cassandraCredentials = null;
             }
             
 			smtpHostName = props.getProperty("cmb.cns.smtp.hostname");
@@ -809,8 +810,22 @@ public class CMBProperties {
 		return hectorAutoDiscoveryDelaySeconds;
 	}
 	
-	public Map<String, String> getHectorCredentials() {
-	    return hectorCredentials;
+	public Map<String, String> getCassandraCredentials() {
+	    return cassandraCredentials;
+	}
+
+	public String getCassandraUsername() {
+		if (cassandraCredentials == null) {
+			return null;
+		}
+	    return cassandraCredentials.get("username");
+	}
+
+	public String getCassandraPassword() {
+		if (cassandraCredentials == null) {
+			return null;
+		}
+	    return cassandraCredentials.get("password");
 	}
 
 	public boolean isCNSPublisherEnabled() {

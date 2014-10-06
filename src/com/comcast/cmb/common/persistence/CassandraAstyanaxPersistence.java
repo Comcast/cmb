@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.log4j.Logger;
+import org.jfree.util.Log;
 
 import com.comcast.cmb.common.controller.CMBControllerServlet;
 import com.comcast.cmb.common.util.CMBErrorCodes;
@@ -31,6 +32,7 @@ import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.PersistenceException;
 import com.comcast.cmb.common.util.ValueAccumulator.AccumulatorName;
 import com.netflix.astyanax.AstyanaxContext;
+import com.netflix.astyanax.AuthenticationCredentials;
 import com.netflix.astyanax.ColumnListMutation;
 import com.netflix.astyanax.Keyspace;
 import com.netflix.astyanax.MutationBatch;
@@ -42,6 +44,7 @@ import com.netflix.astyanax.connectionpool.exceptions.NotFoundException;
 import com.netflix.astyanax.connectionpool.impl.ConnectionPoolConfigurationImpl;
 import com.netflix.astyanax.connectionpool.impl.ConnectionPoolType;
 import com.netflix.astyanax.connectionpool.impl.CountingConnectionPoolMonitor;
+import com.netflix.astyanax.connectionpool.impl.SimpleAuthenticationCredentials;
 import com.netflix.astyanax.impl.AstyanaxConfigurationImpl;
 import com.netflix.astyanax.model.Column;
 import com.netflix.astyanax.model.ColumnFamily;
@@ -89,14 +92,20 @@ public class CassandraAstyanaxPersistence extends AbstractDurablePersistence {
 		keyspaceNames.add(CMBProperties.getInstance().getCQSKeyspace());
 		
 		String dataCenter = CMBProperties.getInstance().getCassandraDataCenter();
+		String username = CMBProperties.getInstance().getCassandraUsername();
+		String password = CMBProperties.getInstance().getCassandraPassword();		
 		
 		for (String k : keyspaceNames) {
-			//configure pool
+
 			ConnectionPoolConfigurationImpl connectionPoolConfiguration = new ConnectionPoolConfigurationImpl("CMBAstyananxConnectionPool")
 			.setMaxConnsPerHost(CMBProperties.getInstance().getAstyanaxMaxConnectionsPerNode())
 			.setSocketTimeout(CMBProperties.getInstance().getCassandraThriftSocketTimeOutMS())
 			.setConnectTimeout(CMBProperties.getInstance().getAstyanaxConnectionWaitTimeOutMS())
 			.setSeeds(AbstractDurablePersistence.CLUSTER_URL);
+			
+			if (username != null && password != null) {
+				connectionPoolConfiguration.setAuthenticationCredentials(new SimpleAuthenticationCredentials(username, password));
+			}
 
 			if (dataCenter != null && !dataCenter.equals("")) {
 				connectionPoolConfiguration.setLocalDatacenter(dataCenter);
@@ -105,7 +114,7 @@ public class CassandraAstyanaxPersistence extends AbstractDurablePersistence {
 			AstyanaxContext<Keyspace> context = new AstyanaxContext.Builder()
 			.forCluster(CLUSTER_NAME)
 			.forKeyspace(k)
-			.withAstyanaxConfiguration(new AstyanaxConfigurationImpl()      
+			.withAstyanaxConfiguration(new AstyanaxConfigurationImpl()  
 			.setDiscoveryType(NodeDiscoveryType.RING_DESCRIBE)
 			.setConnectionPoolType(ConnectionPoolType.TOKEN_AWARE)
 			.setDefaultReadConsistencyLevel(ConsistencyLevel.valueOf("CL_"+CMBProperties.getInstance().getReadConsistencyLevel()))

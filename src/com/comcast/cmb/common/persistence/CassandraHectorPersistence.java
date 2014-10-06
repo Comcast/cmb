@@ -69,7 +69,7 @@ public class CassandraHectorPersistence extends AbstractDurablePersistence {
 	
 	private static final int hectorPoolSize = CMBProperties.getInstance().getHectorPoolSize();
 	private static final String hectorBalancingPolicy = CMBProperties.getInstance().getHectorBalancingPolicy();
-	private static final Map<String, String> credentials = CMBProperties.getInstance().getHectorCredentials();
+	private static final Map<String, String> credentials = CMBProperties.getInstance().getCassandraCredentials();
 
 	private static Cluster cluster;
 	private static Map<String, Keyspace> keyspaces;
