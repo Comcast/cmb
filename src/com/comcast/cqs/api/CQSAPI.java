@@ -40,7 +40,7 @@ public class CQSAPI {
 
 		StringBuffer logLine = new StringBuffer("");
 
-		logLine.append("event=request status=success client=inline Action=").append(action);
+		logLine.append("event=req status=ok client=inline Action=").append(action);
 		
 		if (receiptHandles != null) {
 			for (String receiptHandle : receiptHandles) {
