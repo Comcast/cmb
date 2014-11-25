@@ -113,7 +113,7 @@ public class CNSGetWorkerStatsAction extends CNSAction {
 					Boolean consumerOverloaded = (Boolean)mbeanConn.getAttribute(cnsWorkerMonitor, "ConsumerOverloaded");
 					stats.setConsumerOverloaded(consumerOverloaded);
 					
-					Integer numPublishedMessages = (Integer)mbeanConn.getAttribute(cnsWorkerMonitor, "NumPublishedMessages");
+					Integer numPublishedMessages = (Integer)mbeanConn.getAttribute(cnsWorkerMonitor, "RecentNumberOfPublishedMessages");
 					stats.setNumPublishedMessages(numPublishedMessages);
 					
 					@SuppressWarnings("unchecked")
@@ -123,7 +123,7 @@ public class CNSGetWorkerStatsAction extends CNSAction {
 					Boolean cqsServiceAvailable = (Boolean)mbeanConn.getAttribute(cnsWorkerMonitor, "CQSServiceAvailable");
 					stats.setCqsServiceAvailable(cqsServiceAvailable);
 					
-					Integer numPooledHttpConnections = (Integer)mbeanConn.getAttribute(cnsWorkerMonitor, "NumPooledHttpConnections");
+					Integer numPooledHttpConnections = (Integer)mbeanConn.getAttribute(cnsWorkerMonitor, "PublishHttpPoolSize");
 					stats.setNumPooledHttpConnections(numPooledHttpConnections);
 
 				} catch (Exception ex) {

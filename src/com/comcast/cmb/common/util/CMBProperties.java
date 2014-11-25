@@ -302,7 +302,7 @@ public class CMBProperties {
 			smtpReplyAddress = props.getProperty("cmb.cns.smtp.replyAddress");
 			smtpEnabled = Boolean.parseBoolean(props.getProperty("cmb.cns.smtp.enabled", "false"));
 			
-            region = props.getProperty("cmb.region");
+            region = props.getProperty("cmb.region", "csv");
 
             publisherThreadPoolSize = Integer.parseInt(props.getProperty("cmb.cns.publisher.threadPoolSize", "20"));
             publishJobQueueSizeLimit = Integer.parseInt(props.getProperty("cmb.cns.publisher.publishJobQueueSizeLimit", "100000"));

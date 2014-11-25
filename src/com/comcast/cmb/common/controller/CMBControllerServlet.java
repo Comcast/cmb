@@ -402,7 +402,7 @@ abstract public class CMBControllerServlet extends HttpServlet {
 
 		logLine.append("event=req status="+status+" client=").append(request.getRemoteAddr());
 
-		logLine.append(((this instanceof CQSControllerServlet) ? (" queue_url=" + request.getPathInfo()) : ""));
+		logLine.append(((this instanceof CQSControllerServlet) ? (" queue=" + request.getPathInfo()) : ""));
 
 		if (request.getReceiptHandles() != null && request.getReceiptHandles().size() > 0) {
 			for (int i=0; i<request.getReceiptHandles().size(); i++) {
@@ -440,14 +440,17 @@ abstract public class CMBControllerServlet extends HttpServlet {
 			logLine.append(" lp_ms=").append(System.currentTimeMillis()-request.getRequestReceivedTimestamp());			
 		}
 		
-		logLine.append(" async_pool_queue=").append(CMBControllerServlet.workerPool.getQueue().size()).
-		append(" async_pool_size=").append(CMBControllerServlet.workerPool.getActiveCount());
-		if(CMBProperties.getInstance().getCQSServiceEnabled()){
+		//logLine.append(" async_pool_queue=").append(CMBControllerServlet.workerPool.getQueue().size()).
+		//append(" async_pool_size=").append(CMBControllerServlet.workerPool.getActiveCount());
+		
+		/*if (CMBProperties.getInstance().getCQSServiceEnabled()) {
 			logLine.append(" cqs_pool_size=").append(CMB.cqsServer.getThreadPool().getThreads());
-		}
-		if(CMBProperties.getInstance().getCNSServiceEnabled()){
+		}*/
+		
+		/*if (CMBProperties.getInstance().getCNSServiceEnabled()) {
 			logLine.append(" cns_pool_size=").append(CMB.cnsServer.getThreadPool().getThreads());
-		}
+		}*/
+		
 		// log external headers from proxy if present
 		
 		String rid = request.getHeader("CMB-RID");
