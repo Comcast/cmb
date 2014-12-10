@@ -160,7 +160,7 @@ public class CQSUserPageServlet extends AdminServletBase {
 
 			queueUrls = new ArrayList<String>();
 			
-		} else if (parameters.containsKey("ClearQueue")) {
+		} else if (parameters.containsKey("PurgeQueue")) {
 			
 			String qName = Util.getNameForAbsoluteQueueUrl(queueUrl);
 			String qUserId = Util.getUserIdForAbsoluteQueueUrl(queueUrl);
@@ -170,15 +170,15 @@ public class CQSUserPageServlet extends AdminServletBase {
 				if (!url.endsWith("/")) {
 					url += "/";
 				}
-				url += qUserId + "/" + qName + "?Action=ClearQueue&AWSAccessKeyId=" + user.getAccessKey();
+				url += qUserId + "/" + qName + "?Action=PurgeQueue&AWSAccessKeyId=" + user.getAccessKey();
 				httpGet(url);
-				logger.debug("event=clear_queue url=" + url + " user_id= " + userId);
+				logger.debug("event=purge_queue url=" + url + " user_id= " + userId);
 			} catch (Exception ex) {
-				logger.error("event=clear_queue queue_name=" + qName + " user_id= " + userId, ex);
+				logger.error("event=purge_queue queue_name=" + qName + " user_id= " + userId, ex);
 				throw new ServletException(ex);
 			}
 
-		} else if (parameters.containsKey("ClearAllQueues")) {
+		} else if (parameters.containsKey("PurgeAllQueues")) {
 			
 			for (int i = 0; queueUrls != null && i < queueUrls.size(); i++) {
 
@@ -190,11 +190,11 @@ public class CQSUserPageServlet extends AdminServletBase {
 					if (!url.endsWith("/")) {
 						url += "/";
 					}
-					url += qUserId + "/" + qName + "?Action=ClearQueue&AWSAccessKeyId=" + user.getAccessKey();
+					url += qUserId + "/" + qName + "?Action=PurgeQueue&AWSAccessKeyId=" + user.getAccessKey();
 					httpGet(url);
-					logger.debug("event=clear_queue url=" + url + " user_id= " + userId);
+					logger.debug("event=purge_queue url=" + url + " user_id= " + userId);
 				} catch (Exception ex) {
-					logger.error("event=clear_queue queue_name=" + qName + " user_id= " + userId, ex);
+					logger.error("event=purge_queue queue_name=" + qName + " user_id= " + userId, ex);
 				}
 			}
 		}
@@ -257,7 +257,7 @@ public class CQSUserPageServlet extends AdminServletBase {
     	out.println("<td><input type='submit' value='Delete All' name='DeleteAll' onclick=\"return confirm('Are you sure you want to delete all?')\" /></td></form></tr>");
 
 
-		out.println("<tr><td>Clear all queues:</td><td></td></tr>");
+		out.println("<tr><td>Purge all queues:</td><td></td></tr>");
 		out.println("<tr><form action=\"/webui/cqsuser?userId="+user.getUserId() + "\" " + "method=POST><td><input type='hidden' name='userId' value='"+ userId + "'/>");
 		out.println("<input type='hidden' name='queueNamePrefix' value='"+(queueNamePrefix != null ? queueNamePrefix : "")+"'/></td>");
 		if (showQueuesWithMessagesOnly) {
@@ -266,7 +266,7 @@ public class CQSUserPageServlet extends AdminServletBase {
 		if (showQueueAttributes) {
 			out.println("<input type='hidden' name='ShowAttributes' value='true'/>");
 		}
-		out.println("<td><input type='submit' value='Clear All' name='ClearAllQueues'/></td></form></tr>");
+		out.println("<td><input type='submit' value='Purge All' name='PurgeAllQueues'/></td></form></tr>");
 
 		out.println("</table></p>");
 
@@ -348,7 +348,7 @@ public class CQSUserPageServlet extends AdminServletBase {
 				out.println("<input type='hidden' name='ShowAttributes' value='true'/>");
 			}
 			
-        	out.println("<td><input type='submit' value='Clear' name='ClearQueue'/> <br/><input type='submit' value='Delete' name='Delete' onclick=\"return confirm('Are you sure you want to delete queue "+Util.getNameForAbsoluteQueueUrl(queueUrls.get(i))+"?')\" /></td></form></tr>");
+        	out.println("<td><input type='submit' value='Purge' name='PurgeQueue'/> <br/><input type='submit' value='Delete' name='Delete' onclick=\"return confirm('Are you sure you want to delete queue "+Util.getNameForAbsoluteQueueUrl(queueUrls.get(i))+"?')\" /></td></form></tr>");
 
 		}
 

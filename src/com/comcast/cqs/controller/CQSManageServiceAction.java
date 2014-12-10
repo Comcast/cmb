@@ -39,7 +39,7 @@ import com.comcast.cqs.util.CQSErrorCodes;
  */
 public class CQSManageServiceAction extends CQSAction {
 
-	private static Logger logger = Logger.getLogger(CQSClearQueueAction.class);
+	private static Logger logger = Logger.getLogger(CQSPurgeQueueAction.class);
 	
     public static final String CQS_API_SERVERS = "CQSAPIServers";
     public CQSManageServiceAction() {
@@ -89,7 +89,7 @@ public class CQSManageServiceAction extends CQSAction {
 			
 		} else {
 			logger.error("event=cqs_manage_service error_code=invalid_task_parameter valid_values=ClearCache,ClearAPIStats,RemoveRecord");
-			throw new CMBException(CNSErrorCodes.InvalidParameterValue,"Request parameter Task is missing or invalid. Valid values are ClearQueues, ClearAPIStats, RemoveRecord.");
+			throw new CMBException(CNSErrorCodes.InvalidParameterValue,"Request parameter Task is missing or invalid. Valid values are ClearCache, ClearAPIStats, RemoveRecord.");
 		}
     }
 }

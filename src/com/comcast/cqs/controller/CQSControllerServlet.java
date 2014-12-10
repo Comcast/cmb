@@ -116,7 +116,7 @@ public class CQSControllerServlet extends CMBControllerServlet {
         final CQSRemovePermissionAction removePermissionAction = new CQSRemovePermissionAction();
         final CQSGetQueueAttributesAction getQueueAttributesAction = new CQSGetQueueAttributesAction();
         final CQSSetQueueAttributesAction setQueueAttributesAction = new CQSSetQueueAttributesAction();
-        final CQSClearQueueAction clearQueueAction = new CQSClearQueueAction();
+        final CQSPurgeQueueAction purgeQueueAction = new CQSPurgeQueueAction();
         final CQSPeekMessageAction peekMessageAction = new CQSPeekMessageAction();
         final CQSGetAPIStatsAction getAPIStats = new CQSGetAPIStatsAction();
         final HealthCheckShallow healthCheckShallow = new HealthCheckShallow();
@@ -140,7 +140,7 @@ public class CQSControllerServlet extends CMBControllerServlet {
             put(removePermissionAction.getName(), removePermissionAction);
             put(getQueueAttributesAction.getName(), getQueueAttributesAction);
             put(setQueueAttributesAction.getName(), setQueueAttributesAction);
-            put(clearQueueAction.getName(), clearQueueAction);
+            put(purgeQueueAction.getName(), purgeQueueAction);
             put(healthCheckShallow.getName(), healthCheckShallow);
             put("healthCheckShallow", healthCheckShallow); // for backward-compatibility
             put(clearCache.getName(), clearCache);

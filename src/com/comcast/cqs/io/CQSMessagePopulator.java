@@ -107,8 +107,8 @@ public class CQSMessagePopulator extends CQSPopulator {
         return out;
     }
 
-    public static String getClearQueueResponse() {
-        String out = "<ClearQueueResponse>\n\t" + getResponseMetadata() + "\n</ClearQueueResponse>\n";
+    public static String getPurgeQueueResponse() {
+        String out = "<PurgeQueueResponse>\n\t" + getResponseMetadata() + "\n</PurgeQueueResponse>\n";
         return out;
     }
 
