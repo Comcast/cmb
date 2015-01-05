@@ -2,9 +2,32 @@
 - FREQUENTLY ASKED QUESTIONS
 --------------------------------------------------------------------------------------------
 
-1. I HAVE A QUESTION / FEATURE ENHANCEMENT REQUEST / BUG REPORT - WHAT DO I DO?
+0. I HAVE A QUESTION / FEATURE ENHANCEMENT REQUEST / BUG REPORT - WHAT DO I DO?
 
    Post a question in the CMB User Forum at https://groups.google.com/forum/#!forum/cmb-user-forum
+   
+1. Help, I can't publish messages from a CNS topic into a CQS queue!
+
+   There are several reasons why the CNS service may not be working properly. You should try using 
+   the service manually via Web UI first and methodically follow these steps:
+   
+   Before trying to use CNS you should make sure CQS is working by creating a queue and by sending,
+   receiving and deleting a test message. You should do this because CNS builds on top of CQS and 
+   thus without a working CQS service there is no CNS service.
+   
+   If CQS is working you should try publishing to an HTTP endpoint next. If you don't have a HTTP
+   endpoint you can use the CMB built-in endpoint at
+   
+   http://localhost:6059/Endpoint/recv/mytestendpoint
+   
+   for testing purposes. After publishing a message on the topic check if it has arrived at
+   
+   http://localhost:6059/Endpoint/list
+   
+   If CQS is working and you can publish to HTTP enpoints, then try publishing into a CQS queue.
+   There are a few common pitfalls which are detailed below but if you use the same CMB user for creating
+   the queue and the topic it should be pretty straight-forward. Just make sure to choose "CQS" as
+   the protocol when publishing into a CQS queue (not "SQS").
    
 2. How do I subscribe a CQS queue to a CNS topic? And what about subscriptions "pending confirmation"? 
 
