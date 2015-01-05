@@ -6,3 +6,103 @@
 
    Post a question in the CMB User Forum at https://groups.google.com/forum/#!forum/cmb-user-forum
    
+2. How do I subscribe a CQS queue to a CNS topic? And what about subscriptions "pending confirmation"? 
+
+   When subscribing a CQS queue to a CNS topic you must choose "CQS" as the protocol, not "SQS"! 
+   Notice that when using the AWS Java SDK this means you have to write something like
+   
+   String queueUrl = createQueueResult.getQueueUrl();
+   String queueArn = com.comcast.cqs.util.Util.getArnForAbsoluteQueueUrl(queueUrl);
+   amazonSNSClient.subscribe(createTopicResult.getTopicArn(), "cqs", queueArn);
+
+   instead of 
+
+   Topics.subscribeQueue(amazonSNSClient, amazonSQSClient, createTopicResult.getTopicArn(), createQueueResult.getQueueUrl());
+
+   and accordingly when using other language bindings of the AWS SDK.
+   
+   If both, the CQS queue and the CNS topic are owned (created) by the same user, then you are done
+   at this point. All messages you publish on the CNS topic will be published as messages into the 
+   CQS queue. You will be able to see the subscription as a confirmed subscription with a valid arn 
+   in the CMB Web UI.
+   
+   If, however, the CQS queue and the CNS topic have been created by different CMB users, then the 
+   subscription is not in effect immediately but rather in a "pending confirmation" state. Check the
+   queue for messages and you will find a message with a confirmation request sent by CNS when the
+   subscription was created. This message contains a fully qualified URL with a one-time-use token. 
+   Once you hit that link the subscription will be confirmed and from then on any message published
+   on the topic will be published into the queue just like before. The idea behind confirmations is
+   to avoid inadvertently spamming other user's queues with messages. By asking for a confirmation
+   both parties can be sure to agree on the subscription.
+   
+3. I find dealing with confirmations cumbersome - is there anything I can do to simplify this?
+
+   Absolutely - either use the same CMB user for all your CMB needs and rely on subscriptions
+   being auto-confirmed, or, if that's not an option set 
+   
+   cmb.cns.requireSubscriptionConfirmation=false  
+   
+   in cmb.properties and restart the service. With this configuration change subscriptions will 
+   always be auto-confirmed even if topic and queue are owned by different users.
+   
+   Note: Changing requireSubscriptionConfirmation to false only applies to future subscriptions.
+   It does no auto-confirm already existing subscriptions in "pending confirmation" state. These still 
+   have to be confirmed (or deleted).
+   
+4. Can I subscribe an AWS SQS queue to a CNS topic?
+
+   Yes, you can even subscribe an AWS SQS queue to a CNS topic and thus publish from a CNS 
+   topic directly into a AWS SQS queue. If you want to do this be sure to set you AWS credentials
+   in cmb.properties and restart the service.
+   
+   aws.access.key=
+   aws.access.secret=
+   
+   Currently you can only set a single AWS key and secret globally in cmb.properties which will then
+   be shared by all CMB users.
+   
+5. Do all CMB requests have to be signed?
+
+   No, in fact by default the signature verification feature is turned off assuming you are operating
+   on a trusted network behind a firewall. If you want to enforce signature validation set 
+   
+   cmb.enableSignatureAuth=true
+   
+   in cmb.properties and restart the service. CMB supports signature validation for AWS signatures
+   version 1, 2 and 4.
+   
+6. Do all API calls have to be POST requests or can I use HTTP GET requests as well?
+
+   Both POST and GET are supported. GET requests make testing via browser a lot easier. If you 
+   would like to disable GET requests you can do so by setting
+   
+   cmb.allowGetRequest=false
+      
+   in cmb.properties and restarting the service. 
+   
+7. Does CMB support the ContentType=JSON parameter?
+
+   No, unfortunately not yet. By default AWS SQS and SNS respond with XML and so does CMB. There is 
+   an undocumented parameter ContentType=JSON you can use in AWS to get JSON responses instead but
+   this is not implemented in CMB. We are aware that some client libraries (like Python's boto)
+   rely on this. As a result you can use boto for interacting with CQS but not CNS. You can also 
+   patch boto.
+   
+   https://github.com/boto/boto/pull/827
+      
+8. Can I use the boto client library, or, for that matter AWS client library xyz to interact with CMB?
+
+   CMB is primarily developed with and tested for the AWS Java SDK. People have also successfully 
+   used the nodejs client library and to some degree boto can be used (see 7 above). Of course you
+   can also hand craft your API calls and "curl" them. This option is particularly viable with 
+   signature validation turned off.
+   
+   
+   
+   
+     
+     
+
+   
+
+   
