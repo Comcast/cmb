@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.comcast.cmb.test.tools;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -47,7 +46,7 @@ import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
 import com.amazonaws.services.sqs.model.ReceiveMessageResult;
 import com.comcast.cmb.common.util.Util;
 
-public class CMBTutorial {
+public class Example {
 	
     private static Logger logger = Logger.getLogger(CMBTutorial.class);
     private final static String QUEUE_PREFIX = "TSTQ_"; 
