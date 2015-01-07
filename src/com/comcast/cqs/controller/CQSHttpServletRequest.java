@@ -28,6 +28,7 @@ public class CQSHttpServletRequest extends HttpServletRequestWrapper {
 	private volatile CQSQueue queue;
 	private volatile Map<String, String> receiveAttributes;
 	private volatile List<String> filterAttributes;
+	private volatile List<String> filterMessageAttributes;
 	private volatile List<String> receiptHandles;
 	
 	private volatile Enumeration<String> postParameterNames;
@@ -74,6 +75,14 @@ public class CQSHttpServletRequest extends HttpServletRequestWrapper {
 
 	public void setFilterAttributes(List<String> filterAttributes) {
 		this.filterAttributes = filterAttributes;
+	}
+
+	public List<String> getFilterMessageAttributes() {
+		return filterMessageAttributes;
+	}
+
+	public void setFilterMessageAttributes(List<String> filterMessageAttributes) {
+		this.filterMessageAttributes = filterMessageAttributes;
 	}
 
 	public CQSQueue getQueue() {

@@ -20,9 +20,14 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
+import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
@@ -45,10 +50,14 @@ public final class CQSMessage implements Serializable {
 	transient private String receiptHandle;
 
 	transient private String mD5OfBody;
+	
+	transient private String md5OfMessageAttributes;
 
 	private String body;
 
 	transient private Map<String, String> attributes;
+	
+	transient private Map<String, CQSMessageAttribute> messageAttributes;
 
 	transient private String suppliedMessageId;
 
@@ -66,6 +75,23 @@ public final class CQSMessage implements Serializable {
 		}
 	}
 	
+	public CQSMessage(String body, Map<String, String> attributes, Map<String, CQSMessageAttribute> messageAttributes) throws NoSuchAlgorithmException, UnsupportedEncodingException {
+		
+		this.messageId = UUID.randomUUID().toString();
+		this.receiptHandle = this.messageId;
+		this.body = body;
+		this.attributes = attributes;
+
+		if (body != null) {
+			setMD5OfBody(getMD5(body));
+		}
+		
+		if (messageAttributes != null && messageAttributes.size() > 0) {
+			this.messageAttributes = messageAttributes;
+			this.md5OfMessageAttributes = getMD5(this.messageAttributes);
+		}
+	}
+
 	public CQSMessage() {
 	}
 
@@ -101,6 +127,14 @@ public final class CQSMessage implements Serializable {
 		return attributes;
 	}
 
+	public Map<String, CQSMessageAttribute> getMessageAttributes() {
+		return messageAttributes;
+	}
+
+	public void setMessageAttributes(Map<String, CQSMessageAttribute> messageAttributes) {
+		this.messageAttributes = messageAttributes;
+	}
+
 	public void setAttributes(Map<String, String> attributes) {
 		this.attributes = attributes;
 	}
@@ -115,6 +149,14 @@ public final class CQSMessage implements Serializable {
 
 	public String getMD5OfBody() {
 		return mD5OfBody;
+	}
+
+	public String getMD5OfMessageAttributes() {
+		return md5OfMessageAttributes;
+	}
+
+	public void setMD5OfMessageAttributes(String md5OfMessageAttributes) {
+		this.md5OfMessageAttributes = md5OfMessageAttributes;
 	}
 
 	public void setMD5OfBody(String mD5OfBody) {
@@ -174,6 +216,73 @@ public final class CQSMessage implements Serializable {
         String result = md5.toString().toLowerCase();
         return result;
 	}
+
+	private String getMD5(Map<String, CQSMessageAttribute> messageAttributes) throws NoSuchAlgorithmException, UnsupportedEncodingException {
+		
+        if (messageAttributes == null && messageAttributes.size() == 0) {
+        	return null;
+        }
+
+        List<String> sortedKeys = new ArrayList<String>(messageAttributes.keySet());
+        Collections.sort(sortedKeys);
+        
+        MessageDigest digest = MessageDigest.getInstance("MD5");
+	
+        for (String attrName : sortedKeys) {
+	        CQSMessageAttribute ma = messageAttributes.get(attrName);
+	        setLengthBytes(digest, attrName);
+	        setLengthBytes(digest, ma.getDataType());
+	        if (ma.getStringValue() != null) {
+	        	digest.update((byte)1);
+	        	setLengthBytes(digest, ma.getStringValue());
+	        } else if (ma.getBinaryValue() != null) {
+	        	digest.update((byte)2);
+	        	setLengthBytes(digest, ma.getBinaryValue());
+	        } 
+	        /*else if (ma.getStringListValues() != null) {
+		        digest.update((byte)3);
+		        for (String strListMember : ma.getStringListValues()) {
+		        setLengthBytes(md5Digest, strListMember);
+		        }
+	        } else if (ma.getBinaryListValues() != null) {
+		        md5Digest.update((byte)4);
+		        for (ByteBuffer byteListMember : ma.getBinaryListValues()) {
+		        setLengthBytes(md5Digest, byteListMember);
+		        }
+	        }*/
+        }
+
+        byte bytes[] = digest.digest();
+        StringBuilder md5 = new StringBuilder(bytes.length*2);
+
+        for (int i = 0; i < bytes.length; i++) {
+        	String hexByte = Integer.toHexString(bytes[i]);
+        	if (hexByte.length() == 1) {
+                md5.append("0");
+            } else if (hexByte.length() == 8) {
+            	hexByte = hexByte.substring(6);
+            }
+        	md5.append(hexByte);
+        }
+        
+        String result = md5.toString().toLowerCase();
+        return result;
+	}
+	
+	private void setLengthBytes(MessageDigest digest, String str) throws UnsupportedEncodingException {
+		byte[] bytes = str.getBytes(Charset.forName("UTF-8"));
+		ByteBuffer lengthBytes = ByteBuffer.allocate(4).putInt(bytes.length);
+		digest.update(lengthBytes.array());
+		digest.update(bytes);
+	}
+
+	/*private void setLengthBytes(MessageDigest digest, ByteBuffer binaryValue) {
+		binaryValue.rewind();
+		int size = binaryValue.remaining();
+		ByteBuffer lengthBytes = ByteBuffer.allocate(4).putInt(size);
+		digest.update(lengthBytes.array());
+		digest.update(binaryValue);
+	}*/
 
 	/**
 	 * The persistent state of the CQSMessage

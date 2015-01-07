@@ -28,10 +28,10 @@ import com.comcast.cqs.model.CQSQueue;
  * @author vvenkatraman, bwolf
  *
  */
-public class CQSClearQueueAction extends CQSAction {
+public class CQSPurgeQueueAction extends CQSAction {
 	
-	public CQSClearQueueAction() {
-		super("ClearQueue");
+	public CQSPurgeQueueAction() {
+		super("PurgeQueue");
 	}
 
 	@Override
@@ -46,7 +46,7 @@ public class CQSClearQueueAction extends CQSAction {
             PersistenceFactory.getCQSMessagePersistence().clearQueue(queue.getRelativeUrl(), shard);
         }
 		
-		String out = CQSMessagePopulator.getClearQueueResponse();
+		String out = CQSMessagePopulator.getPurgeQueueResponse();
         writeResponse(out, response);
 		
 		return true;

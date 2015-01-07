@@ -23,6 +23,7 @@ import java.util.Map;
 
 import org.json.JSONException;
 
+import com.comcast.cmb.common.util.CMBException;
 import com.comcast.cmb.common.util.PersistenceException;
 import com.comcast.cqs.model.CQSMessage;
 import com.comcast.cqs.model.CQSQueue;
@@ -167,6 +168,7 @@ public interface ICQSMessagePersistence {
     public void clearQueue(String queueUrl, int shard) throws PersistenceException, NoSuchAlgorithmException, UnsupportedEncodingException;
     
     /**
+     * @throws  
      * Get message payload for a list of message-ids 
      * @param ids The list of message-ids
      * @return The list of messages with those ids in any order
@@ -174,6 +176,7 @@ public interface ICQSMessagePersistence {
      * @throws NoSuchAlgorithmException 
      * @throws IOException 
      * @throws JSONException 
+     * @throws  
      */
 	Map<String, CQSMessage> getMessages(String queueUrl, List<String> ids) throws PersistenceException, NoSuchAlgorithmException, UnsupportedEncodingException, IOException, JSONException;
 	

@@ -47,6 +47,7 @@ import redis.clients.jedis.exceptions.JedisConnectionException;
 import redis.clients.jedis.exceptions.JedisException;
 
 import com.comcast.cmb.common.persistence.AbstractDurablePersistence;
+import com.comcast.cmb.common.util.CMBException;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.PersistenceException;
 import com.comcast.cmb.common.util.ValueAccumulator.AccumulatorName;
@@ -945,7 +946,7 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence {
     }
 
     @Override
-    public List<CQSMessage> receiveMessage(CQSQueue queue, Map<String, String> receiveAttributes) throws PersistenceException, IOException, NoSuchAlgorithmException, InterruptedException, JSONException {
+    public List<CQSMessage> receiveMessage(CQSQueue queue, Map<String, String> receiveAttributes) throws IOException, NoSuchAlgorithmException, InterruptedException, JSONException, PersistenceException {
 
         int shard = rand.nextInt(queue.getNumberOfShards());
         int maxNumberOfMessages = 1;

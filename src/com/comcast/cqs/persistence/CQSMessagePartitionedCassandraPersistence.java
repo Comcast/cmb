@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -41,10 +42,12 @@ import com.comcast.cmb.common.persistence.AbstractDurablePersistence.CmbColumnSl
 import com.comcast.cmb.common.persistence.AbstractDurablePersistence.CmbComposite;
 import com.comcast.cmb.common.persistence.DurablePersistenceFactory;
 import com.comcast.cmb.common.util.CMBErrorCodes;
+import com.comcast.cmb.common.util.CMBException;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.PersistenceException;
 import com.comcast.cqs.controller.CQSCache;
 import com.comcast.cqs.model.CQSMessage;
+import com.comcast.cqs.model.CQSMessageAttribute;
 import com.comcast.cqs.model.CQSQueue;
 import com.comcast.cqs.util.CQSConstants;
 import com.comcast.cqs.util.CQSErrorCodes;
@@ -108,7 +111,7 @@ public class CQSMessagePartitionedCassandraPersistence implements ICQSMessagePer
 		return message.getMessageId();
 	}
 	
-	public List<CQSMessage> extractMessagesFromColumnSlice(String queueUrl, int length, CmbComposite previousHandle, CmbComposite nextHandle, CmbColumnSlice<CmbComposite, String> columnSlice, boolean ignoreFirstLastColumn) throws PersistenceException, NoSuchAlgorithmException, IOException, JSONException  {
+	public List<CQSMessage> extractMessagesFromColumnSlice(String queueUrl, int length, CmbComposite previousHandle, CmbComposite nextHandle, CmbColumnSlice<CmbComposite, String> columnSlice, boolean ignoreFirstLastColumn) throws NoSuchAlgorithmException, IOException, JSONException, PersistenceException  {
 		
 		List<CQSMessage> messageList = new ArrayList<CQSMessage>();
 
@@ -139,7 +142,7 @@ public class CQSMessagePartitionedCassandraPersistence implements ICQSMessagePer
 		return messageList;
 	}
 	
-	private CQSMessage extractMessageFromJSON(String queueUrl, CmbColumn column) throws JSONException, PersistenceException, IOException {
+	private CQSMessage extractMessageFromJSON(String queueUrl, CmbColumn column) throws JSONException, IOException, PersistenceException {
 		
 		CQSQueue queue = null;
 		CQSMessage m = new CQSMessage();
@@ -177,6 +180,18 @@ public class CQSMessagePartitionedCassandraPersistence implements ICQSMessagePer
 			m.getAttributes().put(CQSConstants.SENDER_ID, json.getString(CQSConstants.SENDER_ID));
 		}
 		
+		if (json.has("MessageAttributes")) {
+			m.setMD5OfMessageAttributes(json.getString("MD5OfMessageAttributes"));
+			JSONObject messageAttributes = json.getJSONObject("MessageAttributes");
+			Map<String, CQSMessageAttribute> ma = new HashMap<String, CQSMessageAttribute>();
+			Iterator<String> iter = messageAttributes.keys();
+			while (iter.hasNext()) {
+				String key = iter.next();
+				ma.put(key, new CQSMessageAttribute(messageAttributes.getJSONObject(key).getString("StringValue"), messageAttributes.getJSONObject(key).getString("DataType")));
+			}
+			m.setMessageAttributes(ma);
+		}
+		
 		m.setTimebasedId(column.getName());
 		
 		if (queue.isCompressed()) {
@@ -190,10 +205,9 @@ public class CQSMessagePartitionedCassandraPersistence implements ICQSMessagePer
 		
 		Writer writer = new StringWriter(); 
     	JSONWriter jw = new JSONWriter(writer);
+
     	jw = jw.object();
-		
     	jw.key("MessageId").value(message.getMessageId());
-    	
     	jw.key("MD5OfBody").value(message.getMD5OfBody());
     	jw.key("Body").value(message.getBody());
 		
@@ -210,19 +224,34 @@ public class CQSMessagePartitionedCassandraPersistence implements ICQSMessagePer
 		}
 		
 		if (message.getAttributes() != null) {
-			
 			for (String key : message.getAttributes().keySet()) {
-				
 				String value = message.getAttributes().get(key);
-				
 				if (value == null || value.isEmpty()) {
 					value = "";
 				}
-				
 				jw.key(key).value(value);
 			}
 		}
 		
+		if (message.getMessageAttributes() != null && message.getMessageAttributes().size() > 0) {
+	    	jw.key("MD5OfMessageAttributes").value(message.getMD5OfMessageAttributes());
+			jw.key("MessageAttributes");
+			jw.object();
+			for (String key : message.getMessageAttributes().keySet()) {
+				jw.key(key);
+				jw.object();
+				CQSMessageAttribute messageAttribute = message.getMessageAttributes().get(key);
+				if (messageAttribute.getStringValue() != null) {
+					jw.key("StringValue").value(messageAttribute.getStringValue());
+				} else if (messageAttribute.getBinaryValue() != null) {
+					jw.key("BinaryValue").value(messageAttribute.getBinaryValue());
+				}
+				jw.key("DataType").value(messageAttribute.getDataType());
+				jw.endObject();
+			}
+			jw.endObject();
+		}
+
 		jw.endObject();
 		
 		return writer.toString();
@@ -314,7 +343,7 @@ public class CQSMessagePartitionedCassandraPersistence implements ICQSMessagePer
 	}
 
 	@Override
-	public List<CQSMessage> peekQueue(String queueUrl, int shard, String previousReceiptHandle, String nextReceiptHandle, int length) throws PersistenceException, IOException, NoSuchAlgorithmException, JSONException {
+	public List<CQSMessage> peekQueue(String queueUrl, int shard, String previousReceiptHandle, String nextReceiptHandle, int length) throws IOException, NoSuchAlgorithmException, JSONException, PersistenceException {
 		
 		String queueHash = Util.hashQueueUrl(queueUrl);
 		String key =  queueHash + "_" + shard + "_0";
@@ -429,7 +458,7 @@ public class CQSMessagePartitionedCassandraPersistence implements ICQSMessagePer
 	}
 
 	@Override
-	public Map<String, CQSMessage> getMessages(String queueUrl, List<String> ids) throws PersistenceException, NoSuchAlgorithmException, IOException, JSONException {
+	public Map<String, CQSMessage> getMessages(String queueUrl, List<String> ids) throws NoSuchAlgorithmException, IOException, JSONException, PersistenceException {
 		
 		Map<String, CQSMessage> messageMap = new HashMap<String, CQSMessage>();
 		
@@ -469,7 +498,7 @@ public class CQSMessagePartitionedCassandraPersistence implements ICQSMessagePer
 		return messageMap;
 	}
 	
-	private Map<String, CQSMessage> getMessagesBulk(String queueUrl, List<String> ids) throws NoSuchAlgorithmException, PersistenceException, IOException, JSONException {
+	private Map<String, CQSMessage> getMessagesBulk(String queueUrl, List<String> ids) throws NoSuchAlgorithmException, IOException, JSONException, NumberFormatException, PersistenceException {
 		
 		logger.debug("event=get_message_bulk ids=" + ids);
 		
@@ -588,7 +617,7 @@ public class CQSMessagePartitionedCassandraPersistence implements ICQSMessagePer
 	}
 
 	@Override
-    public List<CQSMessage> peekQueueRandom(String queueUrl, int shard, int length) throws PersistenceException, IOException, NoSuchAlgorithmException, JSONException {
+    public List<CQSMessage> peekQueueRandom(String queueUrl, int shard, int length) throws IOException, NoSuchAlgorithmException, JSONException, PersistenceException {
         
     	String queueHash = Util.hashQueueUrl(queueUrl);
 

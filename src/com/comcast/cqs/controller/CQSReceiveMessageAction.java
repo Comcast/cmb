@@ -62,14 +62,18 @@ public class CQSReceiveMessageAction extends CQSAction {
         
         Map<String, String[]> requestParams = request.getParameterMap();
         List<String> filterAttributes = new ArrayList<String>();
+        List<String> filterMessageAttributes = new ArrayList<String>();
         
         for (String k: requestParams.keySet()) {
-        	if (k.contains(CQSConstants.ATTRIBUTE_NAME)) {
+        	if (k.contains(CQSConstants.MESSAGE_ATTRIBUTE_NAME)) {
+        		filterMessageAttributes.add(requestParams.get(k)[0]);
+        	} else if (k.contains(CQSConstants.ATTRIBUTE_NAME)) {
         		filterAttributes.add(requestParams.get(k)[0]);
         	}
         }
-    	
+        
     	request.setFilterAttributes(filterAttributes);
+    	request.setFilterMessageAttributes(filterMessageAttributes);
     	request.setQueue(queue);
     	
         HashMap<String, String> msgParam = new HashMap<String, String>();
@@ -153,7 +157,7 @@ public class CQSReceiveMessageAction extends CQSAction {
             }
             
             request.setReceiptHandles(receiptHandles);
-            String out = CQSMessagePopulator.getReceiveMessageResponseAfterSerializing(messageList, filterAttributes);
+            String out = CQSMessagePopulator.getReceiveMessageResponseAfterSerializing(messageList, filterAttributes, filterMessageAttributes);
             writeResponse(out, response);
         }
         

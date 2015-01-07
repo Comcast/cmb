@@ -190,7 +190,7 @@ public class CQSLongPollReceiver {
 				request.setReceiptHandles(receiptHandles);
 				request.setAttribute("lp", "yy"); // found lp call with messages 
 				CQSMonitor.getInstance().addNumberOfMessagesReturned(queue.getRelativeUrl(), messageList.size());
-		        String out = CQSMessagePopulator.getReceiveMessageResponseAfterSerializing(messageList, request.getFilterAttributes());
+		        String out = CQSMessagePopulator.getReceiveMessageResponseAfterSerializing(messageList, request.getFilterAttributes(), request.getFilterMessageAttributes());
 		        Action.writeResponse(out, (HttpServletResponse)asyncContext.getResponse());
 		        long lp_ms = System.currentTimeMillis() - ts1;
 		        request.setAttribute("lp_ms", lp_ms);

@@ -30,6 +30,7 @@ public class CQSConstants {
 	public static final String APPROXIMATE_NUMBER_OF_MESSAGES_NOTVISIBLE = "ApproximateNumberOfMessagesNotVisible";
 	public static final String APPROXIMATE_NUMBER_OF_MESSAGES_DELAYED = "ApproximateNumberOfMessagesDelayed";
     public static final String ATTRIBUTE_NAME = "AttributeName";
+    public static final String MESSAGE_ATTRIBUTE_NAME = "MessageAttributeName";
     public static final String DELAY_SECONDS = "DelaySeconds";
     public static final String LABEL = "Label";
     public static final String MAXIMUM_MESSAGE_SIZE = "MaximumMessageSize";
@@ -49,6 +50,7 @@ public class CQSConstants {
 	public static final String NUMBER_OF_PARTITIONS = "NumberOfPartitions";
 	public static final String NUMBER_OF_SHARDS = "NumberOfShards";
 	public static final String IS_COMPRESSED = "IsCompressed";
+	public static final String MESSAGE_ATTRIBUTE = "MessageAttribute";
 
     public static final String REDIS_APPROXIMATE_FIRST_RECEIVE_TIMESTAMP = "AFRTS";	
 	public static final String REDIS_APPROXIMATE_RECEIVE_COUNT = "ARC";

@@ -35,6 +35,7 @@ import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cqs.io.CQSMessagePopulator;
 import com.comcast.cqs.model.CQSBatchResultErrorEntry;
 import com.comcast.cqs.model.CQSMessage;
+import com.comcast.cqs.model.CQSMessageAttribute;
 import com.comcast.cqs.model.CQSQueue;
 import com.comcast.cqs.util.CQSConstants;
 import com.comcast.cqs.util.CQSErrorCodes;
@@ -113,7 +114,29 @@ public class CQSSendMessageBatchAction extends CQSAction {
                 attributes.put(CQSConstants.APPROXIMATE_RECEIVE_COUNT, "0");
                 attributes.put(CQSConstants.APPROXIMATE_FIRST_RECEIVE_TIMESTAMP, "");
                 
-                CQSMessage msg = new CQSMessage(messageBody, attributes);
+                Map<String, CQSMessageAttribute> messageAttributes = new HashMap<String, CQSMessageAttribute>();
+                
+                int messageAttributeIndex = 1;
+                String messageAttributeName = request.getParameter(this.actionName + CQSConstants.REQUEST_ENTRY + index + "." + CQSConstants.MESSAGE_ATTRIBUTE + "." + messageAttributeIndex + ".Name");
+                
+                while (messageAttributeName != null && !messageAttributeName.equals("")) {
+                    String messageAttributeValue = request.getParameter(this.actionName + CQSConstants.REQUEST_ENTRY + index + "."  + CQSConstants.MESSAGE_ATTRIBUTE + "." + messageAttributeIndex + ".Value.StringValue");
+                    if (messageAttributeValue == null || messageAttributeValue.equals("")) {
+                    	messageAttributeValue = request.getParameter(this.actionName + CQSConstants.REQUEST_ENTRY + index + "."  + CQSConstants.MESSAGE_ATTRIBUTE + "." + messageAttributeIndex + ".Value.BinaryValue");
+                    }
+                    if (messageAttributeValue == null || messageAttributeValue.equals("")) {
+                    	throw new CMBException(CMBErrorCodes.InvalidParameterValue, "Missing message attribute value " + messageAttributeName);
+                    }
+                    String messageAttributeDataType = request.getParameter(this.actionName + CQSConstants.REQUEST_ENTRY + index + "." + CQSConstants.MESSAGE_ATTRIBUTE + "." + messageAttributeIndex + ".Value.DataType");
+                    if (messageAttributeDataType == null || messageAttributeDataType.equals("")) {
+                    	throw new CMBException(CMBErrorCodes.InvalidParameterValue, "Missing message attribute data type " + messageAttributeName);
+                    }
+                    messageAttributes.put(messageAttributeName, new CQSMessageAttribute(messageAttributeValue, messageAttributeDataType));
+                    messageAttributeIndex++;
+                    messageAttributeName = request.getParameter(this.actionName + CQSConstants.REQUEST_ENTRY + index + "." + CQSConstants.MESSAGE_ATTRIBUTE + "." + messageAttributeIndex + ".Name");
+                }
+                
+                CQSMessage msg = new CQSMessage(messageBody, attributes, messageAttributes);
                 
                 msg.setSuppliedMessageId(suppliedId);
                 msgList.add(msg);
