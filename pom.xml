@@ -4,7 +4,7 @@
 	<!-- Use this pom.xml file to create a single jar build for all cmb components using the embedded Jetty option (recommended) -->
 
 	<properties>
-	    <buildnum>2.2.42</buildnum>
+	    <buildnum>2.2.43</buildnum>
 	    <projectname>cmb</projectname>
 	</properties>
 
@@ -59,6 +59,7 @@
 			<groupId>com.amazonaws</groupId>
 			<artifactId>aws-java-sdk</artifactId>
 			<version>1.8.11</version>
+			<!--  <version>1.9.13</version> -->
 		</dependency>
 	
 		<dependency>

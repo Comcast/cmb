@@ -81,7 +81,7 @@ abstract public class CMBControllerServlet extends HttpServlet {
 	 */
 	public final static ValueAccumulator valueAccumulator = new ValueAccumulator();
 
-	public final static String VERSION = "2.2.42";
+	public final static String VERSION = "2.2.43";
 	
 	public final static int HARD_TIMEOUT_SEC = CMBProperties.getInstance().getCMBRequestTimeoutSec();
 
@@ -719,10 +719,10 @@ abstract public class CMBControllerServlet extends HttpServlet {
 				AsyncContext asyncContext = asyncEvent.getAsyncContext(); 
 				CQSHttpServletRequest request = (CQSHttpServletRequest)asyncContext.getRequest();
 				String action = request.getParameter("Action");
-				if(action.equals("ReceiveMessage")){
+				if (action.equals("ReceiveMessage")) {
 					String lpValue = (String)request.getAttribute("lp");
-					if(lpValue!=null){
-						String out = CQSMessagePopulator.getReceiveMessageResponseAfterSerializing(new ArrayList<CQSMessage>(), new ArrayList<String>());
+					if (lpValue != null) {
+						String out = CQSMessagePopulator.getReceiveMessageResponseAfterSerializing(new ArrayList<CQSMessage>(), new ArrayList<String>(), new ArrayList<String>());
 						asyncEvent.getSuppliedResponse().getWriter().println(out);
 						
 						CQSQueue queue = ((CQSHttpServletRequest)asyncEvent.getSuppliedRequest()).getQueue();
