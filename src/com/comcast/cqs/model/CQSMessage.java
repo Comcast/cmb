@@ -239,17 +239,6 @@ public final class CQSMessage implements Serializable {
 	        	digest.update((byte)2);
 	        	setLengthBytes(digest, ma.getBinaryValue());
 	        } 
-	        /*else if (ma.getStringListValues() != null) {
-		        digest.update((byte)3);
-		        for (String strListMember : ma.getStringListValues()) {
-		        setLengthBytes(md5Digest, strListMember);
-		        }
-	        } else if (ma.getBinaryListValues() != null) {
-		        md5Digest.update((byte)4);
-		        for (ByteBuffer byteListMember : ma.getBinaryListValues()) {
-		        setLengthBytes(md5Digest, byteListMember);
-		        }
-	        }*/
         }
 
         byte bytes[] = digest.digest();

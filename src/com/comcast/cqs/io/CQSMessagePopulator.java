@@ -35,6 +35,9 @@ public class CQSMessagePopulator extends CQSPopulator {
         StringBuffer out = new StringBuffer("<SendMessageResponse>\n");
         out.append("\t<SendMessageResult>\n");
         out.append("\t\t<MD5OfMessageBody>").append(message.getMD5OfBody()).append("</MD5OfMessageBody>\n");
+        if (message.getMD5OfMessageAttributes() != null) {
+        	out.append("\t\t<MD5OfMessageAttributes>").append(message.getMD5OfMessageAttributes()).append("</MD5OfMessageAttributes>\n");
+        }
         out.append("\t\t<MessageId>").append(message.getMessageId()).append("</MessageId>\n"); 
         out.append("\t</SendMessageResult>\n");
         out.append("\t").append(getResponseMetadata()).append("\n");
@@ -53,6 +56,9 @@ public class CQSMessagePopulator extends CQSPopulator {
             out.append("\t\t\t<Id>").append(message.getSuppliedMessageId()).append("</Id>\n");
             out.append("\t\t\t<MessageId>").append(message.getMessageId()).append("</MessageId>\n"); 
             out.append("\t\t\t<MD5OfMessageBody>").append(message.getMD5OfBody()).append("</MD5OfMessageBody>\n");
+            if (message.getMD5OfMessageAttributes() != null) {
+            	out.append("\t\t<MD5OfMessageAttributes>").append(message.getMD5OfMessageAttributes()).append("</MD5OfMessageAttributes>\n");
+            }
             out.append("\t\t</SendMessageBatchResultEntry>\n");
         }
         
@@ -139,13 +145,13 @@ public class CQSMessagePopulator extends CQSPopulator {
         return out.toString();
     }
     
-    public static String getReceiveMessageResponseAfterSerializing(List<CQSMessage> messages, List<String> filterAttributs) {
+    public static String getReceiveMessageResponseAfterSerializing(List<CQSMessage> messages, List<String> filterAttributs, List<String> filterMessageAttributes) {
         
     	StringBuffer out = new StringBuffer("<ReceiveMessageResponse>\n");
     	out.append("\t<ReceiveMessageResult>\n");
 
         for (CQSMessage message : messages) {
-            out.append(serializeMessage(message, filterAttributs));
+            out.append(serializeMessage(message, filterAttributs, filterMessageAttributes));
         }
 
         out.append("\t</ReceiveMessageResult>\n");
@@ -155,7 +161,7 @@ public class CQSMessagePopulator extends CQSPopulator {
         return out.toString();
     }
 
-    public static String serializeMessage(CQSMessage message, List<String> filterAttributes) {
+    public static String serializeMessage(CQSMessage message, List<String> filterAttributes, List<String> filterMessageAttributes) {
 
     	StringBuffer attributesXmlFragment = fillAttributesInReturn(message, filterAttributes);
         StringBuffer messageXml = new StringBuffer("\t\t<Message>\n"); 
@@ -165,6 +171,29 @@ public class CQSMessagePopulator extends CQSPopulator {
         messageXml.append("\t\t\t<MD5OfBody>").append(message.getMD5OfBody()).append("</MD5OfBody>\n");
         messageXml.append("\t\t\t<Body>").append(StringEscapeUtils.escapeXml(message.getBody()).replaceAll("\r", "&#xD;")).append("</Body>\n");
         messageXml.append(attributesXmlFragment);
+        
+        if (message.getMessageAttributes() != null) {
+        	for (String key : message.getMessageAttributes().keySet()) {
+                if (filterMessageAttributes.contains("All") || filterMessageAttributes.contains(key)) {
+                	messageXml.append("\t\t\t<MD5OfMessageAttributes>").append(message.getMD5OfMessageAttributes()).append("</MD5OfMessageAttributes>\n");
+                	String type = message.getMessageAttributes().get(key).getDataType();
+                	String stringValue = message.getMessageAttributes().get(key).getStringValue();
+                	String binaryValue = message.getMessageAttributes().get(key).getBinaryValue();
+		        	messageXml.append("\t\t\t<MessageAttribute>\n");
+		            messageXml.append("\t\t\t\t<Name>").append(key).append("</Name>\n");
+		            messageXml.append("\t\t\t\t<Value>\n");
+		            messageXml.append("\t\t\t\t\t<DataType>").append(type).append("</DataType>\n");
+		            if (stringValue != null) {
+		            	messageXml.append("\t\t\t\t\t<StringValue>").append(stringValue).append("</StringValue>\n");
+		            } else {
+		            	messageXml.append("\t\t\t\t\t<BinaryValue>").append(binaryValue).append("</BinaryValue>\n");
+		            }
+		            messageXml.append("\t\t\t\t</Value>\n");
+		        	messageXml.append("\t\t\t</MessageAttribute>\n");
+                }
+        	}
+        }
+        
         messageXml.append("\t\t</Message>\n");
         
         return messageXml.toString();
