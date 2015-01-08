@@ -62,10 +62,6 @@ public class CQSSendMessageAction extends CQSAction {
             throw new CMBException(CMBErrorCodes.MissingParameter, "MessageBody not found");
         }
 
-        if (messageBody.length() > CMBProperties.getInstance().getCQSMaxMessageSize()) {
-            throw new CMBException(CMBErrorCodes.InvalidParameterValue, "Value for parameter MessageBody is invalid. Reason: Message body must be shorter than " + CMBProperties.getInstance().getCQSMaxMessageSize() + " bytes");
-        }
-        
         if (!Util.isValidUnicode(messageBody)) {
             throw new CMBException(CMBErrorCodes.InvalidMessageContents, "The message contains characters outside the allowed set.");
         }
@@ -100,6 +96,7 @@ public class CQSSendMessageAction extends CQSAction {
         
         int index = 1;
         String messageAttributeName = request.getParameter(CQSConstants.MESSAGE_ATTRIBUTE+"." + index + ".Name");
+        int messageAttributeSize = 0;
         
         while (messageAttributeName != null && !messageAttributeName.equals("")) {
             String messageAttributeValue = request.getParameter(CQSConstants.MESSAGE_ATTRIBUTE+"." + index + ".Value.StringValue");
@@ -113,9 +110,14 @@ public class CQSSendMessageAction extends CQSAction {
             if (messageAttributeDataType == null || messageAttributeDataType.equals("")) {
             	throw new CMBException(CMBErrorCodes.InvalidParameterValue, "Missing message attribute data type " + messageAttributeName);
             }
+            messageAttributeSize += messageAttributeValue.length();
             messageAttributes.put(messageAttributeName, new CQSMessageAttribute(messageAttributeValue, messageAttributeDataType));
             index++;
             messageAttributeName = request.getParameter(CQSConstants.MESSAGE_ATTRIBUTE+"." + index + ".Name");
+        }
+        
+        if (messageBody.length() + messageAttributeSize > CMBProperties.getInstance().getCQSMaxMessageSize()) {
+            throw new CMBException(CMBErrorCodes.InvalidParameterValue, "Value for parameter MessageBody and/or message attributes are invalid. Reason: Total size must be shorter than " + CMBProperties.getInstance().getCQSMaxMessageSize() + " bytes");
         }
         
         CQSMessage message = new CQSMessage(messageBody, attributes, messageAttributes);

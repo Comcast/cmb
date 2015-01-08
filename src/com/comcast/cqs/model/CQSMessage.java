@@ -73,6 +73,8 @@ public final class CQSMessage implements Serializable {
 		if (body != null) {
 			setMD5OfBody(getMD5(body));
 		}
+
+		this.messageAttributes = new HashMap<String, CQSMessageAttribute>();
 	}
 	
 	public CQSMessage(String body, Map<String, String> attributes, Map<String, CQSMessageAttribute> messageAttributes) throws NoSuchAlgorithmException, UnsupportedEncodingException {
@@ -86,13 +88,16 @@ public final class CQSMessage implements Serializable {
 			setMD5OfBody(getMD5(body));
 		}
 		
-		if (messageAttributes != null && messageAttributes.size() > 0) {
+		if (messageAttributes != null) {
 			this.messageAttributes = messageAttributes;
 			this.md5OfMessageAttributes = getMD5(this.messageAttributes);
+		} else {
+			this.messageAttributes = new HashMap<String, CQSMessageAttribute>();
 		}
 	}
 
 	public CQSMessage() {
+		this.messageAttributes = new HashMap<String, CQSMessageAttribute>();
 	}
 
 	public CQSMessage(String messageId, String body) throws NoSuchAlgorithmException, UnsupportedEncodingException {
@@ -104,6 +109,8 @@ public final class CQSMessage implements Serializable {
 		if (body != null) {
 			setMD5OfBody(getMD5(body));
 		}
+
+		this.messageAttributes = new HashMap<String, CQSMessageAttribute>();
 	}
 	
 	public CQSMessage(Message message) {

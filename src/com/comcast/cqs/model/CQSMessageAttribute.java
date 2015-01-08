@@ -16,8 +16,8 @@
 package com.comcast.cqs.model;
 
 import java.nio.ByteBuffer;
-
 import com.sun.jersey.core.util.Base64;
+import com.comcast.cmb.common.util.CMBException;
 
 public class CQSMessageAttribute {
 	
@@ -51,5 +51,22 @@ public class CQSMessageAttribute {
 	
 	public String getDataType() {
 		return DataType;
+	}
+	
+	public int size() {
+		if (Value == null) {
+			return 0;
+		}
+		return Value.length();
+	}
+	
+	public void validate() throws CMBException {
+		if (DataType.equals("String")) {
+			//TODO
+		} else if (DataType.equals("Number")) {
+			//TODO
+		} else if (DataType.equals("Binary")) {
+			//TODO
+		}
 	}
 }

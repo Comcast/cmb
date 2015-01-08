@@ -67,6 +67,8 @@ public class CQSSendMessageBatchAction extends CQSAction {
 
         int totalMessageSize = 0;
         int index = 1;
+        int totalMessageAttributeSize = 0;
+
         
         String suppliedId = request.getParameter(this.actionName + CQSConstants.REQUEST_ENTRY + index + ".Id");
         String messageBody = request.getParameter(this.actionName + CQSConstants.REQUEST_ENTRY + index + "." + CQSConstants.MESSAGE_BODY);
@@ -131,6 +133,7 @@ public class CQSSendMessageBatchAction extends CQSAction {
                     if (messageAttributeDataType == null || messageAttributeDataType.equals("")) {
                     	throw new CMBException(CMBErrorCodes.InvalidParameterValue, "Missing message attribute data type " + messageAttributeName);
                     }
+                    totalMessageAttributeSize += messageAttributeValue.length();
                     messageAttributes.put(messageAttributeName, new CQSMessageAttribute(messageAttributeValue, messageAttributeDataType));
                     messageAttributeIndex++;
                     messageAttributeName = request.getParameter(this.actionName + CQSConstants.REQUEST_ENTRY + index + "." + CQSConstants.MESSAGE_ATTRIBUTE + "." + messageAttributeIndex + ".Name");
@@ -146,7 +149,7 @@ public class CQSSendMessageBatchAction extends CQSAction {
                 throw new CMBException(CQSErrorCodes.TooManyEntriesInBatchRequest, "Maximum number of entries per request are " + CMBProperties.getInstance().getCQSMaxMessageCountBatch() + ". You have sent " + msgList.size() + ".");
             }
             
-            totalMessageSize += messageBody == null ? 0 : messageBody.length();
+            totalMessageSize += (messageBody == null ? 0 : messageBody.length()) + totalMessageAttributeSize;
             
             if (totalMessageSize > CMBProperties.getInstance().getCQSMaxMessageSizeBatch()) {
                 throw new CMBException(CQSErrorCodes.BatchRequestTooLong, "Batch requests cannot be longer than " + CMBProperties.getInstance().getCQSMaxMessageSizeBatch() + " bytes");
