@@ -15,6 +15,10 @@
  */
 package com.comcast.cqs.model;
 
+import java.nio.ByteBuffer;
+
+import com.sun.jersey.core.util.Base64;
+
 public class CQSMessageAttribute {
 	
 	String Value;
@@ -34,25 +38,17 @@ public class CQSMessageAttribute {
 	}
 	
 	public String getStringValue() {
-		if (DataType.equals("String") || DataType.equals("Number")) {
-			return Value;
-		} else {
-			return null;
-		}
-	}
-	
-	public String getBinaryValue() {
-		if (DataType.equals("Binary")) {
-			return Value;
-		} else {
-			return null;
-		}
-	}
-	
-	public String getValue() {
 		return Value;
 	}
-
+	
+	public ByteBuffer getBinaryValue() {
+		if (DataType.equals("Binary")) {
+			return ByteBuffer.wrap(Base64.decode(Value));
+		} else {
+			return ByteBuffer.wrap(Value.getBytes());
+		}
+	}
+	
 	public String getDataType() {
 		return DataType;
 	}

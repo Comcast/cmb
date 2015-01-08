@@ -172,26 +172,25 @@ public class CQSMessagePopulator extends CQSPopulator {
         messageXml.append("\t\t\t<Body>").append(StringEscapeUtils.escapeXml(message.getBody()).replaceAll("\r", "&#xD;")).append("</Body>\n");
         messageXml.append(attributesXmlFragment);
         
-        if (message.getMessageAttributes() != null) {
+        if (message.getMessageAttributes() != null && message.getMessageAttributes().size() > 0) {
         	for (String key : message.getMessageAttributes().keySet()) {
                 if (filterMessageAttributes.contains("All") || filterMessageAttributes.contains(key)) {
-                	messageXml.append("\t\t\t<MD5OfMessageAttributes>").append(message.getMD5OfMessageAttributes()).append("</MD5OfMessageAttributes>\n");
                 	String type = message.getMessageAttributes().get(key).getDataType();
                 	String stringValue = message.getMessageAttributes().get(key).getStringValue();
-                	String binaryValue = message.getMessageAttributes().get(key).getBinaryValue();
 		        	messageXml.append("\t\t\t<MessageAttribute>\n");
 		            messageXml.append("\t\t\t\t<Name>").append(key).append("</Name>\n");
 		            messageXml.append("\t\t\t\t<Value>\n");
 		            messageXml.append("\t\t\t\t\t<DataType>").append(type).append("</DataType>\n");
-		            if (stringValue != null) {
+		            if (!type.equals("Binary")) {
 		            	messageXml.append("\t\t\t\t\t<StringValue>").append(stringValue).append("</StringValue>\n");
 		            } else {
-		            	messageXml.append("\t\t\t\t\t<BinaryValue>").append(binaryValue).append("</BinaryValue>\n");
+		            	messageXml.append("\t\t\t\t\t<BinaryValue>").append(stringValue).append("</BinaryValue>\n");
 		            }
 		            messageXml.append("\t\t\t\t</Value>\n");
 		        	messageXml.append("\t\t\t</MessageAttribute>\n");
                 }
         	}
+        	messageXml.append("\t\t\t<MD5OfMessageAttributes>").append(message.getMD5OfMessageAttributes()).append("</MD5OfMessageAttributes>\n");
         }
         
         messageXml.append("\t\t</Message>\n");

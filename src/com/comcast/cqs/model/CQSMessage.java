@@ -219,7 +219,7 @@ public final class CQSMessage implements Serializable {
 
 	private String getMD5(Map<String, CQSMessageAttribute> messageAttributes) throws NoSuchAlgorithmException, UnsupportedEncodingException {
 		
-        if (messageAttributes == null && messageAttributes.size() == 0) {
+        if (messageAttributes == null || messageAttributes.size() == 0) {
         	return null;
         }
 
@@ -232,12 +232,12 @@ public final class CQSMessage implements Serializable {
 	        CQSMessageAttribute ma = messageAttributes.get(attrName);
 	        setLengthBytes(digest, attrName);
 	        setLengthBytes(digest, ma.getDataType());
-	        if (ma.getStringValue() != null) {
-	        	digest.update((byte)1);
-	        	setLengthBytes(digest, ma.getStringValue());
-	        } else if (ma.getBinaryValue() != null) {
+	        if (ma.getDataType().equals("Binary")) {
 	        	digest.update((byte)2);
 	        	setLengthBytes(digest, ma.getBinaryValue());
+	        } else {
+	        	digest.update((byte)1);
+	        	setLengthBytes(digest, ma.getStringValue());
 	        } 
         }
 
@@ -265,13 +265,13 @@ public final class CQSMessage implements Serializable {
 		digest.update(bytes);
 	}
 
-	/*private void setLengthBytes(MessageDigest digest, ByteBuffer binaryValue) {
+	private void setLengthBytes(MessageDigest digest, ByteBuffer binaryValue) {
 		binaryValue.rewind();
 		int size = binaryValue.remaining();
 		ByteBuffer lengthBytes = ByteBuffer.allocate(4).putInt(size);
 		digest.update(lengthBytes.array());
 		digest.update(binaryValue);
-	}*/
+	}
 
 	/**
 	 * The persistent state of the CQSMessage
