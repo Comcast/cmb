@@ -780,10 +780,11 @@ public class CassandraAstyanaxPersistence extends AbstractDurablePersistence {
 		logger.debug("event=increment_counter column_family=" + columnFamily);
 
 		try {
-			getKeyspace(keyspace).
+			OperationResult or = getKeyspace(keyspace).
 				prepareColumnMutation(getColumnFamily(columnFamily), rowKey, columnName).
 				incrementCounterColumn(incrementBy).
 				execute();
+			logger.info("event=incr_counter or=" + or);
 		} catch (ConnectionException ex) {
 			throw new PersistenceException(ex);
 		} finally {
@@ -815,7 +816,7 @@ public class CassandraAstyanaxPersistence extends AbstractDurablePersistence {
 		}
 	}
 
-	@Override
+	/*@Override
 	public <K, N> void deleteCounter(String keyspace, String columnFamily,
 			K rowKey, N columnName, CmbSerializer keySerializer,
 			CmbSerializer columnNameSerializer) throws PersistenceException {
@@ -834,7 +835,7 @@ public class CassandraAstyanaxPersistence extends AbstractDurablePersistence {
 			CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CassandraTime, (ts2 - ts1));
 			CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CassandraWrite, 1L);
 		}
-	}
+	}*/
 
 	@Override
 	public <K, N> long getCounter(String keyspace, String columnFamily,

@@ -101,15 +101,37 @@ public class CNSTopicCassandraPersistence implements ICNSTopicPersistence {
 			
 			cassandraHandler.insertRow(AbstractDurablePersistence.CNS_KEYSPACE, topic.getArn(), columnFamilyTopics, getColumnValues(topic), CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, null);
 			cassandraHandler.update(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilyTopicsByUserId, userId, topic.getArn(), "", CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER, null);
-			cassandraHandler.delete(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilyTopicStats, arn, null, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 			
-			cassandraHandler.deleteCounter(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilyTopicStats, arn, "subscriptionConfirmed", CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
-			cassandraHandler.deleteCounter(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilyTopicStats, arn, "subscriptionPending", CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
-			cassandraHandler.deleteCounter(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilyTopicStats, arn, "subscriptionDeleted", CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+			// note: deleteing rows or columns makes them permanently unavailable as counters!
+			// http://stackoverflow.com/questions/13653681/apache-cassandra-delete-from-counter
 			
-			cassandraHandler.incrementCounter(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilyTopicStats, arn, "subscriptionConfirmed", 0, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
-			cassandraHandler.incrementCounter(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilyTopicStats, arn, "subscriptionPending", 0, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
-			cassandraHandler.incrementCounter(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilyTopicStats, arn, "subscriptionDeleted", 0, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+			//cassandraHandler.delete(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilyTopicStats, arn, null, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+
+			//cassandraHandler.deleteCounter(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilyTopicStats, arn, "subscriptionConfirmed", CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+			//cassandraHandler.deleteCounter(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilyTopicStats, arn, "subscriptionPending", CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+			//cassandraHandler.deleteCounter(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilyTopicStats, arn, "subscriptionDeleted", CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+			
+			long subscriptionConfirmed = cassandraHandler.getCounter(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilyTopicStats, arn, "subscriptionConfirmed", CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+			
+			if (subscriptionConfirmed > 0) {
+				cassandraHandler.decrementCounter(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilyTopicStats, arn, "subscriptionConfirmed", (int)subscriptionConfirmed, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+			}
+			
+			long subscriptionPending = cassandraHandler.getCounter(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilyTopicStats, arn, "subscriptionPending", CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+			
+			if (subscriptionPending > 0) {
+				cassandraHandler.decrementCounter(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilyTopicStats, arn, "subscriptionPending", (int)subscriptionPending, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+			}
+
+			long subscriptionDeleted = cassandraHandler.getCounter(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilyTopicStats, arn, "subscriptionDeleted", CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+			
+			if (subscriptionDeleted > 0) {
+				cassandraHandler.decrementCounter(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilyTopicStats, arn, "subscriptionDeleted", (int)subscriptionDeleted, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+			}
+
+			//cassandraHandler.incrementCounter(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilyTopicStats, arn, "subscriptionConfirmed", 0, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+			//cassandraHandler.incrementCounter(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilyTopicStats, arn, "subscriptionPending", 0, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+			//cassandraHandler.incrementCounter(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilyTopicStats, arn, "subscriptionDeleted", 0, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 			
 			CNSTopicAttributes attributes = new CNSTopicAttributes(arn, userId);
 			PersistenceFactory.getCNSAttributePersistence().setTopicAttributes(attributes, arn);
@@ -119,9 +141,9 @@ public class CNSTopicCassandraPersistence implements ICNSTopicPersistence {
 	}
 
 	@Override
-	public void deleteTopic(String topicArn) throws Exception {
+	public void deleteTopic(String arn) throws Exception {
 
-		CNSTopic topic = getTopic(topicArn);
+		CNSTopic topic = getTopic(arn);
 
 		if (topic == null) {
 			throw new CMBException(CNSErrorCodes.CNS_NotFound, "Topic not found.");
@@ -131,15 +153,16 @@ public class CNSTopicCassandraPersistence implements ICNSTopicPersistence {
 
 		PersistenceFactory.getSubscriptionPersistence().unsubscribeAll(topic.getArn());		
 
-		cassandraHandler.delete(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilyTopics, topicArn, null, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
-		cassandraHandler.delete(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilyTopicsByUserId, topic.getUserId(), topicArn, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
-		cassandraHandler.delete(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilyTopicAttributes, topicArn, null, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
-		cassandraHandler.delete(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilyTopicStats, topicArn, null, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
-		cassandraHandler.deleteCounter(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilyTopicStats, topicArn, "subscriptionConfirmed", CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
-		cassandraHandler.deleteCounter(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilyTopicStats, topicArn, "subscriptionPending", CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
-		cassandraHandler.deleteCounter(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilyTopicStats, topicArn, "subscriptionDeleted", CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+		cassandraHandler.delete(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilyTopics, arn, null, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+		cassandraHandler.delete(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilyTopicsByUserId, topic.getUserId(), arn, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+		cassandraHandler.delete(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilyTopicAttributes, arn, null, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
 		
-		CNSCache.removeTopic(topicArn);
+		//cassandraHandler.delete(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilyTopicStats, arn, null, CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+		//cassandraHandler.deleteCounter(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilyTopicStats, topicArn, "subscriptionConfirmed", CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+		//cassandraHandler.deleteCounter(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilyTopicStats, topicArn, "subscriptionPending", CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+		//cassandraHandler.deleteCounter(AbstractDurablePersistence.CNS_KEYSPACE, columnFamilyTopicStats, topicArn, "subscriptionDeleted", CMB_SERIALIZER.STRING_SERIALIZER, CMB_SERIALIZER.STRING_SERIALIZER);
+		
+		CNSCache.removeTopic(arn);
 	}
 	
 	@Override

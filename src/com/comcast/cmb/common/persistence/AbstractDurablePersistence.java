@@ -195,9 +195,9 @@ public abstract class AbstractDurablePersistence {
 			String columnName, int decrementBy, CmbSerializer keySerializer,
 			CmbSerializer columnNameSerializer) throws PersistenceException;
 
-	public abstract <K, N> void deleteCounter(String keyspace, String columnFamily, K rowKey,
+	/*public abstract <K, N> void deleteCounter(String keyspace, String columnFamily, K rowKey,
 			N columnName, CmbSerializer keySerializer,
-			CmbSerializer columnNameSerializer) throws PersistenceException;
+			CmbSerializer columnNameSerializer) throws PersistenceException;*/
 
 	public abstract <K, N> long getCounter(String keyspace, String columnFamily, K rowKey,
 			N columnName, CmbSerializer keySerializer,

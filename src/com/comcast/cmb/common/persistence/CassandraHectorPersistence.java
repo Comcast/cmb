@@ -725,7 +725,7 @@ public class CassandraHectorPersistence extends AbstractDurablePersistence {
 		}
 	}
 
-	@Override
+	/*@Override
 	public <K, N> void deleteCounter(String keyspace, String columnFamily, K rowKey,
 			N columnName, CmbSerializer keySerializer,
 			CmbSerializer columnNameSerializer) throws PersistenceException {
@@ -745,7 +745,7 @@ public class CassandraHectorPersistence extends AbstractDurablePersistence {
 			long ts2 = System.currentTimeMillis();
 			CMBControllerServlet.valueAccumulator.addToCounter(AccumulatorName.CassandraTime, (ts2 - ts1));     
 		}
-	}
+	}*/
 
 	@Override
 	public <K, N> long getCounter(String keyspace, String columnFamily, K rowKey,
