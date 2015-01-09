@@ -44,23 +44,51 @@ end
 
 puts "Creating topic: #{topic_name}"
 topic_arn = sns.create_topic(name: topic_name)[:topic_arn]
+topic = Aws::SNS::Topic.new topic_arn, client: sns
 
 puts "Creating queue: #{queue_name}"
 queue_url = sqs.create_queue(queue_name: queue_name)[:queue_url]
-queue_arn = sqs.get_queue_attributes(queue_url: queue_url, attribute_names: ["QueueArn"])[:attributes]['QueueArn']
+queue = Aws::SQS::Queue.new queue_url, client: sqs
 
 puts "Subscribing: #{queue_name} to #{topic_name}"
-subscription_arn = sns.subscribe(topic_arn: topic_arn, endpoint: queue_arn, protocol: 'cqs')[:subscription_arn]
+subscription = topic.subscribe(endpoint: queue.arn, protocol: 'cqs')
+subscription.set_attributes attribute_name: 'RawMessageDelivery', attribute_value: 'true'
 
 # publish a message on the topic
 
 puts "Publishing to: #{topic_name}"
-delivery = sns.publish(topic_arn: topic_arn, message: "test")[:message_id]
+
+delivery = topic.publish message: 'test', message_attributes: {
+  'ruby_example.key_1' => {
+    string_value: 'xyz',
+    data_type: 'String'
+  },
+
+  'ruby_example.key_2' => {
+    string_value: '123',
+    data_type: 'Number'
+  }
+}
 
 if delivery.nil?
-  puts 'Published message was not delivered to any subscribers. '\
-       'Check log file cmb.log.'
-else
-  puts 'Message was delivered to subscribers!'
+  puts 'Published message was not delivered to any subscribers!'
+  exit 1
 end
 
+puts "Receiving messages from: #{queue_name}"
+messages = queue.receive_messages.to_a
+
+if messages.empty?
+  puts "No message was received!"
+  exit 1
+end
+
+message = messages.first
+
+puts "Message..."
+
+ap message_id: message.message_id,
+   receipt_handle: message.receipt_handle,
+   attributes: message.attributes,
+   body: message.body,
+   message_attributes: message.message_attributes

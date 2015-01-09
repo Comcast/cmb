@@ -1,0 +1,7 @@
+source 'https://rubygems.org'
+
+gem 'aws-sdk-core'
+gem 'aws-sdk-resources'
+gem 'awesome_print'
+gem 'nokogiri'
+gem 'pry-byebug'
