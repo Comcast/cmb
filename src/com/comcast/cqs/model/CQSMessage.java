@@ -33,6 +33,7 @@ import java.util.Map.Entry;
 import java.util.UUID;
 
 import com.amazonaws.services.sqs.model.Message;
+import com.amazonaws.services.sqs.model.MessageAttributeValue;
 import com.comcast.cmb.common.util.Util;
 import com.comcast.cqs.util.CQSConstants;
 
@@ -119,6 +120,16 @@ public final class CQSMessage implements Serializable {
 		this.receiptHandle = message.getReceiptHandle();
 		this.body = message.getBody();
 		this.mD5OfBody = message.getMD5OfBody();
+		
+		this.messageAttributes = new HashMap<String, CQSMessageAttribute>();
+		
+		for (String messageAttributeName : message.getMessageAttributes().keySet()) {
+			MessageAttributeValue messageAttributeValue = message.getMessageAttributes().get(messageAttributeName);
+			CQSMessageAttribute ma = new CQSMessageAttribute(messageAttributeValue.getStringValue(), messageAttributeValue.getDataType());
+			this.messageAttributes.put(messageAttributeName, ma);
+		}
+		
+		this.md5OfMessageAttributes = message.getMD5OfMessageAttributes();
 	}
 
 	public String getMessageId() {

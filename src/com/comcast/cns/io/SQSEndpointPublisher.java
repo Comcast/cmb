@@ -20,6 +20,7 @@ import org.apache.log4j.Logger;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClient;
+import com.amazonaws.services.sqs.model.MessageAttributeValue;
 import com.amazonaws.services.sqs.model.SendMessageRequest;
 import com.comcast.cmb.common.util.CMBException;
 import com.comcast.cmb.common.util.CMBProperties;
@@ -74,8 +75,19 @@ public class SQSEndpointPublisher  extends AbstractEndpointPublisher {
 			}
 			
 			logger.debug("event=send_sqs_message endpoint=" + endpoint + "\" message=\"" + msg);
+			
+			SendMessageRequest sendMessageRequest = new SendMessageRequest(url, msg);
+			
+			if (messageAttributes != null) {
+				for (String messageAttributeName : messageAttributes.keySet()) {
+	            	MessageAttributeValue value = new MessageAttributeValue();
+	            	value.setDataType(messageAttributes.get(messageAttributeName).getDataType());
+	            	value.setStringValue(messageAttributes.get(messageAttributeName).getStringValue());
+	            	sendMessageRequest.addMessageAttributesEntry(messageAttributeName, value);
+				}
+			}
 
-			sqs.sendMessage(new SendMessageRequest(url, msg));			
+			sqs.sendMessage(sendMessageRequest);			
 			
 		} catch(Exception ex) {
 			logger.warn("event=send_sqs_message endpoint=" + endpoint + "\" message=\"" + message, ex);

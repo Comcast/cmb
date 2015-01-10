@@ -17,6 +17,7 @@ package com.comcast.cns.model;
 
 import java.util.Date;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.UUID;
 
 import org.json.JSONException;
@@ -27,6 +28,7 @@ import com.comcast.cmb.common.util.CMBException;
 import com.comcast.cmb.common.util.CMBProperties;
 import com.comcast.cmb.common.util.Util;
 import com.comcast.cns.model.CNSSubscription.CnsSubscriptionProtocol;
+import com.comcast.cqs.model.CQSMessageAttribute;
 
 /**
  * Value class for CNSMessage
@@ -87,14 +89,27 @@ public final class CNSMessage {
     private volatile Date timestamp;
     
     /**
-     * 
+     * Subscription identifier.
      */
     private volatile String subArn;
+    
+    /**
+     * message attributes for cqs subscribers
+     */
+    private volatile Map<String, CQSMessageAttribute> messageAttributes;
     
     /**
      * Type of message, default value is Notification
      */
     private volatile CNSMessageType messageType = CNSMessageType.Notification;
+    
+	public void setMessageAttributes(Map<String, CQSMessageAttribute> messageAttributes) {
+		this.messageAttributes = messageAttributes;
+	}
+
+	public Map<String, CQSMessageAttribute> getMessageAttributes() {
+		return messageAttributes;
+	}
     
 	public void setSubscriptionArn(String subArn) {
 		this.subArn = subArn;
@@ -227,7 +242,15 @@ public final class CNSMessage {
             throw new CMBException(CMBErrorCodes.InvalidQueryParameter, "Message not UTF-8 characters");
         }
         
-        if (message.getBytes().length > CMBProperties.getInstance().getCNSMaxMessageSize()) {
+        int totalSize = message.getBytes().length;
+        
+        if (messageAttributes != null) {
+        	for (String messageAttributeName : messageAttributes.keySet()) {
+        		totalSize += messageAttributes.get(messageAttributeName).getStringValue().getBytes().length;
+        	}
+        }
+        
+        if (totalSize > CMBProperties.getInstance().getCNSMaxMessageSize()) {
             throw new CMBException(CMBErrorCodes.InvalidQueryParameter, "Message greater than " + CMBProperties.getInstance().getCNSMaxMessageSize() + " bytes");
         }
         

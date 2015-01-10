@@ -15,8 +15,11 @@
  */
 package com.comcast.cns.io;
 
+import java.util.Map;
+
 import com.comcast.cmb.common.model.User;
 import com.comcast.cns.model.CNSMessage;
+import com.comcast.cqs.model.CQSMessageAttribute;
 
 /**
  * The interface is for sending messages to a particular endpoint, first set the endpoint, and the message, and optionally the
@@ -89,4 +92,6 @@ public interface IEndpointPublisher {
 	 public String getSubscriptionArn();
 	 public void setSubscriptionArn(String subscriptionArn);
 
+	public Map<String, CQSMessageAttribute> getMessageAttributes();
+	public void setMessageAttributes(Map<String, CQSMessageAttribute> messageAttributes);
 }

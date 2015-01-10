@@ -1,7 +1,10 @@
 package com.comcast.cns.io;
 
+import java.util.Map;
+
 import com.comcast.cmb.common.model.User;
 import com.comcast.cns.model.CNSMessage;
+import com.comcast.cqs.model.CQSMessageAttribute;
 
 public abstract class AbstractEndpointPublisher implements IEndpointPublisher {
 
@@ -14,6 +17,18 @@ public abstract class AbstractEndpointPublisher implements IEndpointPublisher {
 	protected String messageId;
 	protected String topicArn;
 	protected String subscriptionArn;
+	protected Map<String, CQSMessageAttribute> messageAttributes; 
+
+	@Override
+	public Map<String, CQSMessageAttribute> getMessageAttributes() {
+		return messageAttributes;
+	}
+
+	@Override
+	public void setMessageAttributes(
+			Map<String, CQSMessageAttribute> messageAttributes) {
+		this.messageAttributes = messageAttributes;
+	}
 
 	@Override
 	public void setEndpoint(String endpoint) {
@@ -106,5 +121,4 @@ public abstract class AbstractEndpointPublisher implements IEndpointPublisher {
 
 	@Override
 	abstract public void send() throws Exception;
-
 }

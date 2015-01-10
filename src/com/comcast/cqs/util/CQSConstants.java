@@ -51,6 +51,7 @@ public class CQSConstants {
 	public static final String NUMBER_OF_SHARDS = "NumberOfShards";
 	public static final String IS_COMPRESSED = "IsCompressed";
 	public static final String MESSAGE_ATTRIBUTE = "MessageAttribute";
+	public static final String MESSAGE_ATTRIBUTES = "MessageAttributes";
 
     public static final String REDIS_APPROXIMATE_FIRST_RECEIVE_TIMESTAMP = "AFRTS";	
 	public static final String REDIS_APPROXIMATE_RECEIVE_COUNT = "ARC";

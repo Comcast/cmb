@@ -17,7 +17,9 @@ package com.comcast.cns.controller;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 import javax.servlet.AsyncContext;
@@ -46,6 +48,8 @@ import com.comcast.cns.tools.CQSHandler;
 import com.comcast.cns.util.CNSErrorCodes;
 import com.comcast.cns.util.Util;
 import com.comcast.cqs.controller.CQSHttpServletRequest;
+import com.comcast.cqs.model.CQSMessageAttribute;
+import com.comcast.cqs.util.CQSConstants;
 
 /**
  * Publish action
@@ -112,8 +116,6 @@ public class CNSPublishAction extends CNSAction {
     	cnsMessage.setTimestamp(new Date());
     	cnsMessage.setMessage(message);
     	
-    	//TODO: optional shortcut
-    	
     	if (request.getParameter("MessageStructure") != null) {
     		
     		messageStructure = request.getParameter("MessageStructure");   	
@@ -147,11 +149,37 @@ public class CNSPublishAction extends CNSAction {
     		logger.error("event=cns_publish error_code=NotFound message=" + message + " topic_arn=" + topicArn + " user_id=" + userId);
 			throw new CMBException(CNSErrorCodes.CNS_NotFound,"Resource not found.");
     	}
-		
+    	
     	cnsMessage.setUserId(topic.getUserId());
     	cnsMessage.setTopicArn(topicArn);
     	cnsMessage.setMessageType(CNSMessageType.Notification);
     	
+        Map<String, CQSMessageAttribute> messageAttributes = new HashMap<String, CQSMessageAttribute>();
+        
+        int index = 1;
+        String messageAttributeName = request.getParameter(CQSConstants.MESSAGE_ATTRIBUTES+".entry." + index + ".Name");
+        
+        while (messageAttributeName != null && !messageAttributeName.equals("")) {
+            String messageAttributeValue = request.getParameter(CQSConstants.MESSAGE_ATTRIBUTES+".entry." + index + ".Value.StringValue");
+            if (messageAttributeValue == null || messageAttributeValue.equals("")) {
+            	messageAttributeValue = request.getParameter(CQSConstants.MESSAGE_ATTRIBUTES+".entry." + index + ".Value.BinaryValue");
+            }
+            if (messageAttributeValue == null || messageAttributeValue.equals("")) {
+            	throw new CMBException(CMBErrorCodes.InvalidParameterValue, "Missing message attribute value " + messageAttributeName);
+            }
+            String messageAttributeDataType = request.getParameter(CQSConstants.MESSAGE_ATTRIBUTES+".entry." + index + ".Value.DataType");
+            if (messageAttributeDataType == null || messageAttributeDataType.equals("")) {
+            	throw new CMBException(CMBErrorCodes.InvalidParameterValue, "Missing message attribute data type " + messageAttributeName);
+            }
+            messageAttributes.put(messageAttributeName, new CQSMessageAttribute(messageAttributeValue, messageAttributeDataType));
+            index++;
+            messageAttributeName = request.getParameter(CQSConstants.MESSAGE_ATTRIBUTES+".entry." + index + ".Name");
+        }
+
+        if (messageAttributes.size() > 0) {
+        	cnsMessage.setMessageAttributes(messageAttributes);
+        }
+		
     	cnsMessage.checkIsValid();
     	
     	CNSTopicAttributes topicAttributes = CNSCache.getTopicAttributes(topicArn);
@@ -182,7 +210,7 @@ public class CNSPublishAction extends CNSAction {
                 }
                 
                 for (CNSEndpointPublishJob epPublishJob: epPublishJobs) {
-            		String handle = sendMessageOnRandomShardAndCreateQueueIfAbsent(CNS_ENDPOINT_QUEUE_NAME_PREFIX, CMBProperties.getInstance().getCNSNumEndpointPublishJobQueues(), epPublishJob.serialize(), cnsInternalUser.getUserId());
+            		String handle = sendMessageOnRandomShardAndCreateQueueIfAbsent(CNS_ENDPOINT_QUEUE_NAME_PREFIX, CMBProperties.getInstance().getCNSNumEndpointPublishJobQueues(), epPublishJob.serialize(), cnsInternalUser.getUserId(), messageAttributes);
             		if (handle != null && !handle.equals("")) {
             			receiptHandles.add(handle);
             		} else {
@@ -197,7 +225,7 @@ public class CNSPublishAction extends CNSAction {
 
     		logger.debug("event=going_through_job_queue_town_center");
     		
-    		String handle = sendMessageOnRandomShardAndCreateQueueIfAbsent(CNS_PUBLISH_QUEUE_NAME_PREFIX, CMBProperties.getInstance().getCNSNumPublishJobQueues(), cnsMessage.serialize(), cnsInternalUser.getUserId());
+    		String handle = sendMessageOnRandomShardAndCreateQueueIfAbsent(CNS_PUBLISH_QUEUE_NAME_PREFIX, CMBProperties.getInstance().getCNSNumPublishJobQueues(), cnsMessage.serialize(), cnsInternalUser.getUserId(), messageAttributes);
     		if (handle != null && !handle.equals("")) {
     			receiptHandles.add(handle);
     		} else {
@@ -217,7 +245,7 @@ public class CNSPublishAction extends CNSAction {
     	return true;
 	}
 	
-	private String sendMessageOnRandomShardAndCreateQueueIfAbsent(String prefix, int numShards, String message, String userId) {
+	private String sendMessageOnRandomShardAndCreateQueueIfAbsent(String prefix, int numShards, String message, String userId, Map<String, CQSMessageAttribute> messageAttributes) {
 		
 		String receiptHandle = null;
 		
@@ -227,7 +255,7 @@ public class CNSPublishAction extends CNSAction {
     	String relativeQueueUrl = com.comcast.cqs.util.Util.getRelativeQueueUrlForName(queueName, userId);
     	
     	try {
-    		receiptHandle = CQSHandler.sendMessage(relativeQueueUrl, message);
+    		receiptHandle = CQSHandler.sendMessage(relativeQueueUrl, message, messageAttributes);
         } catch (Exception ex) {
 	    	logger.error("event=publish_failure", ex);
     		CQSHandler.ensureQueuesExist(prefix, numShards);

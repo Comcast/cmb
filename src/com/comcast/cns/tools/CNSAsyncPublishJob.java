@@ -15,6 +15,7 @@
  */
 package com.comcast.cns.tools;
 
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -38,6 +39,7 @@ import com.comcast.cns.model.CNSSubscription.CnsSubscriptionProtocol;
 import com.comcast.cns.persistence.ICNSAttributesPersistence;
 import com.comcast.cns.persistence.SubscriberNotFoundException;
 import com.comcast.cns.util.Util;
+import com.comcast.cqs.model.CQSMessageAttribute;
 
 /**
  * Helper class representing individual (to one endpoint) publish job
@@ -62,6 +64,7 @@ public class CNSAsyncPublishJob implements Runnable, IPublisherCallback {
     private final String receiptHandle;
     private final AtomicInteger endpointPublishJobCount;
     private final boolean rawDelivery;
+    private final Map<String, CQSMessageAttribute> messageAttributes; 
 
     private IEndpointPublisher publisher;
     
@@ -226,7 +229,7 @@ public class CNSAsyncPublishJob implements Runnable, IPublisherCallback {
         }            
     }        
     
-    public CNSAsyncPublishJob(CNSMessage message, User user, CnsSubscriptionProtocol protocol, String endpoint, String subArn, boolean rawDelivery, String queueUrl, String receiptHandle, AtomicInteger endpointPublishJobCount) {
+    public CNSAsyncPublishJob(CNSMessage message, User user, CnsSubscriptionProtocol protocol, String endpoint, String subArn, boolean rawDelivery, String queueUrl, String receiptHandle, AtomicInteger endpointPublishJobCount, Map<String, CQSMessageAttribute> messageAttributes) {
     	
     	this.message = message; 
         this.user = user;
@@ -237,6 +240,7 @@ public class CNSAsyncPublishJob implements Runnable, IPublisherCallback {
         this.receiptHandle = receiptHandle;
         this.endpointPublishJobCount = endpointPublishJobCount;
         this.rawDelivery = rawDelivery;
+        this.messageAttributes = messageAttributes;
     }
 
     @Override

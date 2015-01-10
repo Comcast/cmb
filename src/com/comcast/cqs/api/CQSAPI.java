@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -33,6 +34,7 @@ import com.comcast.cmb.common.util.Util;
 import com.comcast.cqs.controller.CQSCache;
 import com.comcast.cqs.controller.CQSLongPollSender;
 import com.comcast.cqs.model.CQSMessage;
+import com.comcast.cqs.model.CQSMessageAttribute;
 import com.comcast.cqs.model.CQSQueue;
 import com.comcast.cqs.util.CQSConstants;
 import com.comcast.cqs.util.CQSErrorCodes;
@@ -76,7 +78,7 @@ public class CQSAPI {
 		logger.info(logLine.toString());
 	}
 	
-	public static String sendMessage(String userId, String relativeQueueUrl, String messageBody, Integer delaySeconds) throws Exception {
+	public static String sendMessage(String userId, String relativeQueueUrl, String messageBody, Integer delaySeconds, Map<String, CQSMessageAttribute> messageAttributes) throws Exception {
 		
 		long ts1 = System.currentTimeMillis();
 
@@ -113,7 +115,7 @@ public class CQSAPI {
         attributes.put(CQSConstants.APPROXIMATE_RECEIVE_COUNT, "0");
         attributes.put(CQSConstants.APPROXIMATE_FIRST_RECEIVE_TIMESTAMP, "");
         
-        CQSMessage message = new CQSMessage(messageBody, attributes);
+        CQSMessage message = new CQSMessage(messageBody, attributes, messageAttributes);
         
 		int shard = rand.nextInt(queue.getNumberOfShards());
 
@@ -177,7 +179,7 @@ public class CQSAPI {
 		}
 
 		long ts2 = System.currentTimeMillis();
-		emitLogLine(userId, "SendMessage", relativeQueueUrl, receiptHandles, ts2-ts1);
+		emitLogLine(userId, "ReceiveMessage", relativeQueueUrl, receiptHandles, ts2-ts1);
 
 		return messages;
 	}
@@ -186,7 +188,7 @@ public class CQSAPI {
 		long ts1 = System.currentTimeMillis();
 		PersistenceFactory.getCQSMessagePersistence().deleteMessage(relativeQueueUrl, receiptHandle);
 		long ts2 = System.currentTimeMillis();
-		emitLogLine(userId, "SendMessage", relativeQueueUrl, new ArrayList<String>(Arrays.asList(receiptHandle)), ts2-ts1);
+		emitLogLine(userId, "DeleteMessage", relativeQueueUrl, new ArrayList<String>(Arrays.asList(receiptHandle)), ts2-ts1);
 	}
 	
 	public static CQSQueue createQueue(String userId, String queueName, Integer visibilityTimeout, Integer messageRetentionPeriod, Integer delaySeconds, Integer receiveMessageWaitTimeSeconds, Integer numberOfPartitions, Integer numberOfShards, Boolean isCompressed, String policy) throws Exception {
@@ -277,7 +279,7 @@ public class CQSAPI {
 
 		long ts2 = System.currentTimeMillis();
 		
-		emitLogLine(userId, "SendMessage", relativeQueueUrl, null, ts2-ts1);
+		emitLogLine(userId, "CreateQueue", relativeQueueUrl, null, ts2-ts1);
 
 		return queue;
 	}
@@ -301,7 +303,7 @@ public class CQSAPI {
 
         long ts2 = System.currentTimeMillis();
         
-		emitLogLine(userId, "SendMessage", relativeQueueUrl, null, ts2-ts1);
+		emitLogLine(userId, "DeleteQueue", relativeQueueUrl, null, ts2-ts1);
 	}
 	
 	public static CQSQueue getQueueUrl(String userId, String queueName) throws Exception {
@@ -320,7 +322,7 @@ public class CQSAPI {
         
 		long ts2 = System.currentTimeMillis();
 		
-		emitLogLine(userId, "SendMessage", queue.getRelativeUrl(), null, ts2-ts1);
+		emitLogLine(userId, "GetQueueUrl", queue.getRelativeUrl(), null, ts2-ts1);
         
         return queue;
 	}

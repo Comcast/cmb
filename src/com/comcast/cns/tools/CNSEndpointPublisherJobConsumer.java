@@ -166,6 +166,7 @@ public class CNSEndpointPublisherJobConsumer implements CNSPublisherPartitionRun
     		return false;
         
     	} else {
+    		
             logger.debug("event=is_overloaded queue_size=" + deliveryHandlers.getQueue().size());
         
             if (deliveryHandlers.getQueue().size() >= testQueueLimit || reDeliveryHandlers.getQueue().size() >= testQueueLimit) {
@@ -277,9 +278,9 @@ public class CNSEndpointPublisherJobConsumer implements CNSPublisherPartitionRun
                     	message.setSubscriptionArn(sub.subArn);
                         
                         if (CMBProperties.getInstance().getCNSIOMode() == IO_MODE.SYNC) {
-                        	publishJob = new CNSPublishJob(message, pubUser, sub.protocol, sub.endpoint, sub.subArn, sub.rawDelivery, queueUrl, msg.getReceiptHandle(), endpointPublishJobCount);
+                        	publishJob = new CNSPublishJob(message, pubUser, sub.protocol, sub.endpoint, sub.subArn, sub.rawDelivery, queueUrl, msg.getReceiptHandle(), endpointPublishJobCount, msg.getMessageAttributes());
                         } else {
-                        	publishJob = new CNSAsyncPublishJob(message, pubUser, sub.protocol, sub.endpoint, sub.subArn, sub.rawDelivery, queueUrl, msg.getReceiptHandle(), endpointPublishJobCount);
+                        	publishJob = new CNSAsyncPublishJob(message, pubUser, sub.protocol, sub.endpoint, sub.subArn, sub.rawDelivery, queueUrl, msg.getReceiptHandle(), endpointPublishJobCount, msg.getMessageAttributes());
                         }
 
                         deliveryHandlers.submit(publishJob);

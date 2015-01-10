@@ -15,6 +15,7 @@
  */package com.comcast.cns.tools;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,6 +32,7 @@ import com.amazonaws.services.sqs.model.CreateQueueResult;
 import com.amazonaws.services.sqs.model.DeleteMessageRequest;
 import com.amazonaws.services.sqs.model.GetQueueUrlRequest;
 import com.amazonaws.services.sqs.model.Message;
+import com.amazonaws.services.sqs.model.MessageAttributeValue;
 import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
 import com.amazonaws.services.sqs.model.ReceiveMessageResult;
 import com.amazonaws.services.sqs.model.SendMessageRequest;
@@ -46,6 +48,7 @@ import com.comcast.cmb.common.util.ValueAccumulator.AccumulatorName;
 import com.comcast.cqs.api.CQSAPI;
 import com.comcast.cqs.controller.CQSCache;
 import com.comcast.cqs.model.CQSMessage;
+import com.comcast.cqs.model.CQSMessageAttribute;
 import com.comcast.cqs.model.CQSQueue;
 import com.comcast.cqs.util.Util;
 
@@ -134,6 +137,7 @@ public class CQSHandler {
         	String absoluteQueueUrl = Util.getAbsoluteQueueUrlForRelativeUrl(relativeQueueUrl);
         	ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest(absoluteQueueUrl);
 	        receiveMessageRequest.setMaxNumberOfMessages(maxNumberOfMessages);
+	        receiveMessageRequest.setMessageAttributeNames(new ArrayList<String>(Arrays.asList("All")));
 	        //receiveMessageRequest.setVisibilityTimeout(CMBProperties.getInstance().getCNSPublishJobVisibilityTimeout());
 	        
 	        if (waitTimeSeconds > 0) {
@@ -173,16 +177,28 @@ public class CQSHandler {
         return queueUrl;
     }
     
-    public static String sendMessage(String relativeQueueUrl, String message) throws Exception {
+    public static String sendMessage(String relativeQueueUrl, String message, Map<String,CQSMessageAttribute> messageAttributes) throws Exception {
 
     	long ts1 = System.currentTimeMillis();
     	String receiptHandle = null;
     	
         if (useInlineApiCalls) {
-        	receiptHandle = CQSAPI.sendMessage(cnsInternal.getUserId(), relativeQueueUrl, message, null);
+        	receiptHandle = CQSAPI.sendMessage(cnsInternal.getUserId(), relativeQueueUrl, message, null, messageAttributes);
         } else {
         	String absoluteQueueUrl = Util.getAbsoluteQueueUrlForRelativeUrl(relativeQueueUrl);
-        	SendMessageResult sendMessageResult = sqs.sendMessage(new SendMessageRequest(absoluteQueueUrl, message));
+
+        	SendMessageRequest sendMessageRequest = new SendMessageRequest(absoluteQueueUrl, message);
+        	
+        	if (messageAttributes != null) {
+				for (String messageAttributeName : messageAttributes.keySet()) {
+	            	MessageAttributeValue value = new MessageAttributeValue();
+	            	value.setDataType(messageAttributes.get(messageAttributeName).getDataType());
+	            	value.setStringValue(messageAttributes.get(messageAttributeName).getStringValue());
+	            	sendMessageRequest.addMessageAttributesEntry(messageAttributeName, value);
+				}
+			}
+
+        	SendMessageResult sendMessageResult = sqs.sendMessage(sendMessageRequest);
         	receiptHandle = sendMessageResult.getMessageId();
         }
         

@@ -154,7 +154,9 @@ public class CNSEndpointPublisherJobProducer implements CNSPublisherPartitionRun
 	            }
 	            
 	            List<CNSEndpointPublishJob.CNSEndpointSubscriptionInfo> subscriptions = null;
+	            
 	            long t1=System.currentTimeMillis();
+	            
 	            try {
 	                subscriptions = getSubscriptionsForTopic(publishMessage.getTopicArn());
 	            } catch (TopicNotFoundException e) {
@@ -171,7 +173,9 @@ public class CNSEndpointPublisherJobProducer implements CNSPublisherPartitionRun
 	                CMBControllerServlet.valueAccumulator.deleteAllCounters();
 	                return true; // return true to avoid backoff
 	            }
+	            
 	            logger.debug("event=get_subscription_list ms="+(System.currentTimeMillis()-t1));
+	            
 	            if (subscriptions != null && subscriptions.size() > 0) {
 	            	
 	                messageFound = true;
@@ -181,13 +185,14 @@ public class CNSEndpointPublisherJobProducer implements CNSPublisherPartitionRun
 	                	
 	                	String epQueueName =  CMBProperties.getInstance().getCNSEndpointPublishQueueNamePrefix() + ((new Random()).nextInt(CMBProperties.getInstance().getCNSNumEndpointPublishJobQueues()));
 	                    String epQueueUrl = CQSHandler.getRelativeCnsInternalQueueUrl(epQueueName);
-	                    CQSHandler.sendMessage(epQueueUrl, epPublishJob.serialize());
+	                    CQSHandler.sendMessage(epQueueUrl, epPublishJob.serialize(), msg.getMessageAttributes());
 	                }
 	            }
 	            
 	            CQSHandler.deleteMessage(queueUrl, msg.getReceiptHandle());
 	            
 	            long ts2 = System.currentTimeMillis();
+	            
 	            logger.debug("event=processed_producer_job cns_cqs_ms=" + CMBControllerServlet.valueAccumulator.getCounter(AccumulatorName.CNSCQSTime) + " resp_ms=" + (ts2 - ts1));
 
 	        } else {

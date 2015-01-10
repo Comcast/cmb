@@ -18,6 +18,7 @@ package com.comcast.cns.io;
 import org.apache.log4j.Logger;
 
 import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.services.sqs.model.MessageAttributeValue;
 import com.amazonaws.services.sqs.AmazonSQSClient;
 import com.amazonaws.services.sqs.model.SendMessageRequest;
 import com.comcast.cmb.common.util.CMBException;
@@ -76,12 +77,21 @@ public class CQSEndpointPublisher extends AbstractEndpointPublisher {
 			}
 			
 			if (CMBProperties.getInstance().useInlineApiCalls() && CMBProperties.getInstance().getCQSServiceEnabled()) {
-				CQSAPI.sendMessage(user.getUserId(), Util.getRelativeForAbsoluteQueueUrl(absoluteQueueUrl), msg, null);
+				CQSAPI.sendMessage(user.getUserId(), Util.getRelativeForAbsoluteQueueUrl(absoluteQueueUrl), msg, null, messageAttributes);
 			} else {
 		        awsCredentials = new BasicAWSCredentials(user.getAccessKey(), user.getAccessSecret());
 		        sqs = new AmazonSQSClient(awsCredentials);
 				sqs.setEndpoint(CMBProperties.getInstance().getCQSServiceUrl());
-				sqs.sendMessage(new SendMessageRequest(absoluteQueueUrl, msg));			
+				SendMessageRequest sendMessageRequest = new SendMessageRequest(absoluteQueueUrl, msg);
+				if (messageAttributes != null) {
+					for (String messageAttributeName : messageAttributes.keySet()) {
+		            	MessageAttributeValue value = new MessageAttributeValue();
+		            	value.setDataType(messageAttributes.get(messageAttributeName).getDataType());
+		            	value.setStringValue(messageAttributes.get(messageAttributeName).getStringValue());
+		            	sendMessageRequest.addMessageAttributesEntry(messageAttributeName, value);
+					}
+				}
+				sqs.sendMessage(sendMessageRequest);			
 			}
 		
 			if (CMBProperties.getInstance().getMaxMessagePayloadLogLength() > 0) {

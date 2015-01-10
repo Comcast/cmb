@@ -174,7 +174,7 @@ public class CQSMessagePopulator extends CQSPopulator {
         
         if (message.getMessageAttributes() != null && message.getMessageAttributes().size() > 0) {
         	for (String key : message.getMessageAttributes().keySet()) {
-                if (filterMessageAttributes.contains("All") || filterMessageAttributes.contains(key)) {
+                if (filterMessageAttributes.contains("All") || filterMessageAttributes.contains("all") || filterMessageAttributes.contains(key)) {
                 	String type = message.getMessageAttributes().get(key).getDataType();
                 	String stringValue = message.getMessageAttributes().get(key).getStringValue();
 		        	messageXml.append("\t\t\t<MessageAttribute>\n");

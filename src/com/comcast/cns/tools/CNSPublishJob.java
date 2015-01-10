@@ -15,6 +15,7 @@
  */
 package com.comcast.cns.tools;
 
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -37,6 +38,7 @@ import com.comcast.cns.model.CNSSubscription.CnsSubscriptionProtocol;
 import com.comcast.cns.persistence.ICNSAttributesPersistence;
 import com.comcast.cns.persistence.SubscriberNotFoundException;
 import com.comcast.cns.util.Util;
+import com.comcast.cqs.model.CQSMessageAttribute;;
 
 /**
  * Helper class representing individual (to one endpoint) publish job
@@ -61,6 +63,7 @@ public class CNSPublishJob implements Runnable {
     private final String receiptHandle;
     private final AtomicInteger endpointPublishJobCount;
     private final boolean rawDelivery;
+    private final Map<String, CQSMessageAttribute> messageAttributes; 
 
     public static volatile IEndpointPublisher testPublisher = null; //set and used for unit-testing
     
@@ -199,6 +202,7 @@ public class CNSPublishJob implements Runnable {
         publisher.setMessageId(this.message.getMessageId());
         publisher.setTopicArn(this.message.getTopicArn());
         publisher.setSubscriptionArn(this.subArn);
+        publisher.setMessageAttributes(this.messageAttributes);
         publisher.send();
         
         logger.debug("event=successful_delivery protocol=" + protocol + " endpoint=" + endpoint + " sub_arn=" + subArn + " attempt=" + numRetries + " raw=" + rawDelivery);
@@ -278,7 +282,7 @@ public class CNSPublishJob implements Runnable {
         }            
     }        
     
-    public CNSPublishJob(CNSMessage message, User user, CnsSubscriptionProtocol protocol, String endpoint, String subArn, boolean rawDelivery, String queueUrl, String receiptHandle, AtomicInteger endpointPublishJobCount) {
+    public CNSPublishJob(CNSMessage message, User user, CnsSubscriptionProtocol protocol, String endpoint, String subArn, boolean rawDelivery, String queueUrl, String receiptHandle, AtomicInteger endpointPublishJobCount, Map<String, CQSMessageAttribute> messageAttributes) {
     	
     	this.message = message; 
         this.user = user;
@@ -289,6 +293,7 @@ public class CNSPublishJob implements Runnable {
         this.receiptHandle = receiptHandle;
         this.endpointPublishJobCount = endpointPublishJobCount;
         this.rawDelivery = rawDelivery;
+        this.messageAttributes = messageAttributes;
     }
 
     @Override
