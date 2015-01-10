@@ -75,8 +75,11 @@ if delivery.nil?
   exit 1
 end
 
+sleep(1)
+
 puts "Receiving messages from: #{queue_name}"
-messages = queue.receive_messages.to_a
+resp = queue.receive_messages(:message_attribute_names => [ "All" ])
+messages = resp.to_a
 
 if messages.empty?
   puts "No message was received!"
