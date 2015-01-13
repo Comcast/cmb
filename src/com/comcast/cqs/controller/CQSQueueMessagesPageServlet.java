@@ -44,6 +44,7 @@ import com.comcast.cmb.common.controller.AdminServletBase;
 import com.comcast.cmb.common.controller.CMBControllerServlet;
 import com.comcast.cmb.common.util.XmlUtil;
 import com.comcast.cqs.model.CQSMessage;
+import com.comcast.cqs.model.CQSMessageAttribute;
 import com.comcast.cqs.util.Util;
 
 /**
@@ -113,7 +114,9 @@ public class CQSQueueMessagesPageServlet extends AdminServletBase {
 			
 			try {
 			
-				ReceiveMessageResult result = sqs.receiveMessage(new ReceiveMessageRequest(queueUrl));
+				ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest(queueUrl);
+				receiveMessageRequest.setMessageAttributeNames(new ArrayList<String>(Arrays.asList("All")));
+				ReceiveMessageResult result = sqs.receiveMessage(receiveMessageRequest);
 				logger.debug("event=receive_message queue_url= " + queueUrl + " user_id=" + userId);
 				List<Message> receivedMessages=null;
 				
@@ -220,7 +223,7 @@ public class CQSQueueMessagesPageServlet extends AdminServletBase {
         	}
         	
        		out.println("<table class = 'alternatecolortable'>");
-       		out.println("<tr><th></th><th>Receipt Handle</th><th>MD5</th><th>Body</th><th>Time Sent</th><th>Time First Received (Appr.)</th><th>Receive Count (Appr.)</th><th>Sender</th><th>&nbsp;</th></tr>");
+       		out.println("<tr><th></th><th>Receipt Handle</th><th>MD5</th><th>Body</th><th>Num Msg Attributes</th><th>Time Sent</th><th>Time First Received (Appr.)</th><th>Receive Count (Appr.)</th><th>Sender</th><th>&nbsp;</th></tr>");
         	
         	out.println("<tr>");
         	out.println("<td>0</td>");
@@ -231,10 +234,8 @@ public class CQSQueueMessagesPageServlet extends AdminServletBase {
         	String messageBodyPart2=null;
         	
         	if ((messageBody!=null) && (messageBody.length()>300)) {
-        		
         		messageBodyPart1=messageBody.substring(0, 299);
         		messageBodyPart2=messageBody.substring(299);
-
         		out.println("<td>");
         		out.println(messageBodyPart1);
         		out.println("<div id='rdetail' style=\"display: none;\">"+messageBodyPart2+"</div>");
@@ -244,6 +245,7 @@ public class CQSQueueMessagesPageServlet extends AdminServletBase {
         		out.println("<td>"+ receivedMessage.getBody() + "</td>");
         	}
         	
+        	out.println("<td>"+ receivedMessage.getMessageAttributes().size() + "</td>");
         	out.println("<td>"+ timeSent + "</td>");
         	out.println("<td>"+ timeReceived + "</td>");
         	out.println("<td>"+ attributes.get("ApproximateReceiveCount") + "</td>");
@@ -262,7 +264,7 @@ public class CQSQueueMessagesPageServlet extends AdminServletBase {
 			
 			if (queueUrl != null) {
 				
-				String peekRequestUrl = cqsServiceBaseUrl + user.getUserId() + "/" + queueName + "?Action=PeekMessage&AWSAccessKeyId=" + user.getAccessKey() + "&MaxNumberOfMessages=10&Shard=" + shard;
+				String peekRequestUrl = cqsServiceBaseUrl + user.getUserId() + "/" + queueName + "?Action=PeekMessage&AWSAccessKeyId=" + user.getAccessKey() + "&MaxNumberOfMessages=10&Shard=" + shard + "&MessageAttributeName.1=All";
 
 				if (prevHandle != null) {
 					peekRequestUrl += "&PreviousReceiptHandle=" + prevHandle; 
@@ -293,7 +295,6 @@ public class CQSQueueMessagesPageServlet extends AdminServletBase {
 					List<Element> attributeElements = XmlUtil.getCurrentLevelChildNodes(messageElement, "Attribute");
 					Map<String, String> attributes = new HashMap<String, String>();
 					
-					
 					for (Element attribute : attributeElements) {
 						
 						String name = XmlUtil.getCurrentLevelTextValue(attribute, "Name");
@@ -305,6 +306,16 @@ public class CQSQueueMessagesPageServlet extends AdminServletBase {
 					}
 					
 					msg.setAttributes(attributes);
+					
+					List<Element> messageAttributeElements = XmlUtil.getCurrentLevelChildNodes(messageElement, "MessageAttribute");
+					Map<String, CQSMessageAttribute> messageAttributes = new HashMap<String, CQSMessageAttribute>();
+
+					for (Element attribute : messageAttributeElements) {
+						String name = XmlUtil.getCurrentLevelTextValue(attribute, "Name");
+						messageAttributes.put(name, new CQSMessageAttribute(name, name));
+					}
+					
+					msg.setMessageAttributes(messageAttributes);
 					
 					availableMessages.add(msg);
 				}
@@ -355,7 +366,7 @@ public class CQSQueueMessagesPageServlet extends AdminServletBase {
         	
         	if (i == 0) {
         		out.println("<table class = 'alternatecolortable'>");
-        		out.println("<tr><th></th><th>Receipt Handle</th><th>MD5</th><th>Body</th><th>Time Sent</th><th>Time First Received (Appr.)</th><th>Receive Count (Appr.)</th><th>Sender</th><th>&nbsp;</th></tr>");
+        		out.println("<tr><th></th><th>Receipt Handle</th><th>MD5</th><th>Body</th><th>Num Msg Attributes</th><th>Time Sent</th><th>Time First Received (Appr.)</th><th>Receive Count (Appr.)</th><th>Sender</th><th>&nbsp;</th></tr>");
         		previousHandle = message.getReceiptHandle();
         	}
         	
@@ -366,10 +377,10 @@ public class CQSQueueMessagesPageServlet extends AdminServletBase {
         	String messageBody=message.getBody();
         	String messageBodyPart1=null;
         	String messageBodyPart2=null;
-        	if((messageBody!=null)&&(messageBody.length()>300)){
+        	
+        	if ((messageBody!=null) && (messageBody.length()>300)) {
         		messageBodyPart1=messageBody.substring(0, 299);
         		messageBodyPart2=messageBody.substring(299);
-
         		out.println("<td>");
         		out.println(messageBodyPart1);
         		out.println("<div id='detail"+i+"' style=\"display: none;\">"+messageBodyPart2+"</div>");
@@ -378,6 +389,8 @@ public class CQSQueueMessagesPageServlet extends AdminServletBase {
         	} else {
         		out.println("<td>"+ message.getBody() + "</td>");
         	}
+        	
+        	out.println("<td>"+ (message.getMessageAttributes() == null ? 0 : message.getMessageAttributes().size()) + "</td>");
         	out.println("<td>"+ timeSent + "</td>");
         	out.println("<td>"+ timeReceived + "</td>");
         	out.println("<td>"+ attributes.get("ApproximateReceiveCount") + "</td>");
@@ -393,7 +406,6 @@ public class CQSQueueMessagesPageServlet extends AdminServletBase {
         
         //This case is for click on "Next" button of the previous page
         if (prevHandle != null) { 
-        	
         	if ((previousHandle) != null) {
         		out.println("<a style='float:left;' href='/webui/cqsuser/message/?userId="+user.getUserId()+"&queueName="+queueName+"&nextHandle="+previousHandle+"'>Prev</a>");
         	} else {
