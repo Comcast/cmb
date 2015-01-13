@@ -304,17 +304,17 @@ centers this is ok for many applications.
 - Known Limitations
 --------------------------------------------------------------------------------------
 
-- Compatibility with the Java AWS SDK has been tested with versions 1.5.7 and 1.6.12
+- Compatibility with the Java AWS SDK has been tested up to version 1.9.14
 
-- CMB does not work with Cassandra versions prior to 1.0.10, however, 1.1.X and 2.0.X 
-  are ok
+- CMB does not work with Cassandra versions prior to 1.0.10, however, 1.1.X, 2.0.X 
+  and 2.1.X are ok
  
 - CNS does not support SMS protocol
 
-- CNS does not support Throttle Policy
+- CNS does not support throttle policy
 
-- CNS does not support Mobile Push notifications
+- CNS does not support mobile push notifications
 
-- CQS does not support Dead Letter Queue
+- CQS does not support dead letter queue
 
 

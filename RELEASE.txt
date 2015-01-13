@@ -1,3 +1,19 @@
+CMB VERSION 2.2.43
+--------------------------------------------------------------------
+
+New features:
+
+- message attributes for CNS and CQS
+
+Bug fixes:
+
+- fix for Cassanndra 2.1 counter columns (prior to fix publishing 
+  from CNS to CQS would not work for Cassandra versions >= 2.1.*
+  
+Misc:
+
+- Renamed ClearQueue() API to PurgeQueue()
+
 CMB VERSION 2.2.42
 --------------------------------------------------------------------
 
@@ -30,7 +46,7 @@ CMB VERSION 2.2.40
 
 New features:
 
-- add cassandra astyanax 
+- added Cassandra astyanax 
 - remove super columns
 
 Bug fixes:

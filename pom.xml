@@ -50,16 +50,9 @@
 		</dependency>
 
 		<dependency>
-			<groupId>org.jboss.netty</groupId>
-			<artifactId>netty</artifactId>
-			<version>3.2.7.Final</version>
-		</dependency>
-	
-		<dependency>
 			<groupId>com.amazonaws</groupId>
 			<artifactId>aws-java-sdk</artifactId>
-			<version>1.8.11</version>
-			<!--  <version>1.9.13</version> -->
+			<version>1.9.14</version>
 		</dependency>
 	
 		<dependency>
@@ -222,12 +215,6 @@
 			<groupId>stax</groupId>
 			<artifactId>stax-api</artifactId>
 			<version>1.0.1</version>
-		</dependency>
-
-		<dependency>
-			<groupId>com.github.stephenc.eaio-uuid</groupId>
-			<artifactId>uuid</artifactId>
-			<version>3.2.0</version>
 		</dependency>
 
 		<dependency>
