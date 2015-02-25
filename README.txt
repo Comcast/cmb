@@ -37,7 +37,7 @@ https://s3-us-west-1.amazonaws.com/cmb-releases/index.html
 If you prefer getting started by looking at some code, here's a complete end-to-end 
 client-side example for accessing CQS/CNS services using the AWS SDK:
 
-https://github.com/Comcast/cmb/blob/master/tests/com/comcast/cmb/test/tools/CMBTutorial.java
+https://github.com/Comcast/cmb/blob/master/examples/java/Example.java
 
 In this example, we first create a queue and a topic. Next we subscribe the queue and 
 also an http endpoint to the topic and finally we publish, receive and delete messages. 

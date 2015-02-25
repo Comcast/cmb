@@ -44,11 +44,13 @@ import com.amazonaws.services.sqs.model.DeleteQueueRequest;
 import com.amazonaws.services.sqs.model.Message;
 import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
 import com.amazonaws.services.sqs.model.ReceiveMessageResult;
+
 import com.comcast.cmb.common.util.Util;
+import com.comcast.cmb.test.tools.CMBTestingConstants;
 
 public class Example {
 	
-    private static Logger logger = Logger.getLogger(CMBTutorial.class);
+    private static Logger logger = Logger.getLogger(Example.class);
     private final static String QUEUE_PREFIX = "TSTQ_"; 
     
 	public static String getArnForQueueUrl(String url) {
