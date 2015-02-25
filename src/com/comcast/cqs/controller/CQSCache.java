@@ -14,6 +14,7 @@ import com.comcast.cmb.common.util.PersistenceException;
 import com.comcast.cmb.common.util.ExpiringCache.CacheFullException;
 import com.comcast.cqs.model.CQSQueue;
 import com.comcast.cqs.persistence.ICQSQueuePersistence;
+import com.comcast.cqs.util.CQSConstants;
 import com.comcast.cqs.util.CQSErrorCodes;
 
 public class CQSCache {
@@ -73,7 +74,11 @@ public class CQSCache {
         String queueUrl = null;
         CQSQueue queue = null;
 
-        queueUrl = request.getRequestURL().toString();
+        queueUrl = request.getRequestURL().toString(); 
+        
+        if (request.getRequestURI() == null || request.getRequestURI().equals("") || request.getRequestURI().equals("/")) {
+        	queueUrl = request.getParameter(CQSConstants.QUEUE_URL);
+        }
 
         if (queueUrl != null && !queueUrl.equals("") && !queueUrl.equals("/")) {
 

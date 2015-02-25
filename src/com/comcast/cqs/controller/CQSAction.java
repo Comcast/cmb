@@ -20,6 +20,7 @@ import javax.servlet.http.HttpServletRequest;
 import com.comcast.cmb.common.controller.Action;
 import com.comcast.cmb.common.model.CMBPolicy;
 import com.comcast.cmb.common.model.User;
+import com.comcast.cqs.util.CQSConstants;
 import com.comcast.cqs.util.Util;
 
 /**
@@ -36,6 +37,11 @@ public abstract class CQSAction extends Action {
     public boolean isActionAllowed(User user, HttpServletRequest request, String service, CMBPolicy policy) throws Exception {
         
         String absoluteQueueUrl = request.getRequestURL().toString();
+        
+        if (request.getRequestURI() == null || request.getRequestURI().equals("") || request.getRequestURI().equals("/")) {
+        	absoluteQueueUrl = request.getParameter(CQSConstants.QUEUE_URL);
+        }
+        
         String queueUserId = Util.getUserIdForAbsoluteQueueUrl(absoluteQueueUrl);
         
         if (user.getUserId().equals(queueUserId)) {

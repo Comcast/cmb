@@ -205,11 +205,11 @@ abstract public class CMBControllerServlet extends HttpServlet {
 			String value = request.getParameter(key);
 			int length = 0;
 
-			if(value != null){
+			if (value != null) {
 				length = value.length();
 			}
 			
-			if (key.equals("MessageBody")) {
+			if (key.equals(CQSConstants.MESSAGE_BODY)) {
 				if (CMBProperties.getInstance().getMaxMessagePayloadLogLength() > 0) {
 					if (value != null && value.length() > CMBProperties.getInstance().getMaxMessagePayloadLogLength()) {
 						value = value.substring(0, CMBProperties.getInstance().getMaxMessagePayloadLogLength())

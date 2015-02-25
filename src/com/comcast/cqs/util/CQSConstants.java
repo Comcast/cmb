@@ -39,6 +39,7 @@ public class CQSConstants {
     public static final String MESSAGE_RETENTION_PERIOD = "MessageRetentionPeriod";
     public static final String POLICY = "Policy";
     public static final String QUEUE_ARN = "QueueArn";
+    public static final String QUEUE_URL = "QueueUrl";
 	public static final String RECEIPT_HANDLE = "ReceiptHandle";
     public static final String REQUEST_ENTRY = "RequestEntry.";
     public static final String SENDER_ID = "SenderId";
