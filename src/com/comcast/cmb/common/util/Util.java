@@ -158,7 +158,7 @@ public class Util {
         for (int i = 0; i < chs.length; i++) {
             if (chs[i] == '\n' || chs[i] == '\t' || chs[i] == '\r' || (chs[i] >= '\u0020' && chs[i] <= '\uD7FF') || (chs[i] >= '\uE000' && chs[i] <= '\uFFFD')) {
                 continue;               
-            } else if (i<chs.length) { // check for 4 bytes unicode, 2 char (utf16)
+            } else if (i<chs.length-1) { // check for 4 bytes unicode, 2 char (utf16)
                 if ((chs[i] >= '\uD800' && chs[i+1] >= '\uDC00') && (chs[i] <= '\uDBFF' && chs[i+1] <= '\uDFFF')) {
                     i++; // skip the next char
                     continue;
