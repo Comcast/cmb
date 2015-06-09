@@ -6,7 +6,45 @@
 
    Post a question in the CMB User Forum at https://groups.google.com/forum/#!forum/cmb-user-forum
    
-1. Help, I can't publish messages from a CNS topic into a CQS queue!
+1. I just installed CMB. When I try to call CQS APIs I get Redis exceptions such as 
+   'unknown command 'EVALSHA'' exceptions.
+
+   You must use Redis version 2.6 or higher. An easy way to check your Redis version is
+   
+   redis-cli --version
+     
+2. I installed CMB over a 3-node Cassandra ring. As soon as a single Cassandra node fails 
+   CMB stops working with Cassandra exceptions such as 'TokenRangeOfflineException'.
+   Isn't the whole point of using Cassandra fault tolerance?
+   
+   Yes! But, by default the CMB keyspaces are created with default replication factor RF=1. While 
+   this works great for single-node POC-style deployments, it's no good for larger Cassandra 
+   rings where you want to use RF=3 or higher to tolerate loss of a at least one Cassandra node.
+   
+   You can find an example showing how to create keyspaces with RF=3 in a commented out
+   section at the top of schema/cassandra_1.2.schema:
+   
+   create keyspace CNS with placement_strategy = 'org.apache.cassandra.locator.SimpleStrategy' and strategy_options = {replication_factor:3};
+   create keyspace CQS with placement_strategy = 'org.apache.cassandra.locator.SimpleStrategy' and strategy_options = {replication_factor:3};
+   create keyspace CMB with placement_strategy = 'org.apache.cassandra.locator.SimpleStrategy' and strategy_options = {replication_factor:3};    
+   
+3. I find installing CMB, Redis and Cassandra way too cumbersome. I just want to try out a simple
+   single node full-stack CMB deployment and play with it a little before getting serious
+   about CMB. What can I do?
+   
+   You can use our single-node Vagrant version which will bootstrap everything you need to get
+   going in a single VM, including Java, Cassandra, Redis and CMB. Simply do
+   
+   > cd packaging/vagrant/cmbbase
+   > vagrant up
+   
+   and after a few minutes you will end up with a running version of CMB. The supplied bootstrap.sh 
+   script may also be helpful in understanding what it takes to install CMB manually yourself.
+   
+   With a little bit of work you can even turn this into a multi-node version using the Vagrant 
+   file in packaging/vagrant/cmbcluster.
+     
+4. Help, I can't publish messages from a CNS topic into a CQS queue!
 
    There are several reasons why the CNS service may not be working properly. You should try using 
    the service manually via Web UI first and methodically follow these steps:
@@ -29,7 +67,7 @@
    the queue and the topic it should be pretty straight-forward. Just make sure to choose "CQS" as
    the protocol when publishing into a CQS queue (not "SQS").
    
-2. How do I subscribe a CQS queue to a CNS topic? And what about subscriptions "pending confirmation"? 
+5. How do I subscribe a CQS queue to a CNS topic? And what about subscriptions "pending confirmation"? 
 
    When subscribing a CQS queue to a CNS topic you must choose "CQS" as the protocol, not "SQS"! 
    Notice that when using the AWS Java SDK this means you have to write something like
@@ -58,7 +96,7 @@
    to avoid inadvertently spamming other user's queues with messages. By asking for a confirmation
    both parties can be sure to agree on the subscription.
    
-3. I find dealing with confirmations cumbersome - is there anything I can do to simplify this?
+6. I find dealing with confirmations cumbersome - is there anything I can do to simplify this?
 
    Absolutely - either use the same CMB user for all your CMB needs and rely on subscriptions
    being auto-confirmed, or, if that's not an option set 
@@ -72,7 +110,7 @@
    It does no auto-confirm already existing subscriptions in "pending confirmation" state. These still 
    have to be confirmed (or deleted).
    
-4. Can I subscribe an AWS SQS queue to a CNS topic?
+7. Can I subscribe an AWS SQS queue to a CNS topic?
 
    Yes, you can even subscribe an AWS SQS queue to a CNS topic and thus publish from a CNS 
    topic directly into a AWS SQS queue. If you want to do this be sure to set you AWS credentials
@@ -84,7 +122,7 @@
    Currently you can only set a single AWS key and secret globally in cmb.properties which will then
    be shared by all CMB users.
    
-5. Do all CMB requests have to be signed?
+8. Do all CMB requests have to be signed?
 
    No, in fact by default the signature verification feature is turned off assuming you are operating
    on a trusted network behind a firewall. If you want to enforce signature validation set 
@@ -94,7 +132,7 @@
    in cmb.properties and restart the service. CMB supports signature validation for AWS signatures
    version 1, 2 and 4.
    
-6. Do all API calls have to be POST requests or can I use HTTP GET requests as well?
+9. Do all API calls have to be POST requests or can I use HTTP GET requests as well?
 
    Both POST and GET are supported. GET requests make testing via browser a lot easier. If you 
    would like to disable GET requests you can do so by setting
@@ -103,7 +141,7 @@
       
    in cmb.properties and restarting the service. 
    
-7. Does CMB support the ContentType=JSON parameter?
+10. Does CMB support the ContentType=JSON parameter?
 
    No, unfortunately not yet. By default AWS SQS and SNS respond with XML and so does CMB. There is 
    an undocumented parameter ContentType=JSON you can use in AWS to get JSON responses instead but
@@ -113,7 +151,7 @@
    
    https://github.com/boto/boto/pull/827
       
-8. Can I use the boto client library, or, for that matter AWS client library xyz to interact with CMB?
+11. Can I use the boto client library, or, for that matter AWS client library xyz to interact with CMB?
 
    CMB is primarily developed with and tested for the AWS Java SDK. People have also successfully 
    used the nodejs client library and to some degree boto can be used (see 7 above). Of course you
