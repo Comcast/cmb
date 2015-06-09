@@ -19,7 +19,7 @@ with AWS SQS and SNS. This document covers these topics:
 - FAQ
 --------------------------------------------------------------------------------------
 
-If you have trouble installing or using CMB check our [FAQ](FAQ) first.
+If you have trouble installing or using CMB check our FAQ first.
 
 --------------------------------------------------------------------------------------
 - User Forum
