@@ -1,0 +1,30 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+# Vagrantfile API/syntax version. Don't touch unless you know what you're doing!
+VAGRANTFILE_API_VERSION = "2"
+
+Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+
+  # use private network for multi-machine environment
+  # may want to use static IP addresses instead of dhcp 
+  # for predictable results
+  
+  config.vm.network "private_network", type: "dhcp"
+
+  config.vm.define "cmb1" do |cmb1|
+    cmb1.vm.box = "cmbbase"
+    #cmb1.vm.network "private_network", ip: "172.28.128.3"
+  end
+
+  config.vm.define "cmb2" do |cmb2|
+    cmb2.vm.box = "cmbbase"
+    #cmb2.vm.network "private_network", ip: "172.28.128.4"
+  end
+
+  config.vm.define "cmb3" do |cmb3|
+    cmb3.vm.box = "cmbbase"
+    #cmb3.vm.network "private_network", ip: "172.28.128.5"
+  end
+
+end

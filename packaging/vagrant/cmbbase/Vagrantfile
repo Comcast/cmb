@@ -1,0 +1,28 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+# to create the base image and move it to the cluster configuration use:
+# vagrant up
+# vagrant package -output cmbbase
+# mv cmbbase ../cmbcluster
+# cd ../cmbcluster
+# vagrant up
+
+# Vagrantfile API/syntax version. Don't touch unless you know what you're doing!
+VAGRANTFILE_API_VERSION = "2"
+
+Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+
+  config.vm.box = "hashicorp/precise64"
+
+  #config.vm.box_url = "http://domain.com/path/to/above.box"
+
+  # provisioning
+
+  config.vm.provision :shell, :path => "bootstrap.sh"
+
+  # use private network for multi-machine environment
+
+  config.vm.network "private_network", type: "dhcp"
+
+end
