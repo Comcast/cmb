@@ -5,6 +5,7 @@
 A highly available, horizontally scalable queuing and notification service compatible 
 with AWS SQS and SNS. This document covers these topics:
 
+- FAQ
 - User Forum
 - Binaries for Download
 - Accessing CQS/CNS Using AWS SDK
@@ -13,6 +14,12 @@ with AWS SQS and SNS. This document covers these topics:
 - Monitoring, Logging
 - Multi Datacenter Support and Failover
 - Known Limitations
+
+--------------------------------------------------------------------------------------
+- FAQ
+--------------------------------------------------------------------------------------
+
+If you have trouble installing or using CMB check our [FAQ](FAQ) first.
 
 --------------------------------------------------------------------------------------
 - User Forum
@@ -181,8 +188,12 @@ persist to disk!).
    /<path_to_cassandra>/bin/cassandra-cli -h localhost -f cmb/schema/cassandra_1.1.schema
 
    /<path_to_cassandra>/bin/cassandra-cli -h localhost -f cmb/schema/cassandra_1.2.schema
+   
+   Make sure to pick a suitable replication factor for your Cassandra ring, for example,
+   RF=1 for single node rings and RF=3 for 3 nodes or larger rings.
 
-5. Ensure Redis does not persist to disk.
+5. Redis version 2.6 or higher is required. Also be sure Redis does not persist 
+   to disk.
 
    Edit the redis.conf file and disable all persistence by commenting out the three 
    lines starting with "save".
