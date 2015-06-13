@@ -644,24 +644,21 @@ abstract public class CMBControllerServlet extends HttpServlet {
 				AsyncContext asyncContext = asyncEvent.getAsyncContext(); 
 				CQSHttpServletRequest request = (CQSHttpServletRequest)asyncContext.getRequest();
 				String action = request.getParameter("Action");
-				if(action.equals("ReceiveMessage")){
-					String lpValue = (String)request.getAttribute("lp");
-
-					if(lpValue!=null){
-
-						User user = authModule.getUserByRequest(request);
-
-						Object lp_ms = request.getAttribute("lp_ms");
-						String logLine = null;
-						if(lp_ms!=null){
-							logLine = getLogLine(asyncContext, request, user, (Long)request.getAttribute("lp_ms"), "ok");
-						}else{
-							logLine = getLogLine(asyncContext, request, user, 0, "ok");
-						}
-						logger.info(logLine);
-					}
-				}
 				
+				if (action != null && action.equals("ReceiveMessage") && request.getAttribute("lp") != null) {
+				
+					User user = authModule.getUserByRequest(request);
+					Object lp_ms = request.getAttribute("lp_ms");
+					String logLine = null;
+					
+					if (lp_ms != null) {
+						logLine = getLogLine(asyncContext, request, user, (Long)request.getAttribute("lp_ms"), "ok");
+					} else {
+						logLine = getLogLine(asyncContext, request, user, 0, "ok");
+					}
+					
+					logger.info(logLine);
+				}
 			}
 
 			@Override
@@ -719,34 +716,33 @@ abstract public class CMBControllerServlet extends HttpServlet {
 				AsyncContext asyncContext = asyncEvent.getAsyncContext(); 
 				CQSHttpServletRequest request = (CQSHttpServletRequest)asyncContext.getRequest();
 				String action = request.getParameter("Action");
-				if (action.equals("ReceiveMessage")) {
-					String lpValue = (String)request.getAttribute("lp");
-					if (lpValue != null) {
-						String out = CQSMessagePopulator.getReceiveMessageResponseAfterSerializing(new ArrayList<CQSMessage>(), new ArrayList<String>(), new ArrayList<String>());
-						asyncEvent.getSuppliedResponse().getWriter().println(out);
-						
-						CQSQueue queue = ((CQSHttpServletRequest)asyncEvent.getSuppliedRequest()).getQueue();
 
-						asyncContext = asyncEvent.getAsyncContext(); 
+				if (action != null && action.equals("ReceiveMessage")) {
+				
+					String out = CQSMessagePopulator.getReceiveMessageResponseAfterSerializing(new ArrayList<CQSMessage>(), new ArrayList<String>(), new ArrayList<String>());
+					asyncEvent.getSuppliedResponse().getWriter().println(out);
+					CQSQueue queue = ((CQSHttpServletRequest)asyncEvent.getSuppliedRequest()).getQueue();
+					asyncContext = asyncEvent.getAsyncContext(); 
 
-						if (queue != null) {
+					if (queue != null) {
 
-							logger.debug("event=on_timeout queue_url=" + queue.getAbsoluteUrl());
+						logger.debug("event=on_timeout queue_url=" + queue.getAbsoluteUrl());
+						ConcurrentLinkedQueue<AsyncContext> queueContextsList = CQSLongPollReceiver.contextQueues.get(queue.getArn());
 
-							ConcurrentLinkedQueue<AsyncContext> queueContextsList = CQSLongPollReceiver.contextQueues.get(queue.getArn());
-
-							if (queueContextsList != null && asyncContext != null) {
-								queueContextsList.remove(asyncContext);
-							}
-
-						} else {
-							logger.debug("event=on_timeout");
+						if (queueContextsList != null && asyncContext != null) {
+							queueContextsList.remove(asyncContext);
 						}
-						asyncContext.complete();
-						return;						
+
+					} else {
+						logger.debug("event=on_timeout");
 					}
+
+					asyncContext.complete();
+					return;						
 				}				
-				//for other Time out show log error and return error response.
+				
+				//for other timeout show log error and return error response.
+				
 				int httpCode = CMBErrorCodes.InternalError.getHttpCode();
 				String code = CMBErrorCodes.InternalError.getCMBCode();
 				String message = "CMB timeout after "+CMBProperties.getInstance().getCMBRequestTimeoutSec()+" seconds";
@@ -773,7 +769,6 @@ abstract public class CMBControllerServlet extends HttpServlet {
 				if (queue != null) {
 
 					logger.error("event=on_timeout queue_url=" + queue.getAbsoluteUrl());
-
 					ConcurrentLinkedQueue<AsyncContext> queueContextsList = CQSLongPollReceiver.contextQueues.get(queue.getArn());
 
 					if (queueContextsList != null && asyncContext != null) {
@@ -783,6 +778,7 @@ abstract public class CMBControllerServlet extends HttpServlet {
 				} else {
 					logger.error("event=on_timeout "+getLogLine(asyncContext, request, authModule.getUserByRequest(request), 0, "timeout"));
 				}
+
 				asyncContext.complete();
 			}
 
