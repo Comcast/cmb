@@ -790,10 +790,10 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence {
     	// first persist to Cassandra and get message-id to put into cache        
         String messageId = persistenceStorage.sendMessage(queue, shard, message);        
         if (messageId == null) {
-        	throw new IllegalStateException("Could not get id from underlying storage");
+        	throw new IllegalStateException("Could not get id from Cassandra");
         }
         boolean cacheAvailable = checkCacheConsistency(queue.getRelativeUrl(), shard, true); //set in cache even if its filling
-        String memId = null;
+        String memId = getMemQueueMessage(messageId);
         boolean brokenJedis = false;
         ShardedJedis jedis = null;
         long ts1 = System.currentTimeMillis();
@@ -806,7 +806,6 @@ public class RedisCachedCassandraPersistence implements ICQSMessagePersistence {
             	if (message.getAttributes().containsKey(CQSConstants.DELAY_SECONDS)) {
             		delaySeconds = Integer.parseInt(message.getAttributes().get(CQSConstants.DELAY_SECONDS));
             	}
-            	memId = getMemQueueMessage(messageId); 
             	jedis = getResource();
             	if (delaySeconds > 0) {
                     jedis.zadd(queue.getRelativeUrl() + "-" + shard + "-V", System.currentTimeMillis() + (delaySeconds * 1000), memId); //insert or update already existing            	    
