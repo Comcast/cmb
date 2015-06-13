@@ -1,3 +1,21 @@
+CMB VERSION 2.2.44
+--------------------------------------------------------------------
+
+Bug fixes:
+
+- fix for SendMessage() reporting an error when Redis is offline 
+  (issue 43)
+- fix for null pointer exception for certain scenarios logging 
+  long poll times
+- allow queue url to be passed in as url parameter (issue 37)
+- fix for unicode validations (issue 39)
+
+Misc:
+
+- improved documentation
+- draft Vagrantfile for bootstrapping single node CMB including C* 
+  and Redis 
+
 CMB VERSION 2.2.43
 --------------------------------------------------------------------
 
