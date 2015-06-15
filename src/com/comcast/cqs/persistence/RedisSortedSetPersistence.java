@@ -32,6 +32,8 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.log4j.Logger;
 import org.json.JSONException;
@@ -64,7 +66,6 @@ public class RedisSortedSetPersistence implements ICQSMessagePersistence {
 
 	private static final Logger logger = Logger.getLogger(RedisSortedSetPersistence.class);
 	private static final Random rand = new Random();
-
 	private static RedisSortedSetPersistence instance;
 
 	public static ExecutorService executor;
@@ -96,7 +97,9 @@ public class RedisSortedSetPersistence implements ICQSMessagePersistence {
 			+ "redis.call(\"ZADD\",KEYS[1],ARGV[4],messages[i]) "
 			+ "end "
 			+ "return messages";
+	
 	private static String luaChangeScoreToHigherSHA = "  ";
+	
 	/**
 	 * 
 	 * @return Singleton implementation of this object
@@ -107,6 +110,10 @@ public class RedisSortedSetPersistence implements ICQSMessagePersistence {
 
 	private static JedisPoolConfig config = new JedisPoolConfig();
 	private static ShardedJedisPool pool;
+	private volatile static AtomicLong lastCheckMS = new AtomicLong(0);
+	private volatile static AtomicBoolean redisDown = new AtomicBoolean(false);
+	private static final long redisCheckFrequencyMS = 5000;
+	
 	static {
 		initializeInstance();
 		initializePool();
@@ -484,7 +491,12 @@ public class RedisSortedSetPersistence implements ICQSMessagePersistence {
 		 try {
 			 // check if cache's state exists, if not return false and initialize cache
 			 // if cache's state is not OK, return false
+			 if (redisDown.get() && System.currentTimeMillis() - lastCheckMS.longValue() <= RedisSortedSetPersistence.redisCheckFrequencyMS) {
+				 return false;
+			 }
+			 lastCheckMS.set(System.currentTimeMillis());
 			 QCacheState state = getCacheState(queueUrl, shard);
+			 redisDown.set(false);
 			 if (state == null || state == QCacheState.Unavailable) {
 				 try {
 					 setCacheFillerProcessing(queueUrl, shard, 20 * 60); // this must be before setCacheState or else a race-condition                    
@@ -519,6 +531,7 @@ public class RedisSortedSetPersistence implements ICQSMessagePersistence {
 			 return true;
 		 } catch (JedisConnectionException e) {
 			 logger.warn("event=check_cache_consistency error_code=redis_unavailable num_connections=" + numRedisConnections.get());
+			 redisDown.set(true);
 			 return false;
 		 }
 	 }
