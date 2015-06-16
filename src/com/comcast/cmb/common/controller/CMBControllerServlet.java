@@ -81,7 +81,7 @@ abstract public class CMBControllerServlet extends HttpServlet {
 	 */
 	public final static ValueAccumulator valueAccumulator = new ValueAccumulator();
 
-	public final static String VERSION = "2.2.45";
+	public final static String VERSION = "2.2.46";
 	
 	public final static int HARD_TIMEOUT_SEC = CMBProperties.getInstance().getCMBRequestTimeoutSec();
 
