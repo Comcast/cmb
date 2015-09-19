@@ -181,17 +181,24 @@ persist to disk!).
    row_cache_size_in_mb: 100
    
    To install the schema, use the appropriate command based on your Cassandra version
-   NOTE: If you want the keyspaces to be replicated, you will need to change the keyspace definitions before adding the schema
+
+   Using cli (deprecated):
    
    /<path_to_cassandra>/bin/cassandra-cli -h localhost -f cmb/schema/cassandra_1.0.schema
 
    /<path_to_cassandra>/bin/cassandra-cli -h localhost -f cmb/schema/cassandra_1.1.schema
 
    /<path_to_cassandra>/bin/cassandra-cli -h localhost -f cmb/schema/cassandra_1.2.schema
-   
-   Make sure to pick a suitable replication factor for your Cassandra ring, for example,
-   RF=1 for single node rings and RF=3 for 3 nodes or larger rings.
 
+   Using cql:
+   
+   /<path_to_cassandra>/bin/cqlsh localhost 9160 -f schema/cassandra_1.2.cql.schema    
+
+   NOTE: If you want the keyspaces to be replicated, you will need to change the keyspace 
+   definitions before adding the schema. Make sure to pick a suitable replication factor 
+   for your Cassandra ring, for example, RF=1 for single node rings and RF=3 for 3 nodes 
+   or larger rings.
+   
 5. Redis version 2.6 or higher is required. Also be sure Redis does not persist 
    to disk.
 
