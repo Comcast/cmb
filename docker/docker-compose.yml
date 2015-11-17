@@ -6,8 +6,11 @@ cmb:
   links:
     - cassandra
     - redis
+# cassandra container needs to be initialized by the schema. Run below:
+# docker exec -it cmb_cassandra_1 cqlsh -f /tmp/cassandra_1.2.cql.schema
 cassandra:
-  build: ./cassandra
+  build: ../
+  dockerfile: Dockerfile-cassandra
   expose:
     - "7000"
     - "7001"
@@ -15,6 +18,7 @@ cassandra:
     - "9042"
     - "9160"
 redis:
-  build: ./redis
+  build: ../
+  dockerfile: Dockerfile-redis
   expose:
     - "6379"
