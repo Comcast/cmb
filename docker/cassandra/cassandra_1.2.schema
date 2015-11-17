@@ -1,0 +1,381 @@
+--
+-- Set Up Keyspace
+--
+
+--
+-- drop keyspaces only if they exist already
+--
+
+--drop keyspace CNS;
+--drop keyspace CQS;
+--drop keyspace CMB;
+
+--
+-- use RF=3 for ring sizes >= 3
+--
+
+--create keyspace CNS with placement_strategy = 'org.apache.cassandra.locator.SimpleStrategy' and strategy_options = {replication_factor:3};
+--create keyspace CQS with placement_strategy = 'org.apache.cassandra.locator.SimpleStrategy' and strategy_options = {replication_factor:3};
+--create keyspace CMB with placement_strategy = 'org.apache.cassandra.locator.SimpleStrategy' and strategy_options = {replication_factor:3};
+
+create keyspace CNS;
+create keyspace CQS;
+create keyspace CMB;
+
+--
+-- CNS Column Families
+--
+
+use CNS;
+
+--
+-- CNSTopics Column Family
+-- 
+-- stores meta data for a topic
+--
+
+create column family CNSTopics
+  with column_type = 'Standard'
+  with caching = 'all'
+  and comparator = 'UTF8Type'
+  and default_validation_class = 'UTF8Type'
+  and key_validation_class = 'UTF8Type'
+  and read_repair_chance = 0
+  and dclocal_read_repair_chance = 0.05
+  and replicate_on_write = true
+  and compaction_strategy = 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy'
+  and column_metadata = [
+    {column_name : 'userId',
+    validation_class : UTF8Type},
+    {column_name : 'displayName',
+    validation_class : UTF8Type},
+    {column_name : 'name',
+    validation_class : UTF8Type}];
+
+--
+-- CNSTopicsByUserId Column Family
+-- 
+-- index topics by user id
+--
+
+create column family CNSTopicsByUserId
+  with column_type = 'Standard'
+  with caching = 'all'
+  and comparator = 'UTF8Type'
+  and default_validation_class = 'UTF8Type'
+  and key_validation_class = 'UTF8Type'
+  and read_repair_chance = 0
+  and dclocal_read_repair_chance = 0.05
+  and replicate_on_write = true
+  and compaction_strategy = 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy';
+
+--
+-- CNSTopicSubscriptions Column Family
+-- 
+-- stores meta data for topic subscriptions
+--
+
+create column family CNSTopicSubscriptions
+  with column_type = 'Standard'
+  with caching = 'keys_only'
+  and comparator = 'CompositeType(UTF8Type, UTF8Type)'
+  and default_validation_class = 'UTF8Type'
+  and key_validation_class = 'UTF8Type'
+  and read_repair_chance = 0
+  and dclocal_read_repair_chance = 0.05
+  and replicate_on_write = true
+  and compaction_strategy = 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy'
+  and compression_options = {'chunk_length_kb' : '64', 'sstable_compression' : 'org.apache.cassandra.io.compress.SnappyCompressor'};
+
+--
+-- CNSTopicSubscriptionsIndex Column Family
+-- 
+-- index subscriptions by topic arn
+--
+
+create column family CNSTopicSubscriptionsIndex
+  with column_type = 'Standard'
+  with caching = 'all'
+  and comparator = 'UTF8Type'
+  and default_validation_class = 'UTF8Type'
+  and key_validation_class = 'UTF8Type'
+  and read_repair_chance = 0
+  and dclocal_read_repair_chance = 0.05
+  and replicate_on_write = true
+  and compaction_strategy = 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy';
+
+--
+-- CNSTopicSubscriptionsUserIndex Column Family
+-- 
+-- index subscriptions by user
+--
+
+create column family CNSTopicSubscriptionsUserIndex
+  with column_type = 'Standard'
+  with caching = 'keys_only'
+  and comparator = 'UTF8Type'
+  and default_validation_class = 'UTF8Type'
+  and key_validation_class = 'UTF8Type'
+  and read_repair_chance = 0
+  and dclocal_read_repair_chance = 0.05
+  and replicate_on_write = true
+  and compaction_strategy = 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy';
+
+--
+-- CNSTopicSubscriptionsTokenIndex Column Family
+-- 
+-- index subscriptions by token
+--
+
+create column family CNSTopicSubscriptionsTokenIndex
+  with column_type = 'Standard'
+  with caching = 'all'
+  and comparator = 'UTF8Type'
+  and default_validation_class = 'UTF8Type'
+  and key_validation_class = 'UTF8Type'
+  and read_repair_chance = 0
+  and dclocal_read_repair_chance = 0.05
+  and replicate_on_write = true
+  and compaction_strategy = 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy';
+
+--
+-- CNSTopicAttributes Column Family
+-- 
+-- topic attributes
+--
+	
+create column family CNSTopicAttributes
+  with column_type = 'Standard'
+  with caching = 'all'
+  and comparator = 'UTF8Type'
+  and default_validation_class = 'UTF8Type'
+  and key_validation_class = 'UTF8Type'
+  and read_repair_chance = 0
+  and dclocal_read_repair_chance = 0.05
+  and replicate_on_write = true
+  and compaction_strategy = 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy'
+  and column_metadata = [
+    {column_name : 'effectiveDeliveryPolicy',
+    validation_class : UTF8Type},
+    {column_name : 'userId',
+    validation_class : UTF8Type},
+    {column_name : 'policy',
+    validation_class : UTF8Type}];
+    
+--
+-- CNSSubscriptionAttributes Column Family
+-- 
+-- subscription attributes
+--
+	
+create column family CNSSubscriptionAttributes
+  with column_type = 'Standard'
+  with caching = 'all'
+  and comparator = 'UTF8Type'
+  and default_validation_class = 'UTF8Type'
+  and key_validation_class = 'UTF8Type'
+  and read_repair_chance = 0
+  and dclocal_read_repair_chance = 0.05
+  and replicate_on_write = true
+  and compaction_strategy = 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy'
+  and column_metadata = [
+    {column_name : 'effectiveDeliveryPolicy',
+    validation_class : UTF8Type},
+    {column_name : 'userId',
+    validation_class : UTF8Type},
+    {column_name : 'confirmationWasAuthenticated',
+    validation_class : UTF8Type},
+    {column_name : 'deliveryPolicy',
+    validation_class : UTF8Type},
+    {column_name : 'topicArn',
+    validation_class : UTF8Type}];
+    
+--
+-- CNSTopicStats Column Family
+-- 
+-- 
+--
+
+create column family CNSTopicStats 
+  with default_validation_class=CounterColumnType 
+  with caching = 'all'
+  and read_repair_chance = 0
+  and dclocal_read_repair_chance = 0.05
+  and key_validation_class=UTF8Type
+  and comparator=UTF8Type; 
+
+--
+-- CNSWorkers Column Family
+-- 
+-- heart beat for cns workers
+--
+
+create column family CNSWorkers
+  with column_type = 'Standard'
+  with caching = 'all'
+  and comparator = 'UTF8Type'
+  and default_validation_class = 'UTF8Type'
+  and key_validation_class = 'UTF8Type'
+  and read_repair_chance = 0
+  and dclocal_read_repair_chance = 0.05
+  and replicate_on_write = true
+  and compaction_strategy = 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy';
+
+--
+-- CNSAPIServers Column Family
+-- 
+-- heart beat for cns api servers
+--
+
+create column family CNSAPIServers  
+  with column_type = 'Standard'
+  with caching = 'all'
+  and comparator = 'UTF8Type'
+  and default_validation_class = 'UTF8Type'
+  and key_validation_class = 'UTF8Type'
+  and read_repair_chance = 0
+  and dclocal_read_repair_chance = 0.05
+  and replicate_on_write = true
+  and compaction_strategy = 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy';
+
+--
+-- CQS Column Families
+--
+
+use CQS;
+
+--
+-- CQSQueues Column Family
+--
+-- stores CQS queue meta data
+--
+
+create column family CQSQueues
+  with column_type = 'Standard'
+  with caching = 'all'
+  and comparator = 'UTF8Type'
+  and default_validation_class = 'UTF8Type'
+  and key_validation_class = 'UTF8Type'
+  and read_repair_chance = 0
+  and dclocal_read_repair_chance = 0.05
+  and replicate_on_write = true
+  and compaction_strategy = 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy'
+  and column_metadata = [
+    {column_name : 'arn',
+    validation_class : UTF8Type,
+    index_name : 'CQSQueuesArnIdx',
+    index_type : 0},
+    {column_name : 'createdTime',
+    validation_class : UTF8Type},
+    {column_name : 'delaySeconds',
+    validation_class : UTF8Type},
+    {column_name : 'maxMsgSize',
+    validation_class : UTF8Type},
+    {column_name : 'msgRetentionPeriod',
+    validation_class : UTF8Type},
+    {column_name : 'name',
+    validation_class : UTF8Type},
+    {column_name : 'ownerUserId',
+    validation_class : UTF8Type,
+    index_name : 'CQSQueuesOwnerUserIdIdx',
+    index_type : 0},
+    {column_name : 'policy',
+    validation_class : UTF8Type},
+    {column_name : 'region',
+    validation_class : UTF8Type},
+    {column_name : 'visibilityTO',
+    validation_class : UTF8Type}];
+
+--
+-- CQSQueuesByUserId Column Family
+-- 
+-- index queues by user id
+--
+
+create column family CQSQueuesByUserId
+  with column_type = 'Standard'
+  with caching = 'keys_only'
+  and comparator = 'UTF8Type'
+  and default_validation_class = 'UTF8Type'
+  and key_validation_class = 'UTF8Type'
+  and read_repair_chance = 0
+  and dclocal_read_repair_chance = 0.05
+  and replicate_on_write = true
+  and compaction_strategy = 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy';
+
+--
+-- CQSPartitionedQueueMessages Column Family
+--
+-- queues messages
+--
+    
+ create column family CQSPartitionedQueueMessages
+  with column_type = 'Standard'
+  with caching = 'keys_only'
+  and comparator = 'CompositeType(LongType, LongType)'
+  and default_validation_class = 'UTF8Type'
+  and key_validation_class = 'UTF8Type'
+  and read_repair_chance = 0
+  and dclocal_read_repair_chance = 0.05
+  and gc_grace = 5
+  and replicate_on_write = true
+  and compaction_strategy = 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy'
+  and compression_options = {'chunk_length_kb' : '64', 'sstable_compression' : 'org.apache.cassandra.io.compress.SnappyCompressor'};
+    
+--
+-- CQSAPIServers Column Family
+-- 
+-- heart beat for cqs api servers
+--
+
+create column family CQSAPIServers
+  with column_type = 'Standard'
+  with caching = 'all'
+  and comparator = 'UTF8Type'
+  and default_validation_class = 'UTF8Type'
+  and key_validation_class = 'UTF8Type'
+  and read_repair_chance = 0
+  and dclocal_read_repair_chance = 0.05
+  and replicate_on_write = true
+  and compaction_strategy = 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy';
+
+--
+-- Generic Column Families
+--
+
+use CMB;
+
+--
+-- Users Column Family
+--
+-- stores user meta data
+--
+
+create column family Users
+  with column_type = 'Standard'
+  with caching = 'all'
+  and comparator = 'UTF8Type'
+  and default_validation_class = 'UTF8Type'
+  and key_validation_class = 'UTF8Type'
+  and read_repair_chance = 0
+  and dclocal_read_repair_chance = 0.05
+  and replicate_on_write = true
+  and compaction_strategy = 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy'
+  and column_metadata = [
+    {column_name : 'accessKey',
+    validation_class : UTF8Type,
+    index_name : 'usersAccessKeyIdx',
+    index_type : 0},
+    {column_name : 'accessSecret',
+    validation_class : UTF8Type},
+    {column_name : 'hashPassword',
+    validation_class : UTF8Type},
+    {column_name : 'userId',
+    validation_class : UTF8Type,
+    index_name : 'usersUserIdIdx',
+    index_type : 0},
+    {column_name : 'isAdmin',
+    validation_class : UTF8Type},
+    {column_name : 'description',
+    validation_class : UTF8Type}];
+   

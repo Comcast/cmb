@@ -1,0 +1,20 @@
+cmb:
+  build: ../
+  ports:
+    - "6059:6059"
+    - "6061:6061"
+  links:
+    - cassandra
+    - redis
+cassandra:
+  build: ./cassandra
+  expose:
+    - "7000"
+    - "7001"
+    - "7199"
+    - "9042"
+    - "9160"
+redis:
+  build: ./redis
+  expose:
+    - "6379"
