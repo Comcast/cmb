@@ -1,0 +1,290 @@
+
+#
+# CMB Configuration File
+#
+# cmb.properties is used to configure the CNS service, the CQS service and CNS worker nodes.
+# When installing CMB for the first time, focus on adjusting the properties marked with 
+# "todo" below. 
+#
+
+#
+# global service URLs - pointing at load balancer; for single machine setups without load 
+# balancer the service URLs should point directly at the service endpoints (thus port numbers
+# should be identical to the server port numbers specified below).  
+#
+
+# todo: adjust service urls
+
+cmb.cqs.service.url=http://localhost:6059/
+cmb.cns.service.url=http://localhost:6061/
+
+# optional custom unsubscribe URL, use %a as placeholder for subscription arn
+
+#cmb.cns.unsubscribe.url=
+
+#
+# ports of local jetty / tomcat service endpoint
+#
+
+cmb.cqs.server.port=6059
+cmb.cns.server.port=6061
+
+#
+# data center name - arbitrary name to distinguish service endpoints in different data centers
+# (used by cqs long polling and displayed in dashboard screens)
+#
+
+# todo: adjust data center name
+
+cmb.dc.name=default
+cmb.deployment.name=default
+
+#
+# enable / disable services and publisher feature, all enabled by default for standalone operation
+#
+
+# todo: enable / disable service modules
+
+cmb.cqs.serviceEnabled=true
+cmb.cns.serviceEnabled=true
+cmb.cns.publisherEnabled=true
+cmb.cns.publisherMode=Producer,Consumer
+
+# enable tracking of response time percentiles, disabled by default
+
+cmb.stats.enable=true
+
+# port for sending long poll notifications
+
+cmb.cqs.longpoll.enable=true
+cmb.cqs.longpoll.port=5555
+
+# async request handler pool size
+
+cmb.workerpool.size=256
+
+#
+# configure email relay here, if email protocol is desired for cns, otherwise set enabled to false
+#
+
+cmb.cns.smtp.enabled=false
+cmb.cns.smtp.hostname=
+cmb.cns.smtp.username=
+cmb.cns.smtp.password=
+cmb.cns.smtp.replyAddress=
+
+#
+# internal user account used by cns to access cqs, be sure to create this user with the web ui
+#
+
+cmb.cns.user.name=cns_internal
+cmb.cns.user.password=cns_internal
+
+# only configure cns user access key and secret if you want to avoid that cns workers have to access cassandra to look up authentication details
+
+#cmb.cns.user.access.key=
+#cmb.cns.user.access.secret=
+
+#
+# aws credentials if publishing to aws sqs endpoints is desired
+#
+
+aws.access.key=
+aws.access.secret=
+
+#
+# maximum message payload length when logging service requests (this will keep logging of message bodies to 
+# a maximum of the first 128 characters)
+#
+
+cmb.log.maxMessagePayloadLogLength=128
+
+# CMB request timeout second
+cmb.request.timeoutSec=20
+
+#
+# cassandra and hector settings
+#
+
+# todo: place cassandra cluster name here (usually "cmb")
+
+cmb.cassandra.clusterName=cmb
+cmb.cassandra.clusterUrl=CASSANDRA_ADDR:CASSANDRA_PORT
+cmb.cassandra.readConsistencyLevel=QUORUM
+cmb.cassandra.writeConsistencyLevel=QUORUM
+cmb.cassandra.thriftSocketTimeOutMS=10000
+cmb.cassandra.dataCenter=
+#cmb.cassandra.username=
+#cmb.cassandra.password=
+
+cmb.astyanax.maxConnectionsPerNode=10
+cmb.astyanax.connectionWaitTimeOutMS=2000
+
+cmb.hector.pool.size=75
+
+cmb.hector.balancingPolicy=RoundRobinBalancingPolicy
+#cmb.hector.balancingPolicy=LeastActiveBalancingPolicy
+#cmb.hector.balancingPolicy=DynamicLoadBalancingPolicy
+
+cmb.hector.autoDiscovery=true
+cmb.hector.autoDiscoveryDelaySeconds=60
+
+# only change cassandra keyspace names if you also changed them in schema.txt
+
+cmb.common.keyspace=CMB
+cmb.cqs.keyspace=CQS
+cmb.cns.keyspace=CNS
+
+#
+# redis settings
+#
+
+cmb.redis.serverList=REDIS_ADDR:REDIS_PORT
+
+cmb.redis.connectionsMaxTotal=100
+cmb.redis.fillerThreads=16
+cmb.redis.revisibleThreads=16
+cmb.redis.expireTTLSec=1209600
+cmb.redis.revisibleFrequencySec=10
+
+#
+# cns worker (publisher) settings
+#
+
+# name prefix for internal cqs queues used by cns
+
+cmb.cns.publish.queueNamePrefix=PublishJobQ_
+cmb.cns.publish.endpointQueueNamePrefix=EndpointPublishQ_
+
+# http thread pool size
+
+cmb.cns.publisher.http.connectionPoolSize=100
+cmb.cns.publisher.http.connectionsPerRouteSize=10
+
+# http timeout after which a message posted to a slow endpoint will be shifted from the delivery to the redlivery queue
+
+cmb.cns.publisher.http.httpTimeoutSeconds=5
+
+# http status codes that will be considered as successful delivery of a message (e.g. 404,403)
+
+cmb.cns.publisher.http.acceptableStatusCodes=
+
+# use synchronous (sync) or asynchronous (async) I/O mode for posting to http endpoints (default is synchronous posting)
+
+cmb.cns.publisher.http.iomode=sync
+
+# thread pool settings for producer and consumer threads
+
+cmb.cns.publisher.numProducers=8
+cmb.cns.publisher.numConsumers=4
+
+# number of internal queues used by producers and consumers
+
+cmb.cns.publisher.numPublishJobQs=2
+cmb.cns.publisher.numEPPublishJobQs=4
+
+# thread pool sizes for message delivery and re-delivery
+
+cmb.cns.publisher.numDeliveryHandlers=128
+cmb.cns.publisher.numReDeliveryHandlers=128
+
+# queue limits for in-memory queues (not cassandra queues) for delivery and re-delivery threads
+# queues should not contain more than one second's worth of messages
+
+cmb.cns.publisher.deliveryHandlerJobQueueLimit=1000
+cmb.cns.publisher.reDeliveryHandlerJobQueueLimit=5000
+
+cmb.cns.publisher.EPPublishJobVTO=10
+cmb.cns.publisher.publishJobVTO=10
+
+# chunk size for cns fan out, each delivery threads will work on delivering a single publish message to at most this number of endpoints
+
+cmb.cns.publisher.maxSubscriptionsPerEPPublishJob=100
+
+cmb.cns.publisher.producerProcessingMaxDelay=1000
+cmb.cns.publisher.consumerProcessingMaxDelay=1000
+
+cmb.cns.publisher.publishJobQueueSizeLimit=100000
+cmb.cns.publisher.pingDelayMS=60000
+cmb.cns.publisher.workStealerDelayMS=60000
+
+# number of failures per minute which will cause a 1 minute suspension of the subscription associated with a particular endpoint, set threshold to 0 to disable this feature 
+
+cmb.cns.publisher.endpointFailureCountToSuspensionThreshold=10
+
+# drop message if time between call to publish api and worker seeing the message exceeds messageExpirationSeconds, set to 0 (default) to disable this feature 
+
+cmb.cns.publisher.messageExpirationSeconds=0
+
+#
+# generic cmb settings
+#
+
+# to enable signature verification on every request change this setting to true
+# Get request does not need signature. If allowGetRequest = false, no Get Request is allowed.
+
+cmb.enableSignatureAuth=false
+cmb.allowGetRequest=true
+
+cmb.region=csv
+cmb.rollingWindowSizeSec=600
+
+#
+# cns settings
+#
+
+# to disable mandatory confirmations for every cross-user cns topic subscription  
+
+cmb.cns.requireSubscriptionConfirmation=true
+
+cmb.cns.useSubInfoCache=false
+
+cmb.cns.maxMsgSize=262144
+
+# speedup fan-out for topics with few subscribers by only going through one internal queue
+
+cmb.cns.bypassPublishJobQueueForSmallTopics=true
+
+# optional setting if you wish to have http posts for cns confirmation messages go through an http proxy, disabled by default
+
+#cmb.cns.http.proxy=127.0.0.1:9090
+
+#
+# cqs settings
+#
+
+# number of cassandra partitions (rows) used per cqs queue
+
+cmb.cqs.numberOfQueuePartitions=100
+
+# default message visibility in seconds
+
+cmb.cqs.visibilityTO=30
+cmb.cqs.maxMsgCountBatch=10
+cmb.cqs.maxMsgSize=262144
+cmb.cqs.maxMsgSizeBatch=262144
+cmb.cqs.msgRetentionPeriod=345600
+cmb.cqs.minMsgRetentionPeriod=60
+cmb.cqs.maxMsgRetentionPeriod=1209600
+cmb.cqs.delaySeconds=0
+cmb.cqs.maxQueueNameLength=80
+cmb.cqs.maxMessageSuppliedIdLength=80
+cmb.cqs.maxBatchEntries=10
+cmb.cqs.maxReceiveMessageCount=10
+cmb.cqs.maxVisibilityTO=43200
+cmb.cqs.maxDelaySeconds=900
+
+#
+# cns / cqs internal cache settings
+#
+
+cmb.user.cacheExpiringInSeconds=60
+cmb.user.cacheSizeLimit=1000000
+
+cmb.cqs.cacheExpiringInSeconds=60
+cmb.cqs.cacheSizeLimit=1000000
+
+cmb.cns.cacheExpiringInSeconds=60
+cmb.cns.cacheSizeLimit=1000000
+
+
