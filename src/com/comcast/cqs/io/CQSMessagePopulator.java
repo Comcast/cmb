@@ -18,7 +18,7 @@ package com.comcast.cqs.io;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.lang.StringEscapeUtils;
+import org.apache.commons.lang3.StringEscapeUtils;
 
 import com.comcast.cqs.model.CQSBatchResultErrorEntry;
 import com.comcast.cqs.model.CQSMessage;
