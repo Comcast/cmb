@@ -15,7 +15,7 @@
  */
 package com.comcast.cns.io;
 
-import org.apache.commons.lang.StringEscapeUtils;
+import org.apache.commons.lang3.StringEscapeUtils;
 
 import com.comcast.cns.model.CNSSubscription;
 import com.comcast.cns.model.CNSSubscriptionAttributes;
@@ -110,7 +110,7 @@ public class CNSAttributePopulator {
 		if (attr.getDisplayName() != null && !attr.getDisplayName().isEmpty()) {
 			out.append("\t\t\t<entry>\n");
 			out.append("\t\t\t\t<key>DisplayName</key>\n");
-			out.append("\t\t\t\t<value>").append(StringEscapeUtils.escapeHtml(attr.getDisplayName())).append("</value>\n");
+			out.append("\t\t\t\t<value>").append(StringEscapeUtils.escapeHtml4(attr.getDisplayName())).append("</value>\n");
 			out.append("\t\t\t</entry>\n");
 		}
 
