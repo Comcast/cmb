@@ -152,24 +152,36 @@ public class Util {
         return true;
     }
     
+    private static final char HIGH_SURROGATE_MIN = '\uD800';
+    private static final char HIGH_SURROGATE_MAX = '\uDBFF';
+    private static final char LOW_SURROGATE_MIN = '\uDC00';
+    private static final char LOW_SURROGATE_MAX = '\uDFFF';
+
     public static boolean isValidUnicode(String msg) {
-        //[\u0020-\uD7FF\uE000-\uFFFD\uD800\uDC00-\uDBFF\uDFFF\r\n\t]
-        char[] chs = msg.toCharArray();
-        for (int i = 0; i < chs.length; i++) {
-            if (chs[i] == '\n' || chs[i] == '\t' || chs[i] == '\r' || (chs[i] >= '\u0020' && chs[i] <= '\uD7FF') || (chs[i] >= '\uE000' && chs[i] <= '\uFFFD')) {
-                continue;               
-            } else if (i<chs.length-1) { // check for 4 bytes unicode, 2 char (utf16)
-                if ((chs[i] >= '\uD800' && chs[i+1] >= '\uDC00') && (chs[i] <= '\uDBFF' && chs[i+1] <= '\uDFFF')) {
-                    i++; // skip the next char
-                    continue;
+        // see http://unicode.org/faq/utf_bom.html#utf16-7 for details
+        int len = msg.length();
+        for (int i = 0; i < len; i++) {
+            char ch = msg.charAt(i);
+            if (HIGH_SURROGATE_MIN <= ch && ch <= HIGH_SURROGATE_MAX) {
+                // high surrogate should be followed by low surrogate
+                if (i + 1 < len) {
+                    char nextCh = msg.charAt(++i);
+                    if (LOW_SURROGATE_MIN <= nextCh
+                            && nextCh <= LOW_SURROGATE_MAX) {
+                        continue;
+                    }
                 }
-            } else {
+                // the case of no next character or not low surrogate is treated as malformed UTF-16
+                return false;
+            } else if (LOW_SURROGATE_MIN <= ch && ch <= LOW_SURROGATE_MAX) {
+                // low surrogate without high surrogate is also treated as malformed UTF-16
                 return false;
             }
+            // anything else is allowed
         }
         return true;
     }
-    
+   
     /**
      * Split a passed in list into multiple lists of a given size
      * @param <T>
