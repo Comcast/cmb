@@ -194,6 +194,10 @@ persist to disk!).
    
    /<path_to_cassandra>/bin/cqlsh localhost 9160 -f schema/cassandra_1.2.cql.schema    
 
+   NOTE: In newer versions of Cassandra thrift is disabled by default, as a result CMB 
+   cannot connect to Cassandra. A solution to this is to run "nodetool enablethrift"
+   while Cassandra is running.
+   
    NOTE: If you want the keyspaces to be replicated, you will need to change the keyspace 
    definitions before adding the schema. Make sure to pick a suitable replication factor 
    for your Cassandra ring, for example, RF=1 for single node rings and RF=3 for 3 nodes 
@@ -322,10 +326,10 @@ centers this is ok for many applications.
 - Known Limitations
 --------------------------------------------------------------------------------------
 
-- Compatibility with the Java AWS SDK has been tested up to version 1.9.14
+- Compatibility with the Java AWS SDK has been tested up to version 1.11.2
 
-- CMB does not work with Cassandra versions prior to 1.0.10, however, 1.1.X, 2.0.X 
-  and 2.1.X are ok
+- CMB does not work with Cassandra versions prior to 1.0.10, however, 1.1.X, 2.0.X , 
+  2.1.X and up are ok
  
 - CNS does not support SMS protocol
 
