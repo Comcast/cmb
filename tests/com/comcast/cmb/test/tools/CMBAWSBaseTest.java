@@ -51,9 +51,6 @@ public class CMBAWSBaseTest {
 	public static String accessKey1 = null;
 	public static String accessSecret1 = null;
 
-	//public static String accessKey1 = "JEBRNE0IMZFU96SRE3MF"; //null;
-	//public static String accessSecret1 = "LJEdWxSNdmI0Pp7gynHgdZVJJ2IfCpATG4vr1jzA";//null;
-	
 	public static final String userName2 = "cmb_unit_test_2";
 	public static String accessKey2 = null;
 	public static String accessSecret2 = null;
