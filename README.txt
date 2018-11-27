@@ -1,3 +1,6 @@
+
+This project is no longer actively supported. It is made available as read-only. 
+
 --------------------------------------------------------------------------------------
 - CMB (Cloud Message Bus) README
 --------------------------------------------------------------------------------------
